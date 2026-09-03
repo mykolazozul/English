@@ -1,0 +1,6 @@
+{
+  "dataSourceId": "f38dba17-bbd6-4f04-9875-030212db4d0a",
+  "count": 0,
+  "syncedAt": null,
+  "note": "Run npm run sync:notion or the GitHub Actions Notion sync workflow to populate the full database."
+}
