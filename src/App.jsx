@@ -1,12 +1,13 @@
-import React, {useEffect, useMemo, useState, useCallback, useRef} from 'react';
+import React, {useEffect, useMemo, useState, useCallback, useRef, lazy, Suspense} from 'react';
 import {BarChart3, BookOpen, Check, CheckCircle2, ChevronRight, Flame, Home, Lock, Menu, Moon, Palette, Play, RotateCcw, Settings, Sun, Target, Trophy, User, Volume2, X, XCircle, Shield, SlidersHorizontal, Brain, Sparkles, Keyboard, Layers, Award, Cloud, Users, MessageCircle, Ghost, VolumeX} from 'lucide-react';
 import {words as fallbackWords, rules, BADGES} from './data';
 import {notionWords, notionSyncMeta} from './notionWords.generated';
 import { Analytics } from '@vercel/analytics/react';
+import { lazy, Suspense } from 'react';
 import {listProfiles, saveProfile, loadProfile, getActiveNick, cloudPull, cloudPush, cloudConfigured, isNickTaken, registerNick, setGuestSession, isGuestSession, getFriends, addFriend, getChat, sendChat, friendsLeaderboard, getDailyAverage, ensureDailyAverage} from './lib/storage'';
 import {onCorrect as srsOk, onWrong as srsBad, isDue, todayStr} from './lib/srs';
 
-const VERSION = '1.1-beta';
+const VERSION = '1.2-beta';
 const words = (notionWords?.length ? notionWords : fallbackWords).map(w => ({
   id: w.id, word: w.word, translation: w.translation || '—', pronunciation: w.pronunciation || '',
   category: w.category || 'Other', level: w.level || '', explanation: w.explanation || '',
@@ -19,26 +20,66 @@ const emptyState = () => ({
   mastery: {}, srs: {}, attempts: {}, history: [], badges: [], avatar: '🇺🇸',
   theme: 'system', skin: 'classic', customTheme: {accent: '#22a06b', bg: '#f6f8f6', surface: '#ffffff'},
   admin: {...defaultAdmin},
-  quiet: false, guest: false, gamesPlayed: 0,
-  compareMode: 'global', compareFriend: '',
+  quiet: false, sfx: true, soundPack: 'auto', guest: false, gamesPlayed: 0,
+  compareMode: 'global', compareFriend: '', midnightSnap: null,
   settings: { keyboardHints: true }
 });
 
-function playTone(ok) {
+function playTone(ok, pack) {
   try {
-    if (window.__efQuiet) return;
+    if (window.__efQuiet || window.__efNoSfx) return;
     const C = window.AudioContext || window.webkitAudioContext; if (!C) return;
     const c = new C(), o = c.createOscillator(), g = c.createGain();
-    o.type = ok ? 'sine' : 'square';
-    o.frequency.setValueAtTime(ok ? 660 : 140, c.currentTime);
-    o.frequency.exponentialRampToValueAtTime(ok ? 980 : 90, c.currentTime + 0.22);
+    const p = pack || window.__efSoundPack || 'classic';
+    if (p === 'neon') {
+      o.type = 'square';
+      o.frequency.setValueAtTime(ok ? 880 : 110, c.currentTime);
+      o.frequency.exponentialRampToValueAtTime(ok ? 1320 : 55, c.currentTime + 0.12);
+      g.gain.setValueAtTime(0.0001, c.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.08, c.currentTime + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + 0.15);
+      o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime + 0.16);
+      return;
+    }
+    if (p === 'candy') {
+      o.type = 'sine';
+      o.frequency.setValueAtTime(ok ? 523 : 180, c.currentTime);
+      o.frequency.exponentialRampToValueAtTime(ok ? 784 : 120, c.currentTime + 0.2);
+    } else if (p === 'paper') {
+      o.type = 'triangle';
+      o.frequency.setValueAtTime(ok ? 440 : 160, c.currentTime);
+      o.frequency.linearRampToValueAtTime(ok ? 660 : 100, c.currentTime + 0.25);
+    } else {
+      o.type = ok ? 'sine' : 'square';
+      o.frequency.setValueAtTime(ok ? 660 : 140, c.currentTime);
+      o.frequency.exponentialRampToValueAtTime(ok ? 980 : 90, c.currentTime + 0.22);
+    }
     g.gain.setValueAtTime(0.0001, c.currentTime);
     g.gain.exponentialRampToValueAtTime(ok ? 0.12 : 0.09, c.currentTime + 0.02);
     g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + 0.28);
     o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime + 0.3);
-    setTimeout(() => c.close(), 400);
   } catch {}
 }
+
+function confettiBurst() {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || window.__efQuiet) return;
+  const root = document.createElement('div');
+  root.className = 'confetti-root';
+  document.body.appendChild(root);
+  const colors = ['#22a06b','#f9a825','#e11d48','#3b82f6','#a855f7','#fff'];
+  for (let i = 0; i < 40; i++) {
+    const p = document.createElement('i');
+    p.style.left = 40 + Math.random() * 20 + '%';
+    p.style.background = colors[i % colors.length];
+    p.style.animationDelay = (Math.random() * 0.3) + 's';
+    p.style.setProperty('--dx', (Math.random() * 200 - 100) + 'px');
+    p.style.setProperty('--rot', (Math.random() * 720 - 360) + 'deg');
+    root.appendChild(p);
+  }
+  setTimeout(() => root.remove(), 1600);
+}
+
+
 function speak(t, rate = 0.9) {
   if (!('speechSynthesis' in window) || window.__efQuiet) return;
   speechSynthesis.cancel();
@@ -147,8 +188,48 @@ export default function App() {
     setPage(p); setMobile(false);
   };
   useEffect(() => {
-    if (page !== 'admin') sessionStorage.removeItem('ef-admin-ok');
+    if (page !== 'admin') {
+      sessionStorage.removeItem('ef-admin-ok');
+      sessionStorage.removeItem('ef-admin-token');
+    }
   }, [page]);
+
+  // Hard admin session lock
+  useEffect(() => {
+    if (page !== 'admin') return;
+    let timer = null;
+    const lock = () => {
+      sessionStorage.removeItem('ef-admin-ok');
+      sessionStorage.removeItem('ef-admin-token');
+      setPage('dashboard');
+    };
+    const bump = () => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(lock, 30000); // 30s idle
+    };
+    const onVis = () => { if (document.hidden) lock(); };
+    const onBlur = () => lock();
+    const onPageHide = () => lock();
+    bump();
+    window.addEventListener('mousemove', bump);
+    window.addEventListener('keydown', bump);
+    window.addEventListener('touchstart', bump);
+    window.addEventListener('scroll', bump, true);
+    document.addEventListener('visibilitychange', onVis);
+    window.addEventListener('blur', onBlur);
+    window.addEventListener('pagehide', onPageHide);
+    return () => {
+      if (timer) clearTimeout(timer);
+      window.removeEventListener('mousemove', bump);
+      window.removeEventListener('keydown', bump);
+      window.removeEventListener('touchstart', bump);
+      window.removeEventListener('scroll', bump, true);
+      document.removeEventListener('visibilitychange', onVis);
+      window.removeEventListener('blur', onBlur);
+      window.removeEventListener('pagehide', onPageHide);
+    };
+  }, [page]);
+
 
   useEffect(() => {
     const resolved = state.theme === 'system'
@@ -170,8 +251,26 @@ export default function App() {
     mq.addEventListener?.('change', onChange);
     return () => mq.removeEventListener?.('change', onChange);
   }, [state.theme, state.skin, state.customTheme]);
-  useEffect(() => { window.__efQuiet = !!state.quiet; }, [state.quiet]);
+  useEffect(() => {
+    window.__efQuiet = !!state.quiet;
+    window.__efNoSfx = state.sfx === false;
+    const pack = state.soundPack === 'auto' ? (state.skin || 'classic') : (state.soundPack || 'classic');
+    window.__efSoundPack = pack;
+  }, [state.quiet, state.sfx, state.soundPack, state.skin]);
+  useEffect(() => {
+    document.documentElement.dataset.reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? '1' : '0';
+  }, []);
   useEffect(() => { ensureDailyAverage(); }, []);
+  useEffect(() => {
+    const t = todayStr();
+    if (!state.midnightSnap || state.midnightSnap.date !== t) {
+      const total = (state.history||[]).length;
+      const correct = (state.history||[]).filter(h => h.correct).length;
+      const pct = total ? Math.round(correct/total*100) : 0;
+      const learned = Object.values(state.mastery||{}).filter(v => v >= (state.admin?.masteryThreshold||8)).length;
+      save({...state, midnightSnap: { date: t, pct, learned, xp: state.xp, streak: state.streak }});
+    }
+  }, [state.today]);
 
   // Daily reset
   useEffect(() => {
@@ -263,7 +362,7 @@ export default function App() {
         {page === 'review' && <ReviewPage state={state} due={dueCount} onStart={() => startLesson('srs', 'en-ua', 'all')} />}
         {page === 'stats' && <Stats state={state} learned={learnedCount} />}
         {page === 'badges' && <BadgesPage state={state} />}
-        {page === 'problems' && <ProblemsPage state={state} save={save} />}
+        {page === 'problems' && <ProblemsPage state={state} save={save} onStart={(m,d,c) => { setLessonCfg({mode:m,direction:d,category:c}); setPage('lesson'); }} />}
         {page === 'leaderboard' && <Leaderboard state={state} />}
         {page === 'settings' && <SettingsPage state={state} save={save} />}
         {page === 'friends' && <FriendsPage state={state} />}
@@ -344,10 +443,12 @@ function Onboarding({onDone}) {
 function Dashboard({state, learned, due, words, onLearn, onReview, cloudMsg, notionMeta}) {
   return (
     <section>
-      <div className="announce card">
-        <span className="eyebrow"> annouce · v0.9-beta</span>
+      <div className="announce card jungle-announce">
+        <div className="vine vine-l" aria-hidden="true"/>
+        <div className="vine vine-r" aria-hidden="true"/>
+        <span className="eyebrow">UPDATE · v1.2-beta</span>
         <h2>🚀 Велике оновлення вже тут</h2>
-        <p>Проблемні слова, Sprint лише по складних, адаптація після помилок, генерація вправ, синк словника, changelog і нові дизайни. Прогрес зберігається при оновленні бази.</p>
+        <p>Проблемні слова, Sprint, SRS, друзі, офлайн-кеш, бейджі та новий інтерфейс. Прогрес зберігається при оновленні бази.</p>
       </div>
       <div className="hero">
         <div>
@@ -471,8 +572,10 @@ function Lesson({cfg, state, save, onExit, onDone}) {
 }
 
 function SprintGame({items, mode, state, save, onExit, onDone}) {
-  const itemsRef = useRef(items);
-  const list = itemsRef.current || items || [];
+  const listRef = useRef(null);
+  if (!listRef.current) listRef.current = (items && items.length) ? items : [];
+  const list = listRef.current;
+
   const [index, setIndex] = useState(0);
   const [picked, setPicked] = useState(null);
   const [done, setDone] = useState(false);
@@ -481,53 +584,100 @@ function SprintGame({items, mode, state, save, onExit, onDone}) {
   const [sessionWrong, setSessionWrong] = useState(0);
   const [slowAudio, setSlowAudio] = useState(false);
   const [leaveAsk, setLeaveAsk] = useState(false);
+  const [mist, setMist] = useState(null); // 'ok' | 'bad'
+
+  const stateRef = useRef(state);
+  stateRef.current = state;
+  const pickedRef = useRef(picked);
+  pickedRef.current = picked;
+  const indexRef = useRef(index);
+  indexRef.current = index;
 
   const w = list[index];
+  const total = list.length || 1;
 
-  const applyAnswer = (ok) => {
-    const points = ok ? state.admin.correctPoints : state.admin.wrongPoints;
-    const mid = w.id;
-    const mastery = {...state.mastery, [mid]: Math.max(0, (state.mastery[mid] || 0) + (ok ? 1 : 0))};
-    const srs = {...state.srs, [mid]: ok ? srsOk(state.srs[mid]) : srsBad(state.srs[mid])};
-    const history = [...state.history, {word: mid, correct: ok, points, date: new Date().toISOString(), mode: mode || 'sprint'}].slice(-2000);
+  const applyAnswer = useCallback((ok, wordObj) => {
+    const st = stateRef.current;
+    const points = ok ? st.admin.correctPoints : st.admin.wrongPoints;
+    const mid = wordObj.id;
+    const mastery = {...st.mastery, [mid]: Math.max(0, (st.mastery[mid] || 0) + (ok ? 1 : 0))};
+    const srs = {...st.srs, [mid]: ok ? srsOk(st.srs[mid]) : srsBad(st.srs[mid])};
+    const history = [...st.history, {word: mid, correct: ok, points, date: new Date().toISOString(), mode: mode || 'sprint'}].slice(-2000);
     const next = {
-      ...state, mastery, srs, history,
-      xp: state.xp + points,
-      todayXp: state.todayXp + points,
-      attempts: {...state.attempts, [mid]: (state.attempts[mid] || 0) + 1}
+      ...st, mastery, srs, history,
+      xp: st.xp + points,
+      todayXp: st.todayXp + points,
+      attempts: {...st.attempts, [mid]: (st.attempts[mid] || 0) + 1}
     };
-    if (ok) setSessionCorrect(c => c + 1); else { setSessionWrong(c => c + 1); setSlowAudio(true); }
+    if (ok) setSessionCorrect(c => c + 1);
+    else { setSessionWrong(c => c + 1); setSlowAudio(true); }
     setScorePop({pts: points, ok, key: Date.now()});
+    setMist(ok ? 'ok' : 'bad');
     playTone(ok);
     save(next);
-    setTimeout(() => setScorePop(null), 900);
-  };
+    setTimeout(() => { setScorePop(null); setMist(null); }, 900);
+  }, [mode, save]);
 
-  const answer = (opt) => {
-    if (picked !== null || !w) return;
-    const ok = opt === w.answer;
+  const answer = useCallback((opt) => {
+    if (pickedRef.current !== null) return;
+    const wordObj = listRef.current[indexRef.current];
+    if (!wordObj) return;
+    const ok = opt === wordObj.answer;
     setPicked(opt);
-    applyAnswer(ok);
-  };
+    applyAnswer(ok, wordObj);
+  }, [applyAnswer]);
 
-  const goNext = () => {
+  const goNext = useCallback(() => {
+    const i = indexRef.current;
+    const len = listRef.current.length;
     setPicked(null);
     setScorePop(null);
-    setIndex(i => {
-      if (i >= list.length - 1) { setDone(true); return i; }
-      return i + 1;
-    });
-  };
+    setMist(null);
+    if (i >= len - 1) {
+      setDone(true);
+    } else {
+      setIndex(i + 1);
+    }
+  }, []);
 
-  const tryExit = () => {
-    if (index > 0 && !done) setLeaveAsk(true);
+  const tryExit = useCallback(() => {
+    if (indexRef.current > 0 && !done) setLeaveAsk(true);
     else onExit();
-  };
+  }, [done, onExit]);
 
-  if (done || !list.length) {
+  // hooks ALWAYS before returns
+  useEffect(() => {
+    const onKey = (e) => {
+      if (done) return;
+      const wordObj = listRef.current[indexRef.current];
+      if (pickedRef.current !== null) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goNext(); }
+        return;
+      }
+      if (mode === 'dictation') return;
+      const n = Number(e.key);
+      if (n >= 1 && n <= 4 && wordObj?.options?.[n - 1] !== undefined) {
+        e.preventDefault();
+        answer(wordObj.options[n - 1]);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [answer, goNext, mode, done]);
+
+  if (!list.length) {
     return (
-      <section>
-        <div className="complete card">
+      <section className="fade-in">
+        <button className="back" type="button" onClick={onExit}>← Назад</button>
+        <div className="card">Немає слів для уроку.</div>
+      </section>
+    );
+  }
+
+  if (done) {
+    return (
+      <section className="fade-in">
+        <div className="complete card steam-pop">
           <CheckCircle2 size={64}/>
           <span className="eyebrow">LESSON COMPLETE</span>
           <h1>Урок завершено 🎉</h1>
@@ -541,6 +691,7 @@ function SprintGame({items, mode, state, save, onExit, onDone}) {
             if (sessionWrong === 0 && sessionCorrect > 0) {
               const bonus = Math.round(sessionCorrect * (state.admin.correctPoints || 4) * 0.1);
               next = {...next, xp: next.xp + bonus, todayXp: next.todayXp + bonus};
+              confettiBurst();
             }
             save(next);
             onDone();
@@ -554,30 +705,13 @@ function SprintGame({items, mode, state, save, onExit, onDone}) {
   const correct = picked === w.answer;
   const masteryNow = state.mastery[w.id] || 0;
 
-  useEffect(() => {
-    const onKey = (e) => {
-      if (picked !== null) {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goNext(); }
-        return;
-      }
-      if (mode === 'dictation') return;
-      const n = Number(e.key);
-      if (n >= 1 && n <= 4 && w?.options?.[n-1] !== undefined) {
-        e.preventDefault();
-        answer(w.options[n-1]);
-      }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [picked, index, w, mode]);
-
   return (
-    <section>
+    <section className={'fade-in lesson-wrap' + (mist ? ' mist-' + mist : '')}>
       {leaveAsk && (
         <div className="ef-modal-backdrop">
           <div className="ef-modal card">
             <h2>Вийти з уроку?</h2>
-            <p>Прогрес відповідей уже збережено, але урок ще не завершено.</p>
+            <p>Відповіді вже збережено, урок ще не завершено.</p>
             <div className="row-btns">
               <button className="secondary" type="button" onClick={() => setLeaveAsk(false)}>Залишитись</button>
               <button className="primary" type="button" onClick={onExit}>Вийти</button>
@@ -585,48 +719,77 @@ function SprintGame({items, mode, state, save, onExit, onDone}) {
           </div>
         </div>
       )}
-      <button className="back" type="button" onClick={tryExit}>← Назад</button>
+      <div className={'mist-layer' + (mist ? ' show ' + mist : '')} aria-hidden="true"/>
+      <button className="back anim-arrow" type="button" onClick={tryExit}><span className="arrow-ico">←</span> Назад</button>
       <div className="lesson-progress-row">
-        <Progress value={(list.length ? index / list.length : 0) * 100}/>
-        <span>{index + 1}/{list.length}</span>
+        <Progress value={(index / total) * 100}/>
+        <span className="q-count">{index + 1}/{list.length}</span>
       </div>
-      <div className={'lesson question card' + (picked !== null ? (correct ? ' flash-correct' : ' flash-wrong') : '')}>
+      <div className={'lesson-card-main card' + (picked !== null ? (correct ? ' flash-ok' : ' flash-bad') : '')}>
         <div className="lesson-top">
-          <span className="pill">{mode === 'srs' ? 'SRS' : 'SPRINT'} · {w.direction === 'en-ua' ? 'EN→UA' : 'UA→EN'}</span>
-          <span className={'points' + (picked !== null ? (correct ? ' positive' : ' negative') : '')}>
-            {picked !== null ? (correct ? `+${state.admin.correctPoints}` : `${state.admin.wrongPoints}`) : 'XP'}
+          <span className="pill">{mode === 'dictation' ? 'DICTATION' : mode === 'fixerror' ? 'FIX' : mode === 'srs' ? 'SRS' : 'SPRINT'}</span>
+          <span className="pill soft">{mode === 'dictation' || !w.direction || w.direction === 'en-ua' ? 'EN→UA' : 'UA→EN'}</span>
+          <span className={'points' + (picked !== null ? (correct ? ' up' : ' down') : '')}>
+            {picked !== null ? (correct ? `+${state.admin.correctPoints}` : `${state.admin.wrongPoints}`) : `0`}
           </span>
-          {scorePop && <span key={scorePop.key} className={'score-float ' + (scorePop.ok ? 'up' : 'down')}>{scorePop.pts > 0 ? '+' : ''}{scorePop.pts}</span>}
         </div>
-        <h1>{w.direction === 'en-ua' ? <>Що означає <em>{w.prompt}</em>?</> : <>Як англійською: <em>{w.prompt}</em>?</>}</h1>
-        {state.admin.showPronunciation && w.direction === 'en-ua' && <p className="muted">{w.pronunciation} · {w.category}</p>}
+        <div className="prompt-block">
+          <p className="prompt-label muted">Питання</p>
+          <h2 className="prompt">{mode === 'dictation' ? 'Напиши слово на слух' : (w.prompt || w.word)}</h2>
+          {mode !== 'dictation' && w.direction === 'en-ua' && (
+            <p className="muted phon">{w.pronunciation} · {w.category}</p>
+          )}
+        </div>
         <div className="speak-row">
-        <button className="speak" type="button" onClick={() => speak(w.word, slowAudio ? 0.55 : 0.9)}><Volume2/> Прослухати</button>
-        <label className="slow-toggle"><input type="checkbox" checked={slowAudio} onChange={e => setSlowAudio(e.target.checked)}/> повільніше</label>
-      </div>
-        <div className="options">
-          {w.options.map((o, j) => {
-            let cls = 'option';
-            if (picked !== null) {
-              if (o === w.answer) cls += ' correct';
-              else if (o === picked) cls += ' wrong';
-              else cls += ' dimmed';
-            }
-            return (
-              <button key={`${w.id}-${index}-${j}`} type="button" disabled={picked !== null} className={cls} onClick={() => answer(o)}>{o}</button>
-            );
-          })}
+          <button className="speak" type="button" onClick={() => speak(w.word, slowAudio ? 0.5 : 0.9)}>
+            <Volume2 size={16}/> Прослухати
+          </button>
+          <label className="slow-toggle right">
+            <input type="checkbox" checked={slowAudio} onChange={e => setSlowAudio(e.target.checked)}/>
+            повільніше
+          </label>
         </div>
+        {mode === 'dictation' ? (
+          <DictationInput onSubmit={(val) => {
+            if (picked !== null) return;
+            const ok = val.trim().toLowerCase() === String(w.answer).trim().toLowerCase();
+            setPicked(val);
+            applyAnswer(ok, w);
+          }} disabled={picked !== null}/>
+        ) : (
+          <div className="options">
+            {w.options.map((o, j) => {
+              let cls = 'option';
+              if (picked !== null) {
+                if (o === w.answer) cls += ' correct';
+                else if (o === picked) cls += ' wrong';
+              }
+              return (
+                <button key={j} type="button" className={cls} disabled={picked !== null} onClick={() => answer(o)}>
+                  <span className="key-hint">{j + 1}</span>{o}
+                </button>
+              );
+            })}
+          </div>
+        )}
         {picked !== null && (
-          <div className={'feedback ' + (correct ? 'feedback-correct' : 'feedback-wrong')}>
-            <div className="feedback-icon">{correct ? <CheckCircle2/> : <XCircle/>}</div>
-            <div className="feedback-copy">
-              <strong>{correct ? 'Правильно!' : 'Неправильно'}</strong>
-              <span>{correct ? `+${state.admin.correctPoints} XP` : `${state.admin.wrongPoints} XP · Відповідь: ${w.answer}`}</span>
-              {w.example && <small>{w.example}</small>}
-              <small>Mastery: {masteryNow}/{state.admin.masteryThreshold}{masteryNow >= state.admin.masteryThreshold ? ' · Вивчено ✓' : ''}</small>
+          <div className={'feedback ' + (correct ? 'ok' : 'bad')}>
+            <div className="feedback-row">
+              {correct ? <CheckCircle2/> : <XCircle/>}
+              <div>
+                <b>{correct ? 'Правильно!' : 'Неправильно'}</b>
+                <p className="muted">{w.explanation || w.translation}</p>
+                <small className="muted">Mastery {masteryNow}/{state.admin.masteryThreshold}</small>
+              </div>
             </div>
-            <button className="primary" type="button" onClick={goNext}>{index >= list.length - 1 ? 'Завершити' : 'Далі'} <ChevronRight size={16}/></button>
+            {scorePop && (
+              <div key={scorePop.key} className={'score-pop ' + (scorePop.ok ? 'ok' : 'bad')}>
+                {scorePop.ok ? '+' : ''}{scorePop.pts}
+              </div>
+            )}
+            <button className="primary next-btn" type="button" onClick={goNext}>
+              {index >= list.length - 1 ? 'Завершити' : 'Далі'} <span className="arrow-ico">→</span>
+            </button>
           </div>
         )}
       </div>
@@ -634,49 +797,17 @@ function SprintGame({items, mode, state, save, onExit, onDone}) {
   );
 }
 
-function DictationGame({items, state, save, onExit, onDone}) {
-  const [index, setIndex] = useState(0);
+function DictationInput({onSubmit, disabled}) {
   const [val, setVal] = useState('');
-  const [picked, setPicked] = useState(null);
-  const [done, setDone] = useState(false);
-  const w = items[index];
-  const check = () => {
-    if (picked !== null || !w) return;
-    const ok = val.trim().toLowerCase() === String(w.answer).trim().toLowerCase();
-    setPicked(ok ? 'ok' : 'bad');
-    const points = ok ? state.admin.correctPoints : state.admin.wrongPoints;
-    const mid = w.id;
-    const mastery = {...state.mastery, [mid]: Math.max(0, (state.mastery[mid] || 0) + (ok ? 1 : 0))};
-    const srs = {...state.srs, [mid]: ok ? srsOk(state.srs[mid]) : srsBad(state.srs[mid])};
-    playTone(ok);
-    save({...state, mastery, srs, xp: state.xp + points, todayXp: state.todayXp + points,
-      history: [...state.history, {word: mid, correct: ok, points, date: new Date().toISOString(), mode: 'dictation'}].slice(-2000)});
-  };
-  const goNext = () => {
-    if (index >= items.length - 1) { setDone(true); return; }
-    setIndex(i => i + 1); setVal(''); setPicked(null);
-  };
-  if (done) return <section><div className="complete card"><h1>Диктант завершено</h1><button className="primary" onClick={onDone}>На головну</button></div></section>;
-  if (!w) return null;
   return (
-    <section>
-      <button className="back" onClick={onExit}>← Назад</button>
-      <Progress value={(index / items.length) * 100}/>
-      <div className={'lesson question card' + (picked === 'ok' ? ' flash-correct' : picked === 'bad' ? ' flash-wrong' : '')}>
-        <span className="pill">DICTATION {index + 1}/{items.length}</span>
-        <h1>{w.direction === 'en-ua' ? <>Переклад слова <em>{w.prompt}</em></> : <>Англійською: <em>{w.prompt}</em></>}</h1>
-        <input className="search" autoFocus value={val} disabled={picked !== null} onChange={e => setVal(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && check()} placeholder="Введи відповідь…"/>
-        {picked === null ? <button className="primary" onClick={check}>Перевірити</button> : (
-          <div className={'feedback ' + (picked === 'ok' ? 'feedback-correct' : 'feedback-wrong')}>
-            <strong>{picked === 'ok' ? 'Правильно!' : `Відповідь: ${w.answer}`}</strong>
-            <button className="primary" onClick={goNext}>Далі</button>
-          </div>
-        )}
-      </div>
-    </section>
+    <div className="dictation-row">
+      <input className="search" value={val} disabled={disabled} onChange={e => setVal(e.target.value)}
+        onKeyDown={e => e.key === 'Enter' && !disabled && onSubmit(val)} placeholder="Введи слово англійською"/>
+      <button className="primary" type="button" disabled={disabled} onClick={() => onSubmit(val)}>Перевірити</button>
+    </div>
   );
 }
+
 
 function MatchGame({items, state, save, onExit, onDone}) {
   const boardRef = useRef(null);
@@ -779,7 +910,9 @@ function Vocabulary({state, setModal}) {
 }
 
 
-function ProblemsPage({state, save}) {
+function ProblemsPage({state, save, onStart}) {
+  const [slow, setSlow] = useState(true);
+  const [minErr, setMinErr] = useState(1);
   const stats = useMemo(() => {
     const map = {};
     (state.history || []).forEach(h => {
@@ -789,34 +922,56 @@ function ProblemsPage({state, save}) {
     });
     return Object.entries(map)
       .map(([id, s]) => ({id, ...s, rate: s.wrong / Math.max(1, s.wrong + s.correct)}))
-      .filter(x => x.wrong > 0)
+      .filter(x => x.wrong >= minErr)
       .sort((a, b) => b.wrong - a.wrong || b.rate - a.rate);
+  }, [state.history, minErr]);
+
+  const weekAgo = Date.now() - 7 * 864e5;
+  const fixedWeek = useMemo(() => {
+    let n = 0;
+    const by = {};
+    (state.history || []).forEach(h => {
+      if (!h.date || new Date(h.date).getTime() < weekAgo) return;
+      if (!by[h.word]) by[h.word] = {w:0,c:0};
+      if (h.correct) by[h.word].c++; else by[h.word].w++;
+    });
+    Object.values(by).forEach(v => { if (v.c > 0 && v.w > 0 && v.c >= v.w) n++; });
+    return n;
   }, [state.history]);
-  const [slow, setSlow] = useState(true);
+
   return (
-    <section>
-      <Title title="Проблемні слова" text="Слова з найбільшою кількістю помилок. Увімкни повільне прослуховування."/>
-      <div className="card filters row">
-        <label style={{display:'flex',alignItems:'center',gap:8}}>
+    <section className="fade-in">
+      <Title title="Проблемні слова" text="Фільтр помилок, спринт і прогрес за тиждень"/>
+      <div className="card filters problems-toolbar">
+        <div className="row-btns wrap">
+          <button type="button" className={'theme' + (minErr===1?' active':'')} onClick={() => setMinErr(1)}>≥1</button>
+          <button type="button" className={'theme' + (minErr===3?' active':'')} onClick={() => setMinErr(3)}>≥3 помилки</button>
+          <button type="button" className="primary" onClick={() => onStart && onStart('problems', 'en-ua', 'all')}>Sprint лише по цих</button>
+        </div>
+        <label className="slow-toggle right">
           <input type="checkbox" checked={slow} onChange={e => setSlow(e.target.checked)}/>
-          Повільне аудіо (на слух)
+          Повільне аудіо
         </label>
       </div>
-      <div className="word-list">
-        {stats.length === 0 && <div className="card muted">Помилок ще немає — так тримати.</div>}
-        {stats.map(s => {
+      <div className="card" style={{marginBottom:12}}>
+        <b>Виправлено за тиждень:</b> {fixedWeek} слів
+        <div className="progress" style={{marginTop:8}}><i style={{width: Math.min(100, fixedWeek * 10) + '%'}}/></div>
+      </div>
+      <div className="word-list stagger">
+        {stats.length === 0 && <div className="card muted">Немає слів з ≥{minErr} помилками.</div>}
+        {stats.map((s, idx) => {
           const w = words.find(x => String(x.id) === String(s.id));
           if (!w) return null;
           return (
-            <div className="word-row card" key={s.id}>
+            <div className="word-row card" key={s.id} style={{animationDelay: (idx * 0.04) + 's'}}>
               <div>
                 <b>{w.word}</b> <span className="muted">{w.pronunciation}</span>
                 <div>{w.translation}</div>
                 <small className="muted">помилок: {s.wrong} · правильних: {s.correct}</small>
               </div>
               <div className="word-meta">
-                <button className="icon" onClick={() => speak(w.word, slow ? 0.55 : 0.9)}><Volume2 size={16}/></button>
-                <span className="pill">{Math.round(s.rate * 100)}% err</span>
+                <button className="icon" type="button" onClick={() => speak(w.word, slow ? 0.5 : 0.9)}><Volume2 size={16}/></button>
+                <span className="pill">{Math.round(s.rate * 100)}%</span>
               </div>
             </div>
           );
@@ -860,11 +1015,15 @@ function Stats({state, learned}) {
   return (
     <section>
       <Title title="Статистика" text="Прогрес за останні дні"/>
+      <Heatmap history={state.history||[]} />
       <div className="grid stats">
-        <Card icon={<Target/>} title="Точність" value={pct + '%'} sub={`${correct}/${total}`}/>
-        <Card icon={<Brain/>} title="Вивчено" value={learned} sub="слів"/>
-        <Card icon={<Sparkles/>} title="XP" value={state.xp} sub={`сьогодні ${state.todayXp}`}/>
-        <Card icon={<Flame/>} title="Streak" value={state.streak} sub="днів"/>
+        <Card icon={<Target/>} title="Точність" value={pct + '%'} sub={`${correct}/${total}`}
+          tone={state.midnightSnap && pct > state.midnightSnap.pct ? 'danger' : 'default'}/>
+        <Card icon={<Brain/>} title="Вивчено" value={learned} sub="слів"
+          tone={state.midnightSnap && learned > state.midnightSnap.learned ? 'warn' : 'default'}/>
+        <Card icon={<Sparkles/>} title="XP" value={state.xp} sub={`сьогодні ${state.todayXp}`}
+          tone={state.midnightSnap && state.xp > state.midnightSnap.xp ? 'orange' : 'default'}/>
+        <Card icon={<Flame/>} title="Streak" value={state.streak} sub="днів" tone="fire"/>
       </div>
       <div className="card">
         <h2>Правильні відповіді · 7 днів</h2>
@@ -884,15 +1043,20 @@ function Stats({state, learned}) {
 function BadgesPage({state}) {
   const earned = new Set(state.badges || []);
   return (
-    <section>
-      <Title title="Бейджі" text="Досягнення за прогрес"/>
-      <div className="grid two">
-        {BADGES.map(b => (
-          <div key={b.id} className={'card badge-card' + (earned.has(b.id) ? ' earned' : ' locked')}>
-            <div className="badge-icon">{b.icon}</div>
-            <div><b>{b.title}</b><p className="muted">{b.desc}</p>{earned.has(b.id) ? <span className="pill ok">Отримано</span> : <span className="pill">Закрито</span>}</div>
-          </div>
-        ))}
+    <section className="fade-in">
+      <Title title="Бейджі" text="Як досягнення в Steam — з анімацією отримання"/>
+      <div className="badges-grid">
+        {BADGES.map(b => {
+          const on = earned.has(b.id);
+          return (
+            <div key={b.id} className={'badge-card card' + (on ? ' earned steam-pop' : ' locked')}>
+              <div className="badge-ico">{on ? '🏅' : '🔒'}</div>
+              <h3>{b.title}</h3>
+              <p className="muted">{b.desc}</p>
+              {on && <span className="pill ok">Отримано</span>}
+            </div>
+          );
+        })}
       </div>
     </section>
   );
@@ -1078,7 +1242,7 @@ function Admin({state, save, setWordsLive, wordsLive}) {
         <div className="card admin-gate-card">
           <div className="admin-gate-icon">🔐</div>
           <h1>Адмін-доступ</h1>
-          <p className="muted">Серверна перевірка пароля. Сесія скидається при виході з розділу.</p>
+          
           <label>Пароль</label>
           <input className="search" type="password" autoFocus value={pin} onChange={e => setPin(e.target.value)} onKeyDown={e => e.key === 'Enter' && tryUnlock()}/>
           {authErr && <p className="auth-err">{authErr}</p>}
@@ -1111,6 +1275,13 @@ function Admin({state, save, setWordsLive, wordsLive}) {
         {saved && !syncing && <span className="saved-message">Словник оновлено ✓</span>}
         <p className="muted small">Автооновлення бази: щогодини 09:00–23:00 (Europe) через GitHub Action.</p>
       </div>
+      
+      <div className="card analytics-panel">
+        <h2>Privacy Analytics (1–17)</h2>
+        <p className="muted">Лише агрегати, без точної геолокації та без персональних даних у UI.</p>
+        <AnalyticsPanel />
+      </div>
+
       <div className="grid two">
         <div className="card">
           <h2>Урок</h2>
@@ -1120,6 +1291,36 @@ function Admin({state, save, setWordsLive, wordsLive}) {
           <label>Mastery <input type="number" value={a.masteryThreshold} onChange={e => update('masteryThreshold', e.target.value)}/></label>
           <label>Пароль адміна <input type="text" value={a.adminPassword} onChange={e => update('adminPassword', e.target.value)}/></label>
           <button className="primary" type="button" onClick={saveAdmin}>Зберегти правила</button>
+        </div>
+        <div className="card">
+          <h2>Бейджі (тест)</h2>
+          <p className="muted">Симуляція видачі як у Steam</p>
+          <div className="row-btns wrap">
+            {BADGES.map(b => (
+              <button key={b.id} className="secondary" type="button" onClick={() => {
+                if ((state.badges||[]).includes(b.id)) return;
+                playTone(true);
+                try {
+                  const C = window.AudioContext || window.webkitAudioContext;
+                  if (C && !window.__efQuiet) {
+                    const c = new C(); const o = c.createOscillator(); const g = c.createGain();
+                    o.type = 'sine'; o.frequency.setValueAtTime(520, c.currentTime);
+                    o.frequency.exponentialRampToValueAtTime(880, c.currentTime + 0.35);
+                    g.gain.setValueAtTime(0.001, c.currentTime);
+                    g.gain.exponentialRampToValueAtTime(0.15, c.currentTime + 0.05);
+                    g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 0.5);
+                    o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime + 0.55);
+                  }
+                } catch {}
+                const el = document.createElement('div');
+                el.className = 'steam-toast';
+                el.innerHTML = '<b>Досягнення отримано</b><span>' + b.title + '</span>';
+                document.body.appendChild(el);
+                setTimeout(() => el.remove(), 3200);
+                save({...state, badges: [...new Set([...(state.badges||[]), b.id])]});
+              }}>{b.title}</button>
+            ))}
+          </div>
         </div>
         <div className="card">
           <h2>Дані гравця</h2>
@@ -1151,6 +1352,8 @@ function AdminDanger({save, state}) {
 
 function AboutPage() {
   const changelog = [
+    {v:'1.3-beta', items:['Admin lock 30s + visibility','Favicon EF','Heatmap','Problems ≥3 + sprint + week','Analytics 1-17 panel','Confetti ideal','Sound packs','Reduced motion']},
+    {v:'1.2-beta', items:['Sprint 1/10 fix (hooks order)','Jungle announce','Mist OK/BAD','Stats colors vs midnight','Steam badge toast','Admin test badges','Arrow animations','Mobile polish']},
     {v:'1.1-beta', items:['Офлайн-кеш SW для words-db','SHA-256 ніки + AES імена','Унікальність ніка','Друзі + чат + рейтинг друзів','Гість (Ghost)','Тихий режим + Налаштування','Бонус 10% ідеальної гри','Клавіші 1–4','Анімації UI','Адмін пароль SHA-256']},
     {v:'1.0-beta', items:['Match/Sprint фікси','Серверний admin-auth','Boss verified']},
     {v:'0.9-beta', items:['Анонс великого оновлення на головній','Проблемні + довгі слова Sprint','Авто-тема system light/dark','Сторінка «Про додаток» + changelog','Примусове оновлення словника з прогресом','Без browser alert/confirm — свої модалки','Кнопки з чітким контрастом','Синк Notion ~333 слів у бандлі','Прогрес зберігається при оновленні бази (match by word)']},
@@ -1163,7 +1366,7 @@ function AboutPage() {
       <div className="card about-left">
         <Title title="Про додаток" text="Сюди пізніше додамо офіційний опис, політику та контакти."/>
         <p className="muted">English Flow — тренажер англійської з SRS, гейміфікацією та словником з Notion.</p>
-        <p className="muted">Версія інтерфейсу: <b>v0.9-beta</b></p>
+        <p className="muted">Версія інтерфейсу: <b>v1.2-beta</b></p>
         <div className="card" style={{marginTop:12}}>
           <h3>Офлайн-кеш словника</h3>
           <p className="muted small">Словник зберігається в localStorage після синку. Наступний крок — Service Worker для повної офлайн-роботи (PWA, відкладено).</p>
@@ -1219,12 +1422,25 @@ function SettingsPage({state, save}) {
           <h2>Звук</h2>
           <label className="row-check">
             <input type="checkbox" checked={!!state.quiet} onChange={e => upd({quiet: e.target.checked})}/>
-            <VolumeX size={16}/> Тихий режим (без звуків і TTS)
+            <VolumeX size={16}/> Тихий режим (TTS + SFX)
           </label>
+          <label className="row-check">
+            <input type="checkbox" checked={state.sfx !== false} onChange={e => upd({sfx: e.target.checked})}/>
+            Звукові ефекти (окремо)
+          </label>
+          <label>Пакет звуків</label>
+          <select className="search" value={state.soundPack || 'auto'} onChange={e => upd({soundPack: e.target.value})}>
+            <option value="auto">Авто (як UI скін)</option>
+            <option value="classic">Classic</option>
+            <option value="neon">Neon digital blip</option>
+            <option value="paper">Paper soft</option>
+            <option value="candy">Candy soft</option>
+          </select>
           <label className="row-check">
             <input type="checkbox" checked={state.settings?.keyboardHints !== false} onChange={e => upd({settings: {...(state.settings||{}), keyboardHints: e.target.checked}})}/>
             <Keyboard size={16}/> Підказки клавіш 1–4
           </label>
+          <p className="muted small">Prefers-reduced-motion з системи автоматично зменшує анімації.</p>
         </div>
         <div className="card">
           <h2>Порівняння після гри</h2>
@@ -1347,6 +1563,111 @@ function CompareBlurb({state}) {
   const diff = state.xp - (avg.avgXp || 0);
   return <p className="muted">Середнє гравців сьогодні: {avg.avgXp} XP · ти {diff >= 0 ? '+' : ''}{diff} від середнього</p>;
 }
+
+function AnalyticsPanel() {
+  const [snap, setSnap] = useState(null);
+  useEffect(() => {
+    const ua = navigator.userAgent || '';
+    let device = 'desktop';
+    if (/Mobi|Android/i.test(ua)) device = 'mobile';
+    else if (/Tablet|iPad/i.test(ua)) device = 'tablet';
+    let os = 'Other';
+    if (/Windows/i.test(ua)) os = 'Windows';
+    else if (/Mac OS/i.test(ua)) os = 'macOS';
+    else if (/Android/i.test(ua)) os = 'Android';
+    else if (/iPhone|iPad/i.test(ua)) os = 'iOS';
+    else if (/Linux/i.test(ua)) os = 'Linux';
+    let browser = 'Other';
+    if (/Edg\//i.test(ua)) browser = 'Edge';
+    else if (/Chrome/i.test(ua)) browser = 'Chrome';
+    else if (/Safari/i.test(ua) && !/Chrome/i.test(ua)) browser = 'Safari';
+    else if (/Firefox/i.test(ua)) browser = 'Firefox';
+    const lang = navigator.language || '—';
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '—';
+    const w = window.screen?.width || 0;
+    let bucket = 'unknown';
+    if (w < 600) bucket = 'S (<600)';
+    else if (w < 1024) bucket = 'M (600–1024)';
+    else if (w < 1440) bucket = 'L (1024–1440)';
+    else bucket = 'XL (≥1440)';
+    setSnap({
+      1: 'країна — через Vercel Analytics (dashboard)',
+      2: 'регіон — вимкнено (privacy)',
+      3: device,
+      4: os,
+      5: browser,
+      6: lang,
+      7: tz,
+      8: bucket,
+      9: location.hash || location.pathname || '/',
+      10: 'сесії — див. Vercel',
+      11: 'час уроку — local history',
+      12: 'completion — local',
+      13: 'режими — local history.mode',
+      14: 'категорії помилок — local',
+      15: navigator.onLine ? 'online' : 'offline',
+      16: document.documentElement.dataset.skin || 'classic',
+      17: 'Vercel Web Analytics'
+    });
+  }, []);
+  if (!snap) return <div className="skeleton" style={{height:120}}/>;
+  const labels = {
+    1:'Країна',2:'Регіон',3:'Пристрій',4:'ОС',5:'Браузер',6:'Мова',7:'Timezone',8:'Екран',
+    9:'Розділ',10:'Сесії',11:'Час уроку',12:'Completion',13:'Режими',14:'Категорії',15:'Мережа',16:'Skin',17:'Vercel'
+  };
+  return (
+    <div className="analytics-grid">
+      {Object.keys(snap).map(k => (
+        <div className="analytics-item" key={k}>
+          <span className="an-num">{k}</span>
+          <div>
+            <b>{labels[k]}</b>
+            <div className="muted small">{snap[k]}</div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function Title({title, text}) { return <div className="title"><h1>{title}</h1><p className="muted">{text}</p></div>; }
-function Card({icon, title, value, sub}) { return <div className="card stat"><div className="stat-top">{icon}<span>{title}</span></div><strong>{value}</strong><small>{sub}</small></div>; }
+
+function Heatmap({history}) {
+  const days = [];
+  const now = new Date();
+  const map = {};
+  (history||[]).forEach(h => {
+    if (!h.date) return;
+    const d = h.date.slice(0,10);
+    map[d] = (map[d]||0) + 1;
+  });
+  for (let i = 34; i >= 0; i--) {
+    const d = new Date(now); d.setDate(d.getDate() - i);
+    const key = d.toISOString().slice(0,10);
+    days.push({key, n: map[key]||0});
+  }
+  const max = Math.max(1, ...days.map(x => x.n));
+  return (
+    <div className="card fade-in">
+      <h2>Heatmap · дні занять (5 тижнів)</h2>
+      <div className="heatmap">
+        {days.map(d => (
+          <div key={d.key} className="hm-cell" title={d.key + ': ' + d.n}
+            style={{opacity: d.n ? 0.25 + 0.75 * (d.n/max) : 0.12}}/>
+        ))}
+      </div>
+      <p className="muted small">Чим яскравіше — тим більше відповідей того дня</p>
+    </div>
+  );
+}
+
+function Card({icon, title, value, sub, tone}) {
+  return (
+    <div className={'card stat tone-' + (tone || 'default')}>
+      <div className="stat-top">{icon}<span>{title}</span></div>
+      <strong>{value}</strong>
+      <small>{sub}</small>
+    </div>
+  );
+}
 function Progress({value}) { return <div className="progress"><i style={{width: `${Math.max(0, Math.min(100, value))}%`}}/></div>; }
