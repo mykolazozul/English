@@ -3,11 +3,33 @@ import {BarChart3, BookOpen, Check, CheckCircle2, ChevronRight, Flame, Home, Loc
 import {words as fallbackWords, rules, BADGES} from './data';
 import {notionWords, notionSyncMeta} from './notionWords.generated';
 import { Analytics } from '@vercel/analytics/react';
-import { lazy, Suspense } from 'react';
-import {listProfiles, saveProfile, loadProfile, getActiveNick, cloudPull, cloudPush, cloudConfigured, isNickTaken, registerNick, setGuestSession, isGuestSession, getFriends, addFriend, getChat, sendChat, friendsLeaderboard, getDailyAverage, ensureDailyAverage} from './lib/storage'';
+import {listProfiles, saveProfile, loadProfile, getActiveNick, cloudPull, cloudPush, cloudConfigured, isNickTaken, registerNick, setGuestSession, isGuestSession, getFriends, addFriend, getChat, sendChat, friendsLeaderboard, getDailyAverage, ensureDailyAverage} from './lib/storage';
 import {onCorrect as srsOk, onWrong as srsBad, isDue, todayStr} from './lib/srs';
 
-const VERSION = '1.2-beta';
+
+/** Roadmap in admin — remove only when user asks by title */
+const ROADMAP_ITEMS = [
+  // v1.4
+  {v:'1.4', title:'Mobile overflow / overlap fix', status:'done'},
+  {v:'1.4', title:'Build fix: duplicate lazy/Suspense import', status:'done'},
+  {v:'1.4', title:'Admin roadmap table (persistent ideas)', status:'done'},
+  {v:'1.4', title:'Stagger toggle in settings', status:'planned'},
+  {v:'1.4', title:'Skeleton loaders on heavy pages', status:'planned'},
+  // v1.5 ideas
+  {v:'1.5', title:'True React.lazy split for Admin + Stats chunks', status:'planned'},
+  {v:'1.5', title:'IndexedDB progress store', status:'planned'},
+  {v:'1.5', title:'E2E chat via Supabase Realtime', status:'planned'},
+  {v:'1.5', title:'Virtualized vocabulary list', status:'planned'},
+  {v:'1.5', title:'Offline full shell (PWA install)', status:'planned'},
+  // v1.6
+  {v:'1.6', title:'Boss fight mode (10 hard words)', status:'planned'},
+  {v:'1.6', title:'Daily quests (3 goals)', status:'planned'},
+  {v:'1.6', title:'Combo multiplier', status:'planned'},
+  {v:'1.6', title:'Async duel with friend', status:'planned'},
+  {v:'1.6', title:'Pronunciation score (Web Speech)', status:'planned'},
+];
+
+const VERSION = '1.4-beta';
 const words = (notionWords?.length ? notionWords : fallbackWords).map(w => ({
   id: w.id, word: w.word, translation: w.translation || '—', pronunciation: w.pronunciation || '',
   category: w.category || 'Other', level: w.level || '', explanation: w.explanation || '',
@@ -22,7 +44,7 @@ const emptyState = () => ({
   admin: {...defaultAdmin},
   quiet: false, sfx: true, soundPack: 'auto', guest: false, gamesPlayed: 0,
   compareMode: 'global', compareFriend: '', midnightSnap: null,
-  settings: { keyboardHints: true }
+  settings: { keyboardHints: true, staggerList: true }
 });
 
 function playTone(ok, pack) {
@@ -259,6 +281,7 @@ export default function App() {
   }, [state.quiet, state.sfx, state.soundPack, state.skin]);
   useEffect(() => {
     document.documentElement.dataset.reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? '1' : '0';
+    document.documentElement.dataset.stagger = state.settings?.staggerList === false ? '0' : '1';
   }, []);
   useEffect(() => { ensureDailyAverage(); }, []);
   useEffect(() => {
@@ -957,7 +980,7 @@ function ProblemsPage({state, save, onStart}) {
         <b>Виправлено за тиждень:</b> {fixedWeek} слів
         <div className="progress" style={{marginTop:8}}><i style={{width: Math.min(100, fixedWeek * 10) + '%'}}/></div>
       </div>
-      <div className="word-list stagger">
+      <div className={'word-list' + (state.settings?.staggerList === false ? '' : ' stagger')}>
         {stats.length === 0 && <div className="card muted">Немає слів з ≥{minErr} помилками.</div>}
         {stats.map((s, idx) => {
           const w = words.find(x => String(x.id) === String(s.id));
@@ -1276,6 +1299,20 @@ function Admin({state, save, setWordsLive, wordsLive}) {
         <p className="muted small">Автооновлення бази: щогодини 09:00–23:00 (Europe) через GitHub Action.</p>
       </div>
       
+      <div className="card roadmap-panel">
+        <h2>Roadmap / ідеї</h2>
+        <p className="muted">По 5+ пунктів на версію. Видаляю лише ті, які ти назвеш.</p>
+        <div className="roadmap-table">
+          <div className="rm-head"><span>Ver</span><span>Функція</span><span>Статус</span></div>
+          {ROADMAP_ITEMS.map((r,i) => (
+            <div className={'rm-row ' + r.status} key={r.v + r.title + i}>
+              <span className="pill">v{r.v}</span>
+              <span>{r.title}</span>
+              <span className={'rm-status ' + r.status}>{r.status === 'done' ? '✓ done' : 'planned'}</span>
+            </div>
+          ))}
+        </div>
+      </div>
       <div className="card analytics-panel">
         <h2>Privacy Analytics (1–17)</h2>
         <p className="muted">Лише агрегати, без точної геолокації та без персональних даних у UI.</p>
@@ -1352,6 +1389,7 @@ function AdminDanger({save, state}) {
 
 function AboutPage() {
   const changelog = [
+    {v:'1.4-beta', items:['Fix Vercel build (lazy dup + string)','Mobile overlap fix','Admin roadmap table','Stagger setting','Skeleton component']},
     {v:'1.3-beta', items:['Admin lock 30s + visibility','Favicon EF','Heatmap','Problems ≥3 + sprint + week','Analytics 1-17 panel','Confetti ideal','Sound packs','Reduced motion']},
     {v:'1.2-beta', items:['Sprint 1/10 fix (hooks order)','Jungle announce','Mist OK/BAD','Stats colors vs midnight','Steam badge toast','Admin test badges','Arrow animations','Mobile polish']},
     {v:'1.1-beta', items:['Офлайн-кеш SW для words-db','SHA-256 ніки + AES імена','Унікальність ніка','Друзі + чат + рейтинг друзів','Гість (Ghost)','Тихий режим + Налаштування','Бонус 10% ідеальної гри','Клавіші 1–4','Анімації UI','Адмін пароль SHA-256']},
@@ -1439,6 +1477,10 @@ function SettingsPage({state, save}) {
           <label className="row-check">
             <input type="checkbox" checked={state.settings?.keyboardHints !== false} onChange={e => upd({settings: {...(state.settings||{}), keyboardHints: e.target.checked}})}/>
             <Keyboard size={16}/> Підказки клавіш 1–4
+          </label>
+          <label className="row-check">
+            <input type="checkbox" checked={state.settings?.staggerList !== false} onChange={e => upd({settings: {...(state.settings||{}), staggerList: e.target.checked}})}/>
+            Stagger-анімація списків
           </label>
           <p className="muted small">Prefers-reduced-motion з системи автоматично зменшує анімації.</p>
         </div>
@@ -1632,6 +1674,9 @@ function AnalyticsPanel() {
 
 function Title({title, text}) { return <div className="title"><h1>{title}</h1><p className="muted">{text}</p></div>; }
 
+function Skeleton({h=120}) {
+  return <div className="skeleton" style={{height:h,width:'100%',margin:'8px 0'}} aria-hidden="true"/>;
+}
 function Heatmap({history}) {
   const days = [];
   const now = new Date();
