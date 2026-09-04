@@ -7,4 +7,9 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register((import.meta.env.BASE_URL || '/') + 'sw.js').catch(() => {});
   });
 }
+// theme-tint favicon (green base)
+try {
+  const link = document.querySelector('link[rel="icon"]');
+  if (link) link.href = (import.meta.env.BASE_URL || '/') + 'favicon.svg';
+} catch {}
 createRoot(document.getElementById('root')).render(<App />);

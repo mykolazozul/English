@@ -381,7 +381,7 @@ html[data-theme=custom]{--bg:var(--custom-bg);--surface:var(--custom-surface)}
 /* Jungle announce */
 .jungle-announce{position:relative;overflow:hidden;border:2px solid #2d6a4f;background:
   linear-gradient(135deg,color-mix(in srgb,#40916c 18%,var(--surface)),var(--surface));}
-.jungle-announce .vine{position:absolute;top:0;bottom:0;width:28px;pointer-events:none;opacity:.85;
+.jungle-announce .vine{display:none !important;position:absolute;top:0;bottom:0;width:28px;pointer-events:none;opacity:.85;
   background:repeating-linear-gradient(180deg,#1b4332 0 6px,#2d6a4f 6px 10px,#52b788 10px 12px,transparent 12px 18px);
   filter:saturate(1.2)}
 .jungle-announce .vine-l{left:0;border-radius:0 40% 40% 0;transform:rotate(-2deg)}
@@ -439,7 +439,7 @@ html[data-theme=custom]{--bg:var(--custom-bg);--surface:var(--custom-surface)}
   .lesson-card-main{padding:14px}
   .options{grid-template-columns:1fr}
   .prompt{font-size:22px}
-  .jungle-announce .vine{width:14px;opacity:.55}
+  .jungle-announce .vine{display:none !important;width:14px;opacity:.55}
   .header-bar{flex-wrap:wrap;gap:8px}
 }
 @media(min-width:801px){
@@ -572,4 +572,43 @@ html[data-stagger="0"] .stagger .word-row{animation:none !important}
 @media(max-width:600px){
   .rm-head,.rm-row{grid-template-columns:56px 1fr;grid-template-rows:auto auto}
   .rm-status{grid-column:2}
+}
+
+/* v1.5 fixes */
+.matched-stay, .option.matched-stay {
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: flex !important;
+  filter: none;
+  outline: 2px solid color-mix(in srgb, var(--accent) 50%, transparent);
+}
+.option.matched-stay { background: color-mix(in srgb, var(--accent) 12%, var(--surface)); }
+.steam-toast.steam-right { left: auto !important; right: 16px; bottom: 24px; }
+.about-compact { align-items: start; }
+.about-compact > * { height: auto !important; max-height: none; }
+.prompt-block { margin-top: 28px !important; padding-top: 12px; }
+.card { animation: none; } /* no whole-block anim on click */
+.primary, .secondary, .option, .nav, .theme, .speak {
+  transition: transform .12s ease, background .15s, border-color .15s, box-shadow .15s;
+}
+.primary:active, .secondary:active, .option:active, .theme:active {
+  transform: scale(0.97);
+}
+.header-bar {
+  padding-top: max(8px, env(safe-area-inset-top));
+}
+@media (max-width: 900px) {
+  .announce, .jungle-announce { margin-top: 8px; padding: 14px !important; }
+  .jungle-announce .vine { display: none !important; width: 0 !important; }
+  .main { padding-top: max(12px, env(safe-area-inset-top)); }
+  .header-bar b, .header-bar span { font-size: 14px; }
+  .pill { font-size: 11px; }
+  /* prevent content under status/url chrome */
+  .app { padding: 0; }
+}
+.rpg-profile .xp-bar {
+  height: 12px; border-radius: 99px; background: var(--border); overflow: hidden; margin: 8px 0;
+}
+.rpg-profile .xp-bar i {
+  display:block; height:100%; background: linear-gradient(90deg, var(--accent), #4ade80);
 }

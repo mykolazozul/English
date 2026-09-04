@@ -9,27 +9,24 @@ import {onCorrect as srsOk, onWrong as srsBad, isDue, todayStr} from './lib/srs'
 
 /** Roadmap in admin — remove only when user asks by title */
 const ROADMAP_ITEMS = [
-  // v1.4
-  {v:'1.4', title:'Mobile overflow / overlap fix', status:'done'},
-  {v:'1.4', title:'Build fix: duplicate lazy/Suspense import', status:'done'},
-  {v:'1.4', title:'Admin roadmap table (persistent ideas)', status:'done'},
-  {v:'1.4', title:'Stagger toggle in settings', status:'planned'},
-  {v:'1.4', title:'Skeleton loaders on heavy pages', status:'planned'},
-  // v1.5 ideas
-  {v:'1.5', title:'True React.lazy split for Admin + Stats chunks', status:'planned'},
-  {v:'1.5', title:'IndexedDB progress store', status:'planned'},
-  {v:'1.5', title:'E2E chat via Supabase Realtime', status:'planned'},
-  {v:'1.5', title:'Virtualized vocabulary list', status:'planned'},
-  {v:'1.5', title:'Offline full shell (PWA install)', status:'planned'},
-  // v1.6
-  {v:'1.6', title:'Boss fight mode (10 hard words)', status:'planned'},
-  {v:'1.6', title:'Daily quests (3 goals)', status:'planned'},
-  {v:'1.6', title:'Combo multiplier', status:'planned'},
-  {v:'1.6', title:'Async duel with friend', status:'planned'},
-  {v:'1.6', title:'Pronunciation score (Web Speech)', status:'planned'},
+  {v:'1.4', title:'Фікс перекриття на мобільному', status:'done'},
+  {v:'1.4', title:'Фікс збірки Vercel (lazy/рядок імпорту)', status:'done'},
+  {v:'1.4', title:'Таблиця Roadmap в адмінці', status:'done'},
+  {v:'1.4', title:'Перемикач stagger-анімації', status:'done'},
+  {v:'1.4', title:'Skeleton-завантаження', status:'done'},
+  {v:'1.5', title:'Вхід: нік + пароль, імʼя з профілю', status:'done'},
+  {v:'1.5', title:'Адмін: лок без виходу на головну', status:'done'},
+  {v:'1.5', title:'Match: слова не зникають після пари', status:'done'},
+  {v:'1.5', title:'Sprint: стабільний лічильник 1→N', status:'done'},
+  {v:'1.5', title:'Профіль у стилі RPG', status:'planned'},
+  {v:'1.6', title:'React.lazy для Admin/Stats', status:'planned'},
+  {v:'1.6', title:'E2E-чат (ключ лише на пристроях)', status:'planned'},
+  {v:'1.6', title:'Адмін: пошук гравців у БД', status:'planned'},
+  {v:'1.6', title:'Аналітика 1–17 з графіками', status:'planned'},
+  {v:'1.6', title:'PWA / повний офлайн', status:'planned'},
 ];
 
-const VERSION = '1.4-beta';
+const VERSION = '1.5-beta';
 const words = (notionWords?.length ? notionWords : fallbackWords).map(w => ({
   id: w.id, word: w.word, translation: w.translation || '—', pronunciation: w.pronunciation || '',
   category: w.category || 'Other', level: w.level || '', explanation: w.explanation || '',
@@ -38,7 +35,7 @@ const words = (notionWords?.length ? notionWords : fallbackWords).map(w => ({
 const CATS = [...new Set(words.map(w => w.category))].sort();
 const defaultAdmin = {lessonSize: 10, correctPoints: 4, wrongPoints: -2, masteryThreshold: 8, shuffleAnswers: true, showPronunciation: true, adminPassword: '2468'};
 const emptyState = () => ({
-  nick: '', name: '', xp: 0, streak: 1, dailyGoal: 50, todayXp: 0, today: todayStr(),
+  nick: '', name: '', passHash: '', xp: 0, streak: 1, dailyGoal: 50, todayXp: 0, today: todayStr(),
   mastery: {}, srs: {}, attempts: {}, history: [], badges: [], avatar: '🇺🇸',
   theme: 'system', skin: 'classic', customTheme: {accent: '#22a06b', bg: '#f6f8f6', surface: '#ffffff'},
   admin: {...defaultAdmin},
@@ -223,7 +220,8 @@ export default function App() {
     const lock = () => {
       sessionStorage.removeItem('ef-admin-ok');
       sessionStorage.removeItem('ef-admin-token');
-      setPage('dashboard');
+      window.dispatchEvent(new Event('ef-admin-lock'));
+      // stay on admin page — only re-show login gate
     };
     const bump = () => {
       if (timer) clearTimeout(timer);
@@ -414,20 +412,67 @@ export default function App() {
 }
 
 function Onboarding({onDone}) {
+  const [mode, setMode] = useState('login'); // login | register
   const [nick, setNick] = useState('');
   const [name, setName] = useState('');
+  const [pass, setPass] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
 
-  const submit = async () => {
+  const validatePass = (n, nm, p) => {
+    const pl = p.trim();
+    const nl = n.trim().toLowerCase();
+    const nml = (nm || '').trim().toLowerCase();
+    if (pl.length < 6) return 'Пароль мінімум 6 символів';
+    if (pl.toLowerCase() === nl) return 'Пароль не може збігатися з ніком';
+    if (nml && pl.toLowerCase() === nml) return 'Пароль не може збігатися з імʼям';
+    return '';
+  };
+
+  const doLogin = async () => {
     const n = nick.trim();
+    if (!n || !pass) { setErr('Вкажи нік і пароль'); return; }
+    setBusy(true); setErr('');
+    try {
+      const { hashPassword } = await import('./lib/crypto.js');
+      let profile = loadProfile(n);
+      if (!profile && cloudConfigured()) {
+        const remote = await cloudPull(n);
+        if (remote) profile = {...emptyState(), ...remote, nick: n};
+      }
+      if (!profile) { setErr('Акаунт не знайдено'); setBusy(false); return; }
+      const h = await hashPassword(pass);
+      if (profile.passHash && profile.passHash !== h) {
+        setErr('Невірний пароль'); setBusy(false); return;
+      }
+      // legacy profiles without passHash — set on first login
+      if (!profile.passHash) {
+        profile = {...profile, passHash: h};
+        saveProfile(n, profile);
+      }
+      setGuestSession(false);
+      onDone(profile);
+    } catch (e) {
+      setErr(e.message || 'Помилка входу');
+    }
+    setBusy(false);
+  };
+
+  const doRegister = async () => {
+    const n = nick.trim();
+    const v = validatePass(n, name, pass);
+    if (v) { setErr(v); return; }
     if (n.length < 2) { setErr('Нік мінімум 2 символи'); return; }
     setBusy(true); setErr('');
     try {
       if (await isNickTaken(n)) { setErr('Цей нік уже зайнятий'); setBusy(false); return; }
+      const { hashPassword } = await import('./lib/crypto.js');
+      const passHash = await hashPassword(pass);
       setGuestSession(false);
       const base = emptyState();
-      const profile = await registerNick(n, {...base, nick: n, name: name.trim() || n});
+      const profile = await registerNick(n, {
+        ...base, nick: n, name: name.trim() || n, passHash
+      });
       onDone(profile);
     } catch (e) {
       setErr(e.message || 'Помилка реєстрації');
@@ -446,32 +491,42 @@ function Onboarding({onDone}) {
     <div className="onboarding fade-in">
       <div className="welcome card">
         <div className="logo">EF</div>
-        <span className="eyebrow">ENGLISH LEARNING PLATFORM</span>
-        <h1>English Flow</h1>
-        <p className="muted">Унікальний нік (хеш SHA-256). Імʼя шифрується AES-GCM на пристрої.</p>
+        <span className="eyebrow">ENGLISH FLOW</span>
+        <h1>{mode === 'login' ? 'Вхід' : 'Реєстрація'}</h1>
+        <p className="muted">Нік може бути як імʼя. Пароль ≠ нік і ≠ імʼя. Імʼя підтягнеться з профілю.</p>
+        <div className="row-btns" style={{marginBottom:12}}>
+          <button type="button" className={'theme' + (mode==='login'?' active':'')} onClick={() => setMode('login')}>Вхід</button>
+          <button type="button" className={'theme' + (mode==='register'?' active':'')} onClick={() => setMode('register')}>Реєстрація</button>
+        </div>
         <label>Нік *</label>
-        <input className="search" value={nick} onChange={e => setNick(e.target.value)} placeholder="унікальний_нік" maxLength={24}/>
-        <label>Імʼя</label>
-        <input className="search" value={name} onChange={e => setName(e.target.value)} placeholder="як до тебе звертатись"/>
+        <input className="search" value={nick} onChange={e => setNick(e.target.value)} placeholder="твій_нік" maxLength={24} autoComplete="username"/>
+        {mode === 'register' && (
+          <>
+            <label>Імʼя (опційно)</label>
+            <input className="search" value={name} onChange={e => setName(e.target.value)} placeholder="як звертатись"/>
+          </>
+        )}
+        <label>Пароль *</label>
+        <input className="search" type="password" value={pass} onChange={e => setPass(e.target.value)} placeholder="••••••••" autoComplete={mode==='login'?'current-password':'new-password'}
+          onKeyDown={e => e.key==='Enter' && (mode==='login'?doLogin():doRegister())}/>
         {err && <p className="auth-err">{err}</p>}
-        <button className="primary full" type="button" disabled={busy} onClick={submit}>{busy ? '…' : 'Почати'}</button>
+        <button className="primary full" type="button" disabled={busy} onClick={mode==='login'?doLogin:doRegister}>
+          {busy ? '…' : (mode==='login' ? 'Увійти' : 'Створити акаунт')}
+        </button>
         <button className="secondary full guest-btn" type="button" onClick={guest}>
-          <Ghost size={18}/> Увійти як гість (лише цей пристрій)
+          <Ghost size={18}/> Увійти як гість
         </button>
       </div>
     </div>
   );
 }
-
 function Dashboard({state, learned, due, words, onLearn, onReview, cloudMsg, notionMeta}) {
   return (
     <section>
-      <div className="announce card jungle-announce">
-        <div className="vine vine-l" aria-hidden="true"/>
-        <div className="vine vine-r" aria-hidden="true"/>
-        <span className="eyebrow">UPDATE · v1.2-beta</span>
-        <h2>🚀 Велике оновлення вже тут</h2>
-        <p>Проблемні слова, Sprint, SRS, друзі, офлайн-кеш, бейджі та новий інтерфейс. Прогрес зберігається при оновленні бази.</p>
+      <div className="announce card">
+        <span className="eyebrow">UPDATE · v1.5-beta</span>
+        <h2>English Flow</h2>
+        <p>Вчи слова, збирай XP, змагайся з друзями. Прогрес зберігається локально та в хмарі (якщо налаштована).</p>
       </div>
       <div className="hero">
         <div>
@@ -589,61 +644,62 @@ function Lesson({cfg, state, save, onExit, onDone}) {
     return makeQuizItems(pool, state.admin.lessonSize, cfg.direction, cfg.category);
   }, []);
 
-  if (mode === 'match') return <MatchGame items={items} state={state} save={save} onExit={onExit} onDone={onDone} />;
+  if (mode === 'match') return <MatchGame key="match-board" items={items} state={state} save={save} onExit={onExit} onDone={onDone} />;
   if (mode === 'dictation') return <DictationGame items={items} state={state} save={save} onExit={onExit} onDone={onDone} />;
   return <SprintGame items={items} mode={mode} state={state} save={save} onExit={onExit} onDone={onDone} />;
 }
 
 function SprintGame({items, mode, state, save, onExit, onDone}) {
-  const listRef = useRef(null);
-  if (!listRef.current) listRef.current = (items && items.length) ? items : [];
-  const list = listRef.current;
+  // Freeze quiz list once — never re-read from props
+  const quizRef = useRef(null);
+  if (!quizRef.current) {
+    quizRef.current = Array.isArray(items) && items.length ? items.slice() : [];
+  }
+  const quiz = quizRef.current;
 
-  const [index, setIndex] = useState(0);
+  const [step, setStep] = useState(0); // 0-based index
   const [picked, setPicked] = useState(null);
   const [done, setDone] = useState(false);
   const [scorePop, setScorePop] = useState(null);
-  const [sessionCorrect, setSessionCorrect] = useState(0);
-  const [sessionWrong, setSessionWrong] = useState(0);
+  const [okCount, setOkCount] = useState(0);
+  const [badCount, setBadCount] = useState(0);
   const [slowAudio, setSlowAudio] = useState(false);
   const [leaveAsk, setLeaveAsk] = useState(false);
-  const [mist, setMist] = useState(null); // 'ok' | 'bad'
+  const [mist, setMist] = useState(null);
 
   const stateRef = useRef(state);
   stateRef.current = state;
+  const stepRef = useRef(step);
+  stepRef.current = step;
   const pickedRef = useRef(picked);
   pickedRef.current = picked;
-  const indexRef = useRef(index);
-  indexRef.current = index;
 
-  const w = list[index];
-  const total = list.length || 1;
+  const w = quiz[step];
+  const total = quiz.length;
 
   const applyAnswer = useCallback((ok, wordObj) => {
     const st = stateRef.current;
-    const points = ok ? st.admin.correctPoints : st.admin.wrongPoints;
+    const points = ok ? Number(st.admin.correctPoints) || 4 : Number(st.admin.wrongPoints) || -2;
     const mid = wordObj.id;
     const mastery = {...st.mastery, [mid]: Math.max(0, (st.mastery[mid] || 0) + (ok ? 1 : 0))};
     const srs = {...st.srs, [mid]: ok ? srsOk(st.srs[mid]) : srsBad(st.srs[mid])};
-    const history = [...st.history, {word: mid, correct: ok, points, date: new Date().toISOString(), mode: mode || 'sprint'}].slice(-2000);
-    const next = {
+    const history = [...(st.history || []), {word: mid, correct: ok, points, date: new Date().toISOString(), mode: mode || 'sprint'}].slice(-2000);
+    save({
       ...st, mastery, srs, history,
-      xp: st.xp + points,
-      todayXp: st.todayXp + points,
-      attempts: {...st.attempts, [mid]: (st.attempts[mid] || 0) + 1}
-    };
-    if (ok) setSessionCorrect(c => c + 1);
-    else { setSessionWrong(c => c + 1); setSlowAudio(true); }
+      xp: (st.xp || 0) + points,
+      todayXp: (st.todayXp || 0) + points,
+      attempts: {...(st.attempts || {}), [mid]: ((st.attempts || {})[mid] || 0) + 1}
+    });
+    if (ok) setOkCount(c => c + 1); else { setBadCount(c => c + 1); setSlowAudio(true); }
     setScorePop({pts: points, ok, key: Date.now()});
     setMist(ok ? 'ok' : 'bad');
     playTone(ok);
-    save(next);
-    setTimeout(() => { setScorePop(null); setMist(null); }, 900);
+    setTimeout(() => { setScorePop(null); setMist(null); }, 700);
   }, [mode, save]);
 
   const answer = useCallback((opt) => {
     if (pickedRef.current !== null) return;
-    const wordObj = listRef.current[indexRef.current];
+    const wordObj = quizRef.current[stepRef.current];
     if (!wordObj) return;
     const ok = opt === wordObj.answer;
     setPicked(opt);
@@ -651,35 +707,26 @@ function SprintGame({items, mode, state, save, onExit, onDone}) {
   }, [applyAnswer]);
 
   const goNext = useCallback(() => {
-    const i = indexRef.current;
-    const len = listRef.current.length;
+    const i = stepRef.current;
+    const len = quizRef.current.length;
     setPicked(null);
     setScorePop(null);
     setMist(null);
-    if (i >= len - 1) {
-      setDone(true);
-    } else {
-      setIndex(i + 1);
-    }
+    if (i + 1 >= len) setDone(true);
+    else setStep(i + 1);
   }, []);
 
-  const tryExit = useCallback(() => {
-    if (indexRef.current > 0 && !done) setLeaveAsk(true);
-    else onExit();
-  }, [done, onExit]);
-
-  // hooks ALWAYS before returns
   useEffect(() => {
     const onKey = (e) => {
       if (done) return;
-      const wordObj = listRef.current[indexRef.current];
+      const wordObj = quizRef.current[stepRef.current];
       if (pickedRef.current !== null) {
         if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goNext(); }
         return;
       }
       if (mode === 'dictation') return;
       const n = Number(e.key);
-      if (n >= 1 && n <= 4 && wordObj?.options?.[n - 1] !== undefined) {
+      if (n >= 1 && n <= 4 && wordObj?.options?.[n - 1] != null) {
         e.preventDefault();
         answer(wordObj.options[n - 1]);
       }
@@ -688,11 +735,11 @@ function SprintGame({items, mode, state, save, onExit, onDone}) {
     return () => window.removeEventListener('keydown', onKey);
   }, [answer, goNext, mode, done]);
 
-  if (!list.length) {
+  if (!total) {
     return (
       <section className="fade-in">
-        <button className="back" type="button" onClick={onExit}>← Назад</button>
-        <div className="card">Немає слів для уроку.</div>
+        <button className="back anim-arrow" type="button" onClick={onExit}>← Назад</button>
+        <div className="card">Немає слів для цього уроку.</div>
       </section>
     );
   }
@@ -700,19 +747,19 @@ function SprintGame({items, mode, state, save, onExit, onDone}) {
   if (done) {
     return (
       <section className="fade-in">
-        <div className="complete card steam-pop">
+        <div className="complete card">
           <CheckCircle2 size={64}/>
           <span className="eyebrow">LESSON COMPLETE</span>
-          <h1>Урок завершено 🎉</h1>
-          <p>Правильно: {sessionCorrect} · Помилки: {sessionWrong} · Питань: {list.length}</p>
-          {sessionWrong === 0 && sessionCorrect > 0 && (
-            <p className="bonus-line">Бонус ідеальної гри: +{Math.round(sessionCorrect * (state.admin.correctPoints || 4) * 0.1)} XP (10.0%)</p>
+          <h1>Урок завершено</h1>
+          <p>Правильно: {okCount} · Помилки: {badCount} · Питань: {total}</p>
+          {badCount === 0 && okCount > 0 && (
+            <p className="bonus-line">Бонус: +{Math.round(okCount * (state.admin.correctPoints || 4) * 0.1)} XP (10.0%)</p>
           )}
           <CompareBlurb state={state} />
           <button className="primary" type="button" onClick={() => {
             let next = {...state, gamesPlayed: (state.gamesPlayed || 0) + 1};
-            if (sessionWrong === 0 && sessionCorrect > 0) {
-              const bonus = Math.round(sessionCorrect * (state.admin.correctPoints || 4) * 0.1);
+            if (badCount === 0 && okCount > 0) {
+              const bonus = Math.round(okCount * (state.admin.correctPoints || 4) * 0.1);
               next = {...next, xp: next.xp + bonus, todayXp: next.todayXp + bonus};
               confettiBurst();
             }
@@ -727,14 +774,15 @@ function SprintGame({items, mode, state, save, onExit, onDone}) {
   if (!w) return null;
   const correct = picked === w.answer;
   const masteryNow = state.mastery[w.id] || 0;
+  const progressPct = (step / total) * 100;
 
   return (
-    <section className={'fade-in lesson-wrap' + (mist ? ' mist-' + mist : '')}>
+    <section className={'lesson-wrap' + (mist ? ' mist-' + mist : '')}>
       {leaveAsk && (
         <div className="ef-modal-backdrop">
           <div className="ef-modal card">
             <h2>Вийти з уроку?</h2>
-            <p>Відповіді вже збережено, урок ще не завершено.</p>
+            <p>Відповіді збережено, урок ще не завершено.</p>
             <div className="row-btns">
               <button className="secondary" type="button" onClick={() => setLeaveAsk(false)}>Залишитись</button>
               <button className="primary" type="button" onClick={onExit}>Вийти</button>
@@ -743,23 +791,25 @@ function SprintGame({items, mode, state, save, onExit, onDone}) {
         </div>
       )}
       <div className={'mist-layer' + (mist ? ' show ' + mist : '')} aria-hidden="true"/>
-      <button className="back anim-arrow" type="button" onClick={tryExit}><span className="arrow-ico">←</span> Назад</button>
+      <button className="back anim-arrow" type="button" onClick={() => (step > 0 ? setLeaveAsk(true) : onExit())}>
+        <span className="arrow-ico">←</span> Назад
+      </button>
       <div className="lesson-progress-row">
-        <Progress value={(index / total) * 100}/>
-        <span className="q-count">{index + 1}/{list.length}</span>
+        <Progress value={progressPct}/>
+        <span className="q-count" key={'q'+step}>{step + 1}/{total}</span>
       </div>
-      <div className={'lesson-card-main card' + (picked !== null ? (correct ? ' flash-ok' : ' flash-bad') : '')}>
+      <div className={'lesson-card-main card' + (picked != null ? (correct ? ' flash-ok' : ' flash-bad') : '')}>
         <div className="lesson-top">
-          <span className="pill">{mode === 'dictation' ? 'DICTATION' : mode === 'fixerror' ? 'FIX' : mode === 'srs' ? 'SRS' : 'SPRINT'}</span>
-          <span className="pill soft">{mode === 'dictation' || !w.direction || w.direction === 'en-ua' ? 'EN→UA' : 'UA→EN'}</span>
-          <span className={'points' + (picked !== null ? (correct ? ' up' : ' down') : '')}>
-            {picked !== null ? (correct ? `+${state.admin.correctPoints}` : `${state.admin.wrongPoints}`) : `0`}
+          <span className="pill">{mode === 'dictation' ? 'DICTATION' : mode === 'srs' ? 'SRS' : 'SPRINT'}</span>
+          <span className="pill soft">{(w.direction || 'en-ua') === 'en-ua' ? 'EN→UA' : 'UA→EN'}</span>
+          <span className={'points' + (picked != null ? (correct ? ' up' : ' down') : '')}>
+            {picked != null ? (correct ? `+${state.admin.correctPoints}` : `${state.admin.wrongPoints}`) : '·'}
           </span>
         </div>
         <div className="prompt-block">
-          <p className="prompt-label muted">Питання</p>
-          <h2 className="prompt">{mode === 'dictation' ? 'Напиши слово на слух' : (w.prompt || w.word)}</h2>
-          {mode !== 'dictation' && w.direction === 'en-ua' && (
+          <p className="prompt-label muted">Питання {step + 1}</p>
+          <h2 className="prompt" key={'p'+step}>{mode === 'dictation' ? 'Напиши слово на слух' : (w.prompt || w.word)}</h2>
+          {mode !== 'dictation' && (w.direction || 'en-ua') === 'en-ua' && (
             <p className="muted phon">{w.pronunciation} · {w.category}</p>
           )}
         </div>
@@ -773,29 +823,29 @@ function SprintGame({items, mode, state, save, onExit, onDone}) {
           </label>
         </div>
         {mode === 'dictation' ? (
-          <DictationInput onSubmit={(val) => {
-            if (picked !== null) return;
+          <DictationInput key={'d'+step} onSubmit={(val) => {
+            if (pickedRef.current != null) return;
             const ok = val.trim().toLowerCase() === String(w.answer).trim().toLowerCase();
             setPicked(val);
             applyAnswer(ok, w);
-          }} disabled={picked !== null}/>
+          }} disabled={picked != null}/>
         ) : (
-          <div className="options">
-            {w.options.map((o, j) => {
+          <div className="options" key={'o'+step}>
+            {(w.options || []).map((o, j) => {
               let cls = 'option';
-              if (picked !== null) {
+              if (picked != null) {
                 if (o === w.answer) cls += ' correct';
                 else if (o === picked) cls += ' wrong';
               }
               return (
-                <button key={j} type="button" className={cls} disabled={picked !== null} onClick={() => answer(o)}>
+                <button key={j} type="button" className={cls} disabled={picked != null} onClick={() => answer(o)}>
                   <span className="key-hint">{j + 1}</span>{o}
                 </button>
               );
             })}
           </div>
         )}
-        {picked !== null && (
+        {picked != null && (
           <div className={'feedback ' + (correct ? 'ok' : 'bad')}>
             <div className="feedback-row">
               {correct ? <CheckCircle2/> : <XCircle/>}
@@ -811,7 +861,7 @@ function SprintGame({items, mode, state, save, onExit, onDone}) {
               </div>
             )}
             <button className="primary next-btn" type="button" onClick={goNext}>
-              {index >= list.length - 1 ? 'Завершити' : 'Далі'} <span className="arrow-ico">→</span>
+              {step + 1 >= total ? 'Завершити' : 'Далі'} <span className="arrow-ico">→</span>
             </button>
           </div>
         )}
@@ -819,6 +869,7 @@ function SprintGame({items, mode, state, save, onExit, onDone}) {
     </section>
   );
 }
+
 
 function DictationInput({onSubmit, disabled}) {
   const [val, setVal] = useState('');
@@ -876,10 +927,10 @@ function MatchGame({items, state, save, onExit, onDone}) {
       <Title title="Match" text="Обери слово і відповідний переклад"/>
       <div className="match-board">
         <div className="match-col">{left.map(x => (
-          <button key={x.id} disabled={matched[x.id]} className={'option' + (matched[x.id] ? ' correct' : '') + (selL === x.id ? ' selected' : '') + (flash[x.id] ? ' ' + flash[x.id] : '')} onClick={() => setSelL(x.id)}>{x.text}</button>
+          <button key={x.id} disabled={matched[x.id]} className={'option match-item' + (matched[x.id] ? ' correct matched-stay' : '') + (selL === x.id ? ' selected' : '') + (flash[x.id] ? ' ' + flash[x.id] : '')} onClick={() => setSelL(x.id)}>{x.text}</button>
         ))}</div>
         <div className="match-col">{right.map(x => (
-          <button key={x.id} disabled={matched[x.id]} className={'option' + (matched[x.id] ? ' correct' : '') + (selR === x.id ? ' selected' : '') + (flash[x.id] ? ' ' + flash[x.id] : '')} onClick={() => setSelR(x.id)}>{x.text}</button>
+          <button key={x.id} disabled={matched[x.id]} className={'option match-item' + (matched[x.id] ? ' correct matched-stay' : '') + (selR === x.id ? ' selected' : '') + (flash[x.id] ? ' ' + flash[x.id] : '')} onClick={() => setSelR(x.id)}>{x.text}</button>
         ))}</div>
       </div>
     </section>
@@ -935,7 +986,7 @@ function Vocabulary({state, setModal}) {
 
 function ProblemsPage({state, save, onStart}) {
   const [slow, setSlow] = useState(true);
-  const [minErr, setMinErr] = useState(1);
+  const [minErr, setMinErr] = useState(2);
   const stats = useMemo(() => {
     const map = {};
     (state.history || []).forEach(h => {
@@ -945,7 +996,7 @@ function ProblemsPage({state, save, onStart}) {
     });
     return Object.entries(map)
       .map(([id, s]) => ({id, ...s, rate: s.wrong / Math.max(1, s.wrong + s.correct)}))
-      .filter(x => x.wrong >= minErr)
+      .filter(x => x.wrong >= minErr && x.wrong > x.correct)
       .sort((a, b) => b.wrong - a.wrong || b.rate - a.rate);
   }, [state.history, minErr]);
 
@@ -1072,7 +1123,7 @@ function BadgesPage({state}) {
         {BADGES.map(b => {
           const on = earned.has(b.id);
           return (
-            <div key={b.id} className={'badge-card card' + (on ? ' earned steam-pop' : ' locked')}>
+            <div key={b.id} className={'badge-card card' + (on ? ' earned' : ' locked')}>
               <div className="badge-ico">{on ? '🏅' : '🔒'}</div>
               <h3>{b.title}</h3>
               <p className="muted">{b.desc}</p>
@@ -1108,7 +1159,7 @@ function Leaderboard({state}) {
 
 function Profile({state, save}) {
   const [name, setName] = useState(state.name);
-  const [goal, setGoal] = useState(state.dailyGoal);
+  const [goal, setGoal] = useState(Math.max(1, state.dailyGoal || 50));
   const [theme, setTheme] = useState(state.theme);
   const [skin, setSkin] = useState(state.skin || 'classic');
   const [accent, setAccent] = useState(state.customTheme.accent);
@@ -1181,6 +1232,11 @@ function Profile({state, save}) {
 function Admin({state, save, setWordsLive, wordsLive}) {
   const [pin, setPin] = useState('');
   const [ok, setOk] = useState(() => sessionStorage.getItem('ef-admin-ok') === '1');
+  useEffect(() => {
+    const lock = () => setOk(false);
+    window.addEventListener('ef-admin-lock', lock);
+    return () => window.removeEventListener('ef-admin-lock', lock);
+  }, []);
   const [a, setA] = useState({...state.admin});
   const [saved, setSaved] = useState(false);
   const [syncing, setSyncing] = useState(false);
@@ -1350,11 +1406,11 @@ function Admin({state, save, setWordsLive, wordsLive}) {
                   }
                 } catch {}
                 const el = document.createElement('div');
-                el.className = 'steam-toast';
-                el.innerHTML = '<b>Досягнення отримано</b><span>' + b.title + '</span>';
+                el.className = 'steam-toast steam-right';
+                el.innerHTML = '<b>ТЕСТ · симуляція</b><span>Demo: ' + b.title + ' (не записано як обовʼязкове)</span>';
                 document.body.appendChild(el);
                 setTimeout(() => el.remove(), 3200);
-                save({...state, badges: [...new Set([...(state.badges||[]), b.id])]});
+                /* тест — без реального збереження ачівки */
               }}>{b.title}</button>
             ))}
           </div>
@@ -1389,6 +1445,7 @@ function AdminDanger({save, state}) {
 
 function AboutPage() {
   const changelog = [
+    {v:'1.5-beta', items:['Вхід нік+пароль','Адмін лок без dashboard','Sprint step fix','Match stay','Без ліан/зелених смуг','Зелений favicon','Проблемні: лише реально проблемні']},
     {v:'1.4-beta', items:['Fix Vercel build (lazy dup + string)','Mobile overlap fix','Admin roadmap table','Stagger setting','Skeleton component']},
     {v:'1.3-beta', items:['Admin lock 30s + visibility','Favicon EF','Heatmap','Problems ≥3 + sprint + week','Analytics 1-17 panel','Confetti ideal','Sound packs','Reduced motion']},
     {v:'1.2-beta', items:['Sprint 1/10 fix (hooks order)','Jungle announce','Mist OK/BAD','Stats colors vs midnight','Steam badge toast','Admin test badges','Arrow animations','Mobile polish']},
@@ -1400,7 +1457,7 @@ function AboutPage() {
     {v:'0.6-beta', items:['Стабільний Sprint','+4/−2 XP','Mastery 8','Vercel Analytics']},
   ];
   return (
-    <section className="about-grid">
+    <section className="about-grid about-compact">
       <div className="card about-left">
         <Title title="Про додаток" text="Сюди пізніше додамо офіційний опис, політику та контакти."/>
         <p className="muted">English Flow — тренажер англійської з SRS, гейміфікацією та словником з Notion.</p>
