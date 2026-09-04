@@ -46,6 +46,25 @@ npm run dev
 npm run build
 ```
 
-## GitHub Pages
+## Deployment
 
-`vite.config.js` is configured with `base: "/English/"` for the repository `mykolazozul/English`.
+### Vercel (recommended)
+Connect the GitHub repo in Vercel. Framework Preset: **Vite**.
+`base` is set to `/` so assets load correctly on `*.vercel.app`.
+
+After deploy, enable **Web Analytics** in the Vercel project dashboard.
+
+### GitHub Pages
+If you still need GitHub Pages, change `base` in `vite.config.js` to `'/English/'` and use the included workflow.
+
+## Vercel Analytics
+
+The app includes `@vercel/analytics` (React version).
+
+```jsx
+import { Analytics } from '@vercel/analytics/react';
+// ...
+<Analytics />
+```
+
+After deploying to Vercel, enable Web Analytics in the project dashboard.
