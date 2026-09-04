@@ -1,70 +1,37 @@
-# English Flow 🇺🇸
+# English Flow v0.6-beta
 
-A responsive English-learning web app built with React + Vite.
+Повноцінна платформа для вивчення англійської (React + Vite).
 
-## Notion synchronization
+## Що всередині
 
-The app uses your Notion database **🇺🇸 English words** as the source of truth.
-The database currently has 395 rows and the data source ID is:
+- **Стабільні питання** — варіанти відповідей не стрибають під час уроку
+- **Рахунок:** +4 за правильну, −2 за помилку (можна піти в мінус)
+- **Mastery:** 8 правильних відповідей на слово = «Вивчено»
+- **Звуки:** окремий «поганий» звук при помилці
+- **Анімації:** миготіння кнопки + floating XP (+4 / −2)
+- **Теми:** світла, темна, custom (колір акценту/фону/карток)
+- **Адмін-панель** (PIN за замовчуванням `2468`): розмір уроку, бали, mastery threshold, shuffle
+- **Версія** в правому нижньому куті: `v0.6-beta`
+- **Vercel Analytics**
+- Notion sync через GitHub Actions
 
-`f38dba17-bbd6-4f04-9875-030212db4d0a`
+## Деплой на Vercel
 
-### Local sync
+1. Підключи GitHub-репозиторій у Vercel (Framework: Vite)
+2. `base` уже `/` — шляхи ассетів коректні
+3. Увімкни Web Analytics у панелі Vercel
 
-1. Create a Notion integration and copy its internal integration token.
-2. Share the **🇺🇸 English words** database with that integration.
-3. In PowerShell:
+## Локально
 
-```powershell
-$env:NOTION_TOKEN="YOUR_NOTION_TOKEN"
-npm run sync:notion
-npm run dev
-```
-
-The sync script follows Notion pagination and imports all available non-empty word rows, including Word, Translation, Explanation, Pronunciation, Examples, Category and Notion URL.
-
-### GitHub automatic sync
-
-Add a repository secret named `NOTION_TOKEN` in:
-
-**GitHub → English → Settings → Secrets and variables → Actions**
-
-The included workflow `.github/workflows/notion-sync.yml` can be run manually and also runs every day. It downloads the full Notion vocabulary, updates the generated data file and commits the result back to the repository.
-
-This architecture keeps the Notion token out of the browser. Never put `NOTION_TOKEN` in `VITE_*` variables or frontend source code.
-
-## Run
-
-```powershell
+```bash
 npm install
 npm run dev
 ```
 
-## Build
+## Адмін-панель
 
-```powershell
-npm run build
-```
+У меню **Профіль** або навігації → Адмін. PIN: `2468` (можна змінити в панелі).
 
-## Deployment
+## Версіонування
 
-### Vercel (recommended)
-Connect the GitHub repo in Vercel. Framework Preset: **Vite**.
-`base` is set to `/` so assets load correctly on `*.vercel.app`.
-
-After deploy, enable **Web Analytics** in the Vercel project dashboard.
-
-### GitHub Pages
-If you still need GitHub Pages, change `base` in `vite.config.js` to `'/English/'` and use the included workflow.
-
-## Vercel Analytics
-
-The app includes `@vercel/analytics` (React version).
-
-```jsx
-import { Analytics } from '@vercel/analytics/react';
-// ...
-<Analytics />
-```
-
-After deploying to Vercel, enable Web Analytics in the project dashboard.
+Поточна версія: **0.6-beta**. Кожне наступне оновлення +0.1.
