@@ -902,6 +902,1032 @@ export const notionWords = [
   },
   {
     "id": "n101",
+    "word": "different",
+    "translation": "різний; інший",
+    "explanation": "Не такий самий; має інші якості або вигляд.",
+    "pronunciation": "діферент",
+    "examples": "We have different opinions.\nThis city is different from my hometown.",
+    "category": "🧠 Feelings & traits"
+  },
+  {
+    "id": "n102",
+    "word": "dining room",
+    "translation": "столова",
+    "explanation": "Кімната, де їдять обід або вечерю.",
+    "pronunciation": "дайнінґ рум",
+    "examples": "We eat dinner in the dining room.\nThe dining room is next to the kitchen.",
+    "category": "🏠 Home & things"
+  },
+  {
+    "id": "n103",
+    "word": "disappointed",
+    "translation": "розчарований",
+    "explanation": "Коли очікував чогось кращого, але результат засмутив.",
+    "pronunciation": "дісепойнтед",
+    "examples": "I was disappointed with the result.\nShe felt disappointed after the exam.",
+    "category": "🧠 Feelings & traits"
+  },
+  {
+    "id": "n104",
+    "word": "divide",
+    "translation": "ділити; розділяти",
+    "explanation": "Розділяти щось на частини або виконувати математичну дію ділення.",
+    "pronunciation": "дівайд",
+    "examples": "Divide ten by two.\nWe need to divide the work between us.",
+    "category": "⚙️ Actions"
+  },
+  {
+    "id": "n105",
+    "word": "do away with",
+    "translation": "позбутися / скасувати",
+    "explanation": "Означає повністю прибрати або скасувати щось.",
+    "pronunciation": "",
+    "examples": "They want to do away with old rules.",
+    "category": "🧩 Phrasal verbs"
+  },
+  {
+    "id": "n106",
+    "word": "do without",
+    "translation": "обходитися без чогось",
+    "explanation": "Жити або працювати без певної речі.",
+    "pronunciation": "",
+    "examples": "I can do without sugar.\nWe had to do without electricity.",
+    "category": "🧩 Phrasal verbs"
+  },
+  {
+    "id": "n107",
+    "word": "doable",
+    "translation": "здійсненний / можна зробити",
+    "explanation": "Прикметник: щось реалістичне, можливе для виконання.",
+    "pronunciation": "",
+    "examples": "This plan is doable.\nIt is hard, but it is doable.",
+    "category": "🧠 Feelings & traits"
+  },
+  {
+    "id": "n108",
+    "word": "donkey",
+    "translation": "осел",
+    "explanation": "Свійська тварина, схожа на маленького коня, яку часто використовують для перевезення речей.",
+    "pronunciation": "донкі",
+    "examples": "The donkey carried the bags.\nWe saw a donkey on the farm.",
+    "category": "🐾 Animals"
+  },
+  {
+    "id": "n109",
+    "word": "drag on",
+    "translation": "затягуватися",
+    "explanation": "Коли щось триває довше, ніж очікувалося, і здається занадто довгим.",
+    "pronunciation": "",
+    "examples": "The meeting dragged on for hours.\nThis movie is starting to drag on.",
+    "category": "🧩 Phrasal verbs"
+  },
+  {
+    "id": "n110",
+    "word": "drain",
+    "translation": "злив",
+    "explanation": "Отвір або система, куди стікає вода.",
+    "pronunciation": "",
+    "examples": "The water went down the drain.\nThis work drains my energy.",
+    "category": "🏠 Home & things"
+  },
+  {
+    "id": "n111",
+    "word": "drinkable",
+    "translation": "можна пити / питний",
+    "explanation": "Прикметник: рідина безпечна або придатна для пиття.",
+    "pronunciation": "",
+    "examples": "This water is drinkable.\nThe river water is not drinkable.",
+    "category": "🍽️ Food"
+  },
+  {
+    "id": "n112",
+    "word": "drop off",
+    "translation": "підвезти / залишити",
+    "explanation": "Відвезти когось кудись або залишити щось у певному місці.",
+    "pronunciation": "",
+    "examples": "I’ll drop you off at home.\nCan you drop off this package?",
+    "category": "🧩 Phrasal verbs"
+  },
+  {
+    "id": "n113",
+    "word": "dunno",
+    "translation": "не знаю",
+    "explanation": "Розмовна форма don’t know.",
+    "pronunciation": "",
+    "examples": "I dunno what to say.\nDunno, maybe we should ask someone.",
+    "category": "💻 Internet slang"
+  },
+  {
+    "id": "n114",
+    "word": "eat",
+    "translation": "їсти",
+    "explanation": "Дієслово: їсти. У твоєму записі переклад «є» краще розуміти як «їсти».",
+    "pronunciation": "",
+    "examples": "I eat breakfast at eight.\nDo you want to eat with us?",
+    "category": "🍽️ Food"
+  },
+  {
+    "id": "n115",
+    "word": "edible",
+    "translation": "їстівний",
+    "explanation": "Суфікс -ible/-able часто означає «можна щось зробити»: edible — можна їсти.",
+    "pronunciation": "",
+    "examples": "These berries are edible.\nNot all mushrooms are edible.",
+    "category": "🍽️ Food"
+  },
+  {
+    "id": "n116",
+    "word": "Effort",
+    "translation": "зусилля; старання",
+    "explanation": "Енергія або праця, яку ти вкладаєш, щоб щось зробити.",
+    "pronunciation": "ефорт",
+    "examples": "This project needs a lot of effort.\nThank you for your effort.",
+    "category": "📚 Abstract / study"
+  },
+  {
+    "id": "n117",
+    "word": "eligible",
+    "translation": "придатний / має право",
+    "explanation": "Підходить за умовами або має право на щось: eligible for a job.",
+    "pronunciation": "",
+    "examples": "You are eligible for a discount.\nOnly students are eligible for this program.",
+    "category": "💼 Work & business"
+  },
+  {
+    "id": "n118",
+    "word": "embarrassing",
+    "translation": "соромний; незручний",
+    "explanation": "Ситуація або річ, через яку людині ніяково або соромно.",
+    "pronunciation": "імбересінґ",
+    "examples": "That was an embarrassing mistake.\nIt was embarrassing to forget their name.",
+    "category": "🧠 Feelings & traits"
+  },
+  {
+    "id": "n119",
+    "word": "enough",
+    "translation": "достатньо",
+    "explanation": "Означає «достатньо». Може стояти перед іменником або після прикметника.",
+    "pronunciation": "",
+    "examples": "We have enough food.\nThat is good enough.",
+    "category": "🔤 Grammar words"
+  },
+  {
+    "id": "n120",
+    "word": "environment",
+    "translation": "навколишнє середовище; оточення",
+    "explanation": "Може означати природу навколо нас або умови/атмосферу, в яких людина живе чи працює.",
+    "pronunciation": "",
+    "examples": "We need to protect the environment.\nI work better in a quiet environment.",
+    "category": "🌦️ Nature & weather"
+  },
+  {
+    "id": "n121",
+    "word": "equals",
+    "translation": "дорівнює",
+    "explanation": "Дієслово в математиці: показує, що дві величини однакові за значенням.",
+    "pronunciation": "",
+    "examples": "Two plus two equals four.\nSuccess equals effort plus time.",
+    "category": "➗ Math & numbers"
+  },
+  {
+    "id": "n122",
+    "word": "ever",
+    "translation": "коли-небудь; взагалі; будь-коли",
+    "explanation": "Часто в питаннях, запереченнях і найвищому ступені.",
+    "pronunciation": "/ˈevə(r)/",
+    "examples": "Have you ever been there? — Ти коли-небудь там був?",
+    "category": "⏱️ Time & frequency"
+  },
+  {
+    "id": "n123",
+    "word": "ever let",
+    "translation": "коли-небудь дозволяв",
+    "explanation": "Частина фрази; ever підсилює значення «колись / коли-небудь».",
+    "pronunciation": "",
+    "examples": "Don’t ever let anyone stop you.\nI won’t ever let this happen again.",
+    "category": "⏱️ Time & frequency"
+  },
+  {
+    "id": "n124",
+    "word": "everywhere",
+    "translation": "скрізь",
+    "explanation": "Прислівник місця: означає «у всіх місцях».",
+    "pronunciation": "",
+    "examples": "I looked everywhere for my keys.\nThere were people everywhere.",
+    "category": "🧭 Direction & place words"
+  },
+  {
+    "id": "n125",
+    "word": "ex",
+    "translation": "колишній; колишня",
+    "explanation": "Людина, з якою раніше були романтичні стосунки.",
+    "pronunciation": "екс",
+    "examples": "My ex lives in another city.\nShe is still friends with her ex.",
+    "category": "💞 Relationships"
+  },
+  {
+    "id": "n126",
+    "word": "excited",
+    "translation": "схвильований; у захваті",
+    "explanation": "Коли ти дуже радієш або чекаєш чогось з нетерпінням.",
+    "pronunciation": "ексайтед",
+    "examples": "I’m excited about the trip.\nThe kids were excited to see the animals.",
+    "category": "🧠 Feelings & traits"
+  },
+  {
+    "id": "n127",
+    "word": "experience",
+    "translation": "досвід; переживання",
+    "explanation": "Може означати знання/навички, отримані через практику, або подію, яку людина пережила.",
+    "pronunciation": "",
+    "examples": "I have experience in customer service.\nTraveling alone was a new experience for me.",
+    "category": "📚 Abstract / study"
+  },
+  {
+    "id": "n128",
+    "word": "exposed",
+    "translation": "викритий; відкритий; незахищений",
+    "explanation": "Коли щось стало видимим, відомим або незахищеним.",
+    "pronunciation": "/ɪkˈspəʊzd/",
+    "examples": "The wires are exposed. — Дроти оголені.",
+    "category": "🧠 Feelings & traits"
+  },
+  {
+    "id": "n129",
+    "word": "extension cord",
+    "translation": "подовжувач",
+    "explanation": "Електричний подовжувач, який дає змогу підключити пристрій далі від розетки.",
+    "pronunciation": "екстеншн корд",
+    "examples": "I need an extension cord for the lamp.\nThe extension cord is under the desk.",
+    "category": "🔌 Tech & devices"
+  },
+  {
+    "id": "n130",
+    "word": "eye",
+    "translation": "око",
+    "explanation": "Орган зору; частина тіла, якою ми бачимо.",
+    "pronunciation": "ай",
+    "examples": "I have something in my eye.\nHer eyes are blue.",
+    "category": "🧍 Body & health"
+  },
+  {
+    "id": "n131",
+    "word": "fabricate",
+    "translation": "виготовляти; вигадувати",
+    "explanation": "Може означати зробити щось або вигадати неправдиву історію.",
+    "pronunciation": "фебрікейт",
+    "examples": "The company fabricates metal parts.\nHe fabricated an excuse.",
+    "category": "⚙️ Actions"
+  },
+  {
+    "id": "n132",
+    "word": "Feel",
+    "translation": "відчувати",
+    "explanation": "У повідомленні було “Fell”, але для “відчувати” правильно “feel”.",
+    "pronunciation": "філ",
+    "examples": "I feel happy today.\nDo you feel cold?",
+    "category": "🧠 Feelings & traits"
+  },
+  {
+    "id": "n133",
+    "word": "feel like",
+    "translation": "здаватися ніби; хотіти",
+    "explanation": "Може означати, що щось відчувається певним чином, або що ти хочеш щось зробити.",
+    "pronunciation": "філ лайк",
+    "examples": "It feels like summer today.\nI feel like watching a movie.\nI feel like I’ve been here before.",
+    "category": "💬 Phrases"
+  },
+  {
+    "id": "n134",
+    "word": "Feelings",
+    "translation": "відчуття / почуття",
+    "explanation": "Емоції або внутрішні відчуття людини.",
+    "pronunciation": "філінґз",
+    "examples": "It is hard to talk about feelings.\nI don’t want to hurt your feelings.",
+    "category": "🧠 Feelings & traits"
+  },
+  {
+    "id": "n135",
+    "word": "fellow",
+    "translation": "хлопець; товариш; людина",
+    "explanation": "Неформальне слово для чоловіка або людини.",
+    "pronunciation": "/ˈfeləʊ/",
+    "examples": "He's a nice fellow. — Він хороший хлопець.",
+    "category": "🧍 Body & health"
+  },
+  {
+    "id": "n136",
+    "word": "figure out",
+    "translation": "зрозуміти / розібратися",
+    "explanation": "Знайти відповідь або зрозуміти, як щось працює.",
+    "pronunciation": "",
+    "examples": "I need to figure out this problem.",
+    "category": "🧩 Phrasal verbs"
+  },
+  {
+    "id": "n137",
+    "word": "find out",
+    "translation": "дізнатися",
+    "explanation": "Отримати інформацію, яку раніше не знав.",
+    "pronunciation": "",
+    "examples": "I need to find out the truth.",
+    "category": "🧩 Phrasal verbs"
+  },
+  {
+    "id": "n138",
+    "word": "Flat",
+    "translation": "квартира",
+    "explanation": "У британській англійській flat = квартира. Також flat як прикметник означає рівний/плаский.",
+    "pronunciation": "флет",
+    "examples": "The floor is flat.\nI live in a small flat.",
+    "category": "🏠 Home & things"
+  },
+  {
+    "id": "n139",
+    "word": "forget",
+    "translation": "забути / забувати",
+    "explanation": "Дієслово: не пам’ятати або перестати тримати щось у пам’яті.",
+    "pronunciation": "форґет",
+    "examples": "Don’t forget your keys.\nI always forget his name.",
+    "category": "⚙️ Actions"
+  },
+  {
+    "id": "n140",
+    "word": "friendly",
+    "translation": "дружній; привітний",
+    "explanation": "Добрий і приємний у спілкуванні.",
+    "pronunciation": "френдлі",
+    "examples": "The staff were very friendly.\nShe gave me a friendly smile.",
+    "category": "🧠 Feelings & traits"
+  },
+  {
+    "id": "n141",
+    "word": "from time to time",
+    "translation": "час від часу",
+    "explanation": "Іноді, періодично.",
+    "pronunciation": "/frəm taɪm tə taɪm/",
+    "examples": "I see him from time to time. — Я час від часу його бачу.",
+    "category": "⏱️ Time & frequency"
+  },
+  {
+    "id": "n142",
+    "word": "funny",
+    "translation": "смішний",
+    "explanation": "Те, що змушує сміятися; іноді також означає дивний.",
+    "pronunciation": "фані",
+    "examples": "That joke was funny.\nThis situation feels a little funny.",
+    "category": "🧠 Feelings & traits"
+  },
+  {
+    "id": "n143",
+    "word": "generate",
+    "translation": "генерувати; створювати",
+    "explanation": "Створювати або виробляти щось, часто автоматично.",
+    "pronunciation": "дженерейт",
+    "examples": "The app can generate a report.\nThis idea generated a lot of interest.",
+    "category": "⚙️ Actions"
+  },
+  {
+    "id": "n144",
+    "word": "get along",
+    "translation": "ладити",
+    "explanation": "Мати добрі стосунки з кимось.",
+    "pronunciation": "",
+    "examples": "I get along with my coworkers.",
+    "category": "🧩 Phrasal verbs"
+  },
+  {
+    "id": "n145",
+    "word": "get back",
+    "translation": "повернутися",
+    "explanation": "Фразове дієслово: повернутися назад або відповісти пізніше.",
+    "pronunciation": "",
+    "examples": "I’ll get back home late.",
+    "category": "🧩 Phrasal verbs"
+  },
+  {
+    "id": "n146",
+    "word": "get in",
+    "translation": "зайти / прибути",
+    "explanation": "Фразове дієслово: зайти всередину або прибути кудись.",
+    "pronunciation": "",
+    "examples": "What time did you get in?\nGet in the car.",
+    "category": "🧩 Phrasal verbs"
+  },
+  {
+    "id": "n147",
+    "word": "get out",
+    "translation": "вийти",
+    "explanation": "Фразове дієслово: вийти з місця, машини або ситуації.",
+    "pronunciation": "",
+    "examples": "Get out of the car.",
+    "category": "🧩 Phrasal verbs"
+  },
+  {
+    "id": "n148",
+    "word": "get over",
+    "translation": "пережити / оговтатися",
+    "explanation": "Означає емоційно відновитися після важкої ситуації.",
+    "pronunciation": "",
+    "examples": "She got over the breakup.\nI need time to get over it.",
+    "category": "🧩 Phrasal verbs"
+  },
+  {
+    "id": "n149",
+    "word": "ghost someone",
+    "translation": "різко перестати відповідати комусь",
+    "explanation": "Раптово припинити спілкування з людиною без пояснення, особливо в переписці або стосунках.",
+    "pronunciation": "ґоуст самван",
+    "examples": "He ghosted me after our first date.\nDon’t ghost someone; just be honest.",
+    "category": "💞 Relationships"
+  },
+  {
+    "id": "n150",
+    "word": "give back",
+    "translation": "повернути",
+    "explanation": "Фразове дієслово: повернути щось власнику.",
+    "pronunciation": "",
+    "examples": "Please give back my money.",
+    "category": "🧩 Phrasal verbs"
+  },
+  {
+    "id": "n151",
+    "word": "hallway",
+    "translation": "коридор",
+    "explanation": "Коридор або прохід усередині будівлі між кімнатами.",
+    "pronunciation": "холвей",
+    "examples": "The bathroom is down the hallway.\nI left my shoes in the hallway.",
+    "category": "🏠 Home & things"
+  },
+  {
+    "id": "n152",
+    "word": "hang out",
+    "translation": "проводити час / тусуватись",
+    "explanation": "Неформально проводити час з кимось.",
+    "pronunciation": "",
+    "examples": "We hang out after work.",
+    "category": "🧩 Phrasal verbs"
+  },
+  {
+    "id": "n153",
+    "word": "hanger",
+    "translation": "вішак",
+    "explanation": "Предмет, на який вішають одяг у шафі.",
+    "pronunciation": "хенґер",
+    "examples": "Put the shirt on a hanger.\nThere is a hanger in the closet.",
+    "category": "🏠 Home & things"
+  },
+  {
+    "id": "n154",
+    "word": "happen to",
+    "translation": "випадково",
+    "explanation": "Фраза для випадкової дії: I happened to see him — я випадково його побачив.",
+    "pronunciation": "",
+    "examples": "Do you happen to know her number?\nI happen to have an extra ticket.",
+    "category": "🔤 Grammar words"
+  },
+  {
+    "id": "n155",
+    "word": "health-wise",
+    "translation": "у плані здоров’я",
+    "explanation": "Форма з -wise: означає «з точки зору здоров’я / у плані здоров’я».",
+    "pronunciation": "",
+    "examples": "Health-wise, they feel better.",
+    "category": "🧍 Body & health"
+  },
+  {
+    "id": "n156",
+    "word": "here",
+    "translation": "тут",
+    "explanation": "Прислівник місця: означає «тут», поруч із тим, хто говорить.",
+    "pronunciation": "",
+    "examples": "Come here, please.\nI live here.",
+    "category": "🧭 Direction & place words"
+  },
+  {
+    "id": "n157",
+    "word": "hold hands",
+    "translation": "триматися за руки",
+    "explanation": "Коли двоє людей тримають одне одного за руки, часто у романтичному або близькому контексті.",
+    "pronunciation": "хоулд хендс",
+    "examples": "They walked through the park and held hands.\nCouples often hold hands in public.",
+    "category": "💞 Relationships"
+  },
+  {
+    "id": "n158",
+    "word": "hold on",
+    "translation": "зачекати",
+    "explanation": "Фраза, коли просиш когось трохи почекати.",
+    "pronunciation": "",
+    "examples": "Hold on a second.",
+    "category": "🧩 Phrasal verbs"
+  },
+  {
+    "id": "n159",
+    "word": "homestay",
+    "translation": "проживання в приймаючій сім'ї",
+    "explanation": "Проживання в будинку місцевої сім'ї.",
+    "pronunciation": "/ˈhəʊmsteɪ/",
+    "examples": "I'm looking for a homestay. — Я шукаю проживання в приймаючій сім'ї.",
+    "category": "🏠 Home & things"
+  },
+  {
+    "id": "n160",
+    "word": "honest",
+    "translation": "чесний",
+    "explanation": "Коли людина говорить правду і не обманює.",
+    "pronunciation": "онест",
+    "examples": "She is an honest person.\nPlease be honest with me.",
+    "category": "🧠 Feelings & traits"
+  },
+  {
+    "id": "n161",
+    "word": "honestly",
+    "translation": "чесно; якщо чесно; відверто кажучи",
+    "explanation": "Використовуємо, коли хочемо сказати правду або висловити щиру думку.",
+    "pronunciation": "онестлі",
+    "examples": "Honestly, I don’t know the answer.\nI honestly think this is a good idea.",
+    "category": "🗣️ Communication"
+  },
+  {
+    "id": "n162",
+    "word": "however",
+    "translation": "однако, тем не менее",
+    "explanation": "Формальне слово для контрасту: «однак / проте». Часто використовується в письмі.",
+    "pronunciation": "haʊˈev.ər",
+    "examples": "I wanted to go; however, I was too tired.\nThis task is hard. However, we can finish it.",
+    "category": "🔤 Grammar words"
+  },
+  {
+    "id": "n163",
+    "word": "hug",
+    "translation": "обіймати; обійми",
+    "explanation": "Обійняти когось руками, щоб показати любов, підтримку або привітання.",
+    "pronunciation": "хаґ",
+    "examples": "Can I hug you?\nShe gave me a warm hug.",
+    "category": "💞 Relationships"
+  },
+  {
+    "id": "n164",
+    "word": "hungry",
+    "translation": "голодний",
+    "explanation": "Коли хочеться їсти.",
+    "pronunciation": "ханґрі",
+    "examples": "I’m hungry after work.\nThe children were hungry before dinner.",
+    "category": "🧍 Body & health"
+  },
+  {
+    "id": "n165",
+    "word": "hurt",
+    "translation": "боліти; поранити; образити",
+    "explanation": "hurt → hurt → hurt у всіх трьох формах.",
+    "pronunciation": "/hɜːt/",
+    "examples": "My leg hurts. — У мене болить нога.",
+    "category": "🧍 Body & health"
+  },
+  {
+    "id": "n166",
+    "word": "I hope",
+    "translation": "я сподіваюсь",
+    "explanation": "Використовуємо, коли хочемо, щоб щось сталося.",
+    "pronunciation": "ай хоуп",
+    "examples": "I hope you feel better soon.\nI hope it doesn’t rain tomorrow.",
+    "category": "🗣️ Communication"
+  },
+  {
+    "id": "n167",
+    "word": "I liked your joke",
+    "translation": "мені сподобався твій жарт",
+    "explanation": "Готова фраза у Past Simple: означає, що жарт сподобався в минулому.",
+    "pronunciation": "",
+    "examples": "I liked your joke yesterday.",
+    "category": "🗣️ Communication"
+  },
+  {
+    "id": "n168",
+    "word": "I mean",
+    "translation": "я имею в виду",
+    "explanation": "Фраза для уточнення думки: «я маю на увазі». Часто використовується в розмові.",
+    "pronunciation": "aɪ miːn",
+    "examples": "I mean, it is not a big problem.\nWhat do you mean?",
+    "category": "🗣️ Communication"
+  },
+  {
+    "id": "n169",
+    "word": "I suppose",
+    "translation": "я гадаю; мабуть",
+    "explanation": "М’який спосіб сказати, що ти так думаєш, але не на 100% впевнений.",
+    "pronunciation": "ай сепоуз",
+    "examples": "I suppose you are right.\nI suppose we can try again tomorrow.",
+    "category": "🗣️ Communication"
+  },
+  {
+    "id": "n170",
+    "word": "I swear",
+    "translation": "я клянусь",
+    "explanation": "Фраза, коли ти дуже серйозно підтверджуєш, що кажеш правду.",
+    "pronunciation": "ай swear",
+    "examples": "I swear I didn’t take your phone.\nI swear, this story is true.",
+    "category": "🗣️ Communication"
+  },
+  {
+    "id": "n171",
+    "word": "I'll not let you down",
+    "translation": "я тебе не підведу",
+    "explanation": "Обіцянка зробити все добре і не розчарувати людину.",
+    "pronunciation": "айл нот лет ю даун",
+    "examples": "Trust me, I’ll not let you down.\nI’ll not let you down on this project.",
+    "category": "🗣️ Communication"
+  },
+  {
+    "id": "n172",
+    "word": "I'm broke",
+    "translation": "я на нулі; у мене немає грошей",
+    "explanation": "Розмовна фраза: зараз немає грошей.",
+    "pronunciation": "айм броук",
+    "examples": "I can’t go out tonight; I’m broke.\nAfter buying the ticket, I’m broke.",
+    "category": "💸 Money"
+  },
+  {
+    "id": "n173",
+    "word": "I'm not sure",
+    "translation": "я не впевнений / не впевнена",
+    "explanation": "Коли ти не знаєш точно або сумніваєшся.",
+    "pronunciation": "айм нот шур",
+    "examples": "I’m not sure about the answer.\nI’m not sure if she is coming.",
+    "category": "🗣️ Communication"
+  },
+  {
+    "id": "n174",
+    "word": "I'm on a mission",
+    "translation": "я маю чітку мету; я на місії",
+    "explanation": "Серйозно налаштований виконати певну мету.",
+    "pronunciation": "/aɪm ɒn ə ˈmɪʃən/",
+    "examples": "I'm on a mission to finish this today. — Я маю мету закінчити це сьогодні.",
+    "category": "📚 Abstract / study"
+  },
+  {
+    "id": "n175",
+    "word": "I'm sorry",
+    "translation": "мені шкода; вибач",
+    "explanation": "Фраза для вибачення або співчуття.",
+    "pronunciation": "айм сорі",
+    "examples": "I’m sorry I’m late.\nI’m sorry to hear that.",
+    "category": "🗣️ Communication"
+  },
+  {
+    "id": "n176",
+    "word": "I'm upset",
+    "translation": "я засмучений / засмучена",
+    "explanation": "Коли людина сумна, роздратована або емоційно розстроєна.",
+    "pronunciation": "айм апсет",
+    "examples": "I’m upset about the news.\nShe is upset because she lost her keys.",
+    "category": "🧠 Feelings & traits"
+  },
+  {
+    "id": "n177",
+    "word": "idc",
+    "translation": "I don’t care / мені байдуже",
+    "explanation": "Скорочення в повідомленнях: I don’t care.",
+    "pronunciation": "",
+    "examples": "Idc what they think.",
+    "category": "💻 Internet slang"
+  },
+  {
+    "id": "n178",
+    "word": "idk",
+    "translation": "I don’t know / не знаю",
+    "explanation": "Скорочення в повідомленнях: I don’t know.",
+    "pronunciation": "",
+    "examples": "Idk, maybe soon.",
+    "category": "💻 Internet slang"
+  },
+  {
+    "id": "n179",
+    "word": "imo",
+    "translation": "in my opinion / на мою думку",
+    "explanation": "Скорочення в повідомленнях: in my opinion.",
+    "pronunciation": "",
+    "examples": "IMO, this is a good idea.",
+    "category": "💻 Internet slang"
+  },
+  {
+    "id": "n180",
+    "word": "impossible",
+    "translation": "неможливо / неможливий",
+    "explanation": "Прикметник: щось неможливо зробити або це не може статися.",
+    "pronunciation": "",
+    "examples": "This puzzle is impossible.\nIt is impossible to be everywhere at once.",
+    "category": "🧠 Feelings & traits"
+  },
+  {
+    "id": "n181",
+    "word": "improve",
+    "translation": "покращувати; покращуватися",
+    "explanation": "Робити щось кращим або ставати кращим з часом.",
+    "pronunciation": "",
+    "examples": "I want to improve my English.\nYour pronunciation has improved a lot.",
+    "category": "⚙️ Actions"
+  },
+  {
+    "id": "n182",
+    "word": "improved",
+    "translation": "покращений; покращився",
+    "explanation": "Past Simple/Past Participle від improve.",
+    "pronunciation": "/ɪmˈpruːvd/",
+    "examples": "My English has improved. — Моя англійська покращилася.",
+    "category": "⚙️ Actions"
+  },
+  {
+    "id": "n183",
+    "word": "in",
+    "translation": "в",
+    "explanation": "Прийменник місця: означає «в / усередині» чогось.",
+    "pronunciation": "ін",
+    "examples": "The keys are in my bag.\nI live in Budapest.",
+    "category": "🧭 Direction & place words"
+  },
+  {
+    "id": "n184",
+    "word": "in fact",
+    "translation": "на самом деле",
+    "explanation": "Фраза для підкреслення правди або уточнення: «насправді».",
+    "pronunciation": "ɪn fækt",
+    "examples": "In fact, I already know him.\nShe looks young, but in fact she is forty.",
+    "category": "🔤 Grammar words"
+  },
+  {
+    "id": "n185",
+    "word": "in front of",
+    "translation": "перед",
+    "explanation": "Прийменникова фраза місця: означає «перед кимось/чимось».",
+    "pronunciation": "ін френт ов",
+    "examples": "The car is in front of the house.\nPlease stand in front of the camera.",
+    "category": "🛣️ Places & movement"
+  },
+  {
+    "id": "n186",
+    "word": "in one sitting",
+    "translation": "за один присід; без перерви",
+    "explanation": "Зробити щось від початку до кінця за один раз, без довгої паузи.",
+    "pronunciation": "ін ван сітінґ",
+    "examples": "I read the whole book in one sitting.\nShe watched the series in one sitting.",
+    "category": "⏱️ Time & frequency"
+  },
+  {
+    "id": "n187",
+    "word": "in the flesh",
+    "translation": "особисто, наживо",
+    "explanation": "Побачити або зустріти когось наживо.",
+    "pronunciation": "/ɪn ðə fleʃ/",
+    "examples": "I finally met him in the flesh. — Я нарешті зустрів його наживо.",
+    "category": "💬 Phrases"
+  },
+  {
+    "id": "n188",
+    "word": "include",
+    "translation": "включати; містити",
+    "explanation": "Мати щось як частину списку, групи або набору.",
+    "pronunciation": "інклуд",
+    "examples": "The price includes breakfast.\nPlease include your phone number.",
+    "category": "⚙️ Actions"
+  },
+  {
+    "id": "n189",
+    "word": "increase",
+    "translation": "збільшувати; зростати",
+    "explanation": "Ставати більшим або робити щось більшим.",
+    "pronunciation": "інкріс",
+    "examples": "Prices continue to increase.\nWe need to increase our speed.",
+    "category": "⚙️ Actions"
+  },
+  {
+    "id": "n190",
+    "word": "inside",
+    "translation": "всередині",
+    "explanation": "Означає «всередині». Може бути прийменником, прислівником або прикметником.",
+    "pronunciation": "інсайд",
+    "examples": "The keys are inside the box.\nIt is warm inside the house.",
+    "category": "🛣️ Places & movement"
+  },
+  {
+    "id": "n191",
+    "word": "intend",
+    "translation": "мати намір / планувати",
+    "explanation": "Формальніше, ніж plan. Означає мати намір щось зробити.",
+    "pronunciation": "",
+    "examples": "I intend to learn English this year.",
+    "category": "⚙️ Actions"
+  },
+  {
+    "id": "n192",
+    "word": "into",
+    "translation": "у; всередину; у напрямку до; захоплюватися/цікавитися",
+    "explanation": "Може означати, що комусь хтось подобається або хтось дуже цікавиться чимось.",
+    "pronunciation": "",
+    "examples": "She is into me.\nI’m into music.",
+    "category": "🧭 Direction & place words"
+  },
+  {
+    "id": "n193",
+    "word": "itself",
+    "translation": "себе; саме по собі",
+    "explanation": "Зворотний займенник для it.",
+    "pronunciation": "/ɪtˈself/",
+    "examples": "The machine turns itself off. — Машина сама вимикається.",
+    "category": "🔤 Grammar words"
+  },
+  {
+    "id": "n194",
+    "word": "I’m in",
+    "translation": "я згоден / я беру участь",
+    "explanation": "Фраза означає, що ти погоджуєшся приєднатися або брати участь.",
+    "pronunciation": "",
+    "examples": "Are you coming with us? I’m in.\nIf you need help, I’m in.",
+    "category": "💬 Phrases"
+  },
+  {
+    "id": "n195",
+    "word": "I’m missing",
+    "translation": "мені не вистачає",
+    "explanation": "Фраза для ситуації, коли тобі бракує чогось або когось.",
+    "pronunciation": "",
+    "examples": "I’m missing one important detail.\nI’m missing my family today.",
+    "category": "💬 Phrases"
+  },
+  {
+    "id": "n196",
+    "word": "jacket",
+    "translation": "куртка; піджак",
+    "explanation": "Верхній одяг, який носять поверх сорочки або футболки. Може бути легкою курткою або піджаком залежно від контексту.",
+    "pronunciation": "джекет",
+    "examples": "Take a jacket; it is cold outside.\nHe wore a black jacket to the meeting.",
+    "category": "👕 Clothes"
+  },
+  {
+    "id": "n197",
+    "word": "keep",
+    "translation": "тримати / зберігати",
+    "explanation": "Дієслово: тримати щось, зберігати або продовжувати мати щось у певному стані.",
+    "pronunciation": "",
+    "examples": "Keep the change.\nPlease keep your room clean.",
+    "category": "⚙️ Actions"
+  },
+  {
+    "id": "n198",
+    "word": "keep on",
+    "translation": "продовжувати",
+    "explanation": "Продовжувати робити щось, часто попри складнощі.",
+    "pronunciation": "",
+    "examples": "Keep on trying.",
+    "category": "🧩 Phrasal verbs"
+  },
+  {
+    "id": "n199",
+    "word": "kind",
+    "translation": "добрий; вид, тип",
+    "explanation": "Як прикметник — добрий; як іменник — вид/тип.",
+    "pronunciation": "/kaɪnd/",
+    "examples": "She is a kind person.\nWhat kind of music do you like?",
+    "category": "🧠 Feelings & traits"
+  },
+  {
+    "id": "n200",
+    "word": "kinda",
+    "translation": "трохи / типу",
+    "explanation": "Скорочено від kind of; дуже розмовне.",
+    "pronunciation": "",
+    "examples": "I’m kinda tired.\nThis is kinda funny.",
+    "category": "💻 Internet slang"
+  },
+  {
+    "id": "n201",
+    "word": "kindness",
+    "translation": "доброта",
+    "explanation": "Добре, турботливе ставлення або добрий вчинок.",
+    "pronunciation": "/ˈkaɪndnəs/",
+    "examples": "Thank you for your kindness. — Дякую за твою доброту.",
+    "category": "🧠 Feelings & traits"
+  },
+  {
+    "id": "n202",
+    "word": "kiss",
+    "translation": "цілувати; поцілунок",
+    "explanation": "Торкатися губами когось або чогось, щоб показати любов, ніжність або привітання.",
+    "pronunciation": "кіс",
+    "examples": "He kissed her goodbye.\nShe gave the baby a kiss.",
+    "category": "💞 Relationships"
+  },
+  {
+    "id": "n203",
+    "word": "know what you mean",
+    "translation": "розуміти, що ти маєш на увазі",
+    "explanation": "Фраза, коли ти погоджуєшся або розумієш думку іншої людини.",
+    "pronunciation": "ноу вот ю мін",
+    "examples": "I know what you mean; this rule is confusing.\nYeah, I know what you mean.",
+    "category": "🗣️ Communication"
+  },
+  {
+    "id": "n204",
+    "word": "knowledge",
+    "translation": "знання",
+    "explanation": "Інформація, розуміння або навички, які людина отримує через навчання чи досвід.",
+    "pronunciation": "нолідж",
+    "examples": "Knowledge is power.\nShe has a lot of knowledge about history.",
+    "category": "📚 Abstract / study"
+  },
+  {
+    "id": "n205",
+    "word": "lane",
+    "translation": "провулок; смуга руху",
+    "explanation": "Маленька вузька вулиця або частина дороги для одного ряду машин.",
+    "pronunciation": "лейн",
+    "examples": "Turn left into the small lane.\nStay in the right lane.",
+    "category": "🛣️ Places & movement"
+  },
+  {
+    "id": "n206",
+    "word": "lightning",
+    "translation": "блискавка",
+    "explanation": "Яскравий спалах світла в небі під час грози.",
+    "pronunciation": "лайтнінґ",
+    "examples": "Lightning hit the tree.\nI saw lightning during the storm.",
+    "category": "🌦️ Nature & weather"
+  },
+  {
+    "id": "n207",
+    "word": "likewise",
+    "translation": "взаємно; так само",
+    "explanation": "Коротке слово для відповіді, коли те саме стосується і тебе. Часто звучить стильно й природно в неформальному спілкуванні.",
+    "pronunciation": "лайквайз",
+    "examples": "Nice to meet you. — Likewise!\nI respect your work. — Likewise.",
+    "category": "🗣️ Communication"
+  },
+  {
+    "id": "n208",
+    "word": "lion",
+    "translation": "лев",
+    "explanation": "Велика дика кішка; самець має гриву.",
+    "pronunciation": "лайон",
+    "examples": "A lion is a wild animal.\nThe lion slept under a tree.",
+    "category": "🐾 Animals"
+  },
+  {
+    "id": "n209",
+    "word": "literally",
+    "translation": "буквально / реально / дуже",
+    "explanation": "Буквально означає «дослівно», але в розмові часто підсилює емоцію.",
+    "pronunciation": "",
+    "examples": "I literally just arrived.\nShe was literally shaking from fear.",
+    "category": "🔤 Grammar words"
+  },
+  {
+    "id": "n210",
+    "word": "location-wise",
+    "translation": "у плані локації",
+    "explanation": "Форма з -wise: означає «з точки зору локації / щодо місця».",
+    "pronunciation": "",
+    "examples": "Location-wise, it is perfect.",
+    "category": "🧭 Direction & place words"
+  },
+  {
+    "id": "n211",
+    "word": "look after",
+    "translation": "доглядати",
+    "explanation": "Піклуватися про когось або щось.",
+    "pronunciation": "",
+    "examples": "Can you look after my cat?",
+    "category": "🧩 Phrasal verbs"
+  },
+  {
+    "id": "n212",
+    "word": "look for",
+    "translation": "шукати",
+    "explanation": "Фразове дієслово: шукати когось або щось.",
+    "pronunciation": "",
+    "examples": "I’m looking for my keys.",
+    "category": "🧩 Phrasal verbs"
+  },
+  {
+    "id": "n213",
+    "word": "look up",
+    "translation": "перевірити інформацію / подивитися в словнику",
+    "explanation": "Знайти інформацію в інтернеті, словнику або довіднику.",
+    "pronunciation": "",
+    "examples": "Look up this word in a dictionary.",
+    "category": "🧩 Phrasal verbs"
+  },
+  {
+    "id": "n214",
+    "word": "lucky",
+    "translation": "щасливий; удачливий",
+    "explanation": "Коли людині пощастило або сталося щось хороше випадково.",
+    "pronunciation": "лакі",
+    "examples": "You are lucky to have good friends.\nI was lucky to find my keys.",
+    "category": "🧠 Feelings & traits"
+  },
+  {
+    "id": "n215",
     "word": "maintain",
     "translation": "підтримувати / утримувати / зберігати",
     "explanation": "Формальне слово: продовжувати щось у тому ж стані або підтримувати рівень.",
@@ -910,7 +1936,7 @@ export const notionWords = [
     "category": "⚙️ Actions"
   },
   {
-    "id": "n102",
+    "id": "n216",
     "word": "make a mess",
     "translation": "зробити безлад; зіпсувати справу",
     "explanation": "Зробити безлад; make a mess of something — погано з чимось впоратися.",
@@ -919,7 +1945,7 @@ export const notionWords = [
     "category": "💬 Phrases"
   },
   {
-    "id": "n103",
+    "id": "n217",
     "word": "makeable",
     "translation": "можна зробити",
     "explanation": "Те, що реально зробити або виготовити.",
@@ -928,7 +1954,7 @@ export const notionWords = [
     "category": "🏠 Home & things"
   },
   {
-    "id": "n104",
+    "id": "n218",
     "word": "manage",
     "translation": "справлятися; керувати",
     "explanation": "Контролювати справу або успішно впоратися з чимось складним.",
@@ -937,7 +1963,7 @@ export const notionWords = [
     "category": "💼 Work & business"
   },
   {
-    "id": "n105",
+    "id": "n219",
     "word": "matter",
     "translation": "значення / мати значення",
     "explanation": "Як іменник — справа/питання; як дієслово — мати значення.",
@@ -946,7 +1972,7 @@ export const notionWords = [
     "category": "📚 Abstract / study"
   },
   {
-    "id": "n106",
+    "id": "n220",
     "word": "maybe",
     "translation": "можливо, так, а можливо, ні",
     "explanation": "Прислівник невпевненості: означає, що щось можливо, але ти не впевнений.",
@@ -955,7 +1981,7 @@ export const notionWords = [
     "category": "🔤 Grammar words"
   },
   {
-    "id": "n107",
+    "id": "n221",
     "word": "mean",
     "translation": "означати; мати на увазі; недобрий",
     "explanation": "Як дієслово — означати або мати на увазі. Як прикметник — злий/недобрий у поведінці.",
@@ -964,7 +1990,7 @@ export const notionWords = [
     "category": "📚 Abstract / study"
   },
   {
-    "id": "n108",
+    "id": "n222",
     "word": "means",
     "translation": "означає; значить",
     "explanation": "Форма mean для he/she/it; також means a lot to me.",
@@ -973,7 +1999,7 @@ export const notionWords = [
     "category": "📚 Abstract / study"
   },
   {
-    "id": "n109",
+    "id": "n223",
     "word": "meat",
     "translation": "м’ясо",
     "explanation": "Їжа з тіла тварини, яку готують і їдять.",
@@ -982,7 +2008,7 @@ export const notionWords = [
     "category": "🍽️ Food"
   },
   {
-    "id": "n110",
+    "id": "n224",
     "word": "mind",
     "translation": "розум",
     "explanation": "Розум, думки або увага; також у фразах типу do you mind — «ти не проти?»",
@@ -991,7 +2017,7 @@ export const notionWords = [
     "category": "📚 Abstract / study"
   },
   {
-    "id": "n111",
+    "id": "n225",
     "word": "minus",
     "translation": "мінус / відняти",
     "explanation": "У математиці означає віднімання або знак «мінус».",
@@ -1000,7 +2026,7 @@ export const notionWords = [
     "category": "➗ Math & numbers"
   },
   {
-    "id": "n112",
+    "id": "n226",
     "word": "mixing",
     "translation": "змішування; змішуючи",
     "explanation": "Форма mix + -ing.",
@@ -1009,7 +2035,7 @@ export const notionWords = [
     "category": "⚙️ Actions"
   },
   {
-    "id": "n113",
+    "id": "n227",
     "word": "moment",
     "translation": "момент; мить",
     "explanation": "Короткий проміжок часу або важлива ситуація.",
@@ -1018,7 +2044,7 @@ export const notionWords = [
     "category": "⏱️ Time & frequency"
   },
   {
-    "id": "n114",
+    "id": "n228",
     "word": "money-wise",
     "translation": "у плані грошей",
     "explanation": "Суфікс -wise означає «у плані… / що стосується…».",
@@ -1027,7 +2053,7 @@ export const notionWords = [
     "category": "💸 Money"
   },
   {
-    "id": "n115",
+    "id": "n229",
     "word": "monkey",
     "translation": "мавпа",
     "explanation": "Тварина-примат, яка часто живе на деревах і дуже спритно рухається.",
@@ -1036,7 +2062,7 @@ export const notionWords = [
     "category": "🐾 Animals"
   },
   {
-    "id": "n116",
+    "id": "n230",
     "word": "mostly",
     "translation": "здебільшого, переважно",
     "explanation": "У більшій частині випадків.",
@@ -1045,7 +2071,7 @@ export const notionWords = [
     "category": "🔤 Grammar words"
   },
   {
-    "id": "n117",
+    "id": "n231",
     "word": "move",
     "translation": "рухатися; переїжджати; хід",
     "explanation": "Рухатися, переїжджати або хід у грі.",
@@ -1054,7 +2080,7 @@ export const notionWords = [
     "category": "🛣️ Places & movement"
   },
   {
-    "id": "n118",
+    "id": "n232",
     "word": "move on",
     "translation": "рухатися далі",
     "explanation": "Продовжити життя або роботу після події чи проблеми.",
@@ -1063,7 +2089,7 @@ export const notionWords = [
     "category": "🧩 Phrasal verbs"
   },
   {
-    "id": "n119",
+    "id": "n233",
     "word": "my bad",
     "translation": "моя помилка",
     "explanation": "Розмовний спосіб вибачитися за свою помилку.",
@@ -1072,7 +2098,7 @@ export const notionWords = [
     "category": "🗣️ Communication"
   },
   {
-    "id": "n120",
+    "id": "n234",
     "word": "near",
     "translation": "біля / поруч",
     "explanation": "Прийменник або прислівник місця: означає «біля / недалеко від».",
@@ -1081,7 +2107,7 @@ export const notionWords = [
     "category": "🛣️ Places & movement"
   },
   {
-    "id": "n121",
+    "id": "n235",
     "word": "nearly",
     "translation": "майже",
     "explanation": "Схоже на almost, але звучить трохи формальніше.",
@@ -1090,7 +2116,7 @@ export const notionWords = [
     "category": "🔤 Grammar words"
   },
   {
-    "id": "n122",
+    "id": "n236",
     "word": "never mind",
     "translation": "не зважай / та нічого / забудь",
     "explanation": "Фраза, коли щось вже не важливо або не треба пояснювати.",
@@ -1099,7 +2125,7 @@ export const notionWords = [
     "category": "💬 Phrases"
   },
   {
-    "id": "n123",
+    "id": "n237",
     "word": "no matter",
     "translation": "не важливо",
     "explanation": "Фраза: no matter what — неважливо що; no matter where — неважливо де.",
@@ -1108,7 +2134,7 @@ export const notionWords = [
     "category": "🔤 Grammar words"
   },
   {
-    "id": "n124",
+    "id": "n238",
     "word": "no way",
     "translation": "та ну / не може бути",
     "explanation": "Фраза здивування або відмови.",
@@ -1117,7 +2143,7 @@ export const notionWords = [
     "category": "💬 Phrases"
   },
   {
-    "id": "n125",
+    "id": "n239",
     "word": "noisy",
     "translation": "галасливий; шумний",
     "explanation": "Коли є багато шуму або гучних звуків.",
@@ -1126,7 +2152,7 @@ export const notionWords = [
     "category": "🧠 Feelings & traits"
   },
   {
-    "id": "n126",
+    "id": "n240",
     "word": "not by a long shot",
     "translation": "навіть близько не так",
     "explanation": "Фраза означає, що щось зовсім не правда або зовсім не близько до результату.",
@@ -1135,7 +2161,7 @@ export const notionWords = [
     "category": "💬 Phrases"
   },
   {
-    "id": "n127",
+    "id": "n241",
     "word": "offer",
     "translation": "пропонувати; пропозиція",
     "explanation": "Як дієслово — пропонувати; як іменник — пропозиція. offer to + verb.",
@@ -1144,7 +2170,7 @@ export const notionWords = [
     "category": "⚙️ Actions"
   },
   {
-    "id": "n128",
+    "id": "n242",
     "word": "on",
     "translation": "на",
     "explanation": "Прийменник: означає «на» поверхні або у значенні «увімкнено».",
@@ -1153,7 +2179,7 @@ export const notionWords = [
     "category": "🧭 Direction & place words"
   },
   {
-    "id": "n129",
+    "id": "n243",
     "word": "opportunity",
     "translation": "можливість",
     "explanation": "Сприятлива можливість щось зробити, отримати або спробувати.",
@@ -1162,7 +2188,7 @@ export const notionWords = [
     "category": "📚 Abstract / study"
   },
   {
-    "id": "n130",
+    "id": "n244",
     "word": "outfit",
     "translation": "одяг; комплект одягу",
     "explanation": "Повний комплект одягу, який людина носить разом.",
@@ -1171,7 +2197,7 @@ export const notionWords = [
     "category": "👕 Clothes"
   },
   {
-    "id": "n131",
+    "id": "n245",
     "word": "owe",
     "translation": "бути винним; завдячувати",
     "explanation": "Бути винним гроші, послугу, вибачення тощо.",
@@ -1180,7 +2206,7 @@ export const notionWords = [
     "category": "💸 Money"
   },
   {
-    "id": "n132",
+    "id": "n246",
     "word": "palpable",
     "translation": "відчутний",
     "explanation": "Щось настільки сильне або очевидне, що це ніби можна відчути фізично.",
@@ -1189,7 +2215,7 @@ export const notionWords = [
     "category": "🧠 Feelings & traits"
   },
   {
-    "id": "n133",
+    "id": "n247",
     "word": "pants",
     "translation": "штани",
     "explanation": "Одяг для ніг. В американській англійській pants = штани.",
@@ -1198,7 +2224,7 @@ export const notionWords = [
     "category": "👕 Clothes"
   },
   {
-    "id": "n134",
+    "id": "n248",
     "word": "pastry",
     "translation": "випічка; тістечко",
     "explanation": "Солодка або солона випічка з тіста.",
@@ -1207,7 +2233,7 @@ export const notionWords = [
     "category": "🍽️ Food"
   },
   {
-    "id": "n135",
+    "id": "n249",
     "word": "path",
     "translation": "доріжка; стежка",
     "explanation": "Невелика дорога для ходьби, часто в парку, лісі або біля дому.",
@@ -1216,7 +2242,7 @@ export const notionWords = [
     "category": "🛣️ Places & movement"
   },
   {
-    "id": "n136",
+    "id": "n250",
     "word": "pay by card",
     "translation": "оплатити карткою",
     "explanation": "Заплатити банківською карткою, а не готівкою.",
@@ -1225,7 +2251,7 @@ export const notionWords = [
     "category": "🍽️ Food"
   },
   {
-    "id": "n137",
+    "id": "n251",
     "word": "pay off",
     "translation": "окупитися",
     "explanation": "Коли зусилля дають хороший результат.",
@@ -1234,7 +2260,7 @@ export const notionWords = [
     "category": "🧩 Phrasal verbs"
   },
   {
-    "id": "n138",
+    "id": "n252",
     "word": "payoff",
     "translation": "винагорода; результат; вигода",
     "explanation": "Користь, результат або винагорода, яку отримуєш після зусиль.",
@@ -1243,7 +2269,7 @@ export const notionWords = [
     "category": "📚 Abstract / study"
   },
   {
-    "id": "n139",
+    "id": "n253",
     "word": "peaceful",
     "translation": "мирний / спокійний",
     "explanation": "Прикметник: описує щось спокійне, без конфлікту або насильства.",
@@ -1252,7 +2278,7 @@ export const notionWords = [
     "category": "🧠 Feelings & traits"
   },
   {
-    "id": "n140",
+    "id": "n254",
     "word": "percent",
     "translation": "відсоток",
     "explanation": "Може бути іменником або частиною виразу для відсотків у математиці та статистиці.",
@@ -1261,7 +2287,7 @@ export const notionWords = [
     "category": "➗ Math & numbers"
   },
   {
-    "id": "n141",
+    "id": "n255",
     "word": "permission",
     "translation": "дозвіл",
     "explanation": "Коли тобі офіційно або особисто дозволяють щось зробити.",
@@ -1270,7 +2296,7 @@ export const notionWords = [
     "category": "📚 Abstract / study"
   },
   {
-    "id": "n142",
+    "id": "n256",
     "word": "pick up",
     "translation": "підняти / забрати / швидко навчитися",
     "explanation": "Може означати взяти щось, забрати когось або швидко вивчити навичку.",
@@ -1279,7 +2305,7 @@ export const notionWords = [
     "category": "🧩 Phrasal verbs"
   },
   {
-    "id": "n143",
+    "id": "n257",
     "word": "play down",
     "translation": "применшувати важливість",
     "explanation": "Робити проблему або подію менш важливою, ніж вона є.",
@@ -1288,7 +2314,7 @@ export const notionWords = [
     "category": "🧩 Phrasal verbs"
   },
   {
-    "id": "n144",
+    "id": "n258",
     "word": "pleasure",
     "translation": "задоволення / приємність",
     "explanation": "Позитивне відчуття або ввічлива відповідь у фразах типу my pleasure.",
@@ -1297,7 +2323,7 @@ export const notionWords = [
     "category": "🧠 Feelings & traits"
   },
   {
-    "id": "n145",
+    "id": "n259",
     "word": "plug",
     "translation": "штекер / вилка",
     "explanation": "Частина кабелю або зарядки, яку вставляють у розетку.",
@@ -1306,7 +2332,7 @@ export const notionWords = [
     "category": "🏠 Home & things"
   },
   {
-    "id": "n146",
+    "id": "n260",
     "word": "plus",
     "translation": "плюс / додати",
     "explanation": "У математиці означає додавання; також може означати «плюс / додаткова перевага».",
@@ -1315,7 +2341,7 @@ export const notionWords = [
     "category": "➗ Math & numbers"
   },
   {
-    "id": "n147",
+    "id": "n261",
     "word": "point",
     "translation": "точка / суть / аргумент / бал / вказувати",
     "explanation": "Дуже багатозначне слово. Може бути іменником або дієсловом.",
@@ -1324,7 +2350,7 @@ export const notionWords = [
     "category": "📚 Abstract / study"
   },
   {
-    "id": "n148",
+    "id": "n262",
     "word": "point out",
     "translation": "вказати",
     "explanation": "Звернути увагу на факт, помилку або деталь.",
@@ -1333,7 +2359,7 @@ export const notionWords = [
     "category": "🧩 Phrasal verbs"
   },
   {
-    "id": "n149",
+    "id": "n263",
     "word": "polite",
     "translation": "ввічливий",
     "explanation": "Коли людина говорить і поводиться з повагою до інших.",
@@ -1342,7 +2368,7 @@ export const notionWords = [
     "category": "🧠 Feelings & traits"
   },
   {
-    "id": "n150",
+    "id": "n264",
     "word": "portable",
     "translation": "переносний",
     "explanation": "Прикметник: щось легко переносити або брати з собою.",
@@ -1351,7 +2377,7 @@ export const notionWords = [
     "category": "🔌 Tech & devices"
   },
   {
-    "id": "n151",
+    "id": "n265",
     "word": "potable",
     "translation": "придатний для пиття",
     "explanation": "Вода, яку можна безпечно пити.",
@@ -1360,7 +2386,7 @@ export const notionWords = [
     "category": "🍽️ Food"
   },
   {
-    "id": "n152",
+    "id": "n266",
     "word": "preference",
     "translation": "перевага, вподобання",
     "explanation": "Те, чому людина віддає перевагу.",
@@ -1369,7 +2395,7 @@ export const notionWords = [
     "category": "📚 Abstract / study"
   },
   {
-    "id": "n153",
+    "id": "n267",
     "word": "pretend",
     "translation": "прикидатися, удавати",
     "explanation": "Дієслово: удавати, що щось правда, хоча це не так.",
@@ -1378,7 +2404,7 @@ export const notionWords = [
     "category": "⚙️ Actions"
   },
   {
-    "id": "n154",
+    "id": "n268",
     "word": "pretty",
     "translation": "гарний; доволі; досить",
     "explanation": "Як прикметник — гарний/симпатичний. Як прислівник у розмовній мові — доволі/досить.",
@@ -1387,7 +2413,7 @@ export const notionWords = [
     "category": "🔤 Grammar words"
   },
   {
-    "id": "n155",
+    "id": "n269",
     "word": "price-wise",
     "translation": "у плані ціни",
     "explanation": "Форма з -wise: означає «з точки зору ціни / щодо вартості».",
@@ -1396,7 +2422,7 @@ export const notionWords = [
     "category": "💸 Money"
   },
   {
-    "id": "n156",
+    "id": "n270",
     "word": "probably",
     "translation": "скоріше за все, так",
     "explanation": "Прислівник імовірності: означає, що щось дуже можливо або скоріше за все станеться.",
@@ -1405,7 +2431,7 @@ export const notionWords = [
     "category": "🔤 Grammar words"
   },
   {
-    "id": "n157",
+    "id": "n271",
     "word": "promise",
     "translation": "обіцянка / обіцяти",
     "explanation": "У повідомленні було “Promis”, правильно пишеться “promise”.",
@@ -1414,7 +2440,7 @@ export const notionWords = [
     "category": "🗣️ Communication"
   },
   {
-    "id": "n158",
+    "id": "n272",
     "word": "purchase",
     "translation": "купувати / покупка",
     "explanation": "Більш формальне слово для buy; може бути дієсловом або іменником.",
@@ -1423,7 +2449,7 @@ export const notionWords = [
     "category": "💸 Money"
   },
   {
-    "id": "n159",
+    "id": "n273",
     "word": "put off",
     "translation": "відкласти",
     "explanation": "Перенести щось на пізніше.",
@@ -1432,7 +2458,7 @@ export const notionWords = [
     "category": "🧩 Phrasal verbs"
   },
   {
-    "id": "n160",
+    "id": "n274",
     "word": "put on",
     "translation": "одягнути",
     "explanation": "Фразове дієслово: одягнути щось на себе.",
@@ -1441,7 +2467,7 @@ export const notionWords = [
     "category": "🧩 Phrasal verbs"
   },
   {
-    "id": "n161",
+    "id": "n275",
     "word": "queen",
     "translation": "королева",
     "explanation": "Жінка-монарх або дружина короля.",
@@ -1450,7 +2476,7 @@ export const notionWords = [
     "category": "🧍 Body & health"
   },
   {
-    "id": "n162",
+    "id": "n276",
     "word": "quit smoking",
     "translation": "кинути курити",
     "explanation": "Фраза означає перестати курити назавжди або намагатися це зробити.",
@@ -1459,7 +2485,7 @@ export const notionWords = [
     "category": "🧍 Body & health"
   },
   {
-    "id": "n163",
+    "id": "n277",
     "word": "rat",
     "translation": "щур; зрадник",
     "explanation": "Основне значення — тварина щур. У розмовному значенні — людина, яка зрадила або донесла на когось.",
@@ -1468,7 +2494,7 @@ export const notionWords = [
     "category": "🐾 Animals"
   },
   {
-    "id": "n164",
+    "id": "n278",
     "word": "rather",
     "translation": "радше, скоріше",
     "explanation": "Часто в would rather — краще б, волів би.",
@@ -1477,7 +2503,7 @@ export const notionWords = [
     "category": "🔤 Grammar words"
   },
   {
-    "id": "n165",
+    "id": "n279",
     "word": "readable",
     "translation": "легко читати / читабельний",
     "explanation": "Прикметник: текст легко читати або він зрозуміло написаний.",
@@ -1486,7 +2512,7 @@ export const notionWords = [
     "category": "📚 Abstract / study"
   },
   {
-    "id": "n166",
+    "id": "n280",
     "word": "receipt",
     "translation": "чек; квитанція",
     "explanation": "Папір або електронний документ, який підтверджує покупку або оплату.",
@@ -1495,7 +2521,7 @@ export const notionWords = [
     "category": "💸 Money"
   },
   {
-    "id": "n167",
+    "id": "n281",
     "word": "red flag",
     "translation": "тривожний сигнал; поганий знак",
     "explanation": "Ознака, що в людині, ситуації або стосунках може бути проблема.",
@@ -1504,7 +2530,7 @@ export const notionWords = [
     "category": "💞 Relationships"
   },
   {
-    "id": "n168",
+    "id": "n282",
     "word": "relationship",
     "translation": "стосунки; відносини",
     "explanation": "Зв’язок між людьми, особливо романтичний або близький.",
@@ -1513,7 +2539,7 @@ export const notionWords = [
     "category": "💞 Relationships"
   },
   {
-    "id": "n169",
+    "id": "n283",
     "word": "remember",
     "translation": "пам’ятати",
     "explanation": "Дієслово: тримати інформацію в пам’яті або не забути зробити щось.",
@@ -1522,7 +2548,7 @@ export const notionWords = [
     "category": "⚙️ Actions"
   },
   {
-    "id": "n170",
+    "id": "n284",
     "word": "remote",
     "translation": "пульт",
     "explanation": "Remote може означати пульт керування; також прикметник «віддалений», наприклад remote work.",
@@ -1531,7 +2557,7 @@ export const notionWords = [
     "category": "🔌 Tech & devices"
   },
   {
-    "id": "n171",
+    "id": "n285",
     "word": "require",
     "translation": "потребувати / вимагати",
     "explanation": "Коли щось є необхідним або обов’язковим.",
@@ -1540,7 +2566,7 @@ export const notionWords = [
     "category": "⚙️ Actions"
   },
   {
-    "id": "n172",
+    "id": "n286",
     "word": "rerun",
     "translation": "повторний показ; повтор",
     "explanation": "Повторний показ серії, програми або події; також може означати зробити щось ще раз.",
@@ -1549,7 +2575,7 @@ export const notionWords = [
     "category": "⏱️ Time & frequency"
   },
   {
-    "id": "n173",
+    "id": "n287",
     "word": "research",
     "translation": "дослідження",
     "explanation": "Систематичне вивчення теми або пошук інформації; також дієслово «досліджувати».",
@@ -1558,7 +2584,7 @@ export const notionWords = [
     "category": "📚 Abstract / study"
   },
   {
-    "id": "n174",
+    "id": "n288",
     "word": "respond",
     "translation": "відповідати; реагувати",
     "explanation": "Давати відповідь або реакцію.",
@@ -1567,7 +2593,7 @@ export const notionWords = [
     "category": "🗣️ Communication"
   },
   {
-    "id": "n175",
+    "id": "n289",
     "word": "rich",
     "translation": "багатий",
     "explanation": "Прикметник: має багато грошей або багато чогось цінного/насиченого.",
@@ -1576,7 +2602,7 @@ export const notionWords = [
     "category": "💸 Money"
   },
   {
-    "id": "n176",
+    "id": "n290",
     "word": "right way",
     "translation": "правильний спосіб",
     "explanation": "Спосіб зробити щось правильно.",
@@ -1585,7 +2611,7 @@ export const notionWords = [
     "category": "📚 Abstract / study"
   },
   {
-    "id": "n177",
+    "id": "n291",
     "word": "roll",
     "translation": "котитися / рушати / їхати",
     "explanation": "Буквально означає «котитися». У сленгу може означати «рушати» або «поїхали».",
@@ -1594,7 +2620,7 @@ export const notionWords = [
     "category": "🛣️ Places & movement"
   },
   {
-    "id": "n178",
+    "id": "n292",
     "word": "rough",
     "translation": "грубий / нерівний / важкий",
     "explanation": "Може описувати поверхню, поведінку або складний період.",
@@ -1603,7 +2629,7 @@ export const notionWords = [
     "category": "🧠 Feelings & traits"
   },
   {
-    "id": "n179",
+    "id": "n293",
     "word": "rude",
     "translation": "грубий / неввічливий",
     "explanation": "Прикметник: неввічливий, грубий у поведінці або словах.",
@@ -1612,7 +2638,7 @@ export const notionWords = [
     "category": "🧠 Feelings & traits"
   },
   {
-    "id": "n180",
+    "id": "n294",
     "word": "rule out",
     "translation": "виключити можливість",
     "explanation": "Означає прибрати варіант, бо він не підходить або малоймовірний.",
@@ -1621,7 +2647,7 @@ export const notionWords = [
     "category": "🧩 Phrasal verbs"
   },
   {
-    "id": "n181",
+    "id": "n295",
     "word": "run into",
     "translation": "випадково зустріти",
     "explanation": "Випадково зустріти когось або зіткнутися з проблемою.",
@@ -1630,7 +2656,7 @@ export const notionWords = [
     "category": "🧩 Phrasal verbs"
   },
   {
-    "id": "n182",
+    "id": "n296",
     "word": "run out",
     "translation": "закінчитися",
     "explanation": "Коли ресурс повністю закінчився.",
@@ -1639,7 +2665,7 @@ export const notionWords = [
     "category": "🧩 Phrasal verbs"
   },
   {
-    "id": "n183",
+    "id": "n297",
     "word": "same subject BTW",
     "translation": "та ж тема, до речі",
     "explanation": "BTW = by the way = до речі.",
@@ -1648,7 +2674,7 @@ export const notionWords = [
     "category": "🗣️ Communication"
   },
   {
-    "id": "n184",
+    "id": "n298",
     "word": "saw",
     "translation": "бачив; пилка",
     "explanation": "Past Simple від see; також іменник «пилка».",
@@ -1657,7 +2683,7 @@ export const notionWords = [
     "category": "⚙️ Actions"
   },
   {
-    "id": "n185",
+    "id": "n299",
     "word": "seen",
     "translation": "побачений; 3-тя форма see",
     "explanation": "Past participle: see → saw → seen.",
@@ -1666,7 +2692,7 @@ export const notionWords = [
     "category": "⚙️ Actions"
   },
   {
-    "id": "n186",
+    "id": "n300",
     "word": "select",
     "translation": "вибирати; обирати",
     "explanation": "Більш офіційне слово для choose, часто коли вибираємо зі списку.",
@@ -1675,7 +2701,7 @@ export const notionWords = [
     "category": "⚙️ Actions"
   },
   {
-    "id": "n187",
+    "id": "n301",
     "word": "self",
     "translation": "власний / сам / суть",
     "explanation": "Може означати «сам», «власне я» або частину складних слів про себе.",
@@ -1684,7 +2710,7 @@ export const notionWords = [
     "category": "📚 Abstract / study"
   },
   {
-    "id": "n188",
+    "id": "n302",
     "word": "sense",
     "translation": "почуття; відчуття; сенс; глузд; усвідомлювати",
     "explanation": "Може означати фізичне або інтуїтивне відчуття, значення/сенс або здоровий глузд. Як дієслово — відчувати або усвідомлювати щось.",
@@ -1693,7 +2719,7 @@ export const notionWords = [
     "category": "📚 Abstract / study"
   },
   {
-    "id": "n189",
+    "id": "n303",
     "word": "set off",
     "translation": "вирушити",
     "explanation": "Почати подорож або рух кудись.",
@@ -1702,7 +2728,7 @@ export const notionWords = [
     "category": "🧩 Phrasal verbs"
   },
   {
-    "id": "n190",
+    "id": "n304",
     "word": "set up",
     "translation": "організувати / створити / налаштувати",
     "explanation": "Може означати створити компанію, організувати подію або налаштувати пристрій.",
@@ -1711,7 +2737,7 @@ export const notionWords = [
     "category": "🧩 Phrasal verbs"
   },
   {
-    "id": "n191",
+    "id": "n305",
     "word": "shark",
     "translation": "акула",
     "explanation": "Морська хижа риба.",
@@ -1720,7 +2746,7 @@ export const notionWords = [
     "category": "🐾 Animals"
   },
   {
-    "id": "n192",
+    "id": "n306",
     "word": "shelf",
     "translation": "полиця",
     "explanation": "Горизонтальна поверхня для зберігання речей; plural: shelves.",
@@ -1729,7 +2755,7 @@ export const notionWords = [
     "category": "🏠 Home & things"
   },
   {
-    "id": "n193",
+    "id": "n307",
     "word": "she’s kinda into me",
     "translation": "я їй, здається, подобаюсь",
     "explanation": "Розмовна фраза: kinda = трохи/ніби, into me = має інтерес або симпатію до мене.",
@@ -1738,7 +2764,7 @@ export const notionWords = [
     "category": "💞 Relationships"
   },
   {
-    "id": "n194",
+    "id": "n308",
     "word": "shirt",
     "translation": "сорочка; футболка",
     "explanation": "Одяг для верхньої частини тіла. Shirt може бути сорочкою з ґудзиками або просто верхнім одягом, залежно від контексту.",
@@ -1747,7 +2773,7 @@ export const notionWords = [
     "category": "👕 Clothes"
   },
   {
-    "id": "n195",
+    "id": "n309",
     "word": "shoes",
     "translation": "взуття; туфлі",
     "explanation": "Те, що носять на ногах, коли виходять на вулицю. Shoes зазвичай множина.",
@@ -1756,7 +2782,7 @@ export const notionWords = [
     "category": "👕 Clothes"
   },
   {
-    "id": "n196",
+    "id": "n310",
     "word": "shoot",
     "translation": "блін / чорт",
     "explanation": "М’яке розмовне слово, яке кажуть, коли щось пішло не так.",
@@ -1765,7 +2791,7 @@ export const notionWords = [
     "category": "💬 Phrases"
   },
   {
-    "id": "n197",
+    "id": "n311",
     "word": "show up",
     "translation": "з’явитися",
     "explanation": "Прийти або з’явитися, часто несподівано або із запізненням.",
@@ -1774,7 +2800,7 @@ export const notionWords = [
     "category": "🧩 Phrasal verbs"
   },
   {
-    "id": "n198",
+    "id": "n312",
     "word": "shower",
     "translation": "душ",
     "explanation": "Пристрій або місце для миття тіла водою; також дія — приймати душ.",
@@ -1783,7 +2809,7 @@ export const notionWords = [
     "category": "🧍 Body & health"
   },
   {
-    "id": "n199",
+    "id": "n313",
     "word": "sidewalk",
     "translation": "тротуар",
     "explanation": "Місце збоку дороги, де ходять пішоходи.",
@@ -1792,19 +2818,189 @@ export const notionWords = [
     "category": "🛣️ Places & movement"
   },
   {
-    "id": "n200",
+    "id": "n314",
     "word": "simplify",
     "translation": "спростити",
     "explanation": "Зробити щось простішим для розуміння або використання.",
     "pronunciation": "сімпліфай",
     "examples": "Can you simplify this explanation?\nWe should simplify the process.",
     "category": "⚙️ Actions"
+  },
+  {
+    "id": "n315",
+    "word": "simulate",
+    "translation": "імітувати; симулювати",
+    "explanation": "Створювати ситуацію, схожу на реальну, для практики або тесту.",
+    "pronunciation": "сім’юлейт",
+    "examples": "This program can simulate real conversations.\nWe simulated the test before launch.",
+    "category": "⚙️ Actions"
+  },
+  {
+    "id": "n316",
+    "word": "single",
+    "translation": "самотній; не у стосунках; один",
+    "explanation": "Може означати, що людина не має романтичних стосунків, або що щось одне/єдине.",
+    "pronunciation": "сінґл",
+    "examples": "I’m single right now.\nI need a single ticket to London.",
+    "category": "💞 Relationships"
+  },
+  {
+    "id": "n317",
+    "word": "slave",
+    "translation": "раб",
+    "explanation": "Людина, позбавлена свободи й змушена працювати під владою іншого.",
+    "pronunciation": "/sleɪv/",
+    "examples": "The history of slavery is tragic. — Історія рабства трагічна.",
+    "category": "📚 Abstract / study"
+  },
+  {
+    "id": "n318",
+    "word": "slow down",
+    "translation": "сповільнитися / сповільнити",
+    "explanation": "Фразове дієслово: зробити повільніше або почати рухатися повільніше.",
+    "pronunciation": "",
+    "examples": "Slow down the car.",
+    "category": "🧩 Phrasal verbs"
+  },
+  {
+    "id": "n319",
+    "word": "smooth",
+    "translation": "гладкий; плавний; без проблем",
+    "explanation": "Про поверхню — гладкий; про процес — плавний, без проблем.",
+    "pronunciation": "/smuːð/",
+    "examples": "The process was smooth. — Процес пройшов без проблем.",
+    "category": "🧠 Feelings & traits"
+  },
+  {
+    "id": "n320",
+    "word": "so",
+    "translation": "тому; отже; так; дуже",
+    "explanation": "Може означати «тому / отже» або підсилювати прикметник: so hot — дуже жарко.",
+    "pronunciation": "səʊ",
+    "examples": "I was tired, so I went home.\nSo, what do we do now?",
+    "category": "🔤 Grammar words"
+  },
+  {
+    "id": "n321",
+    "word": "so close",
+    "translation": "так близько",
+    "explanation": "Фраза означає, що щось або хтось знаходиться дуже близько до цілі, місця або результату.",
+    "pronunciation": "",
+    "examples": "You were so close to the answer.\nThe store is so close to my house.",
+    "category": "💬 Phrases"
+  },
+  {
+    "id": "n322",
+    "word": "socket",
+    "translation": "розетка",
+    "explanation": "Місце в стіні або подовжувачі, куди вставляють вилку.",
+    "pronunciation": "",
+    "examples": "Plug the charger into the socket.\nThis socket does not work.",
+    "category": "🏠 Home & things"
+  },
+  {
+    "id": "n323",
+    "word": "socks",
+    "translation": "шкарпетки",
+    "explanation": "Одяг, який носять на ногах під взуттям.",
+    "pronunciation": "сокс",
+    "examples": "I need clean socks.\nThese socks are warm and soft.",
+    "category": "👕 Clothes"
+  },
+  {
+    "id": "n324",
+    "word": "soulmate",
+    "translation": "споріднена душа",
+    "explanation": "Людина, з якою маєш дуже глибокий емоційний зв’язок і добре розуміння.",
+    "pronunciation": "соулмейт",
+    "examples": "She believes he is her soulmate.\nA soulmate understands you deeply.",
+    "category": "💞 Relationships"
+  },
+  {
+    "id": "n325",
+    "word": "speed up",
+    "translation": "прискоритися / прискорити",
+    "explanation": "Фразове дієслово: зробити швидше або почати рухатися/працювати швидше.",
+    "pronunciation": "",
+    "examples": "We need to speed up the process.",
+    "category": "🧩 Phrasal verbs"
+  },
+  {
+    "id": "n326",
+    "word": "spend",
+    "translation": "витрачати; проводити час; використовувати; виснажувати",
+    "explanation": "Основне значення: витрачати гроші або проводити час. Додатково може означати використовувати ресурс або виснажувати енергію/сили.",
+    "pronunciation": "",
+    "examples": "I spend too much money on coffee.\nWe spent the weekend at home.\nThis work spends a lot of energy.",
+    "category": "💸 Money"
+  },
+  {
+    "id": "n327",
+    "word": "split the bill",
+    "translation": "розділити рахунок",
+    "explanation": "Коли кожен платить свою частину рахунку, наприклад у кафе або ресторані.",
+    "pronunciation": "спліт зе біл",
+    "examples": "Let’s split the bill.\nWe usually split the bill after dinner.",
+    "category": "💸 Money"
+  },
+  {
+    "id": "n328",
+    "word": "spy",
+    "translation": "шпигун; шпигувати",
+    "explanation": "Іменник — шпигун; дієслово — таємно стежити.",
+    "pronunciation": "/spaɪ/",
+    "examples": "He works as a spy. — Він працює шпигуном.",
+    "category": "⚙️ Actions"
+  },
+  {
+    "id": "n329",
+    "word": "stack",
+    "translation": "стос, стопка; складати в стопку",
+    "explanation": "Купа предметів один на одному; tech stack — набір технологій.",
+    "pronunciation": "/stæk/",
+    "examples": "There is a stack of books. — Там є стос книг.",
+    "category": "🏠 Home & things"
+  },
+  {
+    "id": "n330",
+    "word": "street",
+    "translation": "вулиця",
+    "explanation": "Дорога в місті або селі з будинками вздовж неї.",
+    "pronunciation": "стріт",
+    "examples": "I live on a quiet street.\nThis street is very busy in the morning.",
+    "category": "🛣️ Places & movement"
+  },
+  {
+    "id": "n331",
+    "word": "study",
+    "translation": "вчитися; дослідження; робочий кабінет",
+    "explanation": "Як дієслово — вчитися або вивчати. Як іменник — дослідження або робочий кабінет.",
+    "pronunciation": "",
+    "examples": "I study English every day.\nThis study shows interesting results.",
+    "category": "📚 Abstract / study"
+  },
+  {
+    "id": "n332",
+    "word": "stuff",
+    "translation": "речі / всяке",
+    "explanation": "Неформальне слово для речей або предметів загалом.",
+    "pronunciation": "",
+    "examples": "Put your stuff on the shelf.\nI have a lot of stuff to do today.",
+    "category": "🏠 Home & things"
+  },
+  {
+    "id": "n333",
+    "word": "swear",
+    "translation": "клястися; лаятися",
+    "explanation": "Урочисто обіцяти або використовувати лайку.",
+    "pronunciation": "/sweə(r)/",
+    "examples": "I swear I'm telling the truth. — Клянуся, я кажу правду.",
+    "category": "🗣️ Communication"
   }
 ];
 export const notionSyncMeta = {
   "dataSourceId": "f38dba17-bbd6-4f04-9875-030212db4d0a",
-  "count": 200,
-  "syncedAt": "2026-09-04T02:15:00.000Z",
-  "totalInNotion": 394,
-  "note": "Synced via Notion connector. Re-run GitHub Action for full live sync."
+  "count": 333,
+  "syncedAt": "2026-09-04T03:50:00.000Z",
+  "totalInNotion": 394
 };
