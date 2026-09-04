@@ -1,3 +1,3 @@
-// Initial fallback. Run `npm run sync:notion` to replace this file with all words from Notion.
+// Run `npm run sync:notion` (or GitHub Action) to fill from Notion.
 export const notionWords = [];
 export const notionSyncMeta = { count: 0, syncedAt: null };
