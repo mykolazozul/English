@@ -352,3 +352,28 @@ html[data-theme=custom]{--bg:var(--custom-bg);--surface:var(--custom-surface)}
 .sync-meta-line{margin:10px 0;padding:10px 12px;border-radius:10px;background:color-mix(in srgb,var(--accent) 10%,var(--surface));font-size:13px}
 .admin-gate-card .primary.full{margin-top:8px}
 .hero-art-img{width:120px;height:120px;object-fit:contain;border-radius:20px}
+
+@keyframes fadeIn { from { opacity:0; transform:translateY(8px);} to { opacity:1; transform:none;} }
+@keyframes pop { 0%{transform:scale(.6);opacity:0} 70%{transform:scale(1.08)} 100%{transform:scale(1);opacity:1} }
+@keyframes pulseSoft { 0%,100%{box-shadow:0 0 0 0 transparent} 50%{box-shadow:0 0 0 6px color-mix(in srgb,var(--accent) 20%,transparent)} }
+.fade-in{animation:fadeIn .35s ease both}
+.card{animation:fadeIn .4s ease both}
+.option{transition:transform .12s,border-color .15s,background .15s}
+.option:active:not(:disabled){transform:scale(.97)}
+.option.correct,.option.wrong{animation:pop .35s ease}
+.score-pop{animation:pop .5s ease}
+.primary{transition:transform .12s,box-shadow .12s}
+.nav{transition:background .15s,color .15s}
+.hero{animation:fadeIn .45s ease}
+.key-hint{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:6px;background:color-mix(in srgb,var(--accent) 15%,var(--surface));color:var(--accent);font-size:11px;font-weight:800;margin-right:8px}
+.guest-btn{margin-top:10px;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.guest-pill{display:inline-flex;align-items:center;gap:4px}
+.row-check{display:flex;align-items:center;gap:10px;margin:10px 0;font-weight:600}
+.friend-list{list-style:none;padding:0;margin:12px 0}
+.friend-item{width:100%;text-align:left;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--surface);margin-bottom:6px}
+.friend-item.active{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,var(--surface))}
+.chat-box{max-height:280px;overflow:auto;border:1px solid var(--border);border-radius:12px;padding:10px;margin-bottom:10px;background:color-mix(in srgb,var(--bg) 80%,var(--surface))}
+.chat-msg{padding:8px 10px;margin:6px 0;border-radius:10px;background:var(--surface);border:1px solid var(--border)}
+.chat-msg.me{border-color:color-mix(in srgb,var(--accent) 40%,var(--border))}
+.lb-row{display:flex;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)}
+.bonus-line{color:var(--accent);font-weight:800}

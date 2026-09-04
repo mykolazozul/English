@@ -45,3 +45,11 @@ create table players (
 
 ## Деплой
 Vercel ← GitHub, Framework Vite. Після push — 1–3 хв.
+
+
+## Admin server password
+Set `ADMIN_PASSWORD` in Vercel env. API: `POST /api/admin-auth` with `{ "password": "..." }`.
+Without API (local), falls back to client check.
+
+## Analytics
+Uses `@vercel/analytics/react` (Vite SPA). Enable Web Analytics in Vercel dashboard.

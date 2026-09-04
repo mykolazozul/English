@@ -1,12 +1,12 @@
 import React, {useEffect, useMemo, useState, useCallback, useRef} from 'react';
-import {BarChart3, BookOpen, Check, CheckCircle2, ChevronRight, Flame, Home, Lock, Menu, Moon, Palette, Play, RotateCcw, Settings, Sun, Target, Trophy, User, Volume2, X, XCircle, Shield, SlidersHorizontal, Brain, Sparkles, Keyboard, Layers, Award, Cloud} from 'lucide-react';
+import {BarChart3, BookOpen, Check, CheckCircle2, ChevronRight, Flame, Home, Lock, Menu, Moon, Palette, Play, RotateCcw, Settings, Sun, Target, Trophy, User, Volume2, X, XCircle, Shield, SlidersHorizontal, Brain, Sparkles, Keyboard, Layers, Award, Cloud, Users, MessageCircle, Ghost, VolumeX} from 'lucide-react';
 import {words as fallbackWords, rules, BADGES} from './data';
 import {notionWords, notionSyncMeta} from './notionWords.generated';
 import { Analytics } from '@vercel/analytics/react';
-import {listProfiles, saveProfile, loadProfile, getActiveNick, cloudPull, cloudPush, cloudConfigured} from './lib/storage';
+import {listProfiles, saveProfile, loadProfile, getActiveNick, cloudPull, cloudPush, cloudConfigured, isNickTaken, registerNick, setGuestSession, isGuestSession, getFriends, addFriend, getChat, sendChat, friendsLeaderboard, getDailyAverage, ensureDailyAverage} from './lib/storage'';
 import {onCorrect as srsOk, onWrong as srsBad, isDue, todayStr} from './lib/srs';
 
-const VERSION = '1.0-beta';
+const VERSION = '1.1-beta';
 const words = (notionWords?.length ? notionWords : fallbackWords).map(w => ({
   id: w.id, word: w.word, translation: w.translation || '—', pronunciation: w.pronunciation || '',
   category: w.category || 'Other', level: w.level || '', explanation: w.explanation || '',
@@ -18,11 +18,15 @@ const emptyState = () => ({
   nick: '', name: '', xp: 0, streak: 1, dailyGoal: 50, todayXp: 0, today: todayStr(),
   mastery: {}, srs: {}, attempts: {}, history: [], badges: [], avatar: '🇺🇸',
   theme: 'system', skin: 'classic', customTheme: {accent: '#22a06b', bg: '#f6f8f6', surface: '#ffffff'},
-  admin: {...defaultAdmin}
+  admin: {...defaultAdmin},
+  quiet: false, guest: false, gamesPlayed: 0,
+  compareMode: 'global', compareFriend: '',
+  settings: { keyboardHints: true }
 });
 
 function playTone(ok) {
   try {
+    if (window.__efQuiet) return;
     const C = window.AudioContext || window.webkitAudioContext; if (!C) return;
     const c = new C(), o = c.createOscillator(), g = c.createGain();
     o.type = ok ? 'sine' : 'square';
@@ -36,7 +40,7 @@ function playTone(ok) {
   } catch {}
 }
 function speak(t, rate = 0.9) {
-  if (!('speechSynthesis' in window)) return;
+  if (!('speechSynthesis' in window) || window.__efQuiet) return;
   speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(t);
   u.lang = 'en-US';
@@ -166,6 +170,8 @@ export default function App() {
     mq.addEventListener?.('change', onChange);
     return () => mq.removeEventListener?.('change', onChange);
   }, [state.theme, state.skin, state.customTheme]);
+  useEffect(() => { window.__efQuiet = !!state.quiet; }, [state.quiet]);
+  useEffect(() => { ensureDailyAverage(); }, []);
 
   // Daily reset
   useEffect(() => {
@@ -207,6 +213,8 @@ export default function App() {
         <button key={id} className={'nav' + (page === id ? ' active' : '')} onClick={() => nav(id)}><I size={18}/>{t}</button>
       ))}
       <div className="nav-section">ACCOUNT</div>
+      <button className={'nav' + (page === 'friends' ? ' active' : '')} onClick={() => nav('friends')}><Users size={18}/>Друзі</button>
+      <button className={'nav' + (page === 'settings' ? ' active' : '')} onClick={() => nav('settings')}><Settings size={18}/>Налаштування</button>
       <button className={'nav' + (page === 'profile' ? ' active' : '')} onClick={() => nav('profile')}><User size={18}/>Профіль</button>
       <button className={'nav' + (page === 'about' ? ' active' : '')} onClick={() => nav('about')}><Sparkles size={18}/>Про додаток</button>
       <button className={'nav' + (page === 'admin' ? ' active' : '')} onClick={() => nav('admin')}><Shield size={18}/>Адмін</button>
@@ -219,7 +227,8 @@ export default function App() {
       <main className="main">
         <header>
           <button className="icon mobile-only" onClick={() => setMobile(!mobile)}>{mobile ? <X/> : <Menu/>}</button>
-          <div><b>{state.name || state.nick}</b>{String(state.nick).toLowerCase()==='boss' && <span className="boss-badge" title="Verified">👑</span>}<span className="muted"> · @{state.nick}</span>{String(state.nick).toLowerCase()==='boss' && <span className="pill ok">verified</span>}</div>
+          <div><b>{state.name || state.nick}</b>{String(state.nick).toLowerCase()==='boss' && <span className="boss-badge" title="Verified">👑</span>}<span className="muted"> · @{state.nick}</span>{String(state.nick).toLowerCase()==='boss' && <span className="pill ok">verified</span>}
+          {state.guest && <span className="pill guest-pill"><Ghost size={12}/> гість</span>}</div>
           <div className="header-stats"><span>🔥 {state.streak}</span><span>⚡ {state.xp} XP</span></div>
         </header>
         {children}
@@ -256,6 +265,8 @@ export default function App() {
         {page === 'badges' && <BadgesPage state={state} />}
         {page === 'problems' && <ProblemsPage state={state} save={save} />}
         {page === 'leaderboard' && <Leaderboard state={state} />}
+        {page === 'settings' && <SettingsPage state={state} save={save} />}
+        {page === 'friends' && <FriendsPage state={state} />}
         {page === 'profile' && <Profile state={state} save={save} />}
         {page === 'about' && <AboutPage />}
         {page === 'offline' && <section className="page-error card"><h1>Offline</h1><p>Немає зʼєднання. Перевір інтернет і спробуй знову.</p><button className="primary" type="button" onClick={() => nav('dashboard')}>На головну</button></section>}
@@ -284,21 +295,47 @@ function Onboarding({onDone}) {
   const [nick, setNick] = useState('');
   const [name, setName] = useState('');
   const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+
+  const submit = async () => {
+    const n = nick.trim();
+    if (n.length < 2) { setErr('Нік мінімум 2 символи'); return; }
+    setBusy(true); setErr('');
+    try {
+      if (await isNickTaken(n)) { setErr('Цей нік уже зайнятий'); setBusy(false); return; }
+      setGuestSession(false);
+      const base = emptyState();
+      const profile = await registerNick(n, {...base, nick: n, name: name.trim() || n});
+      onDone(profile);
+    } catch (e) {
+      setErr(e.message || 'Помилка реєстрації');
+    }
+    setBusy(false);
+  };
+
+  const guest = () => {
+    setGuestSession(true);
+    const g = {...emptyState(), nick: 'guest', name: 'Гість', guest: true};
+    saveProfile('guest', g);
+    onDone(g);
+  };
+
   return (
-    <div className="onboarding">
+    <div className="onboarding fade-in">
       <div className="welcome card">
         <div className="logo">EF</div>
         <span className="eyebrow">ENGLISH LEARNING PLATFORM</span>
         <h1>English Flow</h1>
-        <p className="muted">Унікальний нік зберігає прогрес. Введи той самий нік на іншому пристрої — дані підтягнуться (якщо налаштована хмара або це той самий браузер).</p>
-        <label>Нік (унікальний)</label>
-        <input className="search" placeholder="mykola_flow" value={nick} onChange={e => setNick(e.target.value.trim().toLowerCase().replace(/[^a-z0-9_]/g, ''))} />
+        <p className="muted">Унікальний нік (хеш SHA-256). Імʼя шифрується AES-GCM на пристрої.</p>
+        <label>Нік *</label>
+        <input className="search" value={nick} onChange={e => setNick(e.target.value)} placeholder="унікальний_нік" maxLength={24}/>
         <label>Імʼя</label>
-        <input className="search" placeholder="Микола" value={name} onChange={e => setName(e.target.value)} />
-        <button className="primary full" disabled={!nick || busy} onClick={async () => { setBusy(true); await onDone(nick, name); setBusy(false); }}>
-          {busy ? 'Завантаження…' : 'Почати'} <ChevronRight size={17}/>
+        <input className="search" value={name} onChange={e => setName(e.target.value)} placeholder="як до тебе звертатись"/>
+        {err && <p className="auth-err">{err}</p>}
+        <button className="primary full" type="button" disabled={busy} onClick={submit}>{busy ? '…' : 'Почати'}</button>
+        <button className="secondary full guest-btn" type="button" onClick={guest}>
+          <Ghost size={18}/> Увійти як гість (лише цей пристрій)
         </button>
-        <p className="muted small">{cloudConfigured() ? '☁️ Хмара Supabase активна' : '💾 Локальні профілі (додай Supabase для крос-девайс)'}</p>
       </div>
     </div>
   );
@@ -495,7 +532,19 @@ function SprintGame({items, mode, state, save, onExit, onDone}) {
           <span className="eyebrow">LESSON COMPLETE</span>
           <h1>Урок завершено 🎉</h1>
           <p>Правильно: {sessionCorrect} · Помилки: {sessionWrong} · Питань: {list.length}</p>
-          <button className="primary" type="button" onClick={onDone}>На головну</button>
+          {sessionWrong === 0 && sessionCorrect > 0 && (
+            <p className="bonus-line">Бонус ідеальної гри: +{Math.round(sessionCorrect * (state.admin.correctPoints || 4) * 0.1)} XP (10.0%)</p>
+          )}
+          <CompareBlurb state={state} />
+          <button className="primary" type="button" onClick={() => {
+            let next = {...state, gamesPlayed: (state.gamesPlayed || 0) + 1};
+            if (sessionWrong === 0 && sessionCorrect > 0) {
+              const bonus = Math.round(sessionCorrect * (state.admin.correctPoints || 4) * 0.1);
+              next = {...next, xp: next.xp + bonus, todayXp: next.todayXp + bonus};
+            }
+            save(next);
+            onDone();
+          }}>На головну</button>
         </div>
       </section>
     );
@@ -504,6 +553,23 @@ function SprintGame({items, mode, state, save, onExit, onDone}) {
   if (!w) return null;
   const correct = picked === w.answer;
   const masteryNow = state.mastery[w.id] || 0;
+
+  useEffect(() => {
+    const onKey = (e) => {
+      if (picked !== null) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goNext(); }
+        return;
+      }
+      if (mode === 'dictation') return;
+      const n = Number(e.key);
+      if (n >= 1 && n <= 4 && w?.options?.[n-1] !== undefined) {
+        e.preventDefault();
+        answer(w.options[n-1]);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [picked, index, w, mode]);
 
   return (
     <section>
@@ -1085,6 +1151,8 @@ function AdminDanger({save, state}) {
 
 function AboutPage() {
   const changelog = [
+    {v:'1.1-beta', items:['Офлайн-кеш SW для words-db','SHA-256 ніки + AES імена','Унікальність ніка','Друзі + чат + рейтинг друзів','Гість (Ghost)','Тихий режим + Налаштування','Бонус 10% ідеальної гри','Клавіші 1–4','Анімації UI','Адмін пароль SHA-256']},
+    {v:'1.0-beta', items:['Match/Sprint фікси','Серверний admin-auth','Boss verified']},
     {v:'0.9-beta', items:['Анонс великого оновлення на головній','Проблемні + довгі слова Sprint','Авто-тема system light/dark','Сторінка «Про додаток» + changelog','Примусове оновлення словника з прогресом','Без browser alert/confirm — свої модалки','Кнопки з чітким контрастом','Синк Notion ~333 слів у бандлі','Прогрес зберігається при оновленні бази (match by word)']},
     {v:'0.8-beta', items:['Проблемні слова','Повільне аудіо','Адмінка не викидає','Неон контраст + light/dark для скінів','Duo / Slate / Candy UI']},
     {v:'0.7-beta', items:['EN↔UA, SRS, диктант, Match','Бейджі, статистика, нік-профілі','3 дизайни Classic/Neon/Paper','Vercel base / + Analytics']},
@@ -1140,6 +1208,145 @@ function OfflineBanner({online}) {
   return <div className="ef-offline">Немає зʼєднання з мережею. Прогрес локальний; синк словника недоступний.</div>;
 }
 
+
+function SettingsPage({state, save}) {
+  const upd = (patch) => save({...state, ...patch});
+  return (
+    <section className="fade-in">
+      <Title title="Налаштування" text="Звук, порівняння, підказки"/>
+      <div className="grid two">
+        <div className="card">
+          <h2>Звук</h2>
+          <label className="row-check">
+            <input type="checkbox" checked={!!state.quiet} onChange={e => upd({quiet: e.target.checked})}/>
+            <VolumeX size={16}/> Тихий режим (без звуків і TTS)
+          </label>
+          <label className="row-check">
+            <input type="checkbox" checked={state.settings?.keyboardHints !== false} onChange={e => upd({settings: {...(state.settings||{}), keyboardHints: e.target.checked}})}/>
+            <Keyboard size={16}/> Підказки клавіш 1–4
+          </label>
+        </div>
+        <div className="card">
+          <h2>Порівняння після гри</h2>
+          <label>Режим</label>
+          <select className="search" value={state.compareMode || 'global'} onChange={e => upd({compareMode: e.target.value})}>
+            <option value="global">Зі середнім усіх гравців</option>
+            <option value="friend">З конкретним другом</option>
+            <option value="off">Вимкнено</option>
+          </select>
+          {(state.compareMode === 'friend') && (
+            <>
+              <label>Нік друга</label>
+              <input className="search" value={state.compareFriend || ''} onChange={e => upd({compareFriend: e.target.value})} placeholder="nick_друга"/>
+            </>
+          )}
+          <p className="muted small">Середнє по локальних профілях оновлюється раз на добу (00:00 логіка по даті).</p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function FriendsPage({state}) {
+  const [q, setQ] = useState('');
+  const [msg, setMsg] = useState('');
+  const [chatWith, setChatWith] = useState('');
+  const [text, setText] = useState('');
+  const [tick, setTick] = useState(0);
+  const friends = getFriends(state.nick);
+  const board = friends.length ? friendsLeaderboard(state.nick) : [];
+  const messages = chatWith ? getChat(state.nick, chatWith) : [];
+
+  const add = () => {
+    const r = addFriend(state.nick, q);
+    setMsg(r.ok ? 'Додано ✓' : (r.error || 'Помилка'));
+    setTick(t => t + 1);
+    if (r.ok) setQ('');
+  };
+
+  const send = () => {
+    if (!chatWith) return;
+    sendChat(state.nick, chatWith, text);
+    setText('');
+    setTick(t => t + 1);
+  };
+
+  return (
+    <section className="fade-in" key={tick}>
+      <Title title="Друзі" text="Пошук, чат і рейтинг між друзями"/>
+      {state.guest && <div className="card muted">У гостьовому режимі друзі локальні лише на цьому пристрої.</div>}
+      <div className="grid two">
+        <div className="card">
+          <h2>Додати друга</h2>
+          <div className="row-btns">
+            <input className="search" value={q} onChange={e => setQ(e.target.value)} placeholder="нік друга"/>
+            <button className="primary" type="button" onClick={add}>Додати</button>
+          </div>
+          {msg && <p className="muted">{msg}</p>}
+          <ul className="friend-list">
+            {friends.map(f => (
+              <li key={f}>
+                <button type="button" className={'friend-item' + (chatWith===f?' active':'')} onClick={() => setChatWith(f)}>
+                  <Users size={14}/> @{f}
+                </button>
+              </li>
+            ))}
+            {!friends.length && <li className="muted">Поки немає друзів</li>}
+          </ul>
+        </div>
+        <div className="card">
+          <h2><MessageCircle size={18}/> Чат {chatWith ? `з @${chatWith}` : ''}</h2>
+          {!chatWith && <p className="muted">Обери друга зліва</p>}
+          {chatWith && (
+            <>
+              <div className="chat-box">
+                {messages.map(m => (
+                  <div key={m.id} className={'chat-msg' + (m.from === state.nick ? ' me' : '')}>
+                    <b>@{m.from}</b> <span className="muted small">{new Date(m.at).toLocaleTimeString()}</span>
+                    <div>{m.text}</div>
+                  </div>
+                ))}
+              </div>
+              <div className="row-btns">
+                <input className="search" value={text} onChange={e => setText(e.target.value)} onKeyDown={e => e.key==='Enter' && send()} placeholder="повідомлення"/>
+                <button className="primary" type="button" onClick={send}>Надіслати</button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+      {friends.length > 0 && (
+        <div className="card" style={{marginTop:16}}>
+          <h2>Рейтинг друзів</h2>
+          <div className="lb">
+            {board.map((r,i) => (
+              <div className="lb-row" key={r.nick}>
+                <span>#{i+1}</span>
+                <b>@{r.nick}</b>
+                {String(r.nick).toLowerCase()==='boss' && ' 👑'}
+                <span className="muted">{r.xp} XP</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
+
+function CompareBlurb({state}) {
+  if (state.compareMode === 'off') return null;
+  const avg = getDailyAverage();
+  if (state.compareMode === 'friend' && state.compareFriend) {
+    const p = loadProfile(state.compareFriend);
+    const fxp = p?.xp || 0;
+    const diff = state.xp - fxp;
+    return <p className="muted">Порівняння з @{state.compareFriend}: ти {diff >= 0 ? 'вище' : 'нижче'} на {Math.abs(diff)} XP</p>;
+  }
+  const diff = state.xp - (avg.avgXp || 0);
+  return <p className="muted">Середнє гравців сьогодні: {avg.avgXp} XP · ти {diff >= 0 ? '+' : ''}{diff} від середнього</p>;
+}
 function Title({title, text}) { return <div className="title"><h1>{title}</h1><p className="muted">{text}</p></div>; }
 function Card({icon, title, value, sub}) { return <div className="card stat"><div className="stat-top">{icon}<span>{title}</span></div><strong>{value}</strong><small>{sub}</small></div>; }
 function Progress({value}) { return <div className="progress"><i style={{width: `${Math.max(0, Math.min(100, value))}%`}}/></div>; }

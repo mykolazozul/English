@@ -1,39 +1,42 @@
 /**
- * Vercel Serverless: POST { password }
- * Env: ADMIN_PASSWORD (plain) or leave default for demo.
- * Returns { ok: true, token } — token is HMAC-ish simple for session (not JWT full).
- * For production set ADMIN_PASSWORD in Vercel env.
+ * POST { password }
+ * Env ADMIN_PASSWORD_HASH = sha256 hex of (ef-v1::PASSWORD)
+ * Or ADMIN_PASSWORD plain for simplicity.
+ * Default demo hash corresponds to: EF-Boss-7kR9!mQ2
  */
+import crypto from 'crypto';
+
+function sha256(s) {
+  return crypto.createHash('sha256').update(s).digest('hex');
+}
+
+const DEFAULT_PLAIN = 'EF-Boss-7kR9!mQ2';
+const DEFAULT_HASH = sha256('ef-v1::' + DEFAULT_PLAIN);
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'method' });
+  if (req.method !== 'POST') return res.status(405).json({ ok: false });
 
-  const expected = process.env.ADMIN_PASSWORD || '2468';
   let body = req.body;
   if (typeof body === 'string') {
     try { body = JSON.parse(body); } catch { body = {}; }
   }
-  const password = body?.password || '';
+  const password = String(body?.password || '');
+  const inputHash = sha256('ef-v1::' + password);
+  const expected = process.env.ADMIN_PASSWORD_HASH
+    || (process.env.ADMIN_PASSWORD ? sha256('ef-v1::' + process.env.ADMIN_PASSWORD) : DEFAULT_HASH);
 
-  // timing-safe-ish compare
-  const a = Buffer.from(String(password));
-  const b = Buffer.from(String(expected));
-  let match = a.length === b.length;
-  if (match) {
-    const crypto = await import('crypto');
-    match = crypto.timingSafeEqual(a, b);
-  }
+  const a = Buffer.from(inputHash);
+  const b = Buffer.from(expected);
+  const match = a.length === b.length && crypto.timingSafeEqual(a, b);
 
-  if (!match) {
-    return res.status(401).json({ ok: false, error: 'invalid' });
-  }
+  if (!match) return res.status(401).json({ ok: false, error: 'invalid' });
 
-  const crypto = await import('crypto');
   const token = crypto.createHmac('sha256', process.env.ADMIN_SECRET || expected)
-    .update('ef-admin:' + Date.now().toString().slice(0, 8))
+    .update('ef-admin:' + Date.now().toString().slice(0, 10))
     .digest('hex');
 
   return res.status(200).json({ ok: true, token, exp: Date.now() + 4 * 3600 * 1000 });
