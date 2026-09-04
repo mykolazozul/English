@@ -5,6 +5,7 @@ import {notionWords, notionSyncMeta} from './notionWords.generated';
 import { Analytics } from '@vercel/analytics/react';
 import {listProfiles, saveProfile, loadProfile, getActiveNick, cloudPull, cloudPush, cloudConfigured, isNickTaken, registerNick, setGuestSession, isGuestSession, getFriends, addFriend, getChat, sendChat, friendsLeaderboard, getDailyAverage, ensureDailyAverage} from './lib/storage';
 import {onCorrect as srsOk, onWrong as srsBad, isDue, todayStr} from './lib/srs';
+import {dbPutProfile, dbGetProfile, dbListProfiles, dbSaveWords, dbLoadWords} from './lib/db.js';
 
 
 /** Roadmap in admin — remove only when user asks by title */
@@ -26,7 +27,7 @@ const ROADMAP_ITEMS = [
   {v:'1.6', title:'PWA / повний офлайн', status:'planned'},
 ];
 
-const VERSION = '1.5-beta';
+const VERSION = '1.7-beta';
 const words = (notionWords?.length ? notionWords : fallbackWords).map(w => ({
   id: w.id, word: w.word, translation: w.translation || '—', pronunciation: w.pronunciation || '',
   category: w.category || 'Other', level: w.level || '', explanation: w.explanation || '',
@@ -198,6 +199,7 @@ export default function App() {
     setState(next);
     if (next.nick) {
       saveProfile(next.nick, next);
+      try { dbPutProfile(next); } catch {}
       if (cloudConfigured()) cloudPush(next.nick, next).catch(() => {});
     }
   }, []);
@@ -283,6 +285,16 @@ export default function App() {
   }, []);
   useEffect(() => { ensureDailyAverage(); }, []);
   useEffect(() => {
+    (async () => {
+      try {
+        const {words: idbWords} = await dbLoadWords();
+        if (idbWords?.length && (!wordsLive || wordsLive.length < idbWords.length)) {
+          setWordsLive(idbWords);
+        }
+      } catch {}
+    })();
+  }, []);
+  useEffect(() => {
     const t = todayStr();
     if (!state.midnightSnap || state.midnightSnap.date !== t) {
       const total = (state.history||[]).length;
@@ -347,7 +359,7 @@ export default function App() {
       <main className="main">
         <header>
           <button className="icon mobile-only" onClick={() => setMobile(!mobile)}>{mobile ? <X/> : <Menu/>}</button>
-          <div><b>{state.name || state.nick}</b>{String(state.nick).toLowerCase()==='boss' && <span className="boss-badge" title="Verified">👑</span>}<span className="muted"> · @{state.nick}</span>{String(state.nick).toLowerCase()==='boss' && <span className="pill ok">verified</span>}
+          <div><b>{state.name || state.nick}</b>{(String(state.nick||'').toLowerCase()==='boss' || String(state.name||'').toLowerCase()==='boss') && <span className="boss-badge" title="Verified">👑</span>}<span className="muted"> · @{state.nick}</span>{(String(state.nick||'').toLowerCase()==='boss' || String(state.name||'').toLowerCase()==='boss') && <span className="pill ok">verified</span>}
           {state.guest && <span className="pill guest-pill"><Ghost size={12}/> гість</span>}</div>
           <div className="header-stats"><span>🔥 {state.streak}</span><span>⚡ {state.xp} XP</span></div>
         </header>
@@ -362,15 +374,40 @@ export default function App() {
   );
 
   if (page === 'onboarding') {
-    return <><Onboarding onDone={async (nick, name) => {
+    return <><Onboarding onDone={async (payload, maybeName) => {
+      // Accept profile object OR (nick, name) for compatibility
+      let nick, name, profile;
+      if (payload && typeof payload === 'object' && payload.nick) {
+        profile = payload;
+        nick = String(profile.nick);
+        name = profile.name || nick;
+      } else {
+        nick = String(payload || '').trim();
+        name = maybeName || nick;
+        profile = null;
+      }
+      if (!nick) return;
       let base = emptyState();
       const local = loadProfile(nick);
       if (local) base = {...base, ...local};
-      const remote = await cloudPull(nick);
-      if (remote && (!local || (remote.updatedAt || '') > (local.updatedAt || ''))) base = {...base, ...remote};
-      const s = {...base, nick, name: name || nick, admin: {...defaultAdmin, ...(base.admin || {})}};
-      save(s); setPage('dashboard');
-      setCloudMsg(remote ? 'Прогрес підтягнуто з хмари' : (local ? 'Локальний профіль' : 'Новий профіль'));
+      if (profile) base = {...base, ...profile};
+      try {
+        const remote = await cloudPull(nick);
+        if (remote && (!local || (remote.updatedAt || '') > (local?.updatedAt || ''))) {
+          base = {...base, ...remote};
+        }
+      } catch {}
+      const s = {
+        ...emptyState(),
+        ...base,
+        nick,
+        name: name || base.name || nick,
+        admin: {...defaultAdmin, ...(base.admin || {})},
+        guest: !!base.guest
+      };
+      save(s);
+      setPage('dashboard');
+      setCloudMsg(local || profile ? 'Профіль готовий' : 'Новий профіль');
     }}/><div className="version-badge">v{VERSION}</div><Analytics /></>;
   }
 
@@ -383,7 +420,7 @@ export default function App() {
         {page === 'review' && <ReviewPage state={state} due={dueCount} onStart={() => startLesson('srs', 'en-ua', 'all')} />}
         {page === 'stats' && <Stats state={state} learned={learnedCount} />}
         {page === 'badges' && <BadgesPage state={state} />}
-        {page === 'problems' && <ProblemsPage state={state} save={save} onStart={(m,d,c) => { setLessonCfg({mode:m,direction:d,category:c}); setPage('lesson'); }} />}
+        {page === 'problems' && <ProblemsPage state={state} save={save} wordsCatalog={wordsLive} onStart={(m,d,c) => { setLessonCfg({mode:m,direction:d,category:c}); setPage('lesson'); }} />}
         {page === 'leaderboard' && <Leaderboard state={state} />}
         {page === 'settings' && <SettingsPage state={state} save={save} />}
         {page === 'friends' && <FriendsPage state={state} />}
@@ -523,10 +560,12 @@ function Onboarding({onDone}) {
 function Dashboard({state, learned, due, words, onLearn, onReview, cloudMsg, notionMeta}) {
   return (
     <section>
-      <div className="announce card">
-        <span className="eyebrow">UPDATE · v1.5-beta</span>
-        <h2>English Flow</h2>
-        <p>Вчи слова, збирай XP, змагайся з друзями. Прогрес зберігається локально та в хмарі (якщо налаштована).</p>
+      <div className="announce card jungle-announce">
+        <span className="vine-deco left" aria-hidden="true">🌿</span>
+        <span className="vine-deco right" aria-hidden="true">🌿</span>
+        <span className="eyebrow">UPDATE · v1.7-beta</span>
+        <h2>🚀 Велике оновлення вже тут</h2>
+        <p>Sprint, SRS, друзі, бейджі. Прогрес зберігається локально та в хмарі (якщо налаштована).</p>
       </div>
       <div className="hero">
         <div>
@@ -549,7 +588,7 @@ function Dashboard({state, learned, due, words, onLearn, onReview, cloudMsg, not
       </div>
       <div className="card">
         <h2>Notion</h2>
-        <p className="muted">{notionMeta?.count ? `Синхронізовано ${notionMeta.count} слів · ${notionMeta.syncedAt || ''}` : `Зараз локальний словник (${words} слів). Повну синхронізацію Notion зробимо пізніше — нагадаю.`}</p>
+        <p className="muted">{notionMeta?.count ? `<!-- sync removed --> ${notionMeta.count} слів · ${notionMeta.syncedAt || ''}` : `Зараз локальний словник (${words} слів). Повну синхронізацію Notion зробимо пізніше — нагадаю.`}</p>
       </div>
     </section>
   );
@@ -624,13 +663,14 @@ function Learn({state, cats, onStart}) {
   );
 }
 
-function Lesson({cfg, state, save, onExit, onDone}) {
+function Lesson({cfg, state, save, onExit, onDone, wordsCatalog}) {
   const mode = cfg.mode;
+  const catalog = (wordsCatalog && wordsCatalog.length) ? wordsCatalog : words;
   const items = useMemo(() => {
-    let pool = words;
+    let pool = catalog;
     if (mode === 'srs') {
-      const due = words.filter(w => isDue(state.srs[w.id], todayStr()));
-      pool = due.length ? due : words;
+      const due = catalog.filter(w => isDue(state.srs[w.id], todayStr()));
+      pool = due.length ? due : catalog;
     } else if (mode === 'problems') {
       const wrongIds = new Set();
       (state.history || []).forEach(h => { if (!h.correct) wrongIds.add(String(h.word)); });
@@ -937,10 +977,11 @@ function MatchGame({items, state, save, onExit, onDone}) {
   );
 }
 
-function Vocabulary({state, setModal}) {
+function Vocabulary({state, setModal, wordsCatalog}) {
+  const dict = (wordsCatalog && wordsCatalog.length) ? wordsCatalog : words;
   const [q, setQ] = useState('');
   const [cat, setCat] = useState('all');
-  const f = words.filter(w => {
+  const f = dict.filter(w => {
     const okCat = cat === 'all' || w.category === cat;
     const okQ = (w.word + ' ' + w.translation + ' ' + w.category).toLowerCase().includes(q.toLowerCase());
     return okCat && okQ;
@@ -984,7 +1025,8 @@ function Vocabulary({state, setModal}) {
 }
 
 
-function ProblemsPage({state, save, onStart}) {
+function ProblemsPage({state, save, onStart, wordsCatalog}) {
+  const dict = (wordsCatalog && wordsCatalog.length) ? wordsCatalog : words;
   const [slow, setSlow] = useState(true);
   const [minErr, setMinErr] = useState(2);
   const stats = useMemo(() => {
@@ -1034,7 +1076,7 @@ function ProblemsPage({state, save, onStart}) {
       <div className={'word-list' + (state.settings?.staggerList === false ? '' : ' stagger')}>
         {stats.length === 0 && <div className="card muted">Немає слів з ≥{minErr} помилками.</div>}
         {stats.map((s, idx) => {
-          const w = words.find(x => String(x.id) === String(s.id));
+          const w = dict.find(x => String(x.id) === String(s.id));
           if (!w) return null;
           return (
             <div className="word-row card" key={s.id} style={{animationDelay: (idx * 0.04) + 's'}}>
@@ -1110,6 +1152,27 @@ function Stats({state, learned}) {
           ))}
         </div>
       </div>
+      <div className="grid two">
+        <div className="card">
+          <h2>Точність</h2>
+          <div className="donut-wrap">
+            <div className="donut" style={{background: `conic-gradient(var(--accent) 0 ${pct}%, var(--border) ${pct}% 100%)`}}/>
+            <div className="donut-label"><b>{pct}%</b><span className="muted">correct</span></div>
+          </div>
+          <p className="muted small">{correct} правильних · {total - correct} помилок · {total} всього</p>
+        </div>
+        <div className="card">
+          <h2>Режими гри</h2>
+          <ModeBars history={state.history || []} />
+        </div>
+      </div>
+      <div className="card">
+        <h2>XP сьогодні vs ціль</h2>
+        <div className="xp-goal-track">
+          <i style={{width: Math.min(100, Math.round(((state.todayXp||0) / Math.max(1, state.dailyGoal||50)) * 100)) + '%'}}/>
+        </div>
+        <p className="muted">{state.todayXp || 0} / {Math.max(1, state.dailyGoal || 50)} XP ({Math.min(100, Math.round(((state.todayXp||0) / Math.max(1, state.dailyGoal||50)) * 100))}%)</p>
+      </div>
     </section>
   );
 }
@@ -1125,9 +1188,11 @@ function BadgesPage({state}) {
           return (
             <div key={b.id} className={'badge-card card' + (on ? ' earned' : ' locked')}>
               <div className="badge-ico">{on ? '🏅' : '🔒'}</div>
-              <h3>{b.title}</h3>
-              <p className="muted">{b.desc}</p>
-              {on && <span className="pill ok">Отримано</span>}
+              <div className="badge-body">
+                <h3>{b.title}</h3>
+                <p className="muted badge-desc">{b.desc}</p>
+                {on && <span className="pill ok">Отримано</span>}
+              </div>
             </div>
           );
         })}
@@ -1158,6 +1223,9 @@ function Leaderboard({state}) {
 }
 
 function Profile({state, save}) {
+  const level = Math.max(1, Math.floor((state.xp || 0) / 100) + 1);
+  const xpInto = (state.xp || 0) % 100;
+
   const [name, setName] = useState(state.name);
   const [goal, setGoal] = useState(Math.max(1, state.dailyGoal || 50));
   const [theme, setTheme] = useState(state.theme);
@@ -1184,7 +1252,17 @@ function Profile({state, save}) {
   };
 
   return (
-    <section>
+    <section className="rpg-profile fade-in">
+      <div className="hero-rpg card">
+        <div className="rpg-avatar">{state.avatar || '🎓'}</div>
+        <div style={{flex:1,minWidth:180}}>
+          <div className="rpg-level">Рівень {level}</div>
+          <h2 style={{margin:'4px 0'}}>{state.name || state.nick} {(String(state.nick||'').toLowerCase()==='boss' || String(state.name||'').toLowerCase()==='boss') && '👑'}</h2>
+          <div className="muted">@{state.nick} · {state.xp || 0} XP · 🔥 {state.streak || 0}</div>
+          <div className="xp-bar" title="До наступного рівня"><i style={{width: xpInto + '%'}}/></div>
+          <small className="muted">{xpInto}/100 XP до рівня {level + 1}</small>
+        </div>
+      </div>
       <Title title="Профіль" text={`Нік @${state.nick}`}/>
       <div className="grid two">
         <div className="card">
@@ -1249,48 +1327,60 @@ function Admin({state, save, setWordsLive, wordsLive}) {
   const forceSync = async () => {
     if (syncing) return;
     setSyncing(true);
-    setSyncProg({cur: 0, total: 100, label: 'Зʼєднання зі словником…'});
+    setSyncProg({cur: 0, total: 100, label: 'Зʼєднання з Notion…'});
     try {
-      const res = await fetch((import.meta.env.BASE_URL || '/') + 'words-db.json?t=' + Date.now());
-      if (!res.ok) throw new Error('Не вдалося завантажити words-db.json');
-      const data = await res.json();
+      let data = null;
+      // 1) Live Notion via serverless (needs NOTION_TOKEN on Vercel)
+      try {
+        const live = await fetch('/api/notion-sync', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+        if (live.ok) {
+          data = await live.json();
+          setSyncProg({cur: 20, total: 100, label: 'Notion: ' + (data.meta?.count || data.words?.length || 0) + ' слів'});
+        } else {
+          const err = await live.json().catch(() => ({}));
+          setSyncProg({cur: 10, total: 100, label: 'API: ' + (err.error || live.status) + ' → fallback JSON'});
+        }
+      } catch (e) {
+        setSyncProg({cur: 10, total: 100, label: 'API недоступне → words-db.json'});
+      }
+      // 2) Fallback static bundle
+      if (!data?.words?.length) {
+        const res = await fetch((import.meta.env.BASE_URL || '/') + 'words-db.json?t=' + Date.now());
+        if (!res.ok) throw new Error('Не вдалося завантажити словник');
+        data = await res.json();
+      }
       const list = data.words || [];
       const total = list.length || 1;
       const mapped = [];
       for (let i = 0; i < list.length; i++) {
         const w = list[i];
         mapped.push({
-          id: w.id || ('n' + (i+1)),
+          id: w.id || ('n' + (i + 1)),
           word: w.word,
           translation: w.translation || '—',
           pronunciation: w.pronunciation || '',
           category: w.category || 'Other',
+          level: w.level || '',
           explanation: w.explanation || '',
           example: (w.example || (w.examples || '').split('\n')[0] || '')
         });
-        if (i % 8 === 0 || i === list.length - 1) {
-          setSyncProg({cur: i + 1, total, label: 'Оновлення слів…'});
-          await new Promise(r => setTimeout(r, 12));
+        if (i % 10 === 0 || i === list.length - 1) {
+          setSyncProg({cur: i + 1, total, label: `Оновлення ${i + 1}/${total}`});
+          await new Promise(r => setTimeout(r, 8));
         }
       }
-      // Preserve progress: remap mastery/srs by word text when ids change
-      const byText = {};
-      (wordsLive || []).forEach(w => { byText[(w.word || '').toLowerCase()] = w.id; });
-      const newByText = {};
-      mapped.forEach(w => { newByText[(w.word || '').toLowerCase()] = w.id; });
-      const mastery = {...state.mastery};
-      const srs = {...state.srs};
-      // keep as-is if ids stable (n1,n2...); progress keyed by id from history still works for same ids
       localStorage.setItem('ef-words-cache-v1', JSON.stringify({words: mapped, meta: data.meta || {}, at: new Date().toISOString()}));
+      try { await dbSaveWords(mapped, data.meta || {}); } catch {}
       setWordsLive(mapped);
-      setSyncProg({cur: total, total, label: 'Готово'});
+      setSyncProg({cur: total, total, label: `Готово · ${total} слів · ${(data.meta && data.meta.source) || 'cache'}`});
       setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
+      setTimeout(() => setSaved(false), 2500);
     } catch (e) {
       setSyncProg({cur: 0, total: 0, label: 'Помилка: ' + (e.message || 'sync failed')});
     }
     setSyncing(false);
   };
+
 
   const tryUnlock = async () => {
     setAuthBusy(true); setAuthErr('');
@@ -1341,7 +1431,7 @@ function Admin({state, save, setWordsLive, wordsLive}) {
       <div className="card sync-card">
         <h2>Словник Notion</h2>
         <p className="muted">Оновлення з файлу words-db.json (генерується з Notion). Прогрес гравця не стирається.</p>
-        <p className="sync-meta-line">Синхронізовано <b>{(wordsLive && wordsLive.length) || notionSyncMeta.count || 0}</b> слів · {notionSyncMeta.syncedAt || '—'}</p>
+        <p className="sync-meta-line"><!-- sync removed --> <b>{(wordsLive && wordsLive.length) || notionSyncMeta.count || 0}</b> слів · {notionSyncMeta.syncedAt || '—'}</p>
         <button className="primary" type="button" disabled={syncing} onClick={forceSync}>
           {syncing ? 'Оновлення…' : 'Оновити словник зараз'}
         </button>
@@ -1416,6 +1506,10 @@ function Admin({state, save, setWordsLive, wordsLive}) {
           </div>
         </div>
         <div className="card">
+          <h2>Пошук гравців (локальна БД)</h2>
+          <PlayerDBSearch current={state} save={save} />
+        </div>
+        <div className="card">
           <h2>Дані гравця</h2>
           <AdminDanger save={save} state={state} />
         </div>
@@ -1445,6 +1539,8 @@ function AdminDanger({save, state}) {
 
 function AboutPage() {
   const changelog = [
+    {v:'1.7-beta', items:['Notion live sync /api/notion-sync','IndexedDB локальна БД','Графіки статистики (donut/modes/XP)','Lesson на wordsLive','Пошук гравців у адмінці']},
+    {v:'1.6-beta', items:['Фікс інкогніто/реєстрації (onDone profile)','Корона Boss','Ліани-емодзі','Sprint/Match hardening','RPG профіль','About compact','Бейджі текст знизу']},
     {v:'1.5-beta', items:['Вхід нік+пароль','Адмін лок без dashboard','Sprint step fix','Match stay','Без ліан/зелених смуг','Зелений favicon','Проблемні: лише реально проблемні']},
     {v:'1.4-beta', items:['Fix Vercel build (lazy dup + string)','Mobile overlap fix','Admin roadmap table','Stagger setting','Skeleton component']},
     {v:'1.3-beta', items:['Admin lock 30s + visibility','Favicon EF','Heatmap','Problems ≥3 + sprint + week','Analytics 1-17 panel','Confetti ideal','Sound packs','Reduced motion']},
@@ -1663,6 +1759,38 @@ function CompareBlurb({state}) {
   return <p className="muted">Середнє гравців сьогодні: {avg.avgXp} XP · ти {diff >= 0 ? '+' : ''}{diff} від середнього</p>;
 }
 
+function PlayerDBSearch({current, save}) {
+  const [q, setQ] = useState('');
+  const [rows, setRows] = useState([]);
+  useEffect(() => {
+    (async () => {
+      const list = await dbListProfiles();
+      setRows(list || []);
+    })();
+  }, [current.xp, current.nick]);
+  const filtered = rows.filter(r => !q || String(r.nick||'').toLowerCase().includes(q.toLowerCase()) || String(r.name||'').toLowerCase().includes(q.toLowerCase()));
+  return (
+    <div>
+      <input className="search" placeholder="Пошук за ніком…" value={q} onChange={e => setQ(e.target.value)}/>
+      <div className="player-db-list">
+        {filtered.length === 0 && <p className="muted">Немає профілів у IndexedDB (зʼявляться після входів на цьому пристрої).</p>}
+        {filtered.map(r => (
+          <div key={r.nick} className="word-row card" style={{marginTop:8}}>
+            <div>
+              <b>{r.name || r.nick}</b> <span className="muted">@{r.nick}</span>
+              <div className="muted small">{r.xp||0} XP · streak {r.streak||0}</div>
+            </div>
+            <button type="button" className="secondary" onClick={() => {
+              if (r.nick === current.nick) {
+                save({...r, xp: 0, todayXp: 0, mastery: {}, srs: {}, history: [], badges: [], attempts: {}});
+              }
+            }}>Обнулити XP</button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 function AnalyticsPanel() {
   const [snap, setSnap] = useState(null);
   useEffect(() => {
@@ -1731,6 +1859,27 @@ function AnalyticsPanel() {
 
 function Title({title, text}) { return <div className="title"><h1>{title}</h1><p className="muted">{text}</p></div>; }
 
+function ModeBars({history}) {
+  const map = {};
+  (history || []).forEach(h => {
+    const m = h.mode || 'sprint';
+    map[m] = (map[m] || 0) + 1;
+  });
+  const entries = Object.entries(map).sort((a,b) => b[1]-a[1]);
+  const max = Math.max(1, ...entries.map(e => e[1]));
+  if (!entries.length) return <p className="muted">Ще немає даних</p>;
+  return (
+    <div className="mode-bars">
+      {entries.map(([k,v]) => (
+        <div key={k} className="mode-row">
+          <span className="mode-name">{k}</span>
+          <div className="mode-track"><i style={{width: (v/max*100) + '%'}}/></div>
+          <span className="mode-n">{v}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
 function Skeleton({h=120}) {
   return <div className="skeleton" style={{height:h,width:'100%',margin:'8px 0'}} aria-hidden="true"/>;
 }

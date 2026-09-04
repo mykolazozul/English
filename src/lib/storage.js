@@ -28,7 +28,7 @@ export async function isNickTaken(nick) {
     try {
       const remote = await cloudPull(n);
       if (remote) return true;
-    } catch {}
+    } catch { /* offline / no cloud — ignore */ }
   }
   return false;
 }
