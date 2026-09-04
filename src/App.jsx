@@ -6,7 +6,7 @@ import { Analytics } from '@vercel/analytics/react';
 import {listProfiles, saveProfile, loadProfile, getActiveNick, cloudPull, cloudPush, cloudConfigured} from './lib/storage';
 import {onCorrect as srsOk, onWrong as srsBad, isDue, todayStr} from './lib/srs';
 
-const VERSION = '0.7-beta';
+const VERSION = '0.8-beta';
 const words = (notionWords?.length ? notionWords : fallbackWords).map(w => ({
   id: w.id, word: w.word, translation: w.translation || '—', pronunciation: w.pronunciation || '',
   category: w.category || 'Other', level: w.level || '', explanation: w.explanation || '',
@@ -35,10 +35,10 @@ function playTone(ok) {
     setTimeout(() => c.close(), 400);
   } catch {}
 }
-function speak(t) {
+function speak(t, rate = 0.9) {
   if (!('speechSynthesis' in window)) return;
   speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(t); u.lang = 'en-US'; u.rate = 0.9; speechSynthesis.speak(u);
+  const u = new SpeechSynthesisUtterance(t); u.lang = 'en-US'; u.rate = rate; speechSynthesis.speak(u);
 }
 function shuffle(arr) {
   const a = [...arr];
@@ -139,6 +139,7 @@ export default function App() {
       {[
         ['stats', BarChart3, 'Статистика'],
         ['badges', Award, 'Бейджі'],
+        ['problems', Target, 'Проблемні'],
         ['leaderboard', Trophy, 'Рейтинг'],
       ].map(([id, I, t]) => (
         <button key={id} className={'nav' + (page === id ? ' active' : '')} onClick={() => nav(id)}><I size={18}/>{t}</button>
@@ -190,6 +191,7 @@ export default function App() {
         {page === 'review' && <ReviewPage state={state} due={dueCount} onStart={() => startLesson('srs', 'en-ua', 'all')} />}
         {page === 'stats' && <Stats state={state} learned={learnedCount} />}
         {page === 'badges' && <BadgesPage state={state} />}
+        {page === 'problems' && <ProblemsPage state={state} save={save} />}
         {page === 'leaderboard' && <Leaderboard state={state} />}
         {page === 'profile' && <Profile state={state} save={save} />}
         {page === 'admin' && <Admin state={state} save={save} />}
@@ -342,6 +344,7 @@ function SprintGame({items, mode, state, save, onExit, onDone}) {
   const [scorePop, setScorePop] = useState(null);
   const [sessionCorrect, setSessionCorrect] = useState(0);
   const [sessionWrong, setSessionWrong] = useState(0);
+  const [slowAudio, setSlowAudio] = useState(false);
 
   const w = items[index];
 
@@ -413,7 +416,10 @@ function SprintGame({items, mode, state, save, onExit, onDone}) {
         </div>
         <h1>{w.direction === 'en-ua' ? <>Що означає <em>{w.prompt}</em>?</> : <>Як англійською: <em>{w.prompt}</em>?</>}</h1>
         {state.admin.showPronunciation && w.direction === 'en-ua' && <p className="muted">{w.pronunciation} · {w.category}</p>}
-        <button className="speak" type="button" onClick={() => speak(w.word)}><Volume2/> Прослухати</button>
+        <div className="speak-row">
+        <button className="speak" type="button" onClick={() => speak(w.word, slowAudio ? 0.55 : 0.9)}><Volume2/> Прослухати</button>
+        <label className="slow-toggle"><input type="checkbox" checked={slowAudio} onChange={e => setSlowAudio(e.target.checked)}/> повільніше</label>
+      </div>
         <div className="options">
           {w.options.map((o, j) => {
             let cls = 'option';
@@ -564,6 +570,54 @@ function Vocabulary({state}) {
               <div className="word-meta">
                 <span className={'pill' + (learned ? ' ok' : '')}>{learned ? 'Вивчено' : `${m}/${state.admin.masteryThreshold}`}</span>
                 <button className="icon" onClick={() => speak(w.word)}><Volume2 size={16}/></button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+
+function ProblemsPage({state, save}) {
+  const stats = useMemo(() => {
+    const map = {};
+    (state.history || []).forEach(h => {
+      if (!h.word) return;
+      if (!map[h.word]) map[h.word] = {wrong: 0, correct: 0};
+      if (h.correct) map[h.word].correct++; else map[h.word].wrong++;
+    });
+    return Object.entries(map)
+      .map(([id, s]) => ({id, ...s, rate: s.wrong / Math.max(1, s.wrong + s.correct)}))
+      .filter(x => x.wrong > 0)
+      .sort((a, b) => b.wrong - a.wrong || b.rate - a.rate);
+  }, [state.history]);
+  const [slow, setSlow] = useState(true);
+  return (
+    <section>
+      <Title title="Проблемні слова" text="Слова з найбільшою кількістю помилок. Увімкни повільне прослуховування."/>
+      <div className="card filters row">
+        <label style={{display:'flex',alignItems:'center',gap:8}}>
+          <input type="checkbox" checked={slow} onChange={e => setSlow(e.target.checked)}/>
+          Повільне аудіо (на слух)
+        </label>
+      </div>
+      <div className="word-list">
+        {stats.length === 0 && <div className="card muted">Помилок ще немає — так тримати.</div>}
+        {stats.map(s => {
+          const w = words.find(x => String(x.id) === String(s.id));
+          if (!w) return null;
+          return (
+            <div className="word-row card" key={s.id}>
+              <div>
+                <b>{w.word}</b> <span className="muted">{w.pronunciation}</span>
+                <div>{w.translation}</div>
+                <small className="muted">помилок: {s.wrong} · правильних: {s.correct}</small>
+              </div>
+              <div className="word-meta">
+                <button className="icon" onClick={() => speak(w.word, slow ? 0.55 : 0.9)}><Volume2 size={16}/></button>
+                <span className="pill">{Math.round(s.rate * 100)}% err</span>
               </div>
             </div>
           );
@@ -724,6 +778,9 @@ function Profile({state, save}) {
             <button className={skin === 'classic' ? 'theme active' : 'theme'} onClick={() => setSkin('classic')}>Classic Green</button>
             <button className={skin === 'neon' ? 'theme active' : 'theme'} onClick={() => setSkin('neon')}>Neon Cyber</button>
             <button className={skin === 'paper' ? 'theme active' : 'theme'} onClick={() => setSkin('paper')}>Paper Academic</button>
+            <button className={skin === 'duo' ? 'theme active' : 'theme'} onClick={() => setSkin('duo')}>Duo Playful</button>
+            <button className={skin === 'slate' ? 'theme active' : 'theme'} onClick={() => setSkin('slate')}>Slate Pro</button>
+            <button className={skin === 'candy' ? 'theme active' : 'theme'} onClick={() => setSkin('candy')}>Candy Soft</button>
           </div>
           <button className="primary" style={{marginTop: 12}} onClick={persist}>Застосувати дизайн</button>
         </div>
@@ -734,17 +791,19 @@ function Profile({state, save}) {
 
 function Admin({state, save}) {
   const [pin, setPin] = useState('');
-  const [ok, setOk] = useState(false);
+  const [ok, setOk] = useState(() => sessionStorage.getItem('ef-admin-ok') === '1');
   const [a, setA] = useState({...state.admin});
   const [saved, setSaved] = useState(false);
+  useEffect(() => { setA({...state.admin}); }, [state.admin]);
+  const unlock = () => { setOk(true); sessionStorage.setItem('ef-admin-ok', '1'); };
   if (!ok) {
     return (
       <section>
         <Title title="Адмін" text="Захищено паролем"/>
         <div className="card" style={{maxWidth: 400}}>
           <label>Пароль</label>
-          <input className="search" type="password" value={pin} onChange={e => setPin(e.target.value)} onKeyDown={e => e.key === 'Enter' && pin === (state.admin.adminPassword || '2468') && setOk(true)}/>
-          <button className="primary" onClick={() => pin === (state.admin.adminPassword || '2468') ? setOk(true) : alert('Невірний пароль')}>Увійти</button>
+          <input className="search" type="password" value={pin} onChange={e => setPin(e.target.value)} onKeyDown={e => e.key === 'Enter' && pin === (state.admin.adminPassword || '2468') && unlock()}/>
+          <button className="primary" onClick={() => pin === (state.admin.adminPassword || '2468') ? unlock() : alert('Невірний пароль')}>Увійти</button>
         </div>
       </section>
     );
