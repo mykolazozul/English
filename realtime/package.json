@@ -1,0 +1,7 @@
+{
+  "name":"english-flow-realtime",
+  "private":true,
+  "type":"module",
+  "scripts":{"start":"node server.mjs"},
+  "dependencies":{"pg":"^8.16.3","ws":"^8.18.3"}
+}

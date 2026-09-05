@@ -1,11 +1,13 @@
 import React, {useEffect, useMemo, useState, useCallback, useRef, lazy, Suspense} from 'react';
-import {BarChart3, BookOpen, Check, CheckCircle2, ChevronRight, Flame, Home, Lock, Menu, Moon, Palette, Play, RotateCcw, Settings, Sun, Target, Trophy, User, Volume2, X, XCircle, Shield, SlidersHorizontal, Brain, Sparkles, Keyboard, Layers, Award, Cloud, Users, MessageCircle, Ghost, VolumeX} from 'lucide-react';
+import {BarChart3, BookOpen, Check, CheckCircle2, ChevronRight, Flame, Home, Lock, Menu, Moon, Palette, Play, RotateCcw, Settings, Sun, Target, Trophy, User, Volume2, X, XCircle, Shield, SlidersHorizontal, Brain, Sparkles, Keyboard, Layers, Award, Cloud, Users, MessageCircle, Ghost, VolumeX, Swords, ShieldAlert, Eye, Bell, Wifi} from 'lucide-react';
 import {words as fallbackWords, rules, BADGES} from './data';
 import {notionWords, notionSyncMeta} from './notionWords.generated';
 import { Analytics } from '@vercel/analytics/react';
 import {listProfiles, saveProfile, loadProfile, getActiveNick, cloudPull, cloudPush, cloudConfigured, isNickTaken, registerNick, setGuestSession, isGuestSession, getFriends, addFriend, acceptFriend, getChat, sendChat, friendsLeaderboard, getDailyAverage, ensureDailyAverage, serverAuth, loadCloudVocabulary, cloudRecordProgress, cloudStartLesson, cloudFinishLesson, flushProgressQueue, serverMe, loadServerConfig} from './lib/storage';
 import {onCorrect as srsOk, onWrong as srsBad, isDue, todayStr} from './lib/srs';
 import {dbPutProfile, dbGetProfile, dbListProfiles, dbSaveWords, dbLoadWords} from './lib/db.js';
+import {createRealtime} from './lib/realtime.js';
+import {track} from './lib/analytics.js';
 
 
 /** Roadmap in admin — remove only when user asks by title */
@@ -209,6 +211,8 @@ export default function App() {
     }).catch(() => {});
   }, []);
   useEffect(() => { const on=()=>flushProgressQueue().catch(()=>{}); window.addEventListener('online',on); return()=>window.removeEventListener('online',on); }, []);
+  useEffect(() => { track('app_open',{page:location.pathname}); }, []);
+  useEffect(() => { if (state.nick) track('page_view',{page}); }, [page, state.nick]);
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 2800); };
 
   const profileSyncTimer = useRef(null);
@@ -388,6 +392,7 @@ export default function App() {
         ['badges', Award, 'Бейджі'],
         ['problems', Target, 'Проблемні'],
         ['leaderboard', Trophy, 'Рейтинг'],
+        ['challenges', Swords, 'Challenges'],
       ].map(([id, I, t]) => (
         <button key={id} className={'nav' + (page === id ? ' active' : '')} onClick={() => nav(id)}><I size={18}/>{t}</button>
       ))}
@@ -471,6 +476,7 @@ export default function App() {
         {page === 'leaderboard' && <Leaderboard state={state} />}
         {page === 'settings' && <SettingsPage state={state} save={save} />}
         {page === 'friends' && <FriendsPage state={state} />}
+        {page === 'challenges' && <ChallengesPage state={state} />}
         {page === 'profile' && <Profile state={state} save={save} />}
         {page === 'about' && <AboutPage />}
         {page === 'offline' && <section className="page-error card"><h1>Offline</h1><p>Немає зʼєднання. Перевір інтернет і спробуй знову.</p><button className="primary" type="button" onClick={() => nav('dashboard')}>На головну</button></section>}
@@ -703,8 +709,9 @@ function Learn({state, cats, onStart}) {
 function Lesson({cfg, state, save, onExit, onDone, wordsCatalog}) {
   const mode = cfg.mode;
   const [lessonId, setLessonId] = useState('');
+  const [serverItems, setServerItems] = useState(null);
   const catalog = (wordsCatalog && wordsCatalog.length) ? wordsCatalog : words;
-  const items = useMemo(() => {
+  const localItems = useMemo(() => {
     let pool = catalog;
     if (mode === 'srs') {
       const due = catalog.filter(w => isDue(state.srs[w.id], todayStr()) && (state.mastery[w.id] || 0) > 0);
@@ -723,15 +730,17 @@ function Lesson({cfg, state, save, onExit, onDone, wordsCatalog}) {
     if (state.admin.shuffleQuestions !== false) pool = shuffle(pool);
     if (mode === 'match') return pool.slice(0, 6);
     return makeQuizItems(pool, state.admin.lessonSize, cfg.direction, 'all');
-  }, []);
+  }, [catalog, mode, cfg.direction, cfg.category, state]);
+  const items = serverItems?.length ? serverItems : localItems;
   useEffect(() => {
-    if (state.guest || !items.length) return;
-    cloudStartLesson(mode, Math.min(items.length, 100)).then(r => setLessonId(r.lessonId || '')).catch(() => {});
-  }, [mode, state.guest, items.length]);
+    if (state.guest || !localItems.length) return;
+    cloudStartLesson(mode, Math.min(localItems.length, 100), cfg.direction, cfg.category).then(r => { setLessonId(r.lessonId || ''); if (Array.isArray(r.items) && r.items.length) setServerItems(r.items); }).catch(() => {});
+  }, [mode, state.guest, localItems.length, cfg.direction, cfg.category]);
 
-  if (mode === 'match') return <MatchGame key="match-board" items={items} state={state} save={save} onExit={onExit} onDone={onDone} lessonId={lessonId} />;
-  if (mode === 'dictation') return <SprintGame items={items} mode={mode} state={state} save={save} onExit={onExit} onDone={onDone} lessonId={lessonId} />; 
-  return <SprintGame items={items} mode={mode} state={state} save={save} onExit={onExit} onDone={onDone} lessonId={lessonId} />;
+  if (!state.guest && (!lessonId || !serverItems?.length)) return <section><button className="back" onClick={onExit}>← Назад</button><div className="card"><h2>Готуємо персональний урок…</h2><p className="muted">Learning Engine підбирає слова та створює захищену сесію.</p></div></section>;
+  if (mode === 'match') return <MatchGame key="match-board" items={items} state={state} save={save} onExit={onExit} onDone={onDone} lessonId={lessonId} direction={cfg.direction} />;
+  if (mode === 'dictation') return <SprintGame items={items} mode={mode} state={state} save={save} onExit={onExit} onDone={onDone} lessonId={lessonId} direction={cfg.direction} />; 
+  return <SprintGame items={items} mode={mode} state={state} save={save} onExit={onExit} onDone={onDone} lessonId={lessonId} direction={cfg.direction} />;
 }
 
 function SprintGame({items, mode, state, save, onExit, onDone, lessonId}) {
@@ -763,7 +772,7 @@ function SprintGame({items, mode, state, save, onExit, onDone, lessonId}) {
   const w = quiz[step];
   const total = quiz.length;
 
-  const applyAnswer = useCallback((ok, wordObj) => {
+  const applyAnswer = useCallback((ok, wordObj, submittedAnswer) => {
     const st = stateRef.current;
     const points = ok ? Number(st.admin.correctPoints) || 4 : Number(st.admin.wrongPoints) || -2;
     const mid = wordObj.id;
@@ -777,7 +786,7 @@ function SprintGame({items, mode, state, save, onExit, onDone, lessonId}) {
       attempts: {...(st.attempts || {}), [mid]: ((st.attempts || {})[mid] || 0) + 1}
     });
     if (!st.guest) {
-      const pending = cloudRecordProgress({notion_id: mid, mode: mode || 'sprint', correct: ok, quality: ok ? 4 : 1, event_id: newEventId(), lesson_id: lessonId || ''})
+      const pending = cloudRecordProgress({notion_id: mid, mode: mode || 'sprint', answer: String(submittedAnswer ?? ''), direction: wordObj.direction || 'en-ua', event_id: newEventId(), lesson_id: lessonId || ''})
         .then(r => { if (r?.user) { const cur=stateRef.current, card=r.card; save({...cur, xp:r.user.xp, streak:r.user.streak, todayXp:r.user.todayXp, today:r.user.today, badges:[...new Set([...(cur.badges||[]), ...(r.earned||[])])], ...(card ? {mastery:{...cur.mastery,[card.notion_id]:card.mastery},srs:{...cur.srs,[card.notion_id]:card.srs},attempts:{...cur.attempts,[card.notion_id]:card.attempts}} : {})}); } return r; })
         .catch(() => null);
       pendingProgress.current.push(pending);
@@ -795,7 +804,7 @@ function SprintGame({items, mode, state, save, onExit, onDone, lessonId}) {
     if (!wordObj) return;
     const ok = opt === wordObj.answer;
     setPicked(opt);
-    applyAnswer(ok, wordObj);
+    applyAnswer(ok, wordObj, opt);
   }, [applyAnswer]);
 
   const goNext = useCallback(() => {
@@ -914,7 +923,7 @@ function SprintGame({items, mode, state, save, onExit, onDone, lessonId}) {
             if (pickedRef.current != null) return;
             const ok = val.trim().toLowerCase() === String(w.answer).trim().toLowerCase();
             setPicked(val);
-            applyAnswer(ok, w);
+            applyAnswer(ok, w, val);
           }} disabled={picked != null}/>
         ) : (
           <div className="options" key={'o'+step}>
@@ -970,7 +979,7 @@ function DictationInput({onSubmit, disabled}) {
 }
 
 
-function MatchGame({items, state, save, onExit, onDone, lessonId}) {
+function MatchGame({items, state, save, onExit, onDone, lessonId, direction='en-ua'}) {
   const boardRef = useRef(null);
   if (!boardRef.current) {
     boardRef.current = {
@@ -999,10 +1008,10 @@ function MatchGame({items, state, save, onExit, onDone, lessonId}) {
       const points = st.admin.correctPoints;
       save({...st, xp: st.xp + points, todayXp: st.todayXp + points,
         history: [...st.history, {word: selL, correct: true, points, date: new Date().toISOString(), mode: 'match'}].slice(-2000)});
-      if (!st.guest) pendingProgress.current.push(cloudRecordProgress({notion_id: selL, mode:'match', correct:true, quality:4, event_id:newEventId(), lesson_id:lessonId||''}).then(r=>{if(r?.user){const cur=stateRef.current,c=r.card;save({...cur,xp:r.user.xp,streak:r.user.streak,todayXp:r.user.todayXp,today:r.user.today,badges:[...new Set([...(cur.badges||[]),...(r.earned||[])])],...(c?{mastery:{...cur.mastery,[c.notion_id]:c.mastery},srs:{...cur.srs,[c.notion_id]:c.srs},attempts:{...cur.attempts,[c.notion_id]:c.attempts}}:{})})}return r}).catch(()=>null));
+      if (!st.guest) pendingProgress.current.push(cloudRecordProgress({notion_id: selL, mode:'match', answer:selR, direction, quality:4, event_id:newEventId(), lesson_id:lessonId||''}).then(r=>{if(r?.user){const cur=stateRef.current,c=r.card;save({...cur,xp:r.user.xp,streak:r.user.streak,todayXp:r.user.todayXp,today:r.user.today,badges:[...new Set([...(cur.badges||[]),...(r.earned||[])])],...(c?{mastery:{...cur.mastery,[c.notion_id]:c.mastery},srs:{...cur.srs,[c.notion_id]:c.srs},attempts:{...cur.attempts,[c.notion_id]:c.attempts}}:{})})}return r}).catch(()=>null));
     } else {
       save({...st, xp: st.xp + st.admin.wrongPoints, todayXp: st.todayXp + st.admin.wrongPoints});
-      if (!st.guest) pendingProgress.current.push(cloudRecordProgress({notion_id: selL, mode:'match', correct:false, quality:1, event_id:newEventId(), lesson_id:lessonId||''}).then(r=>{if(r?.user){const cur=stateRef.current,c=r.card;save({...cur,xp:r.user.xp,streak:r.user.streak,todayXp:r.user.todayXp,today:r.user.today,badges:[...new Set([...(cur.badges||[]),...(r.earned||[])])],...(c?{mastery:{...cur.mastery,[c.notion_id]:c.mastery},srs:{...cur.srs,[c.notion_id]:c.srs},attempts:{...cur.attempts,[c.notion_id]:c.attempts}}:{})})}return r}).catch(()=>null));
+      if (!st.guest) pendingProgress.current.push(cloudRecordProgress({notion_id: selL, mode:'match', answer:selR, direction, quality:1, event_id:newEventId(), lesson_id:lessonId||''}).then(r=>{if(r?.user){const cur=stateRef.current,c=r.card;save({...cur,xp:r.user.xp,streak:r.user.streak,todayXp:r.user.todayXp,today:r.user.today,badges:[...new Set([...(cur.badges||[]),...(r.earned||[])])],...(c?{mastery:{...cur.mastery,[c.notion_id]:c.mastery},srs:{...cur.srs,[c.notion_id]:c.srs},attempts:{...cur.attempts,[c.notion_id]:c.attempts}}:{})})}return r}).catch(()=>null));
     }
     const t = setTimeout(() => { setSelL(null); setSelR(null); setFlash({}); }, 450);
     return () => clearTimeout(t);
@@ -1510,6 +1519,7 @@ function Admin({state, save, setWordsLive, wordsLive}) {
       </div>
       <div className="card"><h2>Стан системи</h2><AdminStats /></div>
       <div className="card"><h2>Журнал безпеки / адмін-дій</h2><AdminAudit /></div>
+      <div className="card analytics-dashboard"><h2>📊 Product Analytics</h2><p className="muted">Агрегована аналітика навчання, retention, режими, completion і помилки.</p><AdminAnalytics /></div><div className="card"><h2>⚑ Reports</h2><AdminReports /></div><div className="card"><h2>🩺 Monitoring</h2><AdminMonitoring /></div>
       <div className="card analytics-panel">
         <h2>Privacy Analytics (1–17)</h2>
         <p className="muted">Лише агрегати, без точної геолокації та без персональних даних у UI.</p>
@@ -1577,6 +1587,11 @@ function AdminUsers(){
   return <div><input className="search" placeholder="Нік або імʼя" value={q} onChange={e=>setQ(e.target.value)}/><div className="player-db-list">{rows.map(r=><div className="word-row card" key={r.id} style={{marginTop:8}}><div><b>{r.name||r.nick}</b> <span className="muted">@{r.nick}</span><div className="muted small">{r.xp} XP · streak {r.streak} · {r.status}</div></div><div className="row-btns wrap"><select value={r.role} disabled={busy} onChange={e=>act(r.id,{role:e.target.value})}><option value="user">user</option><option value="moderator">moderator</option><option value="admin">admin</option></select><button className="secondary" disabled={busy} onClick={()=>act(r.id,{status:r.status==='active'?'suspended':'active'})}>{r.status==='active'?'Призупинити':'Активувати'}</button><button className="secondary" disabled={busy} onClick={()=>reset(r.id)}>Reset</button></div></div>)}</div></div>
 }
 function AdminAudit(){const [rows,setRows]=useState([]);useEffect(()=>{fetch('/api/admin-audit').then(r=>r.json()).then(d=>setRows(d.rows||[])).catch(()=>{})},[]);return <div className="word-list">{rows.slice(0,30).map(r=><div className="word-row card" key={r.id}><div><b>{r.action}</b><div className="muted small">{r.target_nick?`@${r.target_nick} · `:''}{new Date(r.created_at).toLocaleString()}</div></div></div>)}{!rows.length&&<p className="muted">Журнал порожній.</p>}</div>}
+function AdminAnalytics(){const [d,setD]=useState(null),[days,setDays]=useState(30);useEffect(()=>{fetch('/api/admin-analytics?days='+days,{credentials:'include'}).then(r=>r.json()).then(setD).catch(()=>setD(null))},[days]);if(!d)return <p className="muted">Завантаження analytics…</p>;const max=Math.max(1,...(d.daily||[]).map(x=>Number(x.events||0)));return <div><div className="row-btns"><select value={days} onChange={e=>setDays(e.target.value)}><option value={7}>7 днів</option><option value={30}>30 днів</option><option value={90}>90 днів</option></select></div><div className="grid stats"><Card title="Користувачі" value={d.kpi.users||0} sub="унікальні"/><Card title="Події" value={d.kpi.events||0}/><Card title="Уроки" value={d.kpi.lessons||0}/><Card title="Completion" value={d.kpi.lessons?Math.round((d.kpi.completions||0)/d.kpi.lessons*100)+'%':'0%'}/></div><div className="analytics-chart">{(d.daily||[]).map(x=><div className="analytics-day" key={String(x.day)} title={`${x.day}: ${x.events} events`}><i style={{height:(Number(x.events||0)/max*100)+'%'}}/><span>{String(x.day).slice(5)}</span></div>)}</div><div className="grid two"><div><h3>Події</h3>{(d.events||[]).slice(0,8).map(x=><div className="mode-row" key={x.event_name}><span>{x.event_name}</span><b>{x.n}</b></div>)}</div><div><h3>Retention snapshot</h3><p>24h: <b>{d.retention.d1||0}</b></p><p>7d: <b>{d.retention.d7||0}</b></p><p>30d: <b>{d.retention.d30||0}</b></p><h3>Помилки</h3>{(d.errors||[]).slice(0,5).map(x=><div className="muted small" key={x.message}>{x.message} · {x.n}</div>)}</div></div></div>}
+
+function AdminReports(){const [rows,setRows]=useState([]);const load=()=>fetch('/api/reports',{credentials:'include'}).then(r=>r.json()).then(d=>setRows(d.rows||[])).catch(()=>{});useEffect(load,[]);const update=async(id,status)=>{await fetch('/api/reports',{method:'PATCH',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({id,status})});load()};return <div>{rows.slice(0,12).map(r=><div className="word-row" key={r.id}><div><b>#{r.id} · @{r.target_nick}</b><div className="muted small">@{r.reporter_nick} · {r.reason} · {r.status}</div></div><select value={r.status} onChange={e=>update(r.id,e.target.value)}><option>open</option><option>reviewing</option><option>resolved</option><option>dismissed</option></select></div>)}{!rows.length&&<p className="muted">Немає скарг.</p>}</div>}
+function AdminMonitoring(){const [d,setD]=useState(null);useEffect(()=>{const load=()=>fetch('/api/admin-monitoring',{credentials:'include'}).then(r=>r.json()).then(setD).catch(()=>{});load();const t=setInterval(load,15000);return()=>clearInterval(t)},[]);if(!d)return <p className="muted">Завантаження…</p>;return <div className="grid stats"><Card title="DB latency" value={d.dbMs+'ms'} sub="SELECT 1"/><Card title="Sessions" value={d.activeSessions}/><Card title="Answers/hour" value={d.progressLastHour}/><Card title="Open reports" value={d.openReports}/></div>}
+
 function AdminStats(){const [d,setD]=useState(null);useEffect(()=>{fetch('/api/admin-stats').then(r=>r.json()).then(setD).catch(()=>{})},[]);if(!d)return <p className="muted">Завантаження статистики…</p>;return <div className="grid stats"><Card title="Користувачі" value={d.users?.active||0} sub={`усього ${d.users?.total||0}`}/><Card title="Відповіді" value={d.attempts?.total||0}/><Card title="Слова" value={d.words?.total||0}/><Card title="Повідомлення" value={d.messages?.total||0}/></div>}
 
 
@@ -1700,22 +1715,43 @@ function SettingsPage({state, save}) {
               <input className="search" value={state.compareFriend || ''} onChange={e => upd({compareFriend: e.target.value})} placeholder="nick_друга"/>
             </>
           )}
-          <p className="muted small">Середнє по локальних профілях оновлюється раз на добу (00:00 логіка по даті).</p>
+          <p className="muted small">Порівняння тепер працює через серверний рейтинг, а не локальні профілі.</p>
         </div>
+        <PrivacySettings />
       </div>
     </section>
   );
 }
 
 function FriendsPage({state}) {
-  const [q,setQ]=useState(''),[msg,setMsg]=useState(''),[chatWith,setChatWith]=useState(null),[text,setText]=useState(''),[friends,setFriends]=useState([]),[board,setBoard]=useState([]),[messages,setMessages]=useState([]),[busy,setBusy]=useState(false);
+  const [q,setQ]=useState(''),[msg,setMsg]=useState(''),[chatWith,setChatWith]=useState(null),[text,setText]=useState(''),[friends,setFriends]=useState([]),[board,setBoard]=useState([]),[messages,setMessages]=useState([]),[busy,setBusy]=useState(false),[rt,setRt]=useState('offline');
+  const rtRef=useRef(null);
   const load=useCallback(async()=>{if(state.guest)return;const [f,b]=await Promise.all([getFriends(state.nick),friendsLeaderboard(state.nick)]);setFriends(f||[]);setBoard(b||[])},[state.nick,state.guest]);
-  useEffect(()=>{load()},[load]);
-  useEffect(()=>{if(!chatWith||state.guest)return;let alive=true;const pull=async()=>{const rows=await getChat(state.nick,chatWith);if(alive)setMessages(rows||[])};pull();const t=setInterval(pull,5000);return()=>{alive=false;clearInterval(t)}},[chatWith,state.nick,state.guest]);
-  const add=async()=>{setBusy(true);const r=await addFriend(state.nick,q);setMsg(r.ok?'Запит надіслано ✓':(r.error||'Помилка'));if(r.ok)setQ('');setBusy(false);load()};
-  const send=async()=>{if(!chatWith||!text.trim())return;const m=await sendChat(state.nick,chatWith,text);if(m)setMessages(x=>[...x,m]);setText('')};
+  useEffect(()=>{load();if(state.guest)return;const r=createRealtime({onStatus:setRt,onMessage:m=>{if(m.type==='chat'&&m.message){setMessages(x=>x.some(v=>v.id===m.message.id)?x:[...x,m.message])}}});rtRef.current=r;return()=>r.close()},[state.guest]);
+  useEffect(()=>{if(!chatWith||state.guest)return;let alive=true;getChat(state.nick,chatWith).then(x=>alive&&setMessages(x||[]));return()=>{alive=false}},[chatWith,state.nick,state.guest]);
+  useEffect(()=>{if(!chatWith||!rtRef.current)return;const friend=friends.find(f=>f.nick===chatWith);if(friend?.id)rtRef.current.send({type:'join_chat',userId:friend.id})},[chatWith,friends]);
+  const add=async()=>{setBusy(true);const r=await addFriend(state.nick,q);setMsg(r.ok?'Запит надіслано ✓':(r.error||'Помилка'));if(r.ok){track('friend_request',{feature:'friends'});setQ('')}setBusy(false);load()};
+  const send=async()=>{const t=text.trim();if(!chatWith||!t)return;const friend=friends.find(f=>f.nick===chatWith);if(friend?.id&&rtRef.current){const sent=rtRef.current.send({type:'chat',text:t});if(!sent){const m=await sendChat(state.nick,chatWith,t);if(m)setMessages(x=>[...x,m])}}else{const m=await sendChat(state.nick,chatWith,t);if(m)setMessages(x=>[...x,m])}track('chat_send',{realtime:rt,chars:t.length});setText('')};
+  const social=async(action)=>{if(!chatWith)return;await fetch('/api/social',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({nick:chatWith,action})});if(action==='block'){setChatWith(null);load()}};
+  const report=async()=>{if(!chatWith)return;await fetch('/api/reports',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({nick:chatWith,type:'user',reason:'Порушення правил'})});setMsg('Скаргу передано модераторам.')}
   if(state.guest)return <section><Title title="Друзі" text="Друзі та чат доступні після входу в акаунт"/><div className="card muted">Гостьовий режим не зберігає соціальні дані в Neon.</div></section>;
-  return <section className="fade-in"><Title title="Друзі" text="Neon-друзі, запити, чат і рейтинг"/><div className="grid two"><div className="card"><h2>Додати друга</h2><div className="row-btns"><input className="search" value={q} onChange={e=>setQ(e.target.value)} placeholder="нік друга"/><button className="primary" disabled={busy||!q.trim()} onClick={add}>Додати</button></div>{msg&&<p className="muted">{msg}</p>}<ul className="friend-list">{friends.map(f=><li key={f.id||f.nick}><button type="button" className={'friend-item'+(chatWith===f.nick?' active':'')} onClick={()=>f.status==='accepted'&&setChatWith(f.nick)}><Users size={14}/> @{f.nick}{f.status==='pending'?' · запит':''}</button>{f.status==='pending'&&f.requested_by!==state.id&&<button className="secondary" onClick={async()=>{await acceptFriend(state.nick,f.id);load()}}>Прийняти</button>}</li>)}{!friends.length&&<li className="muted">Поки немає друзів</li>}</ul></div><div className="card"><h2><MessageCircle size={18}/> Чат {chatWith?`з @${chatWith}`:''}</h2>{!chatWith?<p className="muted">Обери прийнятого друга зліва</p>:<><div className="chat-box">{messages.map(m=><div key={m.id} className={'chat-msg'+(m.sender_id===undefined||String(m.sender_id)===String(state.id)?' me':'')}><b>{m.sender_id===state.id?'Ти':`@${chatWith}`}</b> <span className="muted small">{new Date(m.created_at||m.at).toLocaleTimeString()}</span><div>{m.text}</div></div>)}</div><div className="row-btns"><input className="search" value={text} onChange={e=>setText(e.target.value)} onKeyDown={e=>e.key==='Enter'&&send()} placeholder="повідомлення"/><button className="primary" onClick={send}>Надіслати</button></div></>}</div></div>{board.length>0&&<div className="card" style={{marginTop:16}}><h2>Рейтинг друзів</h2><div className="lb">{board.map((r,i)=><div className="lb-row" key={r.nick}><span>#{i+1}</span><b>@{r.nick}</b><span className="muted">{r.xp} XP · {r.streak}🔥</span></div>)}</div></div>}</section>;
+  return <section className="fade-in"><Title title="Друзі" text="Neon-друзі, realtime chat і змагання"/><div className="card"><span className="pill"><Wifi size={12}/> realtime: {rt}</span></div><div className="grid two"><div className="card"><h2>Додати друга</h2><div className="row-btns"><input className="search" value={q} onChange={e=>setQ(e.target.value)} placeholder="нік друга"/><button className="primary" disabled={busy||!q.trim()} onClick={add}>Додати</button></div>{msg&&<p className="muted">{msg}</p>}<ul className="friend-list">{friends.map(f=><li key={f.id||f.nick}><button type="button" className={'friend-item'+(chatWith===f.nick?' active':'')} onClick={()=>f.status==='accepted'&&setChatWith(f.nick)}><Users size={14}/> @{f.nick}{f.status==='pending'?' · запит':''}</button>{f.status==='pending'&&f.requested_by!==state.id&&<button className="secondary" onClick={async()=>{await acceptFriend(state.nick,f.id);load()}}>Прийняти</button>}</li>)}{!friends.length&&<li className="muted">Поки немає друзів</li>}</ul></div><div className="card"><h2><MessageCircle size={18}/> Чат {chatWith?`з @${chatWith}`:''}</h2>{!chatWith?<p className="muted">Обери прийнятого друга зліва</p>:<><div className="chat-box">{messages.map(m=><div key={m.id} className={'chat-msg'+(String(m.sender_id)===String(state.id)?' me':'')}><b>{String(m.sender_id)===String(state.id)?'Ти':`@${chatWith}`}</b> <span className="muted small">{new Date(m.created_at).toLocaleTimeString()}</span><div>{m.text}</div></div>)}</div><div className="row-btns"><input className="search" value={text} maxLength={1000} onChange={e=>setText(e.target.value)} onKeyDown={e=>e.key==='Enter'&&send()} placeholder="повідомлення"/><button className="primary" onClick={send}>Надіслати</button></div><div className="row-btns wrap" style={{marginTop:8}}><button className="secondary" onClick={()=>social('mute')}>🔕 Mute</button><button className="secondary" onClick={()=>social('block')}>🚫 Block</button><button className="secondary" onClick={report}>⚑ Report</button></div></>}</div></div>{board.length>0&&<div className="card" style={{marginTop:16}}><h2>Рейтинг друзів</h2><div className="lb">{board.map((r,i)=><div className="lb-row" key={r.nick}><span>#{i+1}</span><b>@{r.nick}</b><span className="muted">{r.xp} XP · {r.streak}🔥</span></div>)}</div></div>}</section>;
+}
+
+function PrivacySettings(){
+  const [s,setS]=useState(null);
+  useEffect(()=>{fetch('/api/privacy',{credentials:'include'}).then(r=>r.json()).then(d=>setS(d.settings||{})).catch(()=>{})},[]);
+  if(!s)return <div className="card"><h2>Приватність</h2><p className="muted">Завантаження…</p></div>;
+  const update=(k,v)=>{const n={...s,[k]:v};setS(n);fetch('/api/privacy',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(n),credentials:'include'}).catch(()=>{})};
+  return <div className="card"><h2><Eye size={18}/> Приватність</h2>{[['show_profile','Показувати профіль'],['show_leaderboard','Показувати мене в рейтингу'],['allow_friend_requests','Дозволяти запити в друзі'],['allow_messages','Дозволяти повідомлення'],['show_online','Показувати online'],['analytics_consent','Дозволяти анонімну аналітику']].map(([k,t])=><label className="row-check" key={k}><input type="checkbox" checked={s[k]!==false} onChange={e=>update(k,e.target.checked)}/>{t}</label>)}</div>;
+}
+
+function ChallengesPage({state}){
+ const [rows,setRows]=useState([]),[title,setTitle]=useState(''),[metric,setMetric]=useState('xp'),[goal,setGoal]=useState(100),[busy,setBusy]=useState(false);
+ const load=useCallback(()=>fetch('/api/challenges').then(r=>r.json()).then(d=>setRows(d.rows||[])).catch(()=>{}),[]); useEffect(()=>{load()},[load]);
+ const create=async(kind='public')=>{setBusy(true);await fetch('/api/challenges',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({kind,metric,title:title||'Мій challenge',goal:Number(goal)||100,hours:24})});setTitle('');await load();setBusy(false)};
+ const join=async(id)=>{await fetch('/api/challenges',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,action:'join'})});await fetch('/api/challenges',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,action:'score'})});load()};
+ return <section className="fade-in"><Title title="Challenges" text="Окремі виклики та змагання між друзями"/><div className="card"><h2>Створити</h2><div className="grid two"><input className="search" value={title} onChange={e=>setTitle(e.target.value)} placeholder="Назва challenge"/><select value={metric} onChange={e=>setMetric(e.target.value)}><option value="xp">XP</option><option value="answers">Відповіді</option><option value="accuracy">Точність</option><option value="mastery">Mastery</option></select><input className="search" type="number" value={goal} onChange={e=>setGoal(e.target.value)}/><div className="row-btns"><button className="primary" disabled={busy} onClick={()=>create('public')}>Для всіх</button><button className="secondary" disabled={busy} onClick={()=>create('friend')}>Для друзів</button></div></div></div><div className="grid two">{rows.map(c=><div className="card challenge-card" key={c.id}><span className="pill">{c.kind}</span><h2>{c.title}</h2><p className="muted">{c.metric} · ціль {c.goal}</p><p className="muted small">до {new Date(c.ends_at).toLocaleString()}</p><button className="primary" disabled={c.joined} onClick={()=>join(c.id)}>{c.joined?'Ви берете участь':'Приєднатись'}</button></div>)}{!rows.length&&<div className="card muted">Активних challenges поки немає.</div>}</div></section>;
 }
 
 function CompareBlurb({state}) {

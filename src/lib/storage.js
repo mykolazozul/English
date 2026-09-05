@@ -31,6 +31,6 @@ export async function loadCloudVocabulary(){try{return(await api('/api/vocabular
 export async function cloudGetProgress(){try{return await api('/api/progress')}catch{return null}}
 export async function cloudRecordProgress(payload){try{return await api('/api/progress',{method:'POST',body:JSON.stringify(payload)})}catch(e){try{const q=JSON.parse(localStorage.getItem(PROGRESS_QUEUE)||'[]');const event={...payload,event_id:payload.event_id||crypto.randomUUID?.()||String(Date.now())};if(!q.some(x=>x.event_id===event.event_id)){q.push(event);localStorage.setItem(PROGRESS_QUEUE,JSON.stringify(q.slice(-1000)))} }catch{};throw e}}
 export async function flushProgressQueue(){let q=[];try{q=JSON.parse(localStorage.getItem(PROGRESS_QUEUE)||'[]')}catch{};if(!q.length)return 0;const left=[];for(const item of q){try{await api('/api/progress',{method:'POST',body:JSON.stringify(item)})}catch{left.push(item)}}try{localStorage.setItem(PROGRESS_QUEUE,JSON.stringify(left))}catch{};return q.length-left.length}
-export async function cloudStartLesson(mode,total){return api('/api/lessons',{method:'POST',body:JSON.stringify({mode,total})})}
+export async function cloudStartLesson(mode,total,direction='en-ua',category='all'){return api('/api/lessons',{method:'POST',body:JSON.stringify({mode,total,direction,category})})}
 export async function cloudFinishLesson(lessonId){return api('/api/lessons',{method:'PATCH',body:JSON.stringify({lessonId})})}
 export {hashPassword}
