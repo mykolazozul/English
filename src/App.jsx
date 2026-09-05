@@ -4,7 +4,7 @@ import {words as fallbackWords, rules, BADGES} from './data';
 import {notionWords, notionSyncMeta} from './notionWords.generated';
 import { Analytics } from '@vercel/analytics/react';
 import { startRegistration, startAuthentication } from '@simplewebauthn/browser';
-import {listProfiles, saveProfile, loadProfile, getActiveNick, cloudPull, cloudPush, cloudConfigured, isNickTaken, registerNick, setGuestSession, isGuestSession, getFriends, addFriend, acceptFriend, getChat, sendChat, registerChatDevice, getChatDevice, getChatDevices, getMyChatDevices, revokeChatDevice, friendsLeaderboard, getDailyAverage, ensureDailyAverage, serverAuth, loadCloudVocabulary, cloudRecordProgress, cloudStartLesson, cloudFinishLesson, serverMe, loadServerConfig} from './lib/storage';
+import {listProfiles, saveProfile, loadProfile, getActiveNick, cloudPull, cloudPush, cloudConfigured, isNickTaken, registerNick, setGuestSession, isGuestSession, getFriends, addFriend, acceptFriend, getChat, sendChat, registerChatDevice, getChatDevice, getChatDevices, getMyChatDevices, revokeChatDevice, friendsLeaderboard, getDailyAverage, ensureDailyAverage, serverAuth, loadCloudVocabulary, cloudRecordProgress, cloudStartLesson, cloudFinishLesson, flushProgressQueue, serverMe, loadServerConfig, cloudLeaderboard} from './lib/storage';
 import {onCorrect as srsOk, onWrong as srsBad, isDue, todayStr} from './lib/srs';
 import {dbPutProfile, dbGetProfile, dbListProfiles, dbSaveWords, dbLoadWords} from './lib/db.js';
 import {createRealtime} from './lib/realtime.js';
@@ -127,7 +127,7 @@ async function requestJson(path, options={}) {
   const data = await res.json().catch(()=>({}));
   if (!res.ok) {
     const e=new Error(data.error || `HTTP ${res.status}`); e.status=res.status; e.data=data;
-    if (res.status===401 && !String(path).startsWith('/api/auth') && !String(path).startsWith('/api/admin-auth')) {
+    if (res.status===401 && !String(path).startsWith('/api/auth') && !String(path).startsWith('/api/admin')) {
       window.dispatchEvent(new CustomEvent('ef-auth-expired',{detail:{path,message:e.message}}));
     }
     throw e;
@@ -721,6 +721,7 @@ function Lesson({cfg, state, save, onExit, onDone, wordsCatalog}) {
   const [lessonId, setLessonId] = useState('');
   const [serverItems, setServerItems] = useState(null);
   const [loadError, setLoadError] = useState('');
+  const [retry, setRetry] = useState(0);
   const catalog = (wordsCatalog && wordsCatalog.length) ? wordsCatalog : words;
   const localItems = useMemo(() => {
     let pool = catalog;
@@ -757,9 +758,9 @@ function Lesson({cfg, state, save, onExit, onDone, wordsCatalog}) {
       if (Array.isArray(r.items) && r.items.length) setServerItems(r.items); else setLoadError('Сервер не повернув питання для уроку.');
     }).catch(e => { clearTimeout(timer); if(cancelled)return; setLoadError(e.status===401 ? 'Сесія закінчилась. Увійди знову.' : (e.message || 'Не вдалося створити захищену сесію.')); });
     return ()=>{cancelled=true;clearTimeout(timer)};
-  }, [mode, state.guest, localItems.length, cfg.direction, cfg.category]);
+  }, [mode, state.guest, localItems.length, cfg.direction, cfg.category, retry]);
 
-  if (!state.guest && (!lessonId || !serverItems?.length)) return <section><button className="back" onClick={onExit}>← Назад</button><div className="card lesson-loading-card"><h2>{loadError ? 'Не вдалося підготувати урок' : 'Готуємо персональний урок…'}</h2><p className="muted">{loadError || 'Learning Engine підбирає слова та створює захищену сесію.'}</p>{loadError&&<div className="row-btns"><button className="primary" onClick={()=>{setLoadError('');setLessonId('');setServerItems(null)}}>Спробувати ще раз</button><button className="secondary" onClick={onExit}>Назад</button></div>}</div></section>;
+  if (!state.guest && (!lessonId || !serverItems?.length)) return <section><button className="back" onClick={onExit}>← Назад</button><div className="card lesson-loading-card"><h2>{loadError ? 'Не вдалося підготувати урок' : 'Готуємо персональний урок…'}</h2><p className="muted">{loadError || 'Learning Engine підбирає слова та створює захищену сесію.'}</p>{loadError&&<div className="row-btns"><button className="primary" onClick={()=>{setLoadError('');setLessonId('');setServerItems(null);setRetry(r=>r+1)}}>Спробувати ще раз</button><button className="secondary" onClick={onExit}>Назад</button></div>}</div></section>;
   if (mode === 'match') return <MatchGame key="match-board" items={items} state={state} save={save} onExit={onExit} onDone={onDone} lessonId={lessonId} direction={cfg.direction} />;
   if (mode === 'dictation') return <SprintGame items={items} mode={mode} state={state} save={save} onExit={onExit} onDone={onDone} lessonId={lessonId} direction={cfg.direction} />; 
   return <SprintGame items={items} mode={mode} state={state} save={save} onExit={onExit} onDone={onDone} lessonId={lessonId} direction={cfg.direction} />;
@@ -943,7 +944,7 @@ function SprintGame({items, mode, state, save, onExit, onDone, lessonId}) {
         {mode === 'dictation' ? (
           <DictationInput key={'d'+step} onSubmit={(val) => {
             if (pickedRef.current != null) return;
-            const ok = val.trim().toLowerCase() === String(w.answer).trim().toLowerCase();
+            const ok = val.trim().toLowerCase() === String(w.word || w.answer).trim().toLowerCase();
             setPicked(val);
             applyAnswer(ok, w, val);
           }} disabled={picked != null}/>
@@ -1069,7 +1070,7 @@ function Vocabulary({state, setModal, wordsCatalog, cats}) {
   });
   return (
     <section>
-      <Title title="Словник" text={`${words.length} слів · ${notionWords?.length ? 'Notion' : 'локальна база (синк пізніше)'}`}/>
+      <Title title="Словник" text={`${dict.length} слів · ${notionWords?.length ? 'Notion' : 'локальна база (синк пізніше)'}`}/>
       <div className="filters row">
         <input className="search" placeholder="Пошук…" value={q} onChange={e => setQ(e.target.value)}/>
         <UiSelect value={cat} onChange={setCat} options={[{value:'all',label:'Усі категорії'},...(cats || CATS).map(c=>({value:c,label:c}))]}/>
@@ -1280,18 +1281,53 @@ function BadgesPage({state}) {
 }
 
 function Leaderboard({state}) {
-  const profiles = Object.values(listProfiles()).sort((a, b) => (b.xp || 0) - (a.xp || 0)).slice(0, 20);
+  const [rows, setRows] = useState(null);
+  useEffect(() => {
+    let alive = true;
+    cloudLeaderboard().then(r => { if (alive) setRows(Array.isArray(r) ? r : []); }).catch(() => { if (alive) setRows([]); });
+    return () => { alive = false; };
+  }, []);
+  const cloud = rows || null;
+  const local = Object.values(listProfiles()).sort((a, b) => (b.xp || 0) - (a.xp || 0)).slice(0, 20);
+  const merged = [];
+  if (cloud) {
+    const seen = new Set();
+    cloud.forEach(r => {
+      if (!r) return;
+      const nick = String(r.nick ?? '');
+      if (!nick || seen.has(nick)) return;
+      seen.add(nick);
+      merged.push({ nick, name: r.name, xp: Number(r.xp) || 0, cloud: true, streak: r.streak });
+    });
+    // Local-only profiles still show up beneath the cloud ranking.
+    local.forEach(p => {
+      const nick = String(p.nick ?? '');
+      if (nick && !seen.has(nick)) { seen.add(nick); merged.push({ nick, name: p.name, xp: Number(p.xp) || 0, cloud: false }); }
+    });
+    merged.sort((a, b) => (b.xp || 0) - (a.xp || 0));
+  } else {
+    merged.push(...local.map(p => ({ nick: p.nick, name: p.name, xp: Number(p.xp) || 0, cloud: false })));
+  }
+  if (!merged.length) {
+    return (
+    <section>
+      <Title title="Рейтинг" text={cloud ? 'Хмарний рейтинг + локальні профілі' : 'Локальні профілі на цьому пристрої'}/>
+      <div className="card">
+        <p className="muted">Поки немає інших профілів</p>
+      </div>
+    </section>
+    );
+  }
   return (
     <section>
-      <Title title="Рейтинг" text="Локальні профілі на цьому пристрої (+ хмара, якщо налаштована)"/>
+      <Title title="Рейтинг" text={cloud ? 'Хмарний рейтинг + локальні профілі' : 'Локальні профілі на цьому пристрої'}/>
       <div className="card">
-        {profiles.length === 0 && <p className="muted">Поки немає інших профілів</p>}
-        {profiles.map((p, i) => (
+        {merged.slice(0, 100).map((p, i) => (
           <div className="leader-row" key={p.nick}>
             <span className="rank">#{i + 1}</span>
             <b>{p.nick}</b>
-            <span className="muted">{p.name}</span>
-            <strong>{p.xp || 0} XP</strong>
+            <span className="muted">{p.name}{p.cloud ? '' : ' · локально'}</span>
+            <strong>{p.xp} XP</strong>
             {p.nick === state.nick && <span className="pill ok">ти</span>}
           </div>
         ))}

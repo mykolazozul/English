@@ -5,7 +5,7 @@ import pg from 'pg';
 const {Pool,Client}=pg;
 const PORT=Number(process.env.PORT||8787), DATABASE_URL=process.env.DATABASE_URL;
 if(!DATABASE_URL) throw new Error('DATABASE_URL is required');
-const pool=new Pool({connectionString:DATABASE_URL,max:10,ssl:{rejectUnauthorized:false}});
+const pool=new Pool({connectionString:DATABASE_URL,max:10,ssl:{rejectUnauthorized:true}});
 const wss=new WebSocketServer({noServer:true,maxPayload:256*1024});
 const rooms=new Map();
 function cookies(req){return Object.fromEntries(String(req.headers.cookie||'').split(';').map(x=>x.trim()).filter(Boolean).map(x=>{const i=x.indexOf('=');return [x.slice(0,i),decodeURIComponent(x.slice(i+1))]}));}
@@ -48,7 +48,7 @@ wss.on('connection',(ws,user)=>{
         if(!d.rows[0]||!target.rows.length)return ws.send(JSON.stringify({type:'error',error:'E2E device not registered'}));
         const keys=Array.isArray(m.keys)?m.keys:[];if(!keys.length||keys.length>20)return ws.send(JSON.stringify({type:'error',error:'Invalid E2E keys'}));
         const valid=new Set(target.rows.map(x=>String(x.device_id)));for(const k of keys){if(!valid.has(String(k.deviceId||''))||typeof k.ciphertext!=='string'||typeof k.iv!=='string'||k.ciphertext.length>200000)return ws.send(JSON.stringify({type:'error',error:'Invalid recipient key'}));}
-        const digest=crypto.createHash('sha256').update(JSON.stringify({keys,version:2,senderDeviceId:deviceId})).digest('hex');
+        const digest=crypto.createHash('sha256').update(JSON.stringify({keys,attachment:null,version:2,senderDeviceId:deviceId})).digest('hex');
         const primary=keys[0];
         const r=await pool.query(`INSERT INTO messages(sender_id,recipient_id,text,ciphertext,iv,crypto_version,sender_device_id,recipient_device_id,sender_key_version,content_hash) VALUES($1,$2,NULL,$3,$4,2,$5,$6,$7,$8) RETURNING id,sender_id,recipient_id,text,ciphertext,iv,crypto_version,sender_device_id,recipient_device_id,sender_key_version,content_hash,created_at,read_at`,[user.id,other,primary.ciphertext,primary.iv,deviceId,primary.deviceId,d.rows[0].key_version,digest]);
         for(const k of keys)await pool.query(`INSERT INTO message_device_keys(message_id,recipient_device_id,ciphertext,iv) VALUES($1,$2,$3,$4) ON CONFLICT(message_id,recipient_device_id) DO UPDATE SET ciphertext=excluded.ciphertext,iv=excluded.iv`,[r.rows[0].id,String(k.deviceId),String(k.ciphertext),String(k.iv)]);
@@ -61,7 +61,7 @@ wss.on('connection',(ws,user)=>{
 });
 const server=http.createServer((req,res)=>{if(req.method==='GET'&&req.url?.startsWith('/health')){res.writeHead(200,{'content-type':'application/json','cache-control':'no-store'});res.end(JSON.stringify({ok:true,service:'english-flow-realtime',at:new Date().toISOString()}));return}res.writeHead(200,{'content-type':'application/json','cache-control':'no-store'});res.end(JSON.stringify({ok:true,service:'english-flow-realtime'}));});
 server.on('upgrade',async(req,socket,head)=>{try{const user=await auth(req);if(!user){socket.write('HTTP/1.1 401 Unauthorized\r\nConnection: close\r\n\r\n');socket.destroy();return}wss.handleUpgrade(req,socket,head,ws=>wss.emit('connection',ws,user))}catch{socket.destroy()}});
-const listener=new Client({connectionString:DATABASE_URL,ssl:{rejectUnauthorized:false}});listener.connect().then(()=>listener.query('LISTEN ef_chat')).then(()=>listener.on('notification',n=>{try{const x=JSON.parse(n.payload);if(x.origin==='realtime')return;broadcast(x.channel,x)}catch{}})).catch(()=>{});
+const listener=new Client({connectionString:DATABASE_URL,ssl:{rejectUnauthorized:true}});listener.connect().then(()=>listener.query('LISTEN ef_chat')).then(()=>listener.on('notification',n=>{try{const x=JSON.parse(n.payload);if(x.origin==='realtime')return;broadcast(x.channel,x)}catch{}})).catch(()=>{});
 server.listen(PORT,()=>console.log(`English Flow realtime listening on ${PORT}`));
 async function shutdown(){await listener.end();await pool.end();process.exit(0)}
 process.on('SIGTERM',shutdown);process.on('SIGINT',shutdown);

@@ -134,6 +134,7 @@ create table if not exists lesson_attempts (
 );
 create index if not exists lesson_attempts_user_idx on lesson_attempts(user_id,created_at desc);
 create index if not exists lesson_attempts_user_mode_idx on lesson_attempts(user_id,mode,created_at desc);
+create index if not exists lesson_attempts_lesson_idx on lesson_attempts(lesson_id,notion_id);
 
 create table if not exists friendships (
   user_id uuid not null references users(id) on delete cascade,

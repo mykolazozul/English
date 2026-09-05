@@ -36,6 +36,7 @@ ALTER TABLE lesson_attempts ADD COLUMN IF NOT EXISTS quality smallint NOT NULL D
 CREATE INDEX IF NOT EXISTS users_xp_idx ON users(xp DESC,updated_at ASC);
 CREATE INDEX IF NOT EXISTS user_vocabulary_user_last_idx ON user_vocabulary(user_id,last_answered_at DESC);
 CREATE INDEX IF NOT EXISTS lesson_attempts_user_mode_idx ON lesson_attempts(user_id,mode,created_at DESC);
+CREATE INDEX IF NOT EXISTS lesson_attempts_lesson_idx ON lesson_attempts(lesson_id,notion_id);
 CREATE INDEX IF NOT EXISTS messages_recipient_created_idx ON messages(recipient_id,created_at DESC);
 CREATE INDEX IF NOT EXISTS friendships_friend_idx ON friendships(friend_id,status,created_at DESC);
 CREATE INDEX IF NOT EXISTS progress_events_user_idx ON progress_events(user_id,created_at DESC);
