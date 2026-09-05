@@ -55,3 +55,6 @@ A daily Vercel cron calls `/api/cron-analytics-cleanup` and removes raw analytic
 
 ## Performance
 `db/schema-v4.sql` adds indexes for the analytics/progress/lesson queries used by the Admin dashboard. Run it once after v3 on the production Neon database.
+
+## v2.3.0 behavior
+Problem-word analytics are restricted to actual problem words rather than listing the entire vocabulary. A word with no recorded mistakes is excluded from the problem list.

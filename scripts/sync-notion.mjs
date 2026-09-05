@@ -43,7 +43,7 @@ do {
       translation: rich('Translation'),
       explanation: rich('Explanation'),
       pronunciation: rich('Pronunciation'),
-      examples: rich('Examples'),
+      examples: rich('Examples') || rich('Example'),
       category: select('Category'),
       added: date
     });

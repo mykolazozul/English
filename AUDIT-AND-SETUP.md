@@ -22,7 +22,7 @@
 - Achievements moved to Neon.
 - SRS/mastery/history are Neon-backed.
 - Notion vocabulary is archived rather than destructively deleted.
-- local storage is treated as cache/offline queue, not the authority.
+- local storage is treated as UI cache only, not the authority.
 
 ### Learning logic
 - SRS due cards no longer fall back to the whole dictionary.

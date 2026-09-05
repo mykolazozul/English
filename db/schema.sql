@@ -100,9 +100,11 @@ create table if not exists lesson_sessions (
   perfect_bonus_awarded boolean not null default false,
   max_answers_per_session integer not null default 200,
   answer_count integer not null default 0,
-  correct_count integer not null default 0
+  correct_count integer not null default 0,
+  lesson_words jsonb not null default '[]'::jsonb
 );
 create index if not exists lesson_sessions_user_idx on lesson_sessions(user_id,started_at desc);
+create index if not exists lesson_sessions_words_gin_idx on lesson_sessions using gin (lesson_words);
 
 create table if not exists progress_events (
   event_id uuid primary key,
@@ -180,12 +182,14 @@ create index if not exists user_achievements_user_idx on user_achievements(user_
 
 create table if not exists admin_sessions (
   id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references users(id) on delete cascade,
   token_hash text not null unique,
   created_at timestamptz not null default now(),
   expires_at timestamptz not null,
   last_seen_at timestamptz not null default now()
 );
 create index if not exists admin_sessions_expiry_idx on admin_sessions(expires_at);
+create index if not exists admin_sessions_user_idx on admin_sessions(user_id,expires_at desc);
 
 create table if not exists admin_audit_logs (
   id bigserial primary key,

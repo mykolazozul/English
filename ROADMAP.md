@@ -7,7 +7,7 @@
 - secure sessions
 - admin panel + audit
 - Notion → Neon content pipeline
-- offline queue
+- online-only reliability and reconnect UX
 
 ## Phase 1 — learning quality
 1. **Daily Challenge** — one focused lesson every day.
@@ -88,3 +88,20 @@ The core loop should become:
 **learn → retrieve → make mistakes → receive explanation → repeat at the right interval → use in context → verify long-term retention**.
 
 SRS should decide *when* to review; difficulty should decide *what* to review; the learner's history should decide *how* to teach it.
+
+## v2.3.0 stability gate
+Core stability is now the priority before adding large new features. Future work must not be marked done until build, static audit, DB sync, protected lessons, admin expiry/re-entry, challenges and HTTP chat are verified.
+
+## v2.5.0 release
+- E2E device-key chat + encrypted Neon messages.
+- Challenge error handling and permanent AI context rules.
+
+## Next recommended hardening
+1. Playwright E2E browser suite for all critical flows.
+2. Authenticated chat key verification (fingerprint/TOFU confirmation) and multi-device key rotation.
+3. True multi-admin accounts with 2FA/passkeys and granular permissions.
+4. Database backup/restore drill and secret rotation procedure.
+5. Runtime error monitoring with privacy-safe error codes.
+6. Better challenge live standings and presence UI.
+7. Admin/Stats React.lazy extraction once component boundaries are clean.
+8. Accessibility audit: keyboard navigation, focus traps, screen-reader labels and contrast.

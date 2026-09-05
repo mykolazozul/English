@@ -1,35 +1,38 @@
 import React, {useEffect, useMemo, useState, useCallback, useRef, lazy, Suspense} from 'react';
-import {BarChart3, BookOpen, Check, CheckCircle2, ChevronRight, Flame, Home, Lock, Menu, Moon, Palette, Play, RotateCcw, Settings, Sun, Target, Trophy, User, Volume2, X, XCircle, Shield, SlidersHorizontal, Brain, Sparkles, Keyboard, Layers, Award, Cloud, Users, MessageCircle, Ghost, VolumeX, Swords, ShieldAlert, Eye, Bell, Wifi} from 'lucide-react';
+import {BarChart3, BookOpen, Check, CheckCircle2, ChevronRight, ChevronDown, Flame, Home, Lock, Menu, Moon, Palette, Play, RotateCcw, Settings, Sun, Target, Trophy, User, Volume2, X, XCircle, Shield, SlidersHorizontal, Brain, Sparkles, Keyboard, Layers, Award, Cloud, Users, MessageCircle, Ghost, VolumeX, Swords, ShieldAlert, Eye, Bell, Wifi} from 'lucide-react';
 import {words as fallbackWords, rules, BADGES} from './data';
 import {notionWords, notionSyncMeta} from './notionWords.generated';
 import { Analytics } from '@vercel/analytics/react';
-import {listProfiles, saveProfile, loadProfile, getActiveNick, cloudPull, cloudPush, cloudConfigured, isNickTaken, registerNick, setGuestSession, isGuestSession, getFriends, addFriend, acceptFriend, getChat, sendChat, friendsLeaderboard, getDailyAverage, ensureDailyAverage, serverAuth, loadCloudVocabulary, cloudRecordProgress, cloudStartLesson, cloudFinishLesson, flushProgressQueue, serverMe, loadServerConfig} from './lib/storage';
+import { startRegistration, startAuthentication } from '@simplewebauthn/browser';
+import {listProfiles, saveProfile, loadProfile, getActiveNick, cloudPull, cloudPush, cloudConfigured, isNickTaken, registerNick, setGuestSession, isGuestSession, getFriends, addFriend, acceptFriend, getChat, sendChat, registerChatDevice, getChatDevice, getChatDevices, getMyChatDevices, revokeChatDevice, friendsLeaderboard, getDailyAverage, ensureDailyAverage, serverAuth, loadCloudVocabulary, cloudRecordProgress, cloudStartLesson, cloudFinishLesson, serverMe, loadServerConfig} from './lib/storage';
 import {onCorrect as srsOk, onWrong as srsBad, isDue, todayStr} from './lib/srs';
 import {dbPutProfile, dbGetProfile, dbListProfiles, dbSaveWords, dbLoadWords} from './lib/db.js';
 import {createRealtime} from './lib/realtime.js';
+import {ensureChatIdentity,publicKeyPayload,encryptChatPayload,decryptChatText,encryptAttachment,decryptAttachment,fingerprint,rotateChatIdentity,trustKey,trustedKey,untrustKey} from './lib/e2e-chat.js';
 import {track} from './lib/analytics.js';
 
 
 /** Roadmap in admin — remove only when user asks by title */
 const ROADMAP_ITEMS = [
-  {v:'1.4', title:'Фікс перекриття на мобільному', status:'done'},
-  {v:'1.4', title:'Фікс збірки Vercel (lazy/рядок імпорту)', status:'done'},
-  {v:'1.4', title:'Таблиця Roadmap в адмінці', status:'done'},
-  {v:'1.4', title:'Перемикач stagger-анімації', status:'done'},
-  {v:'1.4', title:'Skeleton-завантаження', status:'done'},
-  {v:'1.5', title:'Вхід: нік + пароль, імʼя з профілю', status:'done'},
-  {v:'1.5', title:'Адмін: лок без виходу на головну', status:'done'},
-  {v:'1.5', title:'Match: слова не зникають після пари', status:'done'},
-  {v:'1.5', title:'Sprint: стабільний лічильник 1→N', status:'done'},
-  {v:'1.5', title:'Профіль у стилі RPG', status:'planned'},
-  {v:'1.6', title:'React.lazy для Admin/Stats', status:'planned'},
-  {v:'1.6', title:'E2E-чат (ключ лише на пристроях)', status:'planned'},
-  {v:'1.6', title:'Адмін: пошук гравців у БД', status:'planned'},
-  {v:'1.6', title:'Аналітика 1–17 з графіками', status:'planned'},
-  {v:'1.6', title:'PWA / повний офлайн', status:'planned'},
+  {v:'2.3.0', title:'Learning Engine: no endless loading + server answer verification', status:'done'},
+  {v:'2.3.0', title:'Lesson session freeze: exact word set stored in DB', status:'done'},
+  {v:'2.3.0', title:'Safe Notion sync + admin-only sync metadata', status:'done'},
+  {v:'2.3.0', title:'Admin security hardening + session expiry recovery', status:'done'},
+  {v:'2.3.0', title:'Realtime status + ping + chat privacy parity', status:'done'},
+  {v:'2.3.0', title:'Custom dropdowns/modals + 3 admin test designs', status:'done'},
+  {v:'2.3.0', title:'RPG profile + animated emoji feedback on Home/Stats', status:'done'},
+  {v:'2.4.0', title:'E2E chat with device-only P-256 keys + encrypted Neon messages', status:'done'},
+  {v:'2.5.0', title:'Admin 2.0: bootstrap, roles, 2FA/TOTP, session hardening and Security Lab', status:'done'},
+  {v:'2.5.0', title:'Chat Security 2.0: fingerprints, key rotation, multi-device, revoke and encrypted attachments', status:'done'},
+  {v:'2.5.0', title:'Playwright E2E + security regression suite: auth, IDOR, XSS, CSRF, fuzz and rate limits', status:'done'},
+  {v:'2.4.0', title:'Admin/Stats lazy loading + security/session recovery', status:'done'},
+  {v:'2.2.2', title:'Vercel Hobby: 1 Serverless Function gateway', status:'done'},
+  {v:'2.2.0', title:'Product & Learning Analytics 1–17', status:'done'},
+
+  {v:'future', title:'WebAuthn/passkeys + verified device signatures', status:'planned'},
 ];
 
-const VERSION = '2.0-alpha';
+const VERSION = '2.5.0';
 const words = (notionWords?.length ? notionWords : fallbackWords).map(w => ({
   id: w.id, word: w.word, translation: w.translation || '—', pronunciation: w.pronunciation || '',
   category: w.category || 'Other', level: w.level || '', explanation: w.explanation || '',
@@ -119,6 +122,40 @@ function shuffle(arr) {
   return a;
 }
 
+async function requestJson(path, options={}) {
+  const res = await fetch(path, {credentials:'include', ...options, headers:{'Content-Type':'application/json', ...(options.headers||{})}});
+  const data = await res.json().catch(()=>({}));
+  if (!res.ok) {
+    const e=new Error(data.error || `HTTP ${res.status}`); e.status=res.status; e.data=data;
+    if (res.status===401 && !String(path).startsWith('/api/auth') && !String(path).startsWith('/api/admin-auth')) {
+      window.dispatchEvent(new CustomEvent('ef-auth-expired',{detail:{path,message:e.message}}));
+    }
+    throw e;
+  }
+  return data;
+}
+function emitSiteError(message, title='Помилка') {
+  window.dispatchEvent(new CustomEvent('ef-error', {detail:{message:String(message||'Невідома помилка'), title}}));
+}
+function emitSiteToast(message, kind='info') {
+  window.dispatchEvent(new CustomEvent('ef-toast', {detail:{message:String(message||''),kind}}));
+}
+
+function UiSelect({value,onChange,options=[],className='',disabled=false}) {
+  const [open,setOpen]=useState(false);
+  const ref=useRef(null);
+  const selected=options.find(o=>String(o.value)===String(value)) || options[0] || {label:''};
+  useEffect(()=>{
+    const close=e=>{if(!ref.current?.contains(e.target))setOpen(false)};
+    document.addEventListener('mousedown',close);
+    return()=>document.removeEventListener('mousedown',close);
+  },[]);
+  return <div ref={ref} className={'ui-select '+className}>
+    <button type="button" disabled={disabled} className="ui-select-trigger" aria-haspopup="listbox" aria-expanded={open} onClick={()=>setOpen(x=>!x)}><span>{selected?.label}</span><ChevronDown size={15}/></button>
+    {open&&<div className="ui-select-menu" role="listbox">{options.map(o=><button type="button" role="option" aria-selected={String(o.value)===String(value)} key={String(o.value)} className={'ui-select-option'+(String(o.value)===String(value)?' selected':'')} onClick={()=>{onChange(o.value);setOpen(false)}}>{o.label}</button>)}</div>}
+  </div>;
+}
+
 function generateExercises(w) {
   const word = w.word, tr = w.translation, ex = w.example || `I used the word "${word}" today.`;
   const gap = ex.includes(word) ? ex.replace(new RegExp(word, 'i'), '______') : `Please use ______ in a sentence. (${tr})`;
@@ -194,23 +231,26 @@ export default function App() {
   });
   const [toast, setToast] = useState(null);
   const [modal, setModal] = useState(null);
-  const [online, setOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
   useEffect(() => {
-    const on = () => setOnline(true); const off = () => setOnline(false);
-    window.addEventListener('online', on); window.addEventListener('offline', off);
-    return () => { window.removeEventListener('online', on); window.removeEventListener('offline', off); };
-  }, []);
+    const onExpired = e => {
+      if (state.guest) return;
+      setPage('onboarding');
+      setLessonCfg(null);
+      setModal({type:'error',title:'Сесію завершено',text:'Сервер більше не приймає цю сесію. Увійди ще раз — локальний профіль залишиться на пристрої.'});
+    };
+    window.addEventListener('ef-auth-expired', onExpired);
+    return () => window.removeEventListener('ef-auth-expired', onExpired);
+  }, [state.guest]);
   useEffect(() => {
     if (!navigator.onLine) return;
     loadServerConfig().then(cfg => { if (Object.keys(cfg).length) setState(prev => ({...prev,admin:{...prev.admin,...cfg}})); }).catch(() => {});
-    flushProgressQueue().catch(() => {});
     serverMe().then(async me => {
       if (!me?.user) return;
+      await flushProgressQueue().catch(()=>{});
       const remote = await cloudPull(me.user.nick);
       if (remote) { setState(prev => ({...prev,...remote,id:me.user.id,nick:me.user.nick,role:me.user.role,guest:false,admin:{...defaultAdmin,...(prev.admin||{}),...(remote.admin||{})}})); setPage('dashboard'); }
     }).catch(() => {});
   }, []);
-  useEffect(() => { const on=()=>flushProgressQueue().catch(()=>{}); window.addEventListener('online',on); return()=>window.removeEventListener('online',on); }, []);
   useEffect(() => { track('app_open',{page:location.pathname}); }, []);
   useEffect(() => { if (state.nick) track('page_view',{page}); }, [page, state.nick]);
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 2800); };
@@ -230,53 +270,44 @@ export default function App() {
   }, []);
 
   const nav = (p) => {
-    if (page === 'admin' && p !== 'admin') sessionStorage.removeItem('ef-admin-ok');
     setPage(p); setMobile(false);
   };
   useEffect(() => {
-    if (page !== 'admin') {
-      sessionStorage.removeItem('ef-admin-ok');
-      fetch('/api/admin-auth',{method:'DELETE',credentials:'include'}).catch(()=>{});
-    }
+    if (page !== 'admin') fetch('/api/admin-auth',{method:'DELETE',credentials:'include'}).catch(()=>{});
   }, [page]);
 
-  // Hard admin session lock
+  // Admin inactivity lock: cookie is authoritative; never use sessionStorage.
   useEffect(() => {
     if (page !== 'admin') return;
-    let timer = null;
+    let timer = null, hiddenAt = 0;
     const lock = () => {
-      sessionStorage.removeItem('ef-admin-ok');
       fetch('/api/admin-auth',{method:'DELETE',credentials:'include'}).catch(()=>{});
       window.dispatchEvent(new Event('ef-admin-lock'));
-      // stay on admin page — only re-show login gate
     };
     const bump = () => {
       if (timer) clearTimeout(timer);
-      timer = setTimeout(lock, 30000); // 30s idle
+      timer = setTimeout(lock, 5 * 60 * 1000);
     };
-    const onVis = () => { if (document.hidden) lock(); };
-    const onBlur = () => lock();
-    const onPageHide = () => lock();
+    const onVis = () => {
+      if (document.hidden) hiddenAt = Date.now();
+      else { if (hiddenAt && Date.now()-hiddenAt > 2*60*1000) lock(); hiddenAt=0; bump(); }
+    };
     bump();
-    window.addEventListener('mousemove', bump);
-    window.addEventListener('keydown', bump);
-    window.addEventListener('touchstart', bump);
-    window.addEventListener('scroll', bump, true);
+    window.addEventListener('mousemove', bump); window.addEventListener('keydown', bump); window.addEventListener('touchstart', bump); window.addEventListener('scroll', bump, true);
     document.addEventListener('visibilitychange', onVis);
-    window.addEventListener('blur', onBlur);
-    window.addEventListener('pagehide', onPageHide);
     return () => {
       if (timer) clearTimeout(timer);
-      window.removeEventListener('mousemove', bump);
-      window.removeEventListener('keydown', bump);
-      window.removeEventListener('touchstart', bump);
-      window.removeEventListener('scroll', bump, true);
+      window.removeEventListener('mousemove', bump); window.removeEventListener('keydown', bump); window.removeEventListener('touchstart', bump); window.removeEventListener('scroll', bump, true);
       document.removeEventListener('visibilitychange', onVis);
-      window.removeEventListener('blur', onBlur);
-      window.removeEventListener('pagehide', onPageHide);
     };
   }, [page]);
 
+  useEffect(()=>{
+    const onToast=e=>{const m=e.detail?.message;if(m){setToast(m);setTimeout(()=>setToast(null),2800)}};
+    const onError=e=>setModal({type:'error',title:e.detail?.title||'Помилка',text:e.detail?.message||'Невідома помилка'});
+    window.addEventListener('ef-toast',onToast); window.addEventListener('ef-error',onError);
+    return()=>{window.removeEventListener('ef-toast',onToast);window.removeEventListener('ef-error',onError)};
+  },[]);
 
   useEffect(() => {
     const resolved = state.theme === 'system'
@@ -332,17 +363,7 @@ export default function App() {
     })();
   }, []);
 
-  useEffect(() => {
-    if (!state.nick || state.guest) return;
-    (async () => {
-      try {
-        const remote = await cloudPull(state.nick);
-        if (remote && typeof remote === 'object') {
-          setState(prev => ({...prev, ...remote, nick: prev.nick, admin: {...defaultAdmin, ...(prev.admin||{}), ...(remote.admin||{})}}));
-        }
-      } catch {}
-    })();
-  }, []);
+
   useEffect(() => {
     const t = todayStr();
     if (!state.midnightSnap || state.midnightSnap.date !== t) {
@@ -466,7 +487,7 @@ export default function App() {
   return (
     <>
       <Layout>
-        {page === 'dashboard' && <Dashboard state={state} learned={learnedCount} due={dueCount} words={activeWords.length} onLearn={() => nav('learn')} onReview={() => nav('review')} cloudMsg={cloudMsg} notionMeta={notionSyncMeta} />}
+        {page === 'dashboard' && <Dashboard state={state} learned={learnedCount} due={dueCount} words={activeWords.length} onLearn={() => nav('learn')} onReview={() => nav('review')} cloudMsg={cloudMsg} />}
         {page === 'learn' && <Learn state={state} cats={activeCats} onStart={startLesson} />}
         {page === 'vocabulary' && <Vocabulary state={state} setModal={setModal} wordsCatalog={activeWords} cats={activeCats} />}
         {page === 'review' && <ReviewPage state={state} due={dueCount} onStart={() => startLesson('srs', 'en-ua', 'all')} />}
@@ -479,7 +500,6 @@ export default function App() {
         {page === 'challenges' && <ChallengesPage state={state} />}
         {page === 'profile' && <Profile state={state} save={save} />}
         {page === 'about' && <AboutPage />}
-        {page === 'offline' && <section className="page-error card"><h1>Offline</h1><p>Немає зʼєднання. Перевір інтернет і спробуй знову.</p><button className="primary" type="button" onClick={() => nav('dashboard')}>На головну</button></section>}
         {page === '404' && <section className="page-error card"><h1>404</h1><p>Такої сторінки немає.</p><button className="primary" type="button" onClick={() => nav('dashboard')}>На головну</button></section>}
         {page === 'admin' && <Admin state={state} save={save} setWordsLive={setWordsLive} wordsLive={wordsLive} />}
         {page === 'lesson' && lessonCfg && (
@@ -496,7 +516,6 @@ export default function App() {
       <div className="version-badge">v{VERSION}</div>
       <Toast msg={toast} />
       <ConfirmModal modal={modal} onClose={() => setModal(null)} />
-      <OfflineBanner online={online} />
       <Analytics />
     </>
   );
@@ -514,7 +533,7 @@ function Onboarding({onDone}) {
     const pl = p.trim();
     const nl = n.trim().toLowerCase();
     const nml = (nm || '').trim().toLowerCase();
-    if (pl.length < 10) return 'Пароль мінімум 10 символів';
+    if (pl.length < 12) return 'Пароль мінімум 12 символів';
     if (!/[a-z]/.test(pl) || !/[A-Z]/.test(pl) || !/[0-9]/.test(pl)) return 'Пароль має містити великі й малі літери та цифру';
     if (pl.toLowerCase() === nl) return 'Пароль не може збігатися з ніком';
     if (nml && pl.toLowerCase() === nml) return 'Пароль не може збігатися з імʼям';
@@ -600,13 +619,13 @@ function Onboarding({onDone}) {
     </div>
   );
 }
-function Dashboard({state, learned, due, words, onLearn, onReview, cloudMsg, notionMeta}) {
+function Dashboard({state, learned, due, words, onLearn, onReview, cloudMsg}) {
   return (
     <section>
       <div className="announce card jungle-announce">
         <span className="vine-deco left" aria-hidden="true">🌿</span>
         <span className="vine-deco right" aria-hidden="true">🌿</span>
-        <span className="eyebrow">UPDATE · v1.8-beta</span>
+        <span className="eyebrow">UPDATE · v2.5.0</span>
         <h2>🚀 Велике оновлення вже тут</h2>
         <p>Sprint, SRS, друзі, бейджі. Прогрес зберігається локально та синхронізується з хмарною БД.</p>
       </div>
@@ -623,15 +642,12 @@ function Dashboard({state, learned, due, words, onLearn, onReview, cloudMsg, not
         </div>
         <div className="hero-art">🎯</div>
       </div>
+      <EmojiPulse state={state}/>
       <div className="grid stats">
         <Card icon={<Flame/>} title="Streak" value={state.streak} sub="днів" />
         <Card icon={<Sparkles/>} title="XP" value={state.xp} sub={`сьогодні ${state.todayXp}`} />
         <Card icon={<Target/>} title="Ціль" value={`${Math.min(100, Math.round((state.todayXp / state.dailyGoal) * 100))}%`} sub={`${state.todayXp}/${state.dailyGoal}`} />
         <Card icon={<Brain/>} title="Вивчено" value={learned} sub={`з ${words}`} />
-      </div>
-      <div className="card">
-        <h2>Notion</h2>
-        <p className="muted">{notionMeta?.count ? `${notionMeta.count} слів · ${notionMeta.syncedAt || ''}` : `Зараз локальний словник (${words} слів). Словник синхронізується з Notion → Neon автоматично.`}</p>
       </div>
     </section>
   );
@@ -645,16 +661,10 @@ function Learn({state, cats, onStart}) {
       <Title title="Навчання" text="Обери режим. Питання стабільні в межах уроку, кнопки підсвічуються зеленим/червоним." />
       <div className="card filters">
         <label>Напрямок
-          <select value={direction} onChange={e => setDirection(e.target.value)}>
-            <option value="en-ua">EN → UA (що означає слово)</option>
-            <option value="ua-en">UA → EN (як сказати англійською)</option>
-          </select>
+          <UiSelect value={direction} onChange={setDirection} options={[{value:'en-ua',label:'EN → UA (що означає слово)'},{value:'ua-en',label:'UA → EN (як сказати англійською)'}]}/>
         </label>
         <label>Категорія
-          <select value={category} onChange={e => setCategory(e.target.value)}>
-            <option value="all">Усі</option>
-            {cats.map(c => <option key={c} value={c}>{c}</option>)}
-          </select>
+          <UiSelect value={category} onChange={setCategory} options={[{value:'all',label:'Усі'},...cats.map(c=>({value:c,label:c}))]}/>
         </label>
       </div>
       <div className="grid two lesson-grid">
@@ -710,6 +720,7 @@ function Lesson({cfg, state, save, onExit, onDone, wordsCatalog}) {
   const mode = cfg.mode;
   const [lessonId, setLessonId] = useState('');
   const [serverItems, setServerItems] = useState(null);
+  const [loadError, setLoadError] = useState('');
   const catalog = (wordsCatalog && wordsCatalog.length) ? wordsCatalog : words;
   const localItems = useMemo(() => {
     let pool = catalog;
@@ -733,11 +744,22 @@ function Lesson({cfg, state, save, onExit, onDone, wordsCatalog}) {
   }, [catalog, mode, cfg.direction, cfg.category, state]);
   const items = serverItems?.length ? serverItems : localItems;
   useEffect(() => {
-    if (state.guest || !localItems.length) return;
-    cloudStartLesson(mode, Math.min(localItems.length, 100), cfg.direction, cfg.category).then(r => { setLessonId(r.lessonId || ''); if (Array.isArray(r.items) && r.items.length) setServerItems(r.items); }).catch(() => {});
+    let cancelled=false;
+    setLoadError(''); setLessonId(''); setServerItems(null);
+    if (state.guest) return;
+    if (!localItems.length) {
+      const msg = mode==='problems' ? 'Поки немає проблемних слів. Вони зʼявляться після реальних помилок.' : mode==='srs' ? 'Наразі немає карток, які потрібно повторити.' : 'У словнику немає доступних слів для цього уроку.';
+      setLoadError(msg); return;
+    }
+    const timer=setTimeout(()=>{if(!cancelled)setLoadError('Сервер не відповів вчасно. Перевір зʼєднання та спробуй ще раз.')},15000);
+    cloudStartLesson(mode, Math.min(localItems.length, 100), cfg.direction, cfg.category).then(r => {
+      if(cancelled)return; clearTimeout(timer); setLoadError(''); setLessonId(r.lessonId || '');
+      if (Array.isArray(r.items) && r.items.length) setServerItems(r.items); else setLoadError('Сервер не повернув питання для уроку.');
+    }).catch(e => { clearTimeout(timer); if(cancelled)return; setLoadError(e.status===401 ? 'Сесія закінчилась. Увійди знову.' : (e.message || 'Не вдалося створити захищену сесію.')); });
+    return ()=>{cancelled=true;clearTimeout(timer)};
   }, [mode, state.guest, localItems.length, cfg.direction, cfg.category]);
 
-  if (!state.guest && (!lessonId || !serverItems?.length)) return <section><button className="back" onClick={onExit}>← Назад</button><div className="card"><h2>Готуємо персональний урок…</h2><p className="muted">Learning Engine підбирає слова та створює захищену сесію.</p></div></section>;
+  if (!state.guest && (!lessonId || !serverItems?.length)) return <section><button className="back" onClick={onExit}>← Назад</button><div className="card lesson-loading-card"><h2>{loadError ? 'Не вдалося підготувати урок' : 'Готуємо персональний урок…'}</h2><p className="muted">{loadError || 'Learning Engine підбирає слова та створює захищену сесію.'}</p>{loadError&&<div className="row-btns"><button className="primary" onClick={()=>{setLoadError('');setLessonId('');setServerItems(null)}}>Спробувати ще раз</button><button className="secondary" onClick={onExit}>Назад</button></div>}</div></section>;
   if (mode === 'match') return <MatchGame key="match-board" items={items} state={state} save={save} onExit={onExit} onDone={onDone} lessonId={lessonId} direction={cfg.direction} />;
   if (mode === 'dictation') return <SprintGame items={items} mode={mode} state={state} save={save} onExit={onExit} onDone={onDone} lessonId={lessonId} direction={cfg.direction} />; 
   return <SprintGame items={items} mode={mode} state={state} save={save} onExit={onExit} onDone={onDone} lessonId={lessonId} direction={cfg.direction} />;
@@ -1050,10 +1072,7 @@ function Vocabulary({state, setModal, wordsCatalog, cats}) {
       <Title title="Словник" text={`${words.length} слів · ${notionWords?.length ? 'Notion' : 'локальна база (синк пізніше)'}`}/>
       <div className="filters row">
         <input className="search" placeholder="Пошук…" value={q} onChange={e => setQ(e.target.value)}/>
-        <select value={cat} onChange={e => setCat(e.target.value)}>
-          <option value="all">Усі категорії</option>
-          {(cats || CATS).map(c => <option key={c} value={c}>{c}</option>)}
-        </select>
+        <UiSelect value={cat} onChange={setCat} options={[{value:'all',label:'Усі категорії'},...(cats || CATS).map(c=>({value:c,label:c}))]}/>
       </div>
       <div className="word-list">
         {f.map(w => {
@@ -1116,10 +1135,9 @@ function ProblemsPage({state, save, onStart, wordsCatalog}) {
 
   return (
     <section className="fade-in">
-      <Title title="Проблемні слова" text="Фільтр помилок, спринт і прогрес за тиждень"/>
+      <Title title="Проблемні слова" text="Тут показуються тільки слова, де реально є проблема: щонайменше 2 помилки і помилок більше, ніж правильних відповідей."/>
       <div className="card filters problems-toolbar">
         <div className="row-btns wrap">
-          <button type="button" className={'theme' + (minErr===1?' active':'')} onClick={() => setMinErr(1)}>≥1</button>
           <button type="button" className={'theme' + (minErr===3?' active':'')} onClick={() => setMinErr(3)}>≥3 помилки</button>
           <button type="button" className="primary" onClick={() => onStart && onStart('problems', 'en-ua', 'all')}>Sprint лише по цих</button>
         </div>
@@ -1190,6 +1208,7 @@ function Stats({state, learned}) {
   return (
     <section>
       <Title title="Статистика" text="Прогрес за останні дні"/>
+      <EmojiPulse state={state}/>
       <Heatmap history={state.history||[]} />
       <div className="grid stats">
         <Card icon={<Target/>} title="Точність" value={pct + '%'} sub={`${correct}/${total}`}
@@ -1368,8 +1387,11 @@ function Profile({state, save}) {
 
 function Admin({state, save, setWordsLive, wordsLive}) {
   const [pin, setPin] = useState('');
+  const [otp, setOtp] = useState('');
   const [ok, setOk] = useState(false);
-  useEffect(() => { fetch('/api/admin-auth',{credentials:'include'}).then(r=>r.ok?r.json():null).then(d=>setOk(!!d?.ok)).catch(()=>setOk(false)); }, []);
+  const [adminInfo, setAdminInfo] = useState(null);
+  const [adminDesign, setAdminDesign] = useState(()=>localStorage.getItem('ef-admin-design')||'apple');
+  useEffect(() => { fetch('/api/admin-auth',{credentials:'include'}).then(r=>r.ok?r.json():null).then(d=>{setOk(!!d?.ok);setAdminInfo(d?.admin||null)}).catch(()=>{setOk(false);setAdminInfo(null)}); }, []);
   useEffect(() => {
     const lock = () => setOk(false);
     window.addEventListener('ef-admin-lock', lock);
@@ -1381,82 +1403,57 @@ function Admin({state, save, setWordsLive, wordsLive}) {
   const [authBusy, setAuthBusy] = useState(false);
   const [authErr, setAuthErr] = useState('');
   const [syncProg, setSyncProg] = useState({cur:0, total:0, label:''});
-  const unlock = () => setOk(true);
+  const [syncMeta, setSyncMeta] = useState(notionSyncMeta);
+  const unlock = (info=null) => { setOk(true); setAdminInfo(info||adminInfo); setPin(''); setAuthErr(''); };
+  const changeAdminDesign = v => { setAdminDesign(v); localStorage.setItem('ef-admin-design',v); };
   useEffect(() => { setA({...state.admin}); }, [state.admin]);
 
   const forceSync = async () => {
     if (syncing) return;
-    setSyncing(true);
-    setSyncProg({cur: 0, total: 100, label: 'Зʼєднання з Notion…'});
+    setSyncing(true); setSaved(false);
+    setSyncProg({cur:0,total:100,label:'Підключення до Notion…'});
     try {
-      let data = null;
-      // 1) Live Notion via serverless (needs NOTION_TOKEN on Vercel)
-      try {
-        const live = await fetch('/api/notion-sync', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
-        if (live.ok) {
-          data = await live.json();
-          setSyncProg({cur: 20, total: 100, label: 'Notion: ' + (data.meta?.count || data.words?.length || 0) + ' слів'});
-        } else {
-          const err = await live.json().catch(() => ({}));
-          setSyncProg({cur: 10, total: 100, label: 'API: ' + (err.error || live.status) + ' → fallback JSON'});
-        }
-      } catch (e) {
-        setSyncProg({cur: 10, total: 100, label: 'API недоступне → words-db.json'});
-      }
-      // 2) Fallback static bundle
-      if (!data?.words?.length) {
-        const res = await fetch((import.meta.env.BASE_URL || '/') + 'words-db.json?t=' + Date.now());
-        if (!res.ok) throw new Error('Не вдалося завантажити словник');
-        data = await res.json();
-      }
-      const list = data.words || [];
-      const total = list.length || 1;
-      const mapped = [];
-      for (let i = 0; i < list.length; i++) {
-        const w = list[i];
-        mapped.push({
-          id: w.id || ('n' + (i + 1)),
-          word: w.word,
-          translation: w.translation || '—',
-          pronunciation: w.pronunciation || '',
-          category: w.category || 'Other',
-          level: w.level || '',
-          explanation: w.explanation || '',
-          example: (w.example || (w.examples || '').split('\n')[0] || '')
-        });
-        if (i % 10 === 0 || i === list.length - 1) {
-          setSyncProg({cur: i + 1, total, label: `Оновлення ${i + 1}/${total}`});
-          await new Promise(r => setTimeout(r, 8));
-        }
-      }
-      localStorage.setItem('ef-words-cache-v1', JSON.stringify({words: mapped, meta: data.meta || {}, at: new Date().toISOString()}));
-      try { await dbSaveWords(mapped, data.meta || {}); } catch {}
-      setWordsLive(mapped);
-      setSyncProg({cur: total, total, label: `Готово · ${total} слів · ${(data.meta && data.meta.source) || 'cache'}`});
+      const data = await requestJson('/api/notion-sync',{method:'POST',body:'{}'});
+      const list=Array.isArray(data.words)?data.words:[];
+      if (!list.length) throw new Error('Notion повернув порожній словник — оновлення скасовано.');
+      const mapped=list.map((w,i)=>({id:w.id||w.notion_id||('n'+(i+1)),word:w.word,translation:w.translation||'—',pronunciation:w.pronunciation||'',category:w.category||'Other',level:w.level||'',explanation:w.explanation||'',example:w.example||w.examples||''}));
+      localStorage.setItem('ef-words-cache-v1',JSON.stringify({words:mapped,meta:data.meta||{},at:new Date().toISOString()}));
+      await dbSaveWords(mapped,data.meta||{});
+      setWordsLive(mapped); setSyncMeta(data.meta||{});
+      setSyncProg({cur:100,total:100,label:`Готово · ${mapped.length} слів`});
       setSaved(true);
-      setTimeout(() => setSaved(false), 2500);
-    } catch (e) {
-      setSyncProg({cur: 0, total: 0, label: 'Помилка: ' + (e.message || 'sync failed')});
-    }
-    setSyncing(false);
+      emitSiteToast(`Словник синхронізовано: ${mapped.length} слів`,'ok');
+    } catch(e) {
+      setSyncProg({cur:0,total:0,label:'Помилка: '+(e.message||'sync failed')});
+      emitSiteError(e.message||'Не вдалося оновити словник','Синхронізація Notion');
+    } finally { setSyncing(false); }
   };
-
 
   const tryUnlock = async () => {
     setAuthBusy(true); setAuthErr('');
     try {
       const res = await fetch('/api/admin-auth', {
         method: 'POST', headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ password: pin })
+        body: JSON.stringify({ password: pin, code: otp })
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok && data.ok) {
-        unlock();
+        unlock(data.admin);
+        setOtp('');
       } else setAuthErr(data.error || 'Невірний пароль');
     } catch {
       setAuthErr('Немає зʼєднання з сервером');
     }
     setAuthBusy(false);
+  };
+  const passkeyLogin = async () => {
+    setAuthBusy(true); setAuthErr('');
+    try {
+      const a = await requestJson('/api/admin-auth',{method:'POST',body:JSON.stringify({action:'passkey-auth-options'})});
+      const response = await startAuthentication({optionsJSON:a.options});
+      const v = await requestJson('/api/admin-auth',{method:'POST',body:JSON.stringify({action:'passkey-auth-verify',response})});
+      if(v.ok){unlock(v.admin);emitSiteToast('Passkey підтверджено ✓','ok')}
+    } catch(e){setAuthErr(e.message||'Passkey не спрацював')} finally {setAuthBusy(false)}
   };
 
   if (!ok) {
@@ -1467,29 +1464,32 @@ function Admin({state, save, setWordsLive, wordsLive}) {
           <h1>Адмін-доступ</h1>
           
           <label>Пароль</label>
-          <input className="search" type="password" autoFocus value={pin} onChange={e => setPin(e.target.value)} onKeyDown={e => e.key === 'Enter' && tryUnlock()}/>
+          <input className="search" type="password" autoFocus value={pin} onChange={e => setPin(e.target.value)} onKeyDown={e => e.key === 'Enter' && tryUnlock()} placeholder="ADMIN_PASSWORD" autoComplete="current-password"/>
+          {authErr && /2FA/i.test(authErr) && <input className="search" inputMode="numeric" maxLength={6} value={otp} onChange={e=>setOtp(e.target.value.replace(/\D/g,''))} onKeyDown={e=>e.key==='Enter'&&tryUnlock()} placeholder="6-значний 2FA код" autoComplete="one-time-code"/>}
           {authErr && <p className="auth-err">{authErr}</p>}
           <button className="primary full" type="button" disabled={authBusy || !pin} onClick={tryUnlock}>{authBusy ? 'Перевірка…' : 'Увійти в панель'}</button>
+          <button className="secondary full" type="button" disabled={authBusy} onClick={passkeyLogin}>🔑 Увійти з Passkey</button>
         </div>
       </section>
     );
   }
+  const isAdmin = adminInfo?.role === 'admin';
   const update = (k, v) => setA(x => ({...x, [k]: v}));
   const saveAdmin = async () => {
     const nextAdmin = {...a, lessonSize: Math.max(3, Math.min(50, Number(a.lessonSize) || 10)), correctPoints: Number(a.correctPoints) || 4, wrongPoints: Number(a.wrongPoints) || -2, masteryThreshold: Math.max(1, Number(a.masteryThreshold) || 8)};
-    save({...state, admin: nextAdmin});
     try {
-      await fetch('/api/admin-settings', {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({settings:{lessonSize:nextAdmin.lessonSize,correctPoints:nextAdmin.correctPoints,wrongPoints:nextAdmin.wrongPoints,masteryThreshold:nextAdmin.masteryThreshold,shuffleQuestions:!!nextAdmin.shuffleQuestions,shuffleAnswers:!!nextAdmin.shuffleAnswers,showPronunciation:!!nextAdmin.showPronunciation,perfectBonus:Math.max(0,Math.min(100,Number(nextAdmin.perfectBonus)||0)),badgeStyle:nextAdmin.badgeStyle||'neo'}})});
-    } catch {}
-    setSaved(true); setTimeout(() => setSaved(false), 1500);
+      await requestJson('/api/admin-settings',{method:'PUT',body:JSON.stringify({settings:{lessonSize:nextAdmin.lessonSize,correctPoints:nextAdmin.correctPoints,wrongPoints:nextAdmin.wrongPoints,masteryThreshold:nextAdmin.masteryThreshold,shuffleQuestions:!!nextAdmin.shuffleQuestions,shuffleAnswers:!!nextAdmin.shuffleAnswers,showPronunciation:!!nextAdmin.showPronunciation,perfectBonus:Math.max(0,Math.min(100,Number(nextAdmin.perfectBonus)||0)),badgeStyle:nextAdmin.badgeStyle||'neo'}})});
+      save({...state, admin: nextAdmin}); setSaved(true); setTimeout(()=>setSaved(false),1500); emitSiteToast('Правила збережено ✓','ok');
+    } catch(e) { if(e.status===401||e.status===403) window.dispatchEvent(new Event('ef-admin-lock')); else emitSiteError(e.message,'Адмін-налаштування'); }
   };
   return (
-    <section>
-      <Title title="Адмін-панель" text="Локальні правила та словник"/>
-      <div className="card sync-card">
+    <section className={'admin-shell admin-design-'+adminDesign}>
+      <div className="admin-design-switch card"><div><b>Тестовий інтерфейс</b><span className="muted small">3 стилі лише для адмін-панелі</span></div><div className="admin-design-grid">{[['apple','Apple Light'],['glass','Glass Pro'],['studio','Studio Dark']].map(([v,l])=><button key={v} type="button" className={adminDesign===v?'primary':'secondary'} onClick={()=>changeAdminDesign(v)}>{l}</button>)}</div></div>
+      <Title title="Адмін-панель" text="Безпечне керування контентом, БД, синхронізацією та аналітикою"/>
+      {isAdmin && <div className="card sync-card">
         <h2>Словник Notion</h2>
-        <p className="muted">Оновлення з файлу words-db.json (генерується з Notion). Прогрес гравця не стирається.</p>
-        <p className="sync-meta-line"><b>{(wordsLive && wordsLive.length) || notionSyncMeta.count || 0}</b> слів · {notionSyncMeta.syncedAt || '—'}</p>
+        <p className="muted">Живий sync: Notion → Neon. Прогрес гравців не стирається; браузерний JSON — лише кеш.</p>
+        <p className="sync-meta-line"><b>{(wordsLive && wordsLive.length) || syncMeta.count || 0}</b> слів · {syncMeta.syncedAt || '—'}</p>
         <button className="primary" type="button" disabled={syncing} onClick={forceSync}>
           {syncing ? 'Оновлення…' : 'Оновити словник зараз'}
         </button>
@@ -1501,7 +1501,7 @@ function Admin({state, save, setWordsLive, wordsLive}) {
         ) : null}
         {saved && !syncing && <span className="saved-message">Словник оновлено ✓</span>}
         <p className="muted small">Автооновлення бази: щогодини 09:00–23:00 (Europe) через GitHub Action.</p>
-      </div>
+      </div>}
       
       <div className="card roadmap-panel">
         <h2>Roadmap / ідеї</h2>
@@ -1518,18 +1518,19 @@ function Admin({state, save, setWordsLive, wordsLive}) {
         </div>
       </div>
       <div className="card"><h2>Стан системи</h2><AdminStats /></div>
-      <div className="card"><h2>Журнал безпеки / адмін-дій</h2><AdminAudit /></div>
-      <div className="card analytics-dashboard"><h2>📊 Product & Learning Analytics</h2><p className="muted">Єдине серверне джерело аналітики: продукт, навчання, SRS, vocabulary, retention, social, security та system health. Без старих localStorage-метрик.</p><AdminAnalytics /></div>
+      <div className="card"><h2>🛡️ Admin Security 2.0</h2><p className="muted small">Роль: <b>{adminInfo?.role||'admin'}</b> · Permissions: {adminInfo?.role==='admin'?'all':'dashboard, users, reports, monitoring'}</p><AdminSecurity2FA /></div>
+      {isAdmin && <div className="card"><h2>Журнал безпеки / адмін-дій</h2><AdminAudit /></div>}
+      {isAdmin && <div className="card analytics-dashboard"><h2>📊 Product & Learning Analytics</h2><p className="muted">Єдине серверне джерело аналітики: продукт, навчання, SRS, vocabulary, retention, social, security та system health. Без старих localStorage-метрик.</p><AdminAnalytics /></div>}
       <div className="card"><h2>⚑ Reports</h2><AdminReports /></div>
       <div className="card"><h2>🩺 Monitoring</h2><AdminMonitoring /></div>
 
-      <div className="grid two">
+      {isAdmin && <div className="grid two">
         <div className="card">
           <h2>Урок</h2>
           <label>Питань <input type="number" value={a.lessonSize} onChange={e => update('lessonSize', e.target.value)}/></label>
           <label>Бали + <input type="number" value={a.correctPoints} onChange={e => update('correctPoints', e.target.value)}/></label>
           <label>Бали − <input type="number" value={a.wrongPoints} onChange={e => update('wrongPoints', e.target.value)}/></label>
-          <label>Mastery <input type="number" value={a.masteryThreshold} onChange={e => update('masteryThreshold', e.target.value)}/></label><label>Shuffle питань <input type="checkbox" checked={a.shuffleQuestions!==false} onChange={e=>update('shuffleQuestions',e.target.checked)}/></label><label>Perfect bonus <input type="number" min="0" max="100" value={a.perfectBonus||0} onChange={e=>update('perfectBonus',e.target.value)}/></label><label>Стиль ачівок <select value={a.badgeStyle||'neo'} onChange={e=>update('badgeStyle',e.target.value)}><option value="neo">Neo</option><option value="arcade">Arcade</option><option value="minimal">Minimal</option><option value="royal">Royal</option></select></label>
+          <label>Mastery <input type="number" value={a.masteryThreshold} onChange={e => update('masteryThreshold', e.target.value)}/></label><label>Shuffle питань <input type="checkbox" checked={a.shuffleQuestions!==false} onChange={e=>update('shuffleQuestions',e.target.checked)}/></label><label>Perfect bonus <input type="number" min="0" max="100" value={a.perfectBonus||0} onChange={e=>update('perfectBonus',e.target.value)}/></label><label>Стиль ачівок <UiSelect value={a.badgeStyle||'neo'} onChange={v=>update('badgeStyle',v)} options={[{value:'neo',label:'Neo'},{value:'arcade',label:'Arcade'},{value:'minimal',label:'Minimal'},{value:'royal',label:'Royal'}]}/></label>
           <p className="muted small">Пароль адміна тепер зберігається тільки у Vercel Environment Variables як <b>ADMIN_PASSWORD</b>.</p>
           <button className="primary" type="button" onClick={saveAdmin}>Зберегти правила</button>
         </div>
@@ -1565,37 +1566,49 @@ function Admin({state, save, setWordsLive, wordsLive}) {
         </div>
         <div className="card">
           <h2>Керування гравцями</h2>
-          <AdminUsers />
+          <AdminUsers setModal={setModal} />
         </div>
         <div className="card">
           <h2>Дані гравця</h2>
-          <AdminDanger save={save} state={state} />
+          <AdminDanger save={save} state={state} setModal={setModal} />
         </div>
-      </div>
+      </div>}
     </section>
   );
 }
-function AdminUsers(){
-  const [q,setQ]=useState(''),[rows,setRows]=useState([]),[busy,setBusy]=useState(false);
-  const load=useCallback(async()=>{const r=await fetch('/api/admin-users?q='+encodeURIComponent(q));const d=await r.json().catch(()=>({}));setRows(d.rows||[])},[q]);
-  useEffect(()=>{load()},[load]);
-  const act=async(id,body)=>{setBusy(true);await fetch('/api/admin-users',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({userId:id,...body})});await load();setBusy(false)};
-  const reset=async(id)=>{setBusy(true);await fetch('/api/admin-users',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({userId:id,action:'reset_progress'})});await load();setBusy(false)};
-  return <div><input className="search" placeholder="Нік або імʼя" value={q} onChange={e=>setQ(e.target.value)}/><div className="player-db-list">{rows.map(r=><div className="word-row card" key={r.id} style={{marginTop:8}}><div><b>{r.name||r.nick}</b> <span className="muted">@{r.nick}</span><div className="muted small">{r.xp} XP · streak {r.streak} · {r.status}</div></div><div className="row-btns wrap"><select value={r.role} disabled={busy} onChange={e=>act(r.id,{role:e.target.value})}><option value="user">user</option><option value="moderator">moderator</option><option value="admin">admin</option></select><button className="secondary" disabled={busy} onClick={()=>act(r.id,{status:r.status==='active'?'suspended':'active'})}>{r.status==='active'?'Призупинити':'Активувати'}</button><button className="secondary" disabled={busy} onClick={()=>reset(r.id)}>Reset</button></div></div>)}</div></div>
+function AdminSecurity2FA(){
+  const [status,setStatus]=useState(null),[secret,setSecret]=useState(''),[uri,setUri]=useState(''),[code,setCode]=useState(''),[busy,setBusy]=useState(false),[err,setErr]=useState(''),[passkeys,setPasskeys]=useState(null);
+  const load=useCallback(()=>requestJson('/api/admin-auth').then(d=>setStatus(!!d.admin?.two_factor)).catch(()=>setStatus(null)),[]);
+  const loadPasskeys=useCallback(()=>requestJson('/api/admin-auth',{method:'POST',body:JSON.stringify({action:'passkey-auth-options'})}).then(()=>setPasskeys(true)).catch(()=>setPasskeys(false)),[]);
+  useEffect(()=>{load();loadPasskeys()},[load,loadPasskeys]);
+  const setup=async()=>{setBusy(true);setErr('');try{const d=await requestJson('/api/admin-auth',{method:'POST',body:JSON.stringify({action:'2fa-setup'})});setSecret(d.secret||'');setUri(d.uri||'');setStatus(false)}catch(e){setErr(e.message)}finally{setBusy(false)}};
+  const enable=async()=>{setBusy(true);setErr('');try{await requestJson('/api/admin-auth',{method:'POST',body:JSON.stringify({action:'2fa-enable',code})});setStatus(true);setSecret('');setUri('');setCode('');emitSiteToast('2FA увімкнено ✓','ok')}catch(e){setErr(e.message)}finally{setBusy(false)}};
+  const registerPasskey=async()=>{setBusy(true);setErr('');try{const d=await requestJson('/api/admin-auth',{method:'POST',body:JSON.stringify({action:'passkey-register-options'})});const response=await startRegistration({optionsJSON:d.options});await requestJson('/api/admin-auth',{method:'POST',body:JSON.stringify({action:'passkey-register-verify',response})});setPasskeys(true);emitSiteToast('Passkey додано ✓','ok')}catch(e){setErr(e.message||'Не вдалося додати passkey')}finally{setBusy(false)}};
+  if(status===null)return <p className="muted">Перевірка Admin Security…</p>;
+  if(status)return <div className="security-2fa-ok"><span className="pill ok">✓ TOTP 2FA активна</span><div className="passkey-box"><b>Passkey: {passkeys?'доступний':'не налаштований'}</b>{passkeys===true?<span className="muted small">Цей admin має зареєстрований passkey.</span>:<button className="secondary" type="button" disabled={busy} onClick={registerPasskey}>Додати Passkey</button>}</div><p className="muted small">Для входу потрібні ADMIN_PASSWORD + 6-значний код.</p><span className="muted small">Для вимкнення потрібен пароль + код через повторну admin-авторизацію.</span><input className="search" inputMode="numeric" maxLength={6} value={code} onChange={e=>setCode(e.target.value.replace(/\D/g,''))} placeholder="код для керування"/>{err&&<p className="auth-err">{err}</p>}</div>;
+  return <div><span className="pill">2FA не активна</span><div className="passkey-box"><b>Passkey: {passkeys?'доступний':'не налаштований'}</b>{passkeys===true?<span className="muted small">Можна входити без admin password через системний passkey.</span>:<button className="secondary" type="button" disabled={busy} onClick={registerPasskey}>Додати Passkey</button>}</div>{!secret?<button className="secondary" type="button" disabled={busy} onClick={setup}>Створити secret</button>:<><p className="muted small">Додай цей secret у Google/Microsoft Authenticator або інший TOTP-додаток:</p><code className="secret-code">{secret}</code><p className="muted small">URI: {uri}</p><div className="row-btns"><input className="search" inputMode="numeric" maxLength={6} value={code} onChange={e=>setCode(e.target.value.replace(/\D/g,''))} placeholder="6-значний код"/><button className="primary" disabled={busy||code.length!==6} onClick={enable}>Увімкнути 2FA</button></div></>}{err&&<p className="auth-err">{err}</p>}</div>;
 }
-function AdminAudit(){const [rows,setRows]=useState([]);useEffect(()=>{fetch('/api/admin-audit').then(r=>r.json()).then(d=>setRows(d.rows||[])).catch(()=>{})},[]);return <div className="word-list">{rows.slice(0,30).map(r=><div className="word-row card" key={r.id}><div><b>{r.action}</b><div className="muted small">{r.target_nick?`@${r.target_nick} · `:''}{new Date(r.created_at).toLocaleString()}</div></div></div>)}{!rows.length&&<p className="muted">Журнал порожній.</p>}</div>}
+function AdminUsers({setModal}){
+  const [q,setQ]=useState(''),[rows,setRows]=useState([]),[busy,setBusy]=useState(false);
+  const load=useCallback(async()=>{try{const d=await requestJson('/api/admin-users?q='+encodeURIComponent(q));setRows(d.rows||[])}catch(e){if(e.status===401||e.status===403)window.dispatchEvent(new Event('ef-admin-lock'));else emitSiteError(e.message,'Гравці')}} ,[q]);
+  useEffect(()=>{load()},[load]);
+  const act=async(id,body)=>{setBusy(true);try{await requestJson('/api/admin-users',{method:'PATCH',body:JSON.stringify({userId:id,...body})});await load()}catch(e){if(e.status===401||e.status===403)window.dispatchEvent(new Event('ef-admin-lock'));else emitSiteError(e.message,'Керування гравцем')}finally{setBusy(false)}};
+  const reset=async(id)=>{setBusy(true);try{await requestJson('/api/admin-users',{method:'POST',body:JSON.stringify({userId:id,action:'reset_progress'})});await load()}catch(e){if(e.status===401||e.status===403)window.dispatchEvent(new Event('ef-admin-lock'));else emitSiteError(e.message,'Скидання прогресу')}finally{setBusy(false)}};
+  return <div><input className="search" placeholder="Нік або імʼя" value={q} onChange={e=>setQ(e.target.value)}/><div className="player-db-list">{rows.map(r=><div className="word-row card" key={r.id} style={{marginTop:8}}><div><b>{r.name||r.nick}</b> <span className="muted">@{r.nick}</span><div className="muted small">{r.xp} XP · streak {r.streak} · {r.status}</div></div><div className="row-btns wrap"><UiSelect disabled={busy} value={r.role} onChange={v=>act(r.id,{role:v})} options={[{value:'user',label:'user'},{value:'moderator',label:'moderator'},{value:'admin',label:'admin'}]}/><button className="secondary" disabled={busy} onClick={()=>setModal?.({text:`Змінити статус @${r.nick}?`,onYes:()=>act(r.id,{status:r.status==='active'?'suspended':'active'})})}>{r.status==='active'?'Призупинити':'Активувати'}</button><button className="secondary" disabled={busy} onClick={()=>setModal?.({text:`Скинути весь прогрес @${r.nick}? Цю дію не можна скасувати.`,onYes:()=>reset(r.id)})}>Reset</button></div></div>)}</div></div>
+}
+function AdminAudit(){const [rows,setRows]=useState([]);const [err,setErr]=useState('');useEffect(()=>{requestJson('/api/admin-audit').then(d=>setRows(d.rows||[])).catch(e=>{setErr(e.message||'Помилка');if(e.status===401||e.status===403)window.dispatchEvent(new Event('ef-admin-lock'))})},[]);return <div className="word-list">{rows.slice(0,30).map(r=><div className="word-row card" key={r.id}><div><b>{r.action}</b><div className="muted small">{r.target_nick?`@${r.target_nick} · `:''}{new Date(r.created_at).toLocaleString()}</div></div></div>)}{err?<p className="muted">{err}</p>:!rows.length&&<p className="muted">Журнал порожній.</p>}</div>}
 function Metric({title,value,sub}){return <div className="card" style={{margin:0}}><div className="muted small">{title}</div><div style={{fontSize:24,fontWeight:800,marginTop:4}}>{value}</div>{sub&&<div className="muted small">{sub}</div>}</div>}
 function AnalyticsTable({rows,columns,empty='Немає даних'}){if(!rows?.length)return <p className="muted">{empty}</p>;return <div style={{overflowX:'auto'}}><table className="admin-table"><thead><tr>{columns.map(c=><th key={c.key}>{c.label}</th>)}</tr></thead><tbody>{rows.map((r,i)=><tr key={r.id||r.word||r.mode||r.level||i}>{columns.map(c=><td key={c.key}>{c.render?c.render(r):String(r[c.key]??'—')}</td>)}</tr>)}</tbody></table></div>}
 function AnalyticsBars({rows,labelKey='label',valueKey='value',suffix=''}){const max=Math.max(1,...(rows||[]).map(r=>Number(r[valueKey]||0)));if(!rows?.length)return <p className="muted">Немає даних</p>;return <div className="mode-bars">{rows.map((r,i)=><div className="mode-row" key={r[labelKey]||i}><span className="mode-name">{r[labelKey]}</span><div className="mode-track"><i style={{width:(Number(r[valueKey]||0)/max*100)+'%'}}/></div><span className="mode-n">{r[valueKey]}{suffix}</span></div>)}</div>}
 function AdminAnalytics(){
-  const [d,setD]=useState(null),[days,setDays]=useState(30),[tab,setTab]=useState('overview');
-  const load=()=>fetch('/api/admin-analytics?days='+days,{credentials:'include'}).then(r=>r.json()).then(x=>setD(x?.ok?x:null)).catch(()=>setD(null));
+  const [d,setD]=useState(null),[days,setDays]=useState(30),[tab,setTab]=useState('overview'),[err,setErr]=useState('');
+  const load=()=>requestJson('/api/admin-analytics?days='+days).then(x=>{setD(x?.ok?x:null);setErr('')}).catch(e=>{setErr(e.message||'Не вдалося завантажити analytics');if(e.status===401||e.status===403)window.dispatchEvent(new Event('ef-admin-lock'))});
   useEffect(()=>{load()},[days]);
-  if(!d)return <p className="muted">Завантаження analytics…</p>;
+  if(!d)return <div className="admin-error-state"><p className="muted">{err||'Завантаження analytics…'}</p>{err&&<button className="secondary" type="button" onClick={load}>Повторити</button>}</div>;
   const o=d.overview||{}, l=d.learning||{}, v=d.vocabulary||{}, u=d.users||{}, s=d.social||{}, sec=d.security||{}, sys=d.system||{}, f=d.funnel||{};
   const tabs=[['overview','Overview'],['learning','Learning'],['vocabulary','Vocabulary'],['users','Users'],['social','Social'],['security','Security'],['system','System']];
   return <div>
-    <div className="row-btns" style={{flexWrap:'wrap',gap:8}}>{tabs.map(([id,label])=><button key={id} type="button" className={tab===id?'primary':'secondary'} onClick={()=>setTab(id)}>{label}</button>)}<select value={days} onChange={e=>setDays(Number(e.target.value))}><option value={7}>7 днів</option><option value={30}>30 днів</option><option value={90}>90 днів</option></select></div>
+    <div className="row-btns" style={{flexWrap:'wrap',gap:8}}>{tabs.map(([id,label])=><button key={id} type="button" className={tab===id?'primary':'secondary'} onClick={()=>setTab(id)}>{label}</button>)}<UiSelect value={days} onChange={v=>setDays(Number(v))} options={[{value:7,label:'7 днів'},{value:30,label:'30 днів'},{value:90,label:'90 днів'}]}/></div>
     {tab==='overview'&&<>
       <div className="grid stats"><Metric title="Всього users" value={o.total_users||0}/><Metric title="Active users" value={o.active_users||0}/><Metric title={'Active / '+days+'d'} value={o.active_period||0}/><Metric title="New users" value={o.new_users||0}/><Metric title="Lessons started" value={o.lessons_started||0}/><Metric title="Lessons completed" value={o.lessons_completed||0}/><Metric title="Completion" value={(o.completion||0)+'%'}/><Metric title="Accuracy" value={(o.accuracy||0)+'%'}/><Metric title="Answers" value={o.answers||0}/><Metric title="XP earned" value={o.xp_earned||0}/><Metric title="Avg XP / active user" value={o.avgXpUser||0}/><Metric title="Achievements" value={o.achievements_earned||0}/></div>
       <h3>Daily activity</h3><div className="analytics-chart">{(d.daily||[]).map(x=>{const max=Math.max(1,...(d.daily||[]).map(z=>Number(z.events||0)));return <div className="analytics-day" key={String(x.day)} title={`${x.day}: ${x.events} events / ${x.answers} answers`}><i style={{height:(Number(x.events||0)/max*100)+'%'}}/><span>{String(x.day).slice(5)}</span></div>})}</div>
@@ -1623,20 +1636,28 @@ function AdminAnalytics(){
   </div>;
 }
 
-function AdminReports(){const [rows,setRows]=useState([]);const load=()=>fetch('/api/reports',{credentials:'include'}).then(r=>r.json()).then(d=>setRows(d.rows||[])).catch(()=>{});useEffect(load,[]);const update=async(id,status)=>{await fetch('/api/reports',{method:'PATCH',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({id,status})});load()};return <div>{rows.slice(0,12).map(r=><div className="word-row" key={r.id}><div><b>#{r.id} · @{r.target_nick}</b><div className="muted small">@{r.reporter_nick} · {r.reason} · {r.status}</div></div><select value={r.status} onChange={e=>update(r.id,e.target.value)}><option>open</option><option>reviewing</option><option>resolved</option><option>dismissed</option></select></div>)}{!rows.length&&<p className="muted">Немає скарг.</p>}</div>}
-function AdminMonitoring(){const [d,setD]=useState(null);useEffect(()=>{const load=()=>fetch('/api/admin-monitoring',{credentials:'include'}).then(r=>r.json()).then(setD).catch(()=>{});load();const t=setInterval(load,15000);return()=>clearInterval(t)},[]);if(!d)return <p className="muted">Завантаження…</p>;return <div className="grid stats"><Card title="DB latency" value={d.dbMs+'ms'} sub="SELECT 1"/><Card title="Active sessions" value={d.activeSessions}/><Card title="Answers/hour" value={d.progressLastHour}/><Card title="API errors/hour" value={d.apiErrorsHour||0}/><Card title="Realtime online" value={d.realtimeConnections||0}/><Card title="Security events/24h" value={d.security24h||0}/><Card title="Open reports" value={d.openReports}/><Card title="Realtime errors/hour" value={d.realtimeErrorsHour||0}/></div>}
+function AdminReports(){const [rows,setRows]=useState([]);const load=()=>requestJson('/api/reports').then(d=>setRows(d.rows||[])).catch(e=>{if(e.status===401||e.status===403)window.dispatchEvent(new Event('ef-admin-lock'));else emitSiteError(e.message,'Reports')});useEffect(load,[]);const update=async(id,status)=>{await fetch('/api/reports',{method:'PATCH',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({id,status})});load()};return <div>{rows.slice(0,12).map(r=><div className="word-row" key={r.id}><div><b>#{r.id} · @{r.target_nick}</b><div className="muted small">@{r.reporter_nick} · {r.reason} · {r.status}</div></div><UiSelect value={r.status} onChange={v=>update(r.id,v)} options={['open','reviewing','resolved','dismissed'].map(v=>({value:v,label:v}))}/></div>)}{!rows.length&&<p className="muted">Немає скарг.</p>}</div>}
+function AdminMonitoring(){const [d,setD]=useState(null),[err,setErr]=useState('');useEffect(()=>{const load=()=>requestJson('/api/admin-monitoring').then(setD).catch(e=>{setErr(e.message||'Помилка');if(e.status===401||e.status===403)window.dispatchEvent(new Event('ef-admin-lock'))});load();const t=setInterval(load,15000);return()=>clearInterval(t)},[]);if(!d)return <div className="admin-error-state"><p className="muted">{err||'Завантаження…'}</p></div>;return <div><div className="grid stats"><Card title="DB latency" value={d.dbMs+'ms'} sub="SELECT 1"/><Card title="Active sessions" value={d.activeSessions}/><Card title="Answers/hour" value={d.progressLastHour}/><Card title="API errors/hour" value={d.apiErrorsHour||0}/><Card title="Realtime online" value={d.realtimeConnections||0}/><Card title="Security events/24h" value={d.security24h||0}/><Card title="Open reports" value={d.openReports}/><Card title="Realtime errors/hour" value={d.realtimeErrorsHour||0}/></div><div className="sync-health-line"><b>Vocabulary sync:</b> {d.activeVocabulary||0} active · {d.vocabularySync?.value?.count||0} last synced · {d.vocabularySync?.updated_at?new Date(d.vocabularySync.updated_at).toLocaleString():'ще не синхронізовано'}</div></div>}
 
-function AdminStats(){const [d,setD]=useState(null);useEffect(()=>{fetch('/api/admin-stats').then(r=>r.json()).then(setD).catch(()=>{})},[]);if(!d)return <p className="muted">Завантаження статистики…</p>;return <div className="grid stats"><Card title="Користувачі" value={d.users?.active||0} sub={`усього ${d.users?.total||0}`}/><Card title="Відповіді" value={d.attempts?.total||0}/><Card title="Слова" value={d.words?.total||0}/><Card title="Повідомлення" value={d.messages?.total||0}/></div>}
+function AdminStats(){const [d,setD]=useState(null),[err,setErr]=useState('');useEffect(()=>{requestJson('/api/admin-stats').then(setD).catch(e=>{setErr(e.message||'Помилка');if(e.status===401||e.status===403)window.dispatchEvent(new Event('ef-admin-lock'))})},[]);if(!d)return <div className="admin-error-state"><p className="muted">{err||'Завантаження статистики…'}</p>{err&&<button className="secondary" onClick={()=>location.reload()}>Повторити</button>}</div>;return <div className="grid stats"><Card title="Користувачі" value={d.users?.active||0} sub={`усього ${d.users?.total||0}`}/><Card title="Відповіді" value={d.attempts?.total||0}/><Card title="Слова" value={d.words?.total||0}/><Card title="Повідомлення" value={d.messages?.total||0}/></div>}
 
 
-function AdminDanger({save,state}) {
+function AdminDanger({save,state,setModal}) {
   const [busy,setBusy]=useState(false);
   const action=async(type,local)=>{if(!state.id)return;setBusy(true);try{const r=await fetch('/api/admin-users',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({userId:state.id,action:type})});if(r.ok&&local)save({...state,...local});}finally{setBusy(false)}};
-  return <div className="row-btns wrap"><button className="secondary" disabled={busy} onClick={()=>action('clear_history',{history:[]})}>Очистити історію</button><button className="secondary" disabled={busy} onClick={()=>action('reset_srs',{mastery:{},srs:{},attempts:{}})}>Обнулити mastery/SRS</button><button className="secondary" disabled={busy} onClick={()=>action('reset_xp',{xp:0,todayXp:0})}>Обнулити XP</button></div>;
+  return <div className="row-btns wrap"><button className="secondary" disabled={busy} onClick={()=>setModal?.({text:'Очистити твою історію навчання? Цю дію не можна скасувати.',onYes:()=>action('clear_history',{history:[]})})}>Очистити історію</button><button className="secondary" disabled={busy} onClick={()=>setModal?.({text:'Обнулити mastery та SRS? Цю дію не можна скасувати.',onYes:()=>action('reset_srs',{mastery:{},srs:{},attempts:{}})})}>Обнулити mastery/SRS</button><button className="secondary" disabled={busy} onClick={()=>setModal?.({text:'Обнулити XP? Цю дію не можна скасувати.',onYes:()=>action('reset_xp',{xp:0,todayXp:0})})}>Обнулити XP</button></div>;
 }
 
 function AboutPage() {
   const changelog = [
+    {v:'2.5.0', items:['Admin 2.0: bootstrap першого admin, рольова модель, 2FA/TOTP, session hardening та audit','Chat Security 2.0: fingerprints, key rotation, multiple devices, revoke device, encrypted attachments та integrity hash','Security Lab: Playwright E2E + auth/brute-force/session/privilege/XSS/CSRF/IDOR/fuzz/rate-limit regression tests','PWA / Offline видалено: English Flow працює як звичайний online web-app.']},
+    {v:'2.4.0', items:['E2E chat: P-256 device-only keys, AES-GCM ciphertext у Neon, сервер не отримує plaintext','Admin/Stats: recovery після session expiry, monitoring errors та стабільний повторний вхід']},
+    {v:'2.3.0', items:['Стабілізація Learning Engine: помилка підготовки уроку більше не зависає назавжди','Сервер перевіряє правильність відповіді, а не довіряє client-side correct','Захист уроку від відповідей по словах, яких немає в конкретній сесії','Notion Sync: безпечне оновлення, помилка не маскується старим JSON','Realtime status + ping у «Про додаток»','Chat: realtime + HTTP fallback та privacy/block checks','Адмін: 3 тестові UI-дизайни, custom modals, стабільне повторне блокування','Єдина версія інтерфейсу v2.3.0 та AI project instructions']},
+    {v:'2.2.2', items:['Vercel Hobby: 25 API handlers зведено до 1 Serverless Function без втрати /api/* маршрутів','Preview deployment успішно збирається на Hobby plan']},
+    {v:'2.2.1', items:['Security audit виправлено для Windows paths','Lockfile/dependencies актуалізовано','Static audit: client XP/admin bearer/password persistence/HARD fallback']},
+    {v:'2.2.0', items:['Product & Learning Analytics 1–17','Retention, SRS, vocabulary, social, security та system metrics','Admin monitoring і analytics cleanup foundation']},
+    {v:'2.1.0', items:['Production Neon architecture','Server-authoritative XP/SRS/progress','Friends, challenges, chat, privacy, reports','Admin sessions + audit logs']},
+    {v:'2.0.0', items:['Neon-backed application source of truth','Idempotent progress events','Lesson sessions + anti-cheat limits','Persistent achievements та cross-device sync']},
     {v:'1.8-beta', items:['Vercel + Neon PostgreSQL','Повний Notion → Neon sync','Cloud profile sync','Fix Vercel JSX build','Lesson на актуальному словнику']},
     {v:'1.6-beta', items:['Фікс інкогніто/реєстрації (onDone profile)','Корона Boss','Ліани-емодзі','Sprint/Match hardening','RPG профіль','About compact','Бейджі текст знизу']},
     {v:'1.5-beta', items:['Вхід нік+пароль','Адмін лок без dashboard','Sprint step fix','Match stay','Без ліан/зелених смуг','Зелений favicon','Проблемні: лише реально проблемні']},
@@ -1655,11 +1676,7 @@ function AboutPage() {
       <div className="card about-left">
         <Title title="Про додаток" text="Сюди пізніше додамо офіційний опис, політику та контакти."/>
         <p className="muted">English Flow — тренажер англійської з SRS, гейміфікацією та словником з Notion.</p>
-        <p className="muted">Версія інтерфейсу: <b>v1.8-beta</b></p>
-        <div className="card" style={{marginTop:12}}>
-          <h3>Офлайн-кеш словника</h3>
-          <p className="muted small">Словник зберігається в localStorage після синку. Наступний крок — Service Worker для повної офлайн-роботи (PWA, відкладено).</p>
-        </div>
+        <p className="muted">Версія інтерфейсу: <b>v{VERSION}</b></p>
       </div>
       <div className="about-right">
         <Title title="Історія оновлень" text="Усі версії та що змінилось"/>
@@ -1680,25 +1697,12 @@ function Toast({msg}) {
 }
 
 function ConfirmModal({modal, onClose}) {
+  useEffect(()=>{if(!modal)return;const onKey=e=>{if(e.key==='Escape')onClose()};document.addEventListener('keydown',onKey);return()=>document.removeEventListener('keydown',onKey)},[modal,onClose]);
   if (!modal) return null;
-  return (
-    <div className="ef-modal-backdrop" onClick={onClose}>
-      <div className="ef-modal card" onClick={e => e.stopPropagation()}>
-        <h2>Підтвердження</h2>
-        <p>{modal.text}</p>
-        <div className="row-btns">
-          <button className="secondary" type="button" onClick={onClose}>Скасувати</button>
-          <button className="primary" type="button" onClick={() => { modal.onYes?.(); onClose(); }}>Так, продовжити</button>
-        </div>
-      </div>
-    </div>
-  );
+  const error=modal.type==='error';
+  return <div className="ef-modal-backdrop" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget)onClose()}}><div className="ef-modal card" role="dialog" aria-modal="true" aria-labelledby="ef-modal-title" onMouseDown={e=>e.stopPropagation()}><h2 id="ef-modal-title">{modal.title || (error?'Помилка':'Підтвердження')}</h2><p>{modal.text}</p><div className="row-btns"><button className={error?'primary':'secondary'} type="button" onClick={onClose}>{error?'Закрити':'Скасувати'}</button>{!error&&<button className="primary" type="button" onClick={()=>{modal.onYes?.();onClose()}}>Так, продовжити</button>}</div></div></div>;
 }
 
-function OfflineBanner({online}) {
-  if (online) return null;
-  return <div className="ef-offline">Немає зʼєднання з мережею. Прогрес локальний; синк словника недоступний.</div>;
-}
 
 
 function SettingsPage({state, save}) {
@@ -1718,13 +1722,7 @@ function SettingsPage({state, save}) {
             Звукові ефекти (окремо)
           </label>
           <label>Пакет звуків</label>
-          <select className="search" value={state.soundPack || 'auto'} onChange={e => upd({soundPack: e.target.value})}>
-            <option value="auto">Авто (як UI скін)</option>
-            <option value="classic">Classic</option>
-            <option value="neon">Neon digital blip</option>
-            <option value="paper">Paper soft</option>
-            <option value="candy">Candy soft</option>
-          </select>
+          <UiSelect value={state.soundPack || 'auto'} onChange={v=>upd({soundPack:v})} options={[{value:'auto',label:'Авто (як UI скін)'},{value:'classic',label:'Classic'},{value:'neon',label:'Neon digital blip'},{value:'paper',label:'Paper soft'},{value:'candy',label:'Candy soft'}]}/>
           <label className="row-check">
             <input type="checkbox" checked={state.settings?.keyboardHints !== false} onChange={e => upd({settings: {...(state.settings||{}), keyboardHints: e.target.checked}})}/>
             <Keyboard size={16}/> Підказки клавіш 1–4
@@ -1738,11 +1736,7 @@ function SettingsPage({state, save}) {
         <div className="card">
           <h2>Порівняння після гри</h2>
           <label>Режим</label>
-          <select className="search" value={state.compareMode || 'global'} onChange={e => upd({compareMode: e.target.value})}>
-            <option value="global">Зі середнім усіх гравців</option>
-            <option value="friend">З конкретним другом</option>
-            <option value="off">Вимкнено</option>
-          </select>
+          <UiSelect value={state.compareMode || 'global'} onChange={v=>upd({compareMode:v})} options={[{value:'global',label:'Зі середнім усіх гравців'},{value:'friend',label:'З конкретним другом'},{value:'off',label:'Вимкнено'}]}/>
           {(state.compareMode === 'friend') && (
             <>
               <label>Нік друга</label>
@@ -1758,20 +1752,26 @@ function SettingsPage({state, save}) {
 }
 
 function FriendsPage({state}) {
-  const [q,setQ]=useState(''),[msg,setMsg]=useState(''),[chatWith,setChatWith]=useState(null),[text,setText]=useState(''),[friends,setFriends]=useState([]),[board,setBoard]=useState([]),[messages,setMessages]=useState([]),[busy,setBusy]=useState(false),[rt,setRt]=useState('offline');
-  const rtRef=useRef(null);
-  const load=useCallback(async()=>{if(state.guest)return;const [f,b]=await Promise.all([getFriends(state.nick),friendsLeaderboard(state.nick)]);setFriends(f||[]);setBoard(b||[])},[state.nick,state.guest]);
-  useEffect(()=>{load();if(state.guest)return;const r=createRealtime({onStatus:setRt,onMessage:m=>{if(m.type==='chat'&&m.message){setMessages(x=>x.some(v=>v.id===m.message.id)?x:[...x,m.message])}}});rtRef.current=r;return()=>r.close()},[state.guest]);
-  useEffect(()=>{if(!chatWith||state.guest)return;let alive=true;getChat(state.nick,chatWith).then(x=>alive&&setMessages(x||[]));return()=>{alive=false}},[chatWith,state.nick,state.guest]);
+  const [q,setQ]=useState(''),[msg,setMsg]=useState(''),[chatWith,setChatWith]=useState(null),[text,setText]=useState(''),[friends,setFriends]=useState([]),[board,setBoard]=useState([]),[messages,setMessages]=useState([]),[busy,setBusy]=useState(false),[rt,setRt]=useState('offline'),[peerDevices,setPeerDevices]=useState([]),[myDevices,setMyDevices]=useState([]),[security,setSecurity]=useState(''),[peerFp,setPeerFp]=useState(''),[trusted,setTrusted]=useState(''),[attachment,setAttachment]=useState(null);
+  const rtRef=useRef(null),identityRef=useRef(null),friendsRef=useRef([]);
+  const load=useCallback(async()=>{if(state.guest)return;try{const [f,b]=await Promise.all([getFriends(state.nick),friendsLeaderboard(state.nick)]);setFriends(f||[]);friendsRef.current=f||[];setBoard(b||[])}catch(e){emitSiteError(e.message||'Не вдалося завантажити друзів','Друзі')}},[state.nick,state.guest]);
+  const loadDevices=useCallback(async()=>{if(state.guest)return;try{const identity=await ensureChatIdentity();identityRef.current=identity;await registerChatDevice(await publicKeyPayload());setMyDevices(await getMyChatDevices());setSecurity('E2E v2 · пристрій активний')}catch(e){if(e.status===401)return;setSecurity('E2E недоступний');emitSiteError(e.message||'Не вдалося зареєструвати E2E пристрій','Безпека чату')}},[state.guest]);
+  useEffect(()=>{load();loadDevices();if(state.guest)return;let alive=true;const r=createRealtime({onStatus:setRt,onMessage:async m=>{if(m.type==='chat'&&m.message){let item=m.message;try{const sender=friendsRef.current.find(f=>String(f.id)===String(item.sender_id));const nick=sender?.nick||chatWith;if(nick){const ds=await getChatDevices(nick);const d=ds.find(x=>String(x.device_id)===String(item.sender_device_id))||ds[0];if(d?.public_key)item={...item,text:await decryptChatText(item,d.public_key)}}}catch{item={...item,text:'🔒 Не вдалося розшифрувати'}}if(alive)setMessages(x=>x.some(v=>v.id===item.id)?x:[...x,item])}if(m.type==='error')emitSiteError(m.error||'Realtime chat error','Чат')}});rtRef.current=r;return()=>{alive=false;r.close()}},[state.guest,state.nick]);
+  useEffect(()=>{if(!chatWith||state.guest)return;let alive=true;(async()=>{try{const ds=await getChatDevices(chatWith);if(!ds.length){setPeerDevices([]);setPeerFp('');setTrusted('');setMessages([]);setSecurity('Друг ще не має активного E2E-пристрою');return}setPeerDevices(ds);const d=ds[0];const fp=await fingerprint(d.public_key);setPeerFp(fp);setTrusted(trustedKey(chatWith));const raw=await getChat(state.nick,chatWith);const decoded=await Promise.all((raw||[]).map(async m=>{const sender=ds.find(x=>String(x.device_id)===String(m.sender_device_id))||d;return {...m,text:m.ciphertext?await decryptChatText(m,sender.public_key):m.text||''}}));if(alive)setMessages(decoded);if(trustedKey(chatWith)&&trustedKey(chatWith)!==fp)setSecurity('⚠️ Ключ друга змінився');else setSecurity(`E2E v2 · fingerprint ${fp.slice(0,23)}`)}catch(e){if(alive){setMessages([]);emitSiteError(e.message||'Не вдалося завантажити чат','Чат')}}})();return()=>{alive=false}},[chatWith,state.nick]);
   useEffect(()=>{if(!chatWith||!rtRef.current)return;const friend=friends.find(f=>f.nick===chatWith);if(friend?.id)rtRef.current.send({type:'join_chat',userId:friend.id})},[chatWith,friends]);
   const add=async()=>{setBusy(true);const r=await addFriend(state.nick,q);setMsg(r.ok?'Запит надіслано ✓':(r.error||'Помилка'));if(r.ok){track('friend_request',{feature:'friends'});setQ('')}setBusy(false);load()};
-  const send=async()=>{const t=text.trim();if(!chatWith||!t)return;const friend=friends.find(f=>f.nick===chatWith);if(friend?.id&&rtRef.current){const sent=rtRef.current.send({type:'chat',text:t});if(!sent){const m=await sendChat(state.nick,chatWith,t);if(m)setMessages(x=>[...x,m])}}else{const m=await sendChat(state.nick,chatWith,t);if(m)setMessages(x=>[...x,m])}track('chat_send',{realtime:rt,chars:t.length});setText('')};
-  const social=async(action)=>{if(!chatWith)return;await fetch('/api/social',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({nick:chatWith,action})});if(action==='block'){setChatWith(null);load()}};
-  const report=async()=>{if(!chatWith)return;await fetch('/api/reports',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({nick:chatWith,type:'user',reason:'Порушення правил'})});setMsg('Скаргу передано модераторам.')}
+  const send=async()=>{const t=text.trim();if(!chatWith||(!t&&!attachment))return;if(!peerDevices.length){emitSiteError('Одержувач не має активного E2E-пристрою','Чат');return}try{const payload=await encryptChatPayload(t,peerDevices);if(attachment){if(attachment.size>2*1024*1024)throw new Error('Вкладення максимум 2 MB');payload.attachment=await encryptAttachment(attachment,peerDevices)}const friend=friends.find(f=>f.nick===chatWith);let sent=null;if(!attachment&&friend?.id&&rt==='open'&&rtRef.current){const ok=rtRef.current.send({type:'chat',to:chatWith,...payload});if(!ok)sent=await sendChat(state.nick,chatWith,payload)}else sent=await sendChat(state.nick,chatWith,payload);if(sent){const shown={...sent,text:t,attachment_meta:payload.attachment?{name:payload.attachment.name,mime:payload.attachment.mime,size:payload.attachment.size}:null};setMessages(x=>x.some(v=>v.id===shown.id)?x:[...x,shown])}else if(rt!=='open')throw new Error('Не вдалося надіслати E2E повідомлення');track('chat_send',{realtime:rt,chars:t.length,e2e:true,attachment:!!attachment});setText('');setAttachment(null)}catch(e){emitSiteError(e.message||'Не вдалося надіслати повідомлення','Чат')}};
+  const social=async(action)=>{if(!chatWith)return;try{await requestJson('/api/social',{method:'POST',body:JSON.stringify({nick:chatWith,action})});if(action==='block'){setChatWith(null);load()}}catch(e){emitSiteError(e.message,'Соціальні налаштування')}};
+  const report=async()=>{if(!chatWith)return;try{await requestJson('/api/reports',{method:'POST',body:JSON.stringify({nick:chatWith,type:'user',reason:'Порушення правил'})});setMsg('Скаргу передано модераторам.')}catch(e){emitSiteError(e.message,'Скарга')}};
+  const rotate=async()=>{try{const next=await rotateChatIdentity();await registerChatDevice(await publicKeyPayload());setMyDevices(await getMyChatDevices());setSecurity('Ключ пристрою оновлено · '+(await fingerprint(next.publicJwk)).slice(0,23));emitSiteToast('Ключ успішно ротовано ✓','ok')}catch(e){emitSiteError(e.message||'Не вдалося ротувати ключ','Безпека чату')}};
+  const trust=()=>{trustKey(chatWith,peerFp);setTrusted(peerFp);setSecurity('✓ Fingerprint перевірено')};
+  const openAttachment=async(m)=>{try{const sender=peerDevices.find(x=>String(x.device_id)===String(m.sender_device_id))||peerDevices[0];if(!sender?.public_key||!m.attachment_meta||!m.attachment_keys?.length)throw new Error('Немає зашифрованого вкладення для цього пристрою');const blob=await decryptAttachment({mime:m.attachment_meta.mime,keys:m.attachment_keys},sender.public_key);if(!blob)throw new Error('Цей пристрій не має ключа вкладення');const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=m.attachment_meta.name||'attachment';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}catch(e){emitSiteError(e.message||'Не вдалося розшифрувати вкладення','Чат')}};
   if(state.guest)return <section><Title title="Друзі" text="Друзі та чат доступні після входу в акаунт"/><div className="card muted">Гостьовий режим не зберігає соціальні дані в Neon.</div></section>;
-  return <section className="fade-in"><Title title="Друзі" text="Neon-друзі, realtime chat і змагання"/><div className="card"><span className="pill"><Wifi size={12}/> realtime: {rt}</span></div><div className="grid two"><div className="card"><h2>Додати друга</h2><div className="row-btns"><input className="search" value={q} onChange={e=>setQ(e.target.value)} placeholder="нік друга"/><button className="primary" disabled={busy||!q.trim()} onClick={add}>Додати</button></div>{msg&&<p className="muted">{msg}</p>}<ul className="friend-list">{friends.map(f=><li key={f.id||f.nick}><button type="button" className={'friend-item'+(chatWith===f.nick?' active':'')} onClick={()=>f.status==='accepted'&&setChatWith(f.nick)}><Users size={14}/> @{f.nick}{f.status==='pending'?' · запит':''}</button>{f.status==='pending'&&f.requested_by!==state.id&&<button className="secondary" onClick={async()=>{await acceptFriend(state.nick,f.id);load()}}>Прийняти</button>}</li>)}{!friends.length&&<li className="muted">Поки немає друзів</li>}</ul></div><div className="card"><h2><MessageCircle size={18}/> Чат {chatWith?`з @${chatWith}`:''}</h2>{!chatWith?<p className="muted">Обери прийнятого друга зліва</p>:<><div className="chat-box">{messages.map(m=><div key={m.id} className={'chat-msg'+(String(m.sender_id)===String(state.id)?' me':'')}><b>{String(m.sender_id)===String(state.id)?'Ти':`@${chatWith}`}</b> <span className="muted small">{new Date(m.created_at).toLocaleTimeString()}</span><div>{m.text}</div></div>)}</div><div className="row-btns"><input className="search" value={text} maxLength={1000} onChange={e=>setText(e.target.value)} onKeyDown={e=>e.key==='Enter'&&send()} placeholder="повідомлення"/><button className="primary" onClick={send}>Надіслати</button></div><div className="row-btns wrap" style={{marginTop:8}}><button className="secondary" onClick={()=>social('mute')}>🔕 Mute</button><button className="secondary" onClick={()=>social('block')}>🚫 Block</button><button className="secondary" onClick={report}>⚑ Report</button></div></>}</div></div>{board.length>0&&<div className="card" style={{marginTop:16}}><h2>Рейтинг друзів</h2><div className="lb">{board.map((r,i)=><div className="lb-row" key={r.nick}><span>#{i+1}</span><b>@{r.nick}</b><span className="muted">{r.xp} XP · {r.streak}🔥</span></div>)}</div></div>}</section>;
+  return <section className="fade-in"><Title title="Друзі" text="Neon-друзі, E2E realtime chat і змагання"/><div className="card"><span className="pill"><Wifi size={12}/> realtime: {rt}</span><span className="pill" style={{marginLeft:8}}>🔐 {security||'E2E перевіряється…'}</span></div>
+    <div className="card chat-devices-card"><div className="realtime-head"><div><h2 style={{margin:0}}>Безпека чату 2.0</h2><p className="muted small">Ключі залишаються на пристроях. Сервер зберігає ciphertext.</p></div><button className="secondary" type="button" onClick={rotate}>Ротувати ключ</button></div><div className="device-list">{myDevices.map(d=><div className="device-row" key={d.device_id}><div><b>{String(d.device_id)===String(identityRef.current?.deviceId)?'Цей пристрій':'Інший пристрій'}</b><div className="muted small">v{d.key_version} · {new Date(d.updated_at).toLocaleString()}</div></div>{String(d.device_id)!==String(identityRef.current?.deviceId)&&<button className="secondary" type="button" onClick={async()=>{try{await revokeChatDevice(d.device_id);setMyDevices(await getMyChatDevices());emitSiteToast('Пристрій відкликано','ok')}catch(e){emitSiteError(e.message,'Пристрої')}}}>Відкликати</button>}</div>)}{!myDevices.length&&<p className="muted">E2E пристрій ще не зареєстровано.</p>}</div>{chatWith&&peerFp&&<div className={'fingerprint-box '+(trusted&&trusted!==peerFp?'changed':'')}><b>{trusted&&trusted!==peerFp?'⚠️ Цей ключ змінився':'Fingerprint друга'}</b><code>{peerFp}</code>{trusted===peerFp?<span className="pill ok">✓ Перевірено</span>:<button className="secondary" type="button" onClick={trust}>Позначити як перевірений</button>}</div>}</div>
+    <div className="grid two"><div className="card"><h2>Додати друга</h2><div className="row-btns"><input className="search" value={q} onChange={e=>setQ(e.target.value)} placeholder="нік друга"/><button className="primary" disabled={busy||!q.trim()} onClick={add}>Додати</button></div>{msg&&<p className="muted">{msg}</p>}<ul className="friend-list">{friends.map(f=><li key={f.id||f.nick}><button type="button" className={'friend-item'+(chatWith===f.nick?' active':'')} onClick={()=>f.status==='accepted'&&setChatWith(f.nick)}><Users size={14}/> @{f.nick}{f.status==='pending'?' · запит':''}</button>{f.status==='pending'&&f.requested_by!==state.id&&<button className="secondary" onClick={async()=>{const r=await acceptFriend(state.nick,f.id);if(!r.ok)emitSiteError(r.error,'Друзі');load()}}>Прийняти</button>}</li>)}{!friends.length&&<li className="muted">Поки немає друзів</li>}</ul></div>
+      <div className="card"><h2><MessageCircle size={18}/> Чат {chatWith?`з @${chatWith}`:''}</h2>{!chatWith?<p className="muted">Обери прийнятого друга зліва</p>:<><div className="chat-security"><b>🔐 End-to-end encrypted · v2</b><span className="muted small">AES-GCM · multi-device keys · integrity hash</span></div><div className="chat-box">{messages.map(m=><div key={m.id} className={'chat-msg'+(String(m.sender_id)===String(state.id)?' me':'')}><b>{String(m.sender_id)===String(state.id)?'Ти':`@${chatWith}`}</b> <span className="muted small">{new Date(m.created_at).toLocaleTimeString()}</span><div>{m.text}</div>{m.attachment_meta&&<div className="chat-attachment">📎 {m.attachment_meta.name} · {Math.round(Number(m.attachment_meta.size||0)/1024)} KB <button type="button" className="secondary attachment-open" onClick={()=>openAttachment(m)}>Розшифрувати</button></div>}</div>)}</div><div className="row-btns"><input className="search" value={text} maxLength={1000} onChange={e=>setText(e.target.value)} onKeyDown={e=>e.key==='Enter'&&send()} placeholder="зашифроване повідомлення"/><button className="secondary" type="button" onClick={()=>document.getElementById('ef-chat-attachment')?.click()}>📎</button><input id="ef-chat-attachment" hidden type="file" onChange={e=>setAttachment(e.target.files?.[0]||null)}/><button className="primary" disabled={!peerDevices.length||( !text.trim()&&!attachment)} onClick={send}>Надіслати</button></div>{attachment&&<div className="muted small">Вкладення: {attachment.name} · {Math.round(attachment.size/1024)} KB · буде зашифровано на пристрої</div>}<div className="row-btns wrap" style={{marginTop:8}}><button className="secondary" onClick={()=>social('mute')}>🔕 Mute</button><button className="secondary" onClick={()=>social('block')}>🚫 Block</button><button className="secondary" onClick={report}>⚑ Report</button></div></>}</div></div>{board.length>0&&<div className="card" style={{marginTop:16}}><h2>Рейтинг друзів</h2><div className="lb">{board.map((r,i)=><div className="lb-row" key={r.nick}><span>#{i+1}</span><b>@{r.nick}</b><span className="muted">{r.xp} XP · {r.streak}🔥</span></div>)}</div></div>}</section>;
 }
-
 function PrivacySettings(){
   const [s,setS]=useState(null);
   useEffect(()=>{fetch('/api/privacy',{credentials:'include'}).then(r=>r.json()).then(d=>setS(d.settings||{})).catch(()=>{})},[]);
@@ -1783,9 +1783,9 @@ function PrivacySettings(){
 function ChallengesPage({state}){
  const [rows,setRows]=useState([]),[title,setTitle]=useState(''),[metric,setMetric]=useState('xp'),[goal,setGoal]=useState(100),[busy,setBusy]=useState(false);
  const load=useCallback(()=>fetch('/api/challenges').then(r=>r.json()).then(d=>setRows(d.rows||[])).catch(()=>{}),[]); useEffect(()=>{load()},[load]);
- const create=async(kind='public')=>{setBusy(true);await fetch('/api/challenges',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({kind,metric,title:title||'Мій challenge',goal:Number(goal)||100,hours:24})});setTitle('');await load();setBusy(false)};
- const join=async(id)=>{await fetch('/api/challenges',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,action:'join'})});await fetch('/api/challenges',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,action:'score'})});load()};
- return <section className="fade-in"><Title title="Challenges" text="Окремі виклики та змагання між друзями"/><div className="card"><h2>Створити</h2><div className="grid two"><input className="search" value={title} onChange={e=>setTitle(e.target.value)} placeholder="Назва challenge"/><select value={metric} onChange={e=>setMetric(e.target.value)}><option value="xp">XP</option><option value="answers">Відповіді</option><option value="accuracy">Точність</option><option value="mastery">Mastery</option></select><input className="search" type="number" value={goal} onChange={e=>setGoal(e.target.value)}/><div className="row-btns"><button className="primary" disabled={busy} onClick={()=>create('public')}>Для всіх</button><button className="secondary" disabled={busy} onClick={()=>create('friend')}>Для друзів</button></div></div></div><div className="grid two">{rows.map(c=><div className="card challenge-card" key={c.id}><span className="pill">{c.kind}</span><h2>{c.title}</h2><p className="muted">{c.metric} · ціль {c.goal}</p><p className="muted small">до {new Date(c.ends_at).toLocaleString()}</p><button className="primary" disabled={c.joined} onClick={()=>join(c.id)}>{c.joined?'Ви берете участь':'Приєднатись'}</button></div>)}{!rows.length&&<div className="card muted">Активних challenges поки немає.</div>}</div></section>;
+ const create=async(kind='public')=>{setBusy(true);try{await requestJson('/api/challenges',{method:'POST',body:JSON.stringify({kind,metric,title:title||'Мій challenge',goal:Number(goal)||100,hours:24})});setTitle('');await load();emitSiteToast('Challenge створено ✓','ok')}catch(e){emitSiteError(e.message||'Не вдалося створити challenge','Challenges')}finally{setBusy(false)}};
+ const join=async(id)=>{try{const r=await requestJson('/api/challenges',{method:'PATCH',body:JSON.stringify({id,action:'join'})});if(r.ok){await requestJson('/api/challenges',{method:'PATCH',body:JSON.stringify({id,action:'score'})});await load();emitSiteToast('Challenge оновлено ✓','ok')}}catch(e){emitSiteError(e.message||'Не вдалося приєднатися до challenge','Challenges')}};
+ return <section className="fade-in"><Title title="Challenges" text="Окремі виклики та змагання між друзями"/><div className="card"><h2>Створити</h2><div className="grid two"><input className="search" value={title} onChange={e=>setTitle(e.target.value)} placeholder="Назва challenge"/><UiSelect value={metric} onChange={setMetric} options={[{value:'xp',label:'XP'},{value:'answers',label:'Відповіді'},{value:'accuracy',label:'Точність'},{value:'mastery',label:'Mastery'}]}/><input className="search" type="number" value={goal} onChange={e=>setGoal(e.target.value)}/><div className="row-btns"><button className="primary" disabled={busy} onClick={()=>create('public')}>Для всіх</button><button className="secondary" disabled={busy} onClick={()=>create('friend')}>Для друзів</button></div></div></div><div className="grid two">{rows.map(c=><div className="card challenge-card" key={c.id}><span className="pill">{c.kind}</span><h2>{c.title}</h2><p className="muted">{c.metric} · ціль {c.goal}</p><p className="muted small">до {new Date(c.ends_at).toLocaleString()}</p><button className="primary" disabled={c.joined} onClick={()=>join(c.id)}>{c.joined?'Ви берете участь':'Приєднатись'}</button></div>)}{!rows.length&&<div className="card muted">Активних challenges поки немає.</div>}</div></section>;
 }
 
 function CompareBlurb({state}) {
@@ -1829,6 +1829,20 @@ function PlayerDBSearch({current, save}) {
     </div>
   );
 }
+function EmojiPulse({state}) {
+  const total=(state.history||[]).length, correct=(state.history||[]).filter(h=>h.correct).length, pct=total?Math.round(correct/total*100):0;
+  const emojis= pct>=90?['🔥','😎','🚀','🧠','🏆']: pct>=70?['🙂','💪','⚡','🎯','✨']:['🌱','🧩','📚','💡','🎮'];
+  return <div className="emoji-pulse card" aria-label="Навчальний настрій"><div className="emoji-orbit">{emojis.map((e,i)=><span key={i} style={{'--i':i}}>{e}</span>)}</div><div><b>{pct>=90?'Вогонь!':pct>=70?'Гарний темп':'Починаємо розігрів'}</b><div className="muted small">Твоя точність {pct}% · streak {state.streak||0} 🔥</div></div></div>;
+}
+
+function RealtimeStatusPanel(){
+  const [status,setStatus]=useState('offline'),[lastPing,setLastPing]=useState(null),[pingBusy,setPingBusy]=useState(false);
+  const ref=useRef(null);
+  useEffect(()=>{const r=createRealtime({onStatus:setStatus,onMessage:m=>{if(m.type==='pong'&&m.clientTs){setLastPing(Date.now()-m.clientTs);setPingBusy(false)}}});ref.current=r;return()=>r.close()},[]);
+  const ping=()=>{setPingBusy(true);const sent=ref.current?.send({type:'ping',clientTs:Date.now()});if(!sent){setPingBusy(false);emitSiteToast('Realtime ще не підключений','info');return}setTimeout(()=>setPingBusy(false),3000)};
+  return <div className="card realtime-panel"><div className="realtime-head"><div><h3 style={{margin:0}}>Realtime</h3><span className={'realtime-dot '+status}></span><span className="muted small">{status}</span></div><button className="secondary" type="button" onClick={ping} disabled={pingBusy}>{pingBusy?'Перевірка…':'Перевірити ping'}</button></div><p className="muted small">Підключення перевіряється автоматично. Ping показує час round-trip до realtime-сервера.</p>{lastPing!==null&&<b>{lastPing} ms</b>}</div>;
+}
+
 function Title({title, text}) { return <div className="title"><h1>{title}</h1><p className="muted">{text}</p></div>; }
 
 function ModeBars({history}) {

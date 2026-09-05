@@ -22,7 +22,7 @@ Vercel API ───────────────► Neon PostgreSQL
   ▼
 React client
   │
-  ├─ IndexedDB/localStorage = cache + offline queue only
+  ├─ IndexedDB/localStorage = UI/device cache only
   └─ Neon = authoritative state
 ```
 
@@ -58,3 +58,14 @@ Initial intervals are 1 → 3 → adaptive growth, with a maximum stage of 8. Th
 - The displayed number is always `currentIndex + 1` and therefore cannot jump backwards.
 
 The HARD mode never falls back to the whole dictionary.
+
+## v2.3.0 sync boundaries
+**Notion → Neon → client cache** is the content flow. A live sync updates/archives vocabulary in Neon; the browser cache is refreshed only after a successful live response. Home UI intentionally hides Notion metadata.
+
+**Lesson → progress:** the server creates a protected lesson session containing the exact word IDs. Each answer must belong to that session and is verified against Neon before XP/SRS/history mutation.
+
+**Admin:** normal authenticated user session → admin password → short-lived bound admin cookie → admin-only APIs. Expiry returns to the admin gate rather than leaving a broken page.
+
+
+## v2.5.0 E2E boundaries
+Chat plaintext is encrypted in the browser with P-256 ECDH + AES-GCM before HTTP/WebSocket transport. Neon stores ciphertext and public device keys. The application is intentionally online-only; Neon remains authoritative for authenticated XP/SRS/lesson authority.

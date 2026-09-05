@@ -1,4 +1,4 @@
-// SRS v2 mirror. The server is authoritative; this module keeps the UI usable offline.
+// SRS v2 mirror. The server is authoritative; this module mirrors the server SRS policy for rendering.
 const MIN_EASE=1.3;
 export function todayStr(){return new Date().toISOString().slice(0,10)}
 export function isDue(card,today=todayStr()){return !card?.dueAt||String(card.dueAt)<=today}

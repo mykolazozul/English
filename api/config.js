@@ -1,3 +1,0 @@
-import {sqlClient,json} from '../lib/server/db.js';
-const ALLOWED=['lessonSize','correctPoints','wrongPoints','masteryThreshold','shuffleQuestions','shuffleAnswers','showPronunciation','maintenanceMode','maxLessonSize','srsVersion','perfectBonus','badgeStyle'];
-export default async function handler(req,res){try{if(req.method!=='GET')return json(res,405,{ok:false});const sql=sqlClient();const rows=await sql`SELECT key,value FROM admin_settings WHERE key = ANY(${ALLOWED})`;const settings=Object.fromEntries(rows.map(r=>[r.key,r.value]));return json(res,200,{ok:true,settings,serverTime:new Date().toISOString()},{'Cache-Control':'no-store'})}catch(e){return json(res,503,{ok:false,error:'Config unavailable'})}}

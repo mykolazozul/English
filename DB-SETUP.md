@@ -29,3 +29,19 @@ SELECT count(*) AS achievements FROM achievements;
 
 ## Important
 Never paste `DATABASE_URL`, `ADMIN_PASSWORD`, `ADMIN_SECRET`, `SYNC_SECRET` or `NOTION_TOKEN` into frontend code, GitHub issues, screenshots or public repositories.
+
+## Existing production database already on v2/v3/v4
+Run migrations in order only once:
+- `db/schema-v3.sql`
+- `db/schema-v4.sql`
+- `db/schema-v5.sql`
+
+For the current v2.5.0 code, run **v5, then v6, then v7, then v8**.
+
+## v2.5.0 migration
+- `db/schema-v5.sql` — bound admin sessions + protected lesson word sets.
+- `db/schema-v6.sql` — E2E device/message foundation.
+- `db/schema-v7.sql` — multi-device E2E, encrypted attachments, key rotation/revocation fields and Admin 2.0 TOTP storage.
+- `db/schema-v8.sql` — Admin WebAuthn/passkey credentials and short-lived challenges.
+
+Run each once in order on the existing production database. They are designed to be idempotent where possible.

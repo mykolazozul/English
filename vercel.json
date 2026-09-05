@@ -1,6 +1,106 @@
 {
   "rewrites": [
     {
+      "source": "/api/admin-analytics",
+      "destination": "/api/index?route=admin-analytics"
+    },
+    {
+      "source": "/api/admin-audit",
+      "destination": "/api/index?route=admin-audit"
+    },
+    {
+      "source": "/api/admin-auth",
+      "destination": "/api/index?route=admin-auth"
+    },
+    {
+      "source": "/api/admin-monitoring",
+      "destination": "/api/index?route=admin-monitoring"
+    },
+    {
+      "source": "/api/admin-settings",
+      "destination": "/api/index?route=admin-settings"
+    },
+    {
+      "source": "/api/admin-stats",
+      "destination": "/api/index?route=admin-stats"
+    },
+    {
+      "source": "/api/admin-users",
+      "destination": "/api/index?route=admin-users"
+    },
+    {
+      "source": "/api/analytics",
+      "destination": "/api/index?route=analytics"
+    },
+    {
+      "source": "/api/auth",
+      "destination": "/api/index?route=auth"
+    },
+    {
+      "source": "/api/challenges",
+      "destination": "/api/index?route=challenges"
+    },
+    {
+      "source": "/api/chat",
+      "destination": "/api/index?route=chat"
+    },
+    {
+      "source": "/api/config",
+      "destination": "/api/index?route=config"
+    },
+    {
+      "source": "/api/cron-analytics-cleanup",
+      "destination": "/api/index?route=cron-analytics-cleanup"
+    },
+    {
+      "source": "/api/friend-leaderboard",
+      "destination": "/api/index?route=friend-leaderboard"
+    },
+    {
+      "source": "/api/friends",
+      "destination": "/api/index?route=friends"
+    },
+    {
+      "source": "/api/health",
+      "destination": "/api/index?route=health"
+    },
+    {
+      "source": "/api/leaderboard",
+      "destination": "/api/index?route=leaderboard"
+    },
+    {
+      "source": "/api/lessons",
+      "destination": "/api/index?route=lessons"
+    },
+    {
+      "source": "/api/notion-sync",
+      "destination": "/api/index?route=notion-sync"
+    },
+    {
+      "source": "/api/privacy",
+      "destination": "/api/index?route=privacy"
+    },
+    {
+      "source": "/api/profile",
+      "destination": "/api/index?route=profile"
+    },
+    {
+      "source": "/api/progress",
+      "destination": "/api/index?route=progress"
+    },
+    {
+      "source": "/api/reports",
+      "destination": "/api/index?route=reports"
+    },
+    {
+      "source": "/api/social",
+      "destination": "/api/index?route=social"
+    },
+    {
+      "source": "/api/vocabulary",
+      "destination": "/api/index?route=vocabulary"
+    },
+    {
       "source": "/((?!api/).*)",
       "destination": "/index.html"
     }

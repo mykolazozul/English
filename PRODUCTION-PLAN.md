@@ -1,6 +1,6 @@
 # English Flow production plan
 
-Neon is the system of record. Notion is the vocabulary authoring source. Vercel is the HTTP/API frontend layer. The WebSocket service is a separate long-lived Node service and writes/reads chat through Neon. Browser storage is cache/offline only.
+Neon is the system of record. Notion is the vocabulary authoring source. Vercel is the HTTP/API frontend layer. The WebSocket service is a separate long-lived Node service and writes/reads chat through Neon. Browser storage is UI/device cache only.
 
 ## Security boundary
 Browser → API → Neon. Never Browser → Neon.

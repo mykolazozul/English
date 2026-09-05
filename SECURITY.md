@@ -41,7 +41,7 @@ Neon is authoritative for:
 - chat
 - admin settings
 
-localStorage / IndexedDB are caches only. Offline progress is stored as a pending event queue and replayed with idempotent event IDs when connectivity returns.
+localStorage / IndexedDB are caches only. Authenticated progress is submitted online to Neon; there is no offline progress queue.
 
 Notion is the source of vocabulary content. Neon is the source used by the application at runtime.
 
@@ -54,3 +54,11 @@ Notion is the source of vocabulary content. Neon is the source used by the appli
 
 ## What cannot be promised
 No web application can honestly be called impossible to hack. This design removes the major client-side trust problems, but production still needs monitoring, dependency updates, backups, secret rotation, and periodic security testing.
+
+## v2.3.0 hardening
+- Admin authentication requires an already authenticated `admin`/`moderator` Neon account plus the server-side admin password.
+- Admin session records are bound to `admin_sessions.user_id`; unbound legacy sessions are no longer accepted.
+- Protected lesson sessions store `lesson_words`, and `/api/progress` rejects a word that was not selected for that session.
+- `/api/progress` derives correctness from the authoritative Neon vocabulary and submitted answer; client-supplied `correct` is not trusted.
+- Realtime chat applies the same friendship, block and recipient message-privacy checks as HTTP chat.
+- Realtime payloads are size/rate limited and expose a ping/pong health check.
