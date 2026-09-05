@@ -40,11 +40,5 @@
         }
       ]
     }
-  ],
-  "crons": [
-    {
-      "path": "/api/cron-analytics-cleanup",
-      "schedule": "0 3 * * *"
-    }
   ]
 }
