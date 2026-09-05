@@ -1,4 +1,4 @@
-const CACHE = 'ef-offline-v1';
+const CACHE = 'ef-offline-v2';
 const ASSETS = ['./', './index.html', './words-db.json'];
 
 self.addEventListener('install', (e) => {

@@ -1,43 +1,6 @@
-/**
- * POST { password }
- * Env ADMIN_PASSWORD_HASH = sha256 hex of (ef-v1::PASSWORD)
- * Or ADMIN_PASSWORD plain for simplicity.
- * Default demo hash corresponds to: EF-Boss-7kR9!mQ2
- */
 import crypto from 'crypto';
-
-function sha256(s) {
-  return crypto.createHash('sha256').update(s).digest('hex');
-}
-
-const DEFAULT_PLAIN = 'EF-Boss-7kR9!mQ2';
-const DEFAULT_HASH = sha256('ef-v1::' + DEFAULT_PLAIN);
-
-export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ ok: false });
-
-  let body = req.body;
-  if (typeof body === 'string') {
-    try { body = JSON.parse(body); } catch { body = {}; }
-  }
-  const password = String(body?.password || '');
-  const inputHash = sha256('ef-v1::' + password);
-  const expected = process.env.ADMIN_PASSWORD_HASH
-    || (process.env.ADMIN_PASSWORD ? sha256('ef-v1::' + process.env.ADMIN_PASSWORD) : DEFAULT_HASH);
-
-  const a = Buffer.from(inputHash);
-  const b = Buffer.from(expected);
-  const match = a.length === b.length && crypto.timingSafeEqual(a, b);
-
-  if (!match) return res.status(401).json({ ok: false, error: 'invalid' });
-
-  const token = crypto.createHmac('sha256', process.env.ADMIN_SECRET || expected)
-    .update('ef-admin:' + Date.now().toString().slice(0, 10))
-    .digest('hex');
-
-  return res.status(200).json({ ok: true, token, exp: Date.now() + 4 * 3600 * 1000 });
-}
+import {sqlClient,json,parseBody,setCookie,clearAdminCookie} from '../lib/server/db.js';
+const MAX_FAILS=6;
+function token(){return crypto.randomBytes(32).toString('hex')}
+function validSecret(password){const expected=process.env.ADMIN_PASSWORD||'';const a=Buffer.from(String(password||'')),b=Buffer.from(expected);return !!expected&&a.length===b.length&&crypto.timingSafeEqual(a,b)}
+export default async function handler(req,res){res.setHeader('Cache-Control','no-store');try{const sql=sqlClient();if(req.method==='GET'){const rows=await sql`SELECT u.id,u.nick,u.name,u.role FROM admin_sessions a JOIN users u ON u.role IN ('admin','moderator') AND u.status='active' WHERE a.token_hash=encode(digest(${String(req.headers.cookie||'').match(/__Host-ef_admin=([^;]+)/g)?.[1]||''},'sha256'),'hex') AND a.expires_at>now() LIMIT 1`;return json(res,200,{ok:!!rows[0],admin:rows[0]||null})}if(req.method==='DELETE'){const raw=String(req.headers.cookie||'').match(/__Host-ef_admin=([^;]+)/g)?.[1]||'';if(raw)await sql`DELETE FROM admin_sessions WHERE token_hash=encode(digest(${decodeURIComponent(raw)},'sha256'),'hex')`;clearAdminCookie(res);return json(res,200,{ok:true})}if(req.method!=='POST')return json(res,405,{ok:false});const body=parseBody(req),password=String(body.password||'');const fails=await sql`SELECT count(*)::int AS n FROM login_attempts WHERE nick_key='__admin__' AND success=false AND created_at>now()-interval '15 minutes'`;if(Number(fails[0]?.n||0)>=MAX_FAILS)return json(res,429,{ok:false,error:'Забагато невдалих спроб. Спробуй пізніше.'});if(!validSecret(password)){await sql`INSERT INTO login_attempts(nick_key,ip_hash,success) VALUES('__admin__','admin',false)`;return json(res,401,{ok:false,error:'Невірний пароль'})}const t=token();await sql`INSERT INTO admin_sessions(token_hash,expires_at) VALUES(encode(digest(${t},'sha256'),'hex'),now()+interval '4 hours')`;await sql`DELETE FROM admin_sessions WHERE expires_at<now()`;setCookie(res,'__Host-ef_admin',t,60*60*4);return json(res,200,{ok:true,exp:Date.now()+4*3600*1000})}catch(e){return json(res,500,{ok:false,error:'Admin authentication failed'})}}

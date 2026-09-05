@@ -1,19 +1,21 @@
 {
   "name": "english-flow",
   "private": true,
-  "version": "1.6.0",
+  "version": "2.0.0-alpha",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "sync:notion": "node scripts/sync-notion.mjs"
+    "sync:notion": "node scripts/sync-notion.mjs",
+    "audit": "node scripts/audit-static.mjs"
   },
   "dependencies": {
     "@vercel/analytics": "^1.5.0",
     "lucide-react": "^0.468.0",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "@neondatabase/serverless": "^1.1.0"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.4",

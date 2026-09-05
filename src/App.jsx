@@ -3,7 +3,7 @@ import {BarChart3, BookOpen, Check, CheckCircle2, ChevronRight, Flame, Home, Loc
 import {words as fallbackWords, rules, BADGES} from './data';
 import {notionWords, notionSyncMeta} from './notionWords.generated';
 import { Analytics } from '@vercel/analytics/react';
-import {listProfiles, saveProfile, loadProfile, getActiveNick, cloudPull, cloudPush, cloudConfigured, isNickTaken, registerNick, setGuestSession, isGuestSession, getFriends, addFriend, getChat, sendChat, friendsLeaderboard, getDailyAverage, ensureDailyAverage} from './lib/storage';
+import {listProfiles, saveProfile, loadProfile, getActiveNick, cloudPull, cloudPush, cloudConfigured, isNickTaken, registerNick, setGuestSession, isGuestSession, getFriends, addFriend, acceptFriend, getChat, sendChat, friendsLeaderboard, getDailyAverage, ensureDailyAverage, serverAuth, loadCloudVocabulary, cloudRecordProgress, cloudStartLesson, cloudFinishLesson, flushProgressQueue, serverMe, loadServerConfig} from './lib/storage';
 import {onCorrect as srsOk, onWrong as srsBad, isDue, todayStr} from './lib/srs';
 import {dbPutProfile, dbGetProfile, dbListProfiles, dbSaveWords, dbLoadWords} from './lib/db.js';
 
@@ -27,21 +27,21 @@ const ROADMAP_ITEMS = [
   {v:'1.6', title:'PWA / повний офлайн', status:'planned'},
 ];
 
-const VERSION = '1.7-beta';
+const VERSION = '2.0-alpha';
 const words = (notionWords?.length ? notionWords : fallbackWords).map(w => ({
   id: w.id, word: w.word, translation: w.translation || '—', pronunciation: w.pronunciation || '',
   category: w.category || 'Other', level: w.level || '', explanation: w.explanation || '',
   example: w.example || (w.examples || '').split('\n')[0] || ''
 }));
 const CATS = [...new Set(words.map(w => w.category))].sort();
-const defaultAdmin = {lessonSize: 10, correctPoints: 4, wrongPoints: -2, masteryThreshold: 8, shuffleAnswers: true, showPronunciation: true, adminPassword: '2468'};
+const defaultAdmin = {lessonSize: 10, correctPoints: 4, wrongPoints: -2, masteryThreshold: 8, shuffleQuestions: true, shuffleAnswers: true, showPronunciation: true, perfectBonus: 0, badgeStyle: 'neo'};
 const emptyState = () => ({
   nick: '', name: '', passHash: '', xp: 0, streak: 1, dailyGoal: 50, todayXp: 0, today: todayStr(),
   mastery: {}, srs: {}, attempts: {}, history: [], badges: [], avatar: '🇺🇸',
   theme: 'system', skin: 'classic', customTheme: {accent: '#22a06b', bg: '#f6f8f6', surface: '#ffffff'},
   admin: {...defaultAdmin},
   quiet: false, sfx: true, soundPack: 'auto', guest: false, gamesPlayed: 0,
-  compareMode: 'global', compareFriend: '', midnightSnap: null,
+  compareMode: 'global', compareFriend: '', midnightSnap: null, badgeStyle: 'neo',
   settings: { keyboardHints: true, staggerList: true }
 });
 
@@ -110,6 +110,7 @@ function speak(t, rate = 0.9) {
   u.pitch = rate < 0.75 ? 0.85 : 1;
   speechSynthesis.speak(u);
 }
+function newEventId(){try{return crypto.randomUUID()}catch{return `${Date.now()}-${Math.random().toString(36).slice(2)}`}}
 function shuffle(arr) {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
@@ -137,7 +138,13 @@ function makeQuizItems(source, size, direction, category) {
     const prompt = direction === 'en-ua' ? w.word : w.translation;
     const answer = direction === 'en-ua' ? w.translation : w.word;
     const others = source.filter(x => x.id !== w.id);
-    const wrongs = shuffle(others).slice(0, 3).map(x => direction === 'en-ua' ? x.translation : x.word);
+    const wrongs = [];
+    for (const x of shuffle(others)) {
+      const value = direction === 'en-ua' ? x.translation : x.word;
+      if (!value || value === answer || wrongs.includes(value)) continue;
+      wrongs.push(value);
+      if (wrongs.length === 3) break;
+    }
     const options = shuffle([answer, ...wrongs]);
     return {...w, prompt, answer, options, direction};
   });
@@ -191,16 +198,30 @@ export default function App() {
     window.addEventListener('online', on); window.addEventListener('offline', off);
     return () => { window.removeEventListener('online', on); window.removeEventListener('offline', off); };
   }, []);
+  useEffect(() => {
+    if (!navigator.onLine) return;
+    loadServerConfig().then(cfg => { if (Object.keys(cfg).length) setState(prev => ({...prev,admin:{...prev.admin,...cfg}})); }).catch(() => {});
+    flushProgressQueue().catch(() => {});
+    serverMe().then(async me => {
+      if (!me?.user) return;
+      const remote = await cloudPull(me.user.nick);
+      if (remote) { setState(prev => ({...prev,...remote,id:me.user.id,nick:me.user.nick,role:me.user.role,guest:false,admin:{...defaultAdmin,...(prev.admin||{}),...(remote.admin||{})}})); setPage('dashboard'); }
+    }).catch(() => {});
+  }, []);
+  useEffect(() => { const on=()=>flushProgressQueue().catch(()=>{}); window.addEventListener('online',on); return()=>window.removeEventListener('online',on); }, []);
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 2800); };
 
+  const profileSyncTimer = useRef(null);
   const save = useCallback((s) => {
-    const badges = computeBadges(s);
-    const next = {...s, badges};
+    const next = {...s, badges: s.guest ? computeBadges(s) : (s.badges || [])};
     setState(next);
     if (next.nick) {
       saveProfile(next.nick, next);
       try { dbPutProfile(next); } catch {}
-      if (cloudConfigured()) cloudPush(next.nick, next).catch(() => {});
+      if (cloudConfigured() && !next.guest) {
+        if (profileSyncTimer.current) clearTimeout(profileSyncTimer.current);
+        profileSyncTimer.current = setTimeout(() => cloudPush(next.nick, next).catch(() => {}), 900);
+      }
     }
   }, []);
 
@@ -211,7 +232,7 @@ export default function App() {
   useEffect(() => {
     if (page !== 'admin') {
       sessionStorage.removeItem('ef-admin-ok');
-      sessionStorage.removeItem('ef-admin-token');
+      fetch('/api/admin-auth',{method:'DELETE',credentials:'include'}).catch(()=>{});
     }
   }, [page]);
 
@@ -221,7 +242,7 @@ export default function App() {
     let timer = null;
     const lock = () => {
       sessionStorage.removeItem('ef-admin-ok');
-      sessionStorage.removeItem('ef-admin-token');
+      fetch('/api/admin-auth',{method:'DELETE',credentials:'include'}).catch(()=>{});
       window.dispatchEvent(new Event('ef-admin-lock'));
       // stay on admin page — only re-show login gate
     };
@@ -295,6 +316,30 @@ export default function App() {
     })();
   }, []);
   useEffect(() => {
+    (async () => {
+      try {
+        const remoteWords = await loadCloudVocabulary();
+        if (remoteWords?.length) {
+          const mapped = remoteWords.map(w => ({id:w.id,word:w.word,translation:w.translation||'—',pronunciation:w.pronunciation||'',category:w.category||'Other',level:w.level||'',explanation:w.explanation||'',example:w.example||''}));
+          setWordsLive(mapped);
+          try { localStorage.setItem('ef-words-cache-v1', JSON.stringify({words:mapped,meta:{count:mapped.length,source:'neon'},at:new Date().toISOString()})); } catch {}
+        }
+      } catch {}
+    })();
+  }, []);
+
+  useEffect(() => {
+    if (!state.nick || state.guest) return;
+    (async () => {
+      try {
+        const remote = await cloudPull(state.nick);
+        if (remote && typeof remote === 'object') {
+          setState(prev => ({...prev, ...remote, nick: prev.nick, admin: {...defaultAdmin, ...(prev.admin||{}), ...(remote.admin||{})}}));
+        }
+      } catch {}
+    })();
+  }, []);
+  useEffect(() => {
     const t = todayStr();
     if (!state.midnightSnap || state.midnightSnap.date !== t) {
       const total = (state.history||[]).length;
@@ -315,8 +360,10 @@ export default function App() {
     }
   }, []);
 
-  const learnedCount = words.filter(w => (state.mastery[w.id] || 0) >= state.admin.masteryThreshold).length;
-  const dueCount = words.filter(w => isDue(state.srs[w.id], todayStr()) && (state.mastery[w.id] || 0) > 0).length;
+  const activeWords = wordsLive?.length ? wordsLive : words;
+  const activeCats = [...new Set(activeWords.map(w => w.category))].sort();
+  const learnedCount = activeWords.filter(w => (state.mastery[w.id] || 0) >= state.admin.masteryThreshold).length;
+  const dueCount = activeWords.filter(w => isDue(state.srs[w.id], todayStr()) && (state.mastery[w.id] || 0) > 0).length;
 
   const startLesson = (mode, direction = 'en-ua', category = 'all') => {
     setLessonCfg({mode, direction, category});
@@ -414,9 +461,9 @@ export default function App() {
   return (
     <>
       <Layout>
-        {page === 'dashboard' && <Dashboard state={state} learned={learnedCount} due={dueCount} words={words.length} onLearn={() => nav('learn')} onReview={() => nav('review')} cloudMsg={cloudMsg} notionMeta={notionSyncMeta} />}
-        {page === 'learn' && <Learn state={state} cats={CATS} onStart={startLesson} />}
-        {page === 'vocabulary' && <Vocabulary state={state} setModal={setModal} />}
+        {page === 'dashboard' && <Dashboard state={state} learned={learnedCount} due={dueCount} words={activeWords.length} onLearn={() => nav('learn')} onReview={() => nav('review')} cloudMsg={cloudMsg} notionMeta={notionSyncMeta} />}
+        {page === 'learn' && <Learn state={state} cats={activeCats} onStart={startLesson} />}
+        {page === 'vocabulary' && <Vocabulary state={state} setModal={setModal} wordsCatalog={activeWords} cats={activeCats} />}
         {page === 'review' && <ReviewPage state={state} due={dueCount} onStart={() => startLesson('srs', 'en-ua', 'all')} />}
         {page === 'stats' && <Stats state={state} learned={learnedCount} />}
         {page === 'badges' && <BadgesPage state={state} />}
@@ -432,6 +479,7 @@ export default function App() {
         {page === 'lesson' && lessonCfg && (
           <Lesson
             cfg={lessonCfg}
+            wordsCatalog={activeWords}
             state={state}
             save={save}
             onExit={() => nav('learn')}
@@ -460,7 +508,8 @@ function Onboarding({onDone}) {
     const pl = p.trim();
     const nl = n.trim().toLowerCase();
     const nml = (nm || '').trim().toLowerCase();
-    if (pl.length < 6) return 'Пароль мінімум 6 символів';
+    if (pl.length < 10) return 'Пароль мінімум 10 символів';
+    if (!/[a-z]/.test(pl) || !/[A-Z]/.test(pl) || !/[0-9]/.test(pl)) return 'Пароль має містити великі й малі літери та цифру';
     if (pl.toLowerCase() === nl) return 'Пароль не може збігатися з ніком';
     if (nml && pl.toLowerCase() === nml) return 'Пароль не може збігатися з імʼям';
     return '';
@@ -471,22 +520,13 @@ function Onboarding({onDone}) {
     if (!n || !pass) { setErr('Вкажи нік і пароль'); return; }
     setBusy(true); setErr('');
     try {
-      const { hashPassword } = await import('./lib/crypto.js');
-      let profile = loadProfile(n);
-      if (!profile && cloudConfigured()) {
-        const remote = await cloudPull(n);
-        if (remote) profile = {...emptyState(), ...remote, nick: n};
-      }
-      if (!profile) { setErr('Акаунт не знайдено'); setBusy(false); return; }
-      const h = await hashPassword(pass);
-      if (profile.passHash && profile.passHash !== h) {
-        setErr('Невірний пароль'); setBusy(false); return;
-      }
-      // legacy profiles without passHash — set on first login
-      if (!profile.passHash) {
-        profile = {...profile, passHash: h};
-        saveProfile(n, profile);
-      }
+      const auth = await serverAuth('login', { nick: n, password: pass });
+      if (!auth.ok) throw new Error(auth.error || 'Невірний пароль');
+      let profile = null;
+      const remote = await cloudPull(n);
+      if (remote) profile = {...emptyState(), ...remote, nick: n, name: remote.name || auth.user?.name || n};
+      if (!profile) profile = loadProfile(n);
+      if (!profile) profile = {...emptyState(), nick:n, name:auth.user?.name || n, id:auth.user?.id, role:auth.user?.role};
       setGuestSession(false);
       onDone(profile);
     } catch (e) {
@@ -502,14 +542,11 @@ function Onboarding({onDone}) {
     if (n.length < 2) { setErr('Нік мінімум 2 символи'); return; }
     setBusy(true); setErr('');
     try {
-      if (await isNickTaken(n)) { setErr('Цей нік уже зайнятий'); setBusy(false); return; }
-      const { hashPassword } = await import('./lib/crypto.js');
-      const passHash = await hashPassword(pass);
+      const auth = await serverAuth('register', { nick: n, name: name.trim() || n, password: pass });
+      if (!auth.ok) throw new Error(auth.error || 'Помилка реєстрації');
       setGuestSession(false);
       const base = emptyState();
-      const profile = await registerNick(n, {
-        ...base, nick: n, name: name.trim() || n, passHash
-      });
+      const profile = await registerNick(n, { ...base, nick:n, name:name.trim()||n, id:auth.user?.id, role:auth.user?.role });
       onDone(profile);
     } catch (e) {
       setErr(e.message || 'Помилка реєстрації');
@@ -563,9 +600,9 @@ function Dashboard({state, learned, due, words, onLearn, onReview, cloudMsg, not
       <div className="announce card jungle-announce">
         <span className="vine-deco left" aria-hidden="true">🌿</span>
         <span className="vine-deco right" aria-hidden="true">🌿</span>
-        <span className="eyebrow">UPDATE · v1.7-beta</span>
+        <span className="eyebrow">UPDATE · v1.8-beta</span>
         <h2>🚀 Велике оновлення вже тут</h2>
-        <p>Sprint, SRS, друзі, бейджі. Прогрес зберігається локально та в хмарі (якщо налаштована).</p>
+        <p>Sprint, SRS, друзі, бейджі. Прогрес зберігається локально та синхронізується з хмарною БД.</p>
       </div>
       <div className="hero">
         <div>
@@ -588,7 +625,7 @@ function Dashboard({state, learned, due, words, onLearn, onReview, cloudMsg, not
       </div>
       <div className="card">
         <h2>Notion</h2>
-        <p className="muted">{notionMeta?.count ? `<!-- sync removed --> ${notionMeta.count} слів · ${notionMeta.syncedAt || ''}` : `Зараз локальний словник (${words} слів). Повну синхронізацію Notion зробимо пізніше — нагадаю.`}</p>
+        <p className="muted">{notionMeta?.count ? `${notionMeta.count} слів · ${notionMeta.syncedAt || ''}` : `Зараз локальний словник (${words} слів). Словник синхронізується з Notion → Neon автоматично.`}</p>
       </div>
     </section>
   );
@@ -647,7 +684,7 @@ function Learn({state, cats, onStart}) {
           <div className="lesson-icon">⚠️</div>
           <span className="pill">HARD</span>
           <h2>Лише проблемні</h2>
-          <p className="muted">Слова з помилками + адаптація</p>
+          <p className="muted">Тільки слова, де помилки переважають правильні відповіді</p>
           <button className="secondary" onClick={() => onStart('problems', direction, category)}>Sprint</button>
         </div>
         <div className="card lesson-card">
@@ -665,31 +702,39 @@ function Learn({state, cats, onStart}) {
 
 function Lesson({cfg, state, save, onExit, onDone, wordsCatalog}) {
   const mode = cfg.mode;
+  const [lessonId, setLessonId] = useState('');
   const catalog = (wordsCatalog && wordsCatalog.length) ? wordsCatalog : words;
   const items = useMemo(() => {
     let pool = catalog;
     if (mode === 'srs') {
-      const due = catalog.filter(w => isDue(state.srs[w.id], todayStr()));
-      pool = due.length ? due : catalog;
+      const due = catalog.filter(w => isDue(state.srs[w.id], todayStr()) && (state.mastery[w.id] || 0) > 0);
+      pool = due;
     } else if (mode === 'problems') {
-      const wrongIds = new Set();
-      (state.history || []).forEach(h => { if (!h.correct) wrongIds.add(String(h.word)); });
-      pool = words.filter(w => wrongIds.has(String(w.id)) || (state.mastery[w.id] || 0) === 0);
-      if (pool.length < 4) pool = words;
+      const stats = {};
+      (state.history || []).forEach(h => { const id=String(h.word); if(!stats[id]) stats[id]={w:0,c:0}; if(h.correct) stats[id].c++; else stats[id].w++; });
+      const hardIds = new Set(Object.entries(stats).filter(([,v]) => v.w >= 2 && v.w > v.c).map(([id]) => id));
+      pool = catalog.filter(w => hardIds.has(String(w.id)));
+      // HARD never silently falls back to the whole dictionary.
+      if (!pool.length) pool = []; 
     } else if (mode === 'long') {
-      pool = words.filter(w => (w.word || '').replace(/\s/g, '').length > 6);
-      if (pool.length < 4) pool = words;
+      pool = catalog.filter(w => (w.word || '').replace(/\s/g, '').length > 6);
     }
-    if (mode === 'match') return shuffle(pool.filter(w => cfg.category === 'all' || w.category === cfg.category)).slice(0, 6);
-    return makeQuizItems(pool, state.admin.lessonSize, cfg.direction, cfg.category);
+    if (cfg.category && cfg.category !== 'all') pool = pool.filter(w => w.category === cfg.category);
+    if (state.admin.shuffleQuestions !== false) pool = shuffle(pool);
+    if (mode === 'match') return pool.slice(0, 6);
+    return makeQuizItems(pool, state.admin.lessonSize, cfg.direction, 'all');
   }, []);
+  useEffect(() => {
+    if (state.guest || !items.length) return;
+    cloudStartLesson(mode, Math.min(items.length, 100)).then(r => setLessonId(r.lessonId || '')).catch(() => {});
+  }, [mode, state.guest, items.length]);
 
-  if (mode === 'match') return <MatchGame key="match-board" items={items} state={state} save={save} onExit={onExit} onDone={onDone} />;
-  if (mode === 'dictation') return <DictationGame items={items} state={state} save={save} onExit={onExit} onDone={onDone} />;
-  return <SprintGame items={items} mode={mode} state={state} save={save} onExit={onExit} onDone={onDone} />;
+  if (mode === 'match') return <MatchGame key="match-board" items={items} state={state} save={save} onExit={onExit} onDone={onDone} lessonId={lessonId} />;
+  if (mode === 'dictation') return <SprintGame items={items} mode={mode} state={state} save={save} onExit={onExit} onDone={onDone} lessonId={lessonId} />; 
+  return <SprintGame items={items} mode={mode} state={state} save={save} onExit={onExit} onDone={onDone} lessonId={lessonId} />;
 }
 
-function SprintGame({items, mode, state, save, onExit, onDone}) {
+function SprintGame({items, mode, state, save, onExit, onDone, lessonId}) {
   // Freeze quiz list once — never re-read from props
   const quizRef = useRef(null);
   if (!quizRef.current) {
@@ -706,6 +751,7 @@ function SprintGame({items, mode, state, save, onExit, onDone}) {
   const [slowAudio, setSlowAudio] = useState(false);
   const [leaveAsk, setLeaveAsk] = useState(false);
   const [mist, setMist] = useState(null);
+  const pendingProgress = useRef([]);
 
   const stateRef = useRef(state);
   stateRef.current = state;
@@ -730,6 +776,12 @@ function SprintGame({items, mode, state, save, onExit, onDone}) {
       todayXp: (st.todayXp || 0) + points,
       attempts: {...(st.attempts || {}), [mid]: ((st.attempts || {})[mid] || 0) + 1}
     });
+    if (!st.guest) {
+      const pending = cloudRecordProgress({notion_id: mid, mode: mode || 'sprint', correct: ok, quality: ok ? 4 : 1, event_id: newEventId(), lesson_id: lessonId || ''})
+        .then(r => { if (r?.user) { const cur=stateRef.current, card=r.card; save({...cur, xp:r.user.xp, streak:r.user.streak, todayXp:r.user.todayXp, today:r.user.today, badges:[...new Set([...(cur.badges||[]), ...(r.earned||[])])], ...(card ? {mastery:{...cur.mastery,[card.notion_id]:card.mastery},srs:{...cur.srs,[card.notion_id]:card.srs},attempts:{...cur.attempts,[card.notion_id]:card.attempts}} : {})}); } return r; })
+        .catch(() => null);
+      pendingProgress.current.push(pending);
+    }
     if (ok) setOkCount(c => c + 1); else { setBadCount(c => c + 1); setSlowAudio(true); }
     setScorePop({pts: points, ok, key: Date.now()});
     setMist(ok ? 'ok' : 'bad');
@@ -792,18 +844,13 @@ function SprintGame({items, mode, state, save, onExit, onDone}) {
           <span className="eyebrow">LESSON COMPLETE</span>
           <h1>Урок завершено</h1>
           <p>Правильно: {okCount} · Помилки: {badCount} · Питань: {total}</p>
-          {badCount === 0 && okCount > 0 && (
-            <p className="bonus-line">Бонус: +{Math.round(okCount * (state.admin.correctPoints || 4) * 0.1)} XP (10.0%)</p>
-          )}
+{badCount === 0 && okCount > 0 && <p className="bonus-line">Ідеальний урок ✓</p>}
           <CompareBlurb state={state} />
           <button className="primary" type="button" onClick={() => {
             let next = {...state, gamesPlayed: (state.gamesPlayed || 0) + 1};
-            if (badCount === 0 && okCount > 0) {
-              const bonus = Math.round(okCount * (state.admin.correctPoints || 4) * 0.1);
-              next = {...next, xp: next.xp + bonus, todayXp: next.todayXp + bonus};
-              confettiBurst();
-            }
+            if (badCount === 0 && okCount > 0) confettiBurst();
             save(next);
+            if (!state.guest && lessonId) Promise.allSettled(pendingProgress.current).then(() => cloudFinishLesson(lessonId).then(r => { if(r?.user) save({...stateRef.current,...r.user}); }).catch(() => {}));
             onDone();
           }}>На головну</button>
         </div>
@@ -814,7 +861,7 @@ function SprintGame({items, mode, state, save, onExit, onDone}) {
   if (!w) return null;
   const correct = picked === w.answer;
   const masteryNow = state.mastery[w.id] || 0;
-  const progressPct = (step / total) * 100;
+  const progressPct = ((step + 1) / total) * 100;
 
   return (
     <section className={'lesson-wrap' + (mist ? ' mist-' + mist : '')}>
@@ -923,7 +970,7 @@ function DictationInput({onSubmit, disabled}) {
 }
 
 
-function MatchGame({items, state, save, onExit, onDone}) {
+function MatchGame({items, state, save, onExit, onDone, lessonId}) {
   const boardRef = useRef(null);
   if (!boardRef.current) {
     boardRef.current = {
@@ -939,6 +986,7 @@ function MatchGame({items, state, save, onExit, onDone}) {
   const [flash, setFlash] = useState({});
   const stateRef = useRef(state);
   stateRef.current = state;
+  const pendingProgress = useRef([]);
 
   useEffect(() => {
     if (!selL || !selR) return;
@@ -951,15 +999,17 @@ function MatchGame({items, state, save, onExit, onDone}) {
       const points = st.admin.correctPoints;
       save({...st, xp: st.xp + points, todayXp: st.todayXp + points,
         history: [...st.history, {word: selL, correct: true, points, date: new Date().toISOString(), mode: 'match'}].slice(-2000)});
+      if (!st.guest) pendingProgress.current.push(cloudRecordProgress({notion_id: selL, mode:'match', correct:true, quality:4, event_id:newEventId(), lesson_id:lessonId||''}).then(r=>{if(r?.user){const cur=stateRef.current,c=r.card;save({...cur,xp:r.user.xp,streak:r.user.streak,todayXp:r.user.todayXp,today:r.user.today,badges:[...new Set([...(cur.badges||[]),...(r.earned||[])])],...(c?{mastery:{...cur.mastery,[c.notion_id]:c.mastery},srs:{...cur.srs,[c.notion_id]:c.srs},attempts:{...cur.attempts,[c.notion_id]:c.attempts}}:{})})}return r}).catch(()=>null));
     } else {
       save({...st, xp: st.xp + st.admin.wrongPoints, todayXp: st.todayXp + st.admin.wrongPoints});
+      if (!st.guest) pendingProgress.current.push(cloudRecordProgress({notion_id: selL, mode:'match', correct:false, quality:1, event_id:newEventId(), lesson_id:lessonId||''}).then(r=>{if(r?.user){const cur=stateRef.current,c=r.card;save({...cur,xp:r.user.xp,streak:r.user.streak,todayXp:r.user.todayXp,today:r.user.today,badges:[...new Set([...(cur.badges||[]),...(r.earned||[])])],...(c?{mastery:{...cur.mastery,[c.notion_id]:c.mastery},srs:{...cur.srs,[c.notion_id]:c.srs},attempts:{...cur.attempts,[c.notion_id]:c.attempts}}:{})})}return r}).catch(()=>null));
     }
     const t = setTimeout(() => { setSelL(null); setSelR(null); setFlash({}); }, 450);
     return () => clearTimeout(t);
   }, [selL, selR]);
 
   const allDone = items.length > 0 && items.every(w => matched[w.id]);
-  if (allDone) return <section><div className="complete card"><h1>Match завершено 🎯</h1><button className="primary" onClick={onDone}>На головну</button></div></section>;
+  if (allDone) return <section><div className="complete card"><h1>Match завершено 🎯</h1><button className="primary" onClick={() => { if (!state.guest && lessonId) Promise.allSettled(pendingProgress.current).then(() => cloudFinishLesson(lessonId).then(r => { if(r?.user) save({...stateRef.current,...r.user}); }).catch(() => {})); onDone(); }}>На головну</button></div></section>;
 
   return (
     <section>
@@ -977,7 +1027,7 @@ function MatchGame({items, state, save, onExit, onDone}) {
   );
 }
 
-function Vocabulary({state, setModal, wordsCatalog}) {
+function Vocabulary({state, setModal, wordsCatalog, cats}) {
   const dict = (wordsCatalog && wordsCatalog.length) ? wordsCatalog : words;
   const [q, setQ] = useState('');
   const [cat, setCat] = useState('all');
@@ -993,7 +1043,7 @@ function Vocabulary({state, setModal, wordsCatalog}) {
         <input className="search" placeholder="Пошук…" value={q} onChange={e => setQ(e.target.value)}/>
         <select value={cat} onChange={e => setCat(e.target.value)}>
           <option value="all">Усі категорії</option>
-          {CATS.map(c => <option key={c} value={c}>{c}</option>)}
+          {(cats || CATS).map(c => <option key={c} value={c}>{c}</option>)}
         </select>
       </div>
       <div className="word-list">
@@ -1100,7 +1150,7 @@ function ProblemsPage({state, save, onStart, wordsCatalog}) {
 function ReviewPage({state, due, onStart}) {
   return (
     <section>
-      <Title title="SRS Повторення" text="Інтервали: 1 → 3 → 7 → 14 → 30 → 60 днів"/>
+      <Title title="SRS Повторення" text="SRS v2: adaptive interval + ease + lapses"/>
       <div className="card">
         <h2>На сьогодні: {due} слів</h2>
         <p className="muted">Слова зʼявляються знову саме тоді, коли майже забуваєш.</p>
@@ -1186,7 +1236,7 @@ function BadgesPage({state}) {
         {BADGES.map(b => {
           const on = earned.has(b.id);
           return (
-            <div key={b.id} className={'badge-card card' + (on ? ' earned' : ' locked')}>
+            <div key={b.id} className={'badge-card card badge-style-' + (state.badgeStyle || 'neo') + (on ? ' earned' : ' locked')}>
               <div className="badge-ico">{on ? '🏅' : '🔒'}</div>
               <div className="badge-body">
                 <h3>{b.title}</h3>
@@ -1274,7 +1324,7 @@ function Profile({state, save}) {
           {msg && <span className="saved-message">{msg}</span>}
           <hr/>
           <button className="secondary" onClick={pullCloud} disabled={syncing}><Cloud size={16}/> {syncing ? '…' : 'Підтягнути з хмари'}</button>
-          <p className="muted small">{cloudConfigured() ? 'Supabase підключено' : 'Додай VITE_SUPABASE_URL і VITE_SUPABASE_ANON_KEY у Vercel для крос-девайс'}</p>
+          <p className="muted small">{cloudConfigured() ? 'Neon PostgreSQL підключено через Vercel' : 'Neon ще не налаштований у Vercel'}</p>
         </div>
         <div className="card">
           <h2><Palette size={18}/> Тема</h2>
@@ -1309,7 +1359,8 @@ function Profile({state, save}) {
 
 function Admin({state, save, setWordsLive, wordsLive}) {
   const [pin, setPin] = useState('');
-  const [ok, setOk] = useState(() => sessionStorage.getItem('ef-admin-ok') === '1');
+  const [ok, setOk] = useState(false);
+  useEffect(() => { fetch('/api/admin-auth',{credentials:'include'}).then(r=>r.ok?r.json():null).then(d=>setOk(!!d?.ok)).catch(()=>setOk(false)); }, []);
   useEffect(() => {
     const lock = () => setOk(false);
     window.addEventListener('ef-admin-lock', lock);
@@ -1321,7 +1372,7 @@ function Admin({state, save, setWordsLive, wordsLive}) {
   const [authBusy, setAuthBusy] = useState(false);
   const [authErr, setAuthErr] = useState('');
   const [syncProg, setSyncProg] = useState({cur:0, total:0, label:''});
-  const unlock = () => { setOk(true); sessionStorage.setItem('ef-admin-ok', '1'); };
+  const unlock = () => setOk(true);
   useEffect(() => { setA({...state.admin}); }, [state.admin]);
 
   const forceSync = async () => {
@@ -1391,16 +1442,10 @@ function Admin({state, save, setWordsLive, wordsLive}) {
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok && data.ok) {
-        sessionStorage.setItem('ef-admin-token', data.token || '1');
         unlock();
-      } else if (res.status === 404 || res.status === 405) {
-        // local fallback when API not deployed
-        if (pin === (state.admin.adminPassword || '2468')) unlock();
-        else setAuthErr('Невірний пароль');
-      } else setAuthErr('Невірний пароль');
+      } else setAuthErr(data.error || 'Невірний пароль');
     } catch {
-      if (pin === (state.admin.adminPassword || '2468')) unlock();
-      else setAuthErr('Немає зʼєднання / невірний пароль');
+      setAuthErr('Немає зʼєднання з сервером');
     }
     setAuthBusy(false);
   };
@@ -1421,8 +1466,12 @@ function Admin({state, save, setWordsLive, wordsLive}) {
     );
   }
   const update = (k, v) => setA(x => ({...x, [k]: v}));
-  const saveAdmin = () => {
-    save({...state, admin: {...a, lessonSize: Math.max(3, Math.min(50, Number(a.lessonSize) || 10)), correctPoints: Number(a.correctPoints) || 4, wrongPoints: Number(a.wrongPoints) || -2, masteryThreshold: Math.max(1, Number(a.masteryThreshold) || 8)}});
+  const saveAdmin = async () => {
+    const nextAdmin = {...a, lessonSize: Math.max(3, Math.min(50, Number(a.lessonSize) || 10)), correctPoints: Number(a.correctPoints) || 4, wrongPoints: Number(a.wrongPoints) || -2, masteryThreshold: Math.max(1, Number(a.masteryThreshold) || 8)};
+    save({...state, admin: nextAdmin});
+    try {
+      await fetch('/api/admin-settings', {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({settings:{lessonSize:nextAdmin.lessonSize,correctPoints:nextAdmin.correctPoints,wrongPoints:nextAdmin.wrongPoints,masteryThreshold:nextAdmin.masteryThreshold,shuffleQuestions:!!nextAdmin.shuffleQuestions,shuffleAnswers:!!nextAdmin.shuffleAnswers,showPronunciation:!!nextAdmin.showPronunciation,perfectBonus:Math.max(0,Math.min(100,Number(nextAdmin.perfectBonus)||0)),badgeStyle:nextAdmin.badgeStyle||'neo'}})});
+    } catch {}
     setSaved(true); setTimeout(() => setSaved(false), 1500);
   };
   return (
@@ -1431,7 +1480,7 @@ function Admin({state, save, setWordsLive, wordsLive}) {
       <div className="card sync-card">
         <h2>Словник Notion</h2>
         <p className="muted">Оновлення з файлу words-db.json (генерується з Notion). Прогрес гравця не стирається.</p>
-        <p className="sync-meta-line"><!-- sync removed --> <b>{(wordsLive && wordsLive.length) || notionSyncMeta.count || 0}</b> слів · {notionSyncMeta.syncedAt || '—'}</p>
+        <p className="sync-meta-line"><b>{(wordsLive && wordsLive.length) || notionSyncMeta.count || 0}</b> слів · {notionSyncMeta.syncedAt || '—'}</p>
         <button className="primary" type="button" disabled={syncing} onClick={forceSync}>
           {syncing ? 'Оновлення…' : 'Оновити словник зараз'}
         </button>
@@ -1447,7 +1496,7 @@ function Admin({state, save, setWordsLive, wordsLive}) {
       
       <div className="card roadmap-panel">
         <h2>Roadmap / ідеї</h2>
-        <p className="muted">По 5+ пунктів на версію. Видаляю лише ті, які ти назвеш.</p>
+        <p className="muted">Центральна панель керування: контент, правила навчання, безпека, користувачі та аналітика.</p>
         <div className="roadmap-table">
           <div className="rm-head"><span>Ver</span><span>Функція</span><span>Статус</span></div>
           {ROADMAP_ITEMS.map((r,i) => (
@@ -1459,6 +1508,8 @@ function Admin({state, save, setWordsLive, wordsLive}) {
           ))}
         </div>
       </div>
+      <div className="card"><h2>Стан системи</h2><AdminStats /></div>
+      <div className="card"><h2>Журнал безпеки / адмін-дій</h2><AdminAudit /></div>
       <div className="card analytics-panel">
         <h2>Privacy Analytics (1–17)</h2>
         <p className="muted">Лише агрегати, без точної геолокації та без персональних даних у UI.</p>
@@ -1471,8 +1522,8 @@ function Admin({state, save, setWordsLive, wordsLive}) {
           <label>Питань <input type="number" value={a.lessonSize} onChange={e => update('lessonSize', e.target.value)}/></label>
           <label>Бали + <input type="number" value={a.correctPoints} onChange={e => update('correctPoints', e.target.value)}/></label>
           <label>Бали − <input type="number" value={a.wrongPoints} onChange={e => update('wrongPoints', e.target.value)}/></label>
-          <label>Mastery <input type="number" value={a.masteryThreshold} onChange={e => update('masteryThreshold', e.target.value)}/></label>
-          <label>Пароль адміна <input type="text" value={a.adminPassword} onChange={e => update('adminPassword', e.target.value)}/></label>
+          <label>Mastery <input type="number" value={a.masteryThreshold} onChange={e => update('masteryThreshold', e.target.value)}/></label><label>Shuffle питань <input type="checkbox" checked={a.shuffleQuestions!==false} onChange={e=>update('shuffleQuestions',e.target.checked)}/></label><label>Perfect bonus <input type="number" min="0" max="100" value={a.perfectBonus||0} onChange={e=>update('perfectBonus',e.target.value)}/></label><label>Стиль ачівок <select value={a.badgeStyle||'neo'} onChange={e=>update('badgeStyle',e.target.value)}><option value="neo">Neo</option><option value="arcade">Arcade</option><option value="minimal">Minimal</option><option value="royal">Royal</option></select></label>
+          <p className="muted small">Пароль адміна тепер зберігається тільки у Vercel Environment Variables як <b>ADMIN_PASSWORD</b>.</p>
           <button className="primary" type="button" onClick={saveAdmin}>Зберегти правила</button>
         </div>
         <div className="card">
@@ -1506,8 +1557,8 @@ function Admin({state, save, setWordsLive, wordsLive}) {
           </div>
         </div>
         <div className="card">
-          <h2>Пошук гравців (локальна БД)</h2>
-          <PlayerDBSearch current={state} save={save} />
+          <h2>Керування гравцями</h2>
+          <AdminUsers />
         </div>
         <div className="card">
           <h2>Дані гравця</h2>
@@ -1517,29 +1568,27 @@ function Admin({state, save, setWordsLive, wordsLive}) {
     </section>
   );
 }
-
-function AdminDanger({save, state}) {
-  const [q, setQ] = useState(null);
-  if (q) return (
-    <div className="ef-inline-confirm">
-      <p>{q.t}</p>
-      <button className="secondary" type="button" onClick={() => setQ(null)}>Скасувати</button>
-      <button className="primary" type="button" onClick={() => { q.go(); setQ(null); }}>Підтвердити</button>
-    </div>
-  );
-  return (
-    <>
-      <button className="secondary" type="button" onClick={() => setQ({t:'Очистити історію відповідей?', go:() => save({...state, history:[]})})}>Очистити історію</button>
-      <button className="secondary" type="button" onClick={() => setQ({t:'Обнулити mastery та SRS?', go:() => save({...state, mastery:{}, srs:{}})})}>Обнулити mastery/SRS</button>
-      <button className="secondary" type="button" onClick={() => setQ({t:'Обнулити XP?', go:() => save({...state, xp:0, todayXp:0})})}>Обнулити XP</button>
-    </>
-  );
+function AdminUsers(){
+  const [q,setQ]=useState(''),[rows,setRows]=useState([]),[busy,setBusy]=useState(false);
+  const load=useCallback(async()=>{const r=await fetch('/api/admin-users?q='+encodeURIComponent(q));const d=await r.json().catch(()=>({}));setRows(d.rows||[])},[q]);
+  useEffect(()=>{load()},[load]);
+  const act=async(id,body)=>{setBusy(true);await fetch('/api/admin-users',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({userId:id,...body})});await load();setBusy(false)};
+  const reset=async(id)=>{setBusy(true);await fetch('/api/admin-users',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({userId:id,action:'reset_progress'})});await load();setBusy(false)};
+  return <div><input className="search" placeholder="Нік або імʼя" value={q} onChange={e=>setQ(e.target.value)}/><div className="player-db-list">{rows.map(r=><div className="word-row card" key={r.id} style={{marginTop:8}}><div><b>{r.name||r.nick}</b> <span className="muted">@{r.nick}</span><div className="muted small">{r.xp} XP · streak {r.streak} · {r.status}</div></div><div className="row-btns wrap"><select value={r.role} disabled={busy} onChange={e=>act(r.id,{role:e.target.value})}><option value="user">user</option><option value="moderator">moderator</option><option value="admin">admin</option></select><button className="secondary" disabled={busy} onClick={()=>act(r.id,{status:r.status==='active'?'suspended':'active'})}>{r.status==='active'?'Призупинити':'Активувати'}</button><button className="secondary" disabled={busy} onClick={()=>reset(r.id)}>Reset</button></div></div>)}</div></div>
 }
+function AdminAudit(){const [rows,setRows]=useState([]);useEffect(()=>{fetch('/api/admin-audit').then(r=>r.json()).then(d=>setRows(d.rows||[])).catch(()=>{})},[]);return <div className="word-list">{rows.slice(0,30).map(r=><div className="word-row card" key={r.id}><div><b>{r.action}</b><div className="muted small">{r.target_nick?`@${r.target_nick} · `:''}{new Date(r.created_at).toLocaleString()}</div></div></div>)}{!rows.length&&<p className="muted">Журнал порожній.</p>}</div>}
+function AdminStats(){const [d,setD]=useState(null);useEffect(()=>{fetch('/api/admin-stats').then(r=>r.json()).then(setD).catch(()=>{})},[]);if(!d)return <p className="muted">Завантаження статистики…</p>;return <div className="grid stats"><Card title="Користувачі" value={d.users?.active||0} sub={`усього ${d.users?.total||0}`}/><Card title="Відповіді" value={d.attempts?.total||0}/><Card title="Слова" value={d.words?.total||0}/><Card title="Повідомлення" value={d.messages?.total||0}/></div>}
 
+
+function AdminDanger({save,state}) {
+  const [busy,setBusy]=useState(false);
+  const action=async(type,local)=>{if(!state.id)return;setBusy(true);try{const r=await fetch('/api/admin-users',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({userId:state.id,action:type})});if(r.ok&&local)save({...state,...local});}finally{setBusy(false)}};
+  return <div className="row-btns wrap"><button className="secondary" disabled={busy} onClick={()=>action('clear_history',{history:[]})}>Очистити історію</button><button className="secondary" disabled={busy} onClick={()=>action('reset_srs',{mastery:{},srs:{},attempts:{}})}>Обнулити mastery/SRS</button><button className="secondary" disabled={busy} onClick={()=>action('reset_xp',{xp:0,todayXp:0})}>Обнулити XP</button></div>;
+}
 
 function AboutPage() {
   const changelog = [
-    {v:'1.7-beta', items:['Notion live sync /api/notion-sync','IndexedDB локальна БД','Графіки статистики (donut/modes/XP)','Lesson на wordsLive','Пошук гравців у адмінці']},
+    {v:'1.8-beta', items:['Vercel + Neon PostgreSQL','Повний Notion → Neon sync','Cloud profile sync','Fix Vercel JSX build','Lesson на актуальному словнику']},
     {v:'1.6-beta', items:['Фікс інкогніто/реєстрації (onDone profile)','Корона Boss','Ліани-емодзі','Sprint/Match hardening','RPG профіль','About compact','Бейджі текст знизу']},
     {v:'1.5-beta', items:['Вхід нік+пароль','Адмін лок без dashboard','Sprint step fix','Match stay','Без ліан/зелених смуг','Зелений favicon','Проблемні: лише реально проблемні']},
     {v:'1.4-beta', items:['Fix Vercel build (lazy dup + string)','Mobile overlap fix','Admin roadmap table','Stagger setting','Skeleton component']},
@@ -1557,7 +1606,7 @@ function AboutPage() {
       <div className="card about-left">
         <Title title="Про додаток" text="Сюди пізніше додамо офіційний опис, політику та контакти."/>
         <p className="muted">English Flow — тренажер англійської з SRS, гейміфікацією та словником з Notion.</p>
-        <p className="muted">Версія інтерфейсу: <b>v1.2-beta</b></p>
+        <p className="muted">Версія інтерфейсу: <b>v1.8-beta</b></p>
         <div className="card" style={{marginTop:12}}>
           <h3>Офлайн-кеш словника</h3>
           <p className="muted small">Словник зберігається в localStorage після синку. Наступний крок — Service Worker для повної офлайн-роботи (PWA, відкладено).</p>
@@ -1659,104 +1708,23 @@ function SettingsPage({state, save}) {
 }
 
 function FriendsPage({state}) {
-  const [q, setQ] = useState('');
-  const [msg, setMsg] = useState('');
-  const [chatWith, setChatWith] = useState('');
-  const [text, setText] = useState('');
-  const [tick, setTick] = useState(0);
-  const friends = getFriends(state.nick);
-  const board = friends.length ? friendsLeaderboard(state.nick) : [];
-  const messages = chatWith ? getChat(state.nick, chatWith) : [];
-
-  const add = () => {
-    const r = addFriend(state.nick, q);
-    setMsg(r.ok ? 'Додано ✓' : (r.error || 'Помилка'));
-    setTick(t => t + 1);
-    if (r.ok) setQ('');
-  };
-
-  const send = () => {
-    if (!chatWith) return;
-    sendChat(state.nick, chatWith, text);
-    setText('');
-    setTick(t => t + 1);
-  };
-
-  return (
-    <section className="fade-in" key={tick}>
-      <Title title="Друзі" text="Пошук, чат і рейтинг між друзями"/>
-      {state.guest && <div className="card muted">У гостьовому режимі друзі локальні лише на цьому пристрої.</div>}
-      <div className="grid two">
-        <div className="card">
-          <h2>Додати друга</h2>
-          <div className="row-btns">
-            <input className="search" value={q} onChange={e => setQ(e.target.value)} placeholder="нік друга"/>
-            <button className="primary" type="button" onClick={add}>Додати</button>
-          </div>
-          {msg && <p className="muted">{msg}</p>}
-          <ul className="friend-list">
-            {friends.map(f => (
-              <li key={f}>
-                <button type="button" className={'friend-item' + (chatWith===f?' active':'')} onClick={() => setChatWith(f)}>
-                  <Users size={14}/> @{f}
-                </button>
-              </li>
-            ))}
-            {!friends.length && <li className="muted">Поки немає друзів</li>}
-          </ul>
-        </div>
-        <div className="card">
-          <h2><MessageCircle size={18}/> Чат {chatWith ? `з @${chatWith}` : ''}</h2>
-          {!chatWith && <p className="muted">Обери друга зліва</p>}
-          {chatWith && (
-            <>
-              <div className="chat-box">
-                {messages.map(m => (
-                  <div key={m.id} className={'chat-msg' + (m.from === state.nick ? ' me' : '')}>
-                    <b>@{m.from}</b> <span className="muted small">{new Date(m.at).toLocaleTimeString()}</span>
-                    <div>{m.text}</div>
-                  </div>
-                ))}
-              </div>
-              <div className="row-btns">
-                <input className="search" value={text} onChange={e => setText(e.target.value)} onKeyDown={e => e.key==='Enter' && send()} placeholder="повідомлення"/>
-                <button className="primary" type="button" onClick={send}>Надіслати</button>
-              </div>
-            </>
-          )}
-        </div>
-      </div>
-      {friends.length > 0 && (
-        <div className="card" style={{marginTop:16}}>
-          <h2>Рейтинг друзів</h2>
-          <div className="lb">
-            {board.map((r,i) => (
-              <div className="lb-row" key={r.nick}>
-                <span>#{i+1}</span>
-                <b>@{r.nick}</b>
-                {String(r.nick).toLowerCase()==='boss' && ' 👑'}
-                <span className="muted">{r.xp} XP</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </section>
-  );
+  const [q,setQ]=useState(''),[msg,setMsg]=useState(''),[chatWith,setChatWith]=useState(null),[text,setText]=useState(''),[friends,setFriends]=useState([]),[board,setBoard]=useState([]),[messages,setMessages]=useState([]),[busy,setBusy]=useState(false);
+  const load=useCallback(async()=>{if(state.guest)return;const [f,b]=await Promise.all([getFriends(state.nick),friendsLeaderboard(state.nick)]);setFriends(f||[]);setBoard(b||[])},[state.nick,state.guest]);
+  useEffect(()=>{load()},[load]);
+  useEffect(()=>{if(!chatWith||state.guest)return;let alive=true;const pull=async()=>{const rows=await getChat(state.nick,chatWith);if(alive)setMessages(rows||[])};pull();const t=setInterval(pull,5000);return()=>{alive=false;clearInterval(t)}},[chatWith,state.nick,state.guest]);
+  const add=async()=>{setBusy(true);const r=await addFriend(state.nick,q);setMsg(r.ok?'Запит надіслано ✓':(r.error||'Помилка'));if(r.ok)setQ('');setBusy(false);load()};
+  const send=async()=>{if(!chatWith||!text.trim())return;const m=await sendChat(state.nick,chatWith,text);if(m)setMessages(x=>[...x,m]);setText('')};
+  if(state.guest)return <section><Title title="Друзі" text="Друзі та чат доступні після входу в акаунт"/><div className="card muted">Гостьовий режим не зберігає соціальні дані в Neon.</div></section>;
+  return <section className="fade-in"><Title title="Друзі" text="Neon-друзі, запити, чат і рейтинг"/><div className="grid two"><div className="card"><h2>Додати друга</h2><div className="row-btns"><input className="search" value={q} onChange={e=>setQ(e.target.value)} placeholder="нік друга"/><button className="primary" disabled={busy||!q.trim()} onClick={add}>Додати</button></div>{msg&&<p className="muted">{msg}</p>}<ul className="friend-list">{friends.map(f=><li key={f.id||f.nick}><button type="button" className={'friend-item'+(chatWith===f.nick?' active':'')} onClick={()=>f.status==='accepted'&&setChatWith(f.nick)}><Users size={14}/> @{f.nick}{f.status==='pending'?' · запит':''}</button>{f.status==='pending'&&f.requested_by!==state.id&&<button className="secondary" onClick={async()=>{await acceptFriend(state.nick,f.id);load()}}>Прийняти</button>}</li>)}{!friends.length&&<li className="muted">Поки немає друзів</li>}</ul></div><div className="card"><h2><MessageCircle size={18}/> Чат {chatWith?`з @${chatWith}`:''}</h2>{!chatWith?<p className="muted">Обери прийнятого друга зліва</p>:<><div className="chat-box">{messages.map(m=><div key={m.id} className={'chat-msg'+(m.sender_id===undefined||String(m.sender_id)===String(state.id)?' me':'')}><b>{m.sender_id===state.id?'Ти':`@${chatWith}`}</b> <span className="muted small">{new Date(m.created_at||m.at).toLocaleTimeString()}</span><div>{m.text}</div></div>)}</div><div className="row-btns"><input className="search" value={text} onChange={e=>setText(e.target.value)} onKeyDown={e=>e.key==='Enter'&&send()} placeholder="повідомлення"/><button className="primary" onClick={send}>Надіслати</button></div></>}</div></div>{board.length>0&&<div className="card" style={{marginTop:16}}><h2>Рейтинг друзів</h2><div className="lb">{board.map((r,i)=><div className="lb-row" key={r.nick}><span>#{i+1}</span><b>@{r.nick}</b><span className="muted">{r.xp} XP · {r.streak}🔥</span></div>)}</div></div>}</section>;
 }
 
-
 function CompareBlurb({state}) {
-  if (state.compareMode === 'off') return null;
-  const avg = getDailyAverage();
-  if (state.compareMode === 'friend' && state.compareFriend) {
-    const p = loadProfile(state.compareFriend);
-    const fxp = p?.xp || 0;
-    const diff = state.xp - fxp;
-    return <p className="muted">Порівняння з @{state.compareFriend}: ти {diff >= 0 ? 'вище' : 'нижче'} на {Math.abs(diff)} XP</p>;
-  }
-  const diff = state.xp - (avg.avgXp || 0);
-  return <p className="muted">Середнє гравців сьогодні: {avg.avgXp} XP · ти {diff >= 0 ? '+' : ''}{diff} від середнього</p>;
+  const [rows,setRows]=useState([]);
+  useEffect(()=>{if(state.guest||state.compareMode==='off')return;const fn=state.compareMode==='friend'?friendsLeaderboard(state.nick):cloudLeaderboard();fn.then(setRows).catch(()=>setRows([]))},[state.nick,state.compareMode]);
+  if(state.compareMode==='off')return null;
+  if(state.compareMode==='friend'&&state.compareFriend){const f=rows.find(x=>String(x.nick).toLowerCase()===String(state.compareFriend).toLowerCase());if(!f)return <p className="muted">@{state.compareFriend}: даних ще немає</p>;const diff=(state.xp||0)-(f.xp||0);return <p className="muted">Порівняння з @{f.nick}: ти {diff>=0?'вище':'нижче'} на {Math.abs(diff)} XP</p>}
+  if(!rows.length)return <p className="muted">Рейтинг завантажується…</p>;
+  const avg=Math.round(rows.reduce((a,x)=>a+(x.xp||0),0)/rows.length),diff=(state.xp||0)-avg;return <p className="muted">Середнє XP у рейтингу: {avg} · ти {diff>=0?'+':''}{diff}</p>;
 }
 
 function PlayerDBSearch({current, save}) {

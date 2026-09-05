@@ -1,0 +1,2 @@
+import {sqlClient,json,requireUser} from '../lib/server/db.js';
+export default async function handler(req,res){try{const me=await requireUser(req,res);if(!me)return json(res,401,{ok:false,error:'Unauthorized'});const sql=sqlClient();const rows=await sql`SELECT u.nick,u.name,u.xp,u.streak FROM users u WHERE u.id=${me.id} OR u.id IN (SELECT friend_id FROM friendships WHERE user_id=${me.id} AND status='accepted') ORDER BY u.xp DESC,u.updated_at ASC LIMIT 100`;return json(res,200,{ok:true,rows})}catch(e){return json(res,500,{ok:false,error:'Friends leaderboard failed'})}}

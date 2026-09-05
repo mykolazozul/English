@@ -1,0 +1,2 @@
+import {sqlClient,json} from '../lib/server/db.js';
+export default async function handler(req,res){try{if(req.method!=='GET')return json(res,405,{ok:false});const sql=sqlClient();const rows=await sql`SELECT nick,name,xp,streak FROM users WHERE status='active' ORDER BY xp DESC,updated_at ASC LIMIT 100`;return json(res,200,{ok:true,rows})}catch(e){return json(res,500,{ok:false,error:'Leaderboard failed'})}}

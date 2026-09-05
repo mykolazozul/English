@@ -69,4 +69,7 @@ export const BADGES = [
 {id:'perfect_lesson',title:'Без помилок',desc:'Урок без жодної помилки',icon:'💎'},
 {id:'dictation',title:'Диктант',desc:'Пройди режим диктанту',icon:'✍️'},
 {id:'match_master',title:'Match Master',desc:'Виграй Match-гру',icon:'🎯'},
+{id:'accuracy_90',title:'Точність',desc:'90%+ на 100 відповідях',icon:'🎯'},
+{id:'xp_5000',title:'Потік 5000',desc:'Набери 5000 XP',icon:'💎'},
+{id:'streak_30',title:'Місяць без пауз',desc:'Streak ≥ 30',icon:'👑'},
 ];

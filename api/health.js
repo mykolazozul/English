@@ -1,0 +1,2 @@
+import {sqlClient,json} from '../lib/server/db.js';
+export default async function handler(req,res){try{if(req.method!=='GET')return json(res,405,{ok:false});const sql=sqlClient();const r=await sql`SELECT now() AS db_time,(SELECT count(*) FROM vocabulary WHERE archived=false)::int AS words,(SELECT count(*) FROM users WHERE status='active')::int AS users`;return json(res,200,{ok:true,db:true,...r[0]},{'Cache-Control':'no-store'})}catch{return json(res,503,{ok:false,db:false,error:'Database unavailable'})}}

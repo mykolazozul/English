@@ -3,7 +3,7 @@ name: Sync English words from Notion
 on:
   workflow_dispatch:
   schedule:
-    # Every hour from 09:00 to 23:00 UTC (adjust if needed for local TZ)
+    # Keep the requested hourly sync: 15 runs/day, 09:00–23:00 UTC.
     - cron: '0 9-23 * * *'
 
 permissions:
@@ -17,15 +17,32 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Sync Notion
+      - name: Sync Notion to generated files
         env:
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
-          NOTION_DATA_SOURCE_ID: f38dba17-bbd6-4f04-9875-030212db4d0a
+          NOTION_DATA_SOURCE_ID: ${{ secrets.NOTION_DATA_SOURCE_ID }}
         run: npm run sync:notion
-      - name: Commit synced data
+
+      - name: Sync Notion to Neon via Vercel API
+        env:
+          VERCEL_API_URL: ${{ secrets.VERCEL_API_URL }}
+          SYNC_SECRET: ${{ secrets.SYNC_SECRET }}
+        run: |
+          test -n "$VERCEL_API_URL" || (echo "Missing VERCEL_API_URL GitHub secret" && exit 1)
+          test -n "$SYNC_SECRET" || (echo "Missing SYNC_SECRET GitHub secret" && exit 1)
+          curl --fail-with-body -sS -X POST "$VERCEL_API_URL/api/notion-sync" \
+            -H "Content-Type: application/json" \
+            -H "x-sync-secret: $SYNC_SECRET" \
+            -d '{}'
+
+      - name: Commit synced static cache
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/notionWords.generated.js public/notion-sync-meta.json public/words.json || true
-          git diff --cached --quiet || git commit -m "chore: hourly sync English words from Notion"
-          git push
+          git add src/notionWords.generated.js public/notion-sync-meta.json public/words.json public/words-db.json
+          if git diff --cached --quiet; then
+            echo "No static word changes"
+          else
+            git commit -m "chore: hourly sync English words from Notion"
+            git push
+          fi
