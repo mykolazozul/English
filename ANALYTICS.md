@@ -1,11 +1,57 @@
-# Product analytics
+# English Flow Analytics
 
-The app collects first-party product events only when analytics consent is enabled.
+## Single source of truth
+Admin analytics is server-side and reads authoritative Neon data. Browser `localStorage` / IndexedDB snapshots are not used for admin product metrics. Notion remains the content source; Neon is the application source of truth.
 
-Tracked events include app open, page view, lesson start/answer/complete, SRS review, challenge join/complete, friend request/accept, chat send/read, feature use and client errors.
+## Product
+- active users for the selected period
+- new users: today / 7d / 30d / selected period
+- lessons started/completed and completion rate
+- answers, accuracy, XP earned and average XP per active user
+- daily activity timeline
+- lesson funnel: app opens → lessons → answers → completed
+- mode performance: starts, completion, accuracy, average lesson time
 
-The server stores an HMAC-SHA256 IP hash, not the raw IP. Event data is allow-listed and excludes passwords, tokens, cookies, raw IPs and message contents.
+## Learning Engine
+- new/studied/mastered cards
+- words reviewed
+- due SRS cards
+- SRS review count and SRS accuracy
+- average attempts and mastery
+- CEFR vocabulary distribution
+- most difficult/problem words with error rate
+- most reviewed words
+- high-accuracy/easy words
+- never-shown vocabulary
 
-Admin analytics exposes aggregates: unique users, event volume, lessons, answers, completion, daily activity, modes, retention snapshot and error counts.
+## Users / Social
+- active/suspended/deleted users
+- new users today/7d/30d
+- friendships and pending requests
+- messages
+- challenges created/joined/completed
+- cohort D1/D7/D30 retention
 
-Raw analytics events should be retained for a limited period. Use the `analyticsRetentionDays` admin setting and scheduled cleanup when the product is live.
+## Security
+- security events
+- failed logins
+- open reports
+- report volume
+- top recorded client errors
+
+## System / Realtime
+- DB latency
+- active sessions
+- answers/hour
+- API errors/hour
+- realtime online presence
+- realtime open/reconnect/error events
+
+## Privacy
+Raw IP is never stored by analytics; only an HMAC-SHA256 hash is stored for abuse/aggregation use. Event payloads are allow-listed and exclude passwords, tokens, cookies, raw IPs, emails, and message contents. The old local 1–17 privacy snapshot has been removed from Admin.
+
+## Retention
+A daily Vercel cron calls `/api/cron-analytics-cleanup` and removes raw analytics events older than the `analyticsRetentionDays` admin setting (bounded to 30–3650 days). Set `CRON_SECRET` in Vercel. Vercel cron requests use that secret as the bearer authorization for the cleanup endpoint.
+
+## Performance
+`db/schema-v4.sql` adds indexes for the analytics/progress/lesson queries used by the Admin dashboard. Run it once after v3 on the production Neon database.

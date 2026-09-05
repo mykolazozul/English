@@ -1519,12 +1519,9 @@ function Admin({state, save, setWordsLive, wordsLive}) {
       </div>
       <div className="card"><h2>Стан системи</h2><AdminStats /></div>
       <div className="card"><h2>Журнал безпеки / адмін-дій</h2><AdminAudit /></div>
-      <div className="card analytics-dashboard"><h2>📊 Product Analytics</h2><p className="muted">Агрегована аналітика навчання, retention, режими, completion і помилки.</p><AdminAnalytics /></div><div className="card"><h2>⚑ Reports</h2><AdminReports /></div><div className="card"><h2>🩺 Monitoring</h2><AdminMonitoring /></div>
-      <div className="card analytics-panel">
-        <h2>Privacy Analytics (1–17)</h2>
-        <p className="muted">Лише агрегати, без точної геолокації та без персональних даних у UI.</p>
-        <AnalyticsPanel />
-      </div>
+      <div className="card analytics-dashboard"><h2>📊 Product & Learning Analytics</h2><p className="muted">Єдине серверне джерело аналітики: продукт, навчання, SRS, vocabulary, retention, social, security та system health. Без старих localStorage-метрик.</p><AdminAnalytics /></div>
+      <div className="card"><h2>⚑ Reports</h2><AdminReports /></div>
+      <div className="card"><h2>🩺 Monitoring</h2><AdminMonitoring /></div>
 
       <div className="grid two">
         <div className="card">
@@ -1587,10 +1584,47 @@ function AdminUsers(){
   return <div><input className="search" placeholder="Нік або імʼя" value={q} onChange={e=>setQ(e.target.value)}/><div className="player-db-list">{rows.map(r=><div className="word-row card" key={r.id} style={{marginTop:8}}><div><b>{r.name||r.nick}</b> <span className="muted">@{r.nick}</span><div className="muted small">{r.xp} XP · streak {r.streak} · {r.status}</div></div><div className="row-btns wrap"><select value={r.role} disabled={busy} onChange={e=>act(r.id,{role:e.target.value})}><option value="user">user</option><option value="moderator">moderator</option><option value="admin">admin</option></select><button className="secondary" disabled={busy} onClick={()=>act(r.id,{status:r.status==='active'?'suspended':'active'})}>{r.status==='active'?'Призупинити':'Активувати'}</button><button className="secondary" disabled={busy} onClick={()=>reset(r.id)}>Reset</button></div></div>)}</div></div>
 }
 function AdminAudit(){const [rows,setRows]=useState([]);useEffect(()=>{fetch('/api/admin-audit').then(r=>r.json()).then(d=>setRows(d.rows||[])).catch(()=>{})},[]);return <div className="word-list">{rows.slice(0,30).map(r=><div className="word-row card" key={r.id}><div><b>{r.action}</b><div className="muted small">{r.target_nick?`@${r.target_nick} · `:''}{new Date(r.created_at).toLocaleString()}</div></div></div>)}{!rows.length&&<p className="muted">Журнал порожній.</p>}</div>}
-function AdminAnalytics(){const [d,setD]=useState(null),[days,setDays]=useState(30);useEffect(()=>{fetch('/api/admin-analytics?days='+days,{credentials:'include'}).then(r=>r.json()).then(setD).catch(()=>setD(null))},[days]);if(!d)return <p className="muted">Завантаження analytics…</p>;const max=Math.max(1,...(d.daily||[]).map(x=>Number(x.events||0)));return <div><div className="row-btns"><select value={days} onChange={e=>setDays(e.target.value)}><option value={7}>7 днів</option><option value={30}>30 днів</option><option value={90}>90 днів</option></select></div><div className="grid stats"><Card title="Користувачі" value={d.kpi.users||0} sub="унікальні"/><Card title="Події" value={d.kpi.events||0}/><Card title="Уроки" value={d.kpi.lessons||0}/><Card title="Completion" value={d.kpi.lessons?Math.round((d.kpi.completions||0)/d.kpi.lessons*100)+'%':'0%'}/></div><div className="analytics-chart">{(d.daily||[]).map(x=><div className="analytics-day" key={String(x.day)} title={`${x.day}: ${x.events} events`}><i style={{height:(Number(x.events||0)/max*100)+'%'}}/><span>{String(x.day).slice(5)}</span></div>)}</div><div className="grid two"><div><h3>Події</h3>{(d.events||[]).slice(0,8).map(x=><div className="mode-row" key={x.event_name}><span>{x.event_name}</span><b>{x.n}</b></div>)}</div><div><h3>Retention snapshot</h3><p>24h: <b>{d.retention.d1||0}</b></p><p>7d: <b>{d.retention.d7||0}</b></p><p>30d: <b>{d.retention.d30||0}</b></p><h3>Помилки</h3>{(d.errors||[]).slice(0,5).map(x=><div className="muted small" key={x.message}>{x.message} · {x.n}</div>)}</div></div></div>}
+function Metric({title,value,sub}){return <div className="card" style={{margin:0}}><div className="muted small">{title}</div><div style={{fontSize:24,fontWeight:800,marginTop:4}}>{value}</div>{sub&&<div className="muted small">{sub}</div>}</div>}
+function AnalyticsTable({rows,columns,empty='Немає даних'}){if(!rows?.length)return <p className="muted">{empty}</p>;return <div style={{overflowX:'auto'}}><table className="admin-table"><thead><tr>{columns.map(c=><th key={c.key}>{c.label}</th>)}</tr></thead><tbody>{rows.map((r,i)=><tr key={r.id||r.word||r.mode||r.level||i}>{columns.map(c=><td key={c.key}>{c.render?c.render(r):String(r[c.key]??'—')}</td>)}</tr>)}</tbody></table></div>}
+function AnalyticsBars({rows,labelKey='label',valueKey='value',suffix=''}){const max=Math.max(1,...(rows||[]).map(r=>Number(r[valueKey]||0)));if(!rows?.length)return <p className="muted">Немає даних</p>;return <div className="mode-bars">{rows.map((r,i)=><div className="mode-row" key={r[labelKey]||i}><span className="mode-name">{r[labelKey]}</span><div className="mode-track"><i style={{width:(Number(r[valueKey]||0)/max*100)+'%'}}/></div><span className="mode-n">{r[valueKey]}{suffix}</span></div>)}</div>}
+function AdminAnalytics(){
+  const [d,setD]=useState(null),[days,setDays]=useState(30),[tab,setTab]=useState('overview');
+  const load=()=>fetch('/api/admin-analytics?days='+days,{credentials:'include'}).then(r=>r.json()).then(x=>setD(x?.ok?x:null)).catch(()=>setD(null));
+  useEffect(()=>{load()},[days]);
+  if(!d)return <p className="muted">Завантаження analytics…</p>;
+  const o=d.overview||{}, l=d.learning||{}, v=d.vocabulary||{}, u=d.users||{}, s=d.social||{}, sec=d.security||{}, sys=d.system||{}, f=d.funnel||{};
+  const tabs=[['overview','Overview'],['learning','Learning'],['vocabulary','Vocabulary'],['users','Users'],['social','Social'],['security','Security'],['system','System']];
+  return <div>
+    <div className="row-btns" style={{flexWrap:'wrap',gap:8}}>{tabs.map(([id,label])=><button key={id} type="button" className={tab===id?'primary':'secondary'} onClick={()=>setTab(id)}>{label}</button>)}<select value={days} onChange={e=>setDays(Number(e.target.value))}><option value={7}>7 днів</option><option value={30}>30 днів</option><option value={90}>90 днів</option></select></div>
+    {tab==='overview'&&<>
+      <div className="grid stats"><Metric title="Всього users" value={o.total_users||0}/><Metric title="Active users" value={o.active_users||0}/><Metric title={'Active / '+days+'d'} value={o.active_period||0}/><Metric title="New users" value={o.new_users||0}/><Metric title="Lessons started" value={o.lessons_started||0}/><Metric title="Lessons completed" value={o.lessons_completed||0}/><Metric title="Completion" value={(o.completion||0)+'%'}/><Metric title="Accuracy" value={(o.accuracy||0)+'%'}/><Metric title="Answers" value={o.answers||0}/><Metric title="XP earned" value={o.xp_earned||0}/><Metric title="Avg XP / active user" value={o.avgXpUser||0}/><Metric title="Achievements" value={o.achievements_earned||0}/></div>
+      <h3>Daily activity</h3><div className="analytics-chart">{(d.daily||[]).map(x=>{const max=Math.max(1,...(d.daily||[]).map(z=>Number(z.events||0)));return <div className="analytics-day" key={String(x.day)} title={`${x.day}: ${x.events} events / ${x.answers} answers`}><i style={{height:(Number(x.events||0)/max*100)+'%'}}/><span>{String(x.day).slice(5)}</span></div>})}</div>
+      <div className="grid two"><div><h3>Lesson funnel</h3><AnalyticsBars rows={[{label:'App opens',value:f.app_opens||0},{label:'Lessons started',value:f.lessons_started||0},{label:'Answers',value:f.first_answers||0},{label:'Completed',value:f.lessons_completed||0}]}/></div><div><h3>Retention cohorts</h3><AnalyticsTable rows={(d.retention||[]).slice(0,10)} columns={[{key:'cohort',label:'Cohort'},{key:'cohort_size',label:'Users'},{key:'d1_pct',label:'D1 %',render:r=>r.d1_pct+'%'},{key:'d7_pct',label:'D7 %',render:r=>r.d7_pct+'%'},{key:'d30_pct',label:'D30 %',render:r=>r.d30_pct+'%'}]}/></div></div>
+      <h3>Modes</h3><AnalyticsTable rows={d.modes} columns={[{key:'mode',label:'Mode'},{key:'starts',label:'Starts'},{key:'completions',label:'Completed'},{key:'accuracy',label:'Accuracy',render:r=>r.accuracy+'%'},{key:'avg_minutes',label:'Avg. time',render:r=>r.avg_minutes+' min'}]}/>
+    </>}
+    {tab==='learning'&&<>
+      <div className="grid stats"><Metric title="New cards" value={l.new_cards||0}/><Metric title="Words reviewed" value={l.reviewed_cards||0}/><Metric title="Studied cards" value={l.studied_cards||0}/><Metric title="Mastered" value={l.mastered_cards||0}/><Metric title="Due SRS" value={l.due_cards||0}/><Metric title="Accuracy" value={(l.accuracy||0)+'%'}/><Metric title="Avg attempts / word" value={l.avg_attempts||0}/><Metric title="Avg mastery" value={l.avg_mastery||0}/><Metric title="SRS reviews" value={l.srs_reviews||0}/><Metric title="SRS accuracy" value={(l.srs_accuracy||0)+'%'}/></div>
+      <h3>CEFR content distribution</h3><AnalyticsBars rows={(d.levelDistribution||[]).map(x=>({label:x.level,value:x.words}))}/>
+      <h3>Lesson performance</h3><AnalyticsTable rows={d.modes} columns={[{key:'mode',label:'Mode'},{key:'starts',label:'Starts'},{key:'completions',label:'Completed'},{key:'accuracy',label:'Accuracy',render:r=>r.accuracy+'%'},{key:'avg_minutes',label:'Avg time',render:r=>r.avg_minutes+' min'}]}/>
+    </>}
+    {tab==='vocabulary'&&<>
+      <div className="grid stats"><Metric title="Vocabulary total" value={v.vocabulary_total||0}/><Metric title="Never shown" value={v.never_shown||0}/><Metric title="Long words" value={v.long_words||0}/><Metric title="CEFR tagged" value={v.cefr_tagged||0}/></div>
+      <h3>Most difficult / problem words</h3><AnalyticsTable rows={d.weakWords} columns={[{key:'word',label:'Word'},{key:'level',label:'Level'},{key:'category',label:'Category'},{key:'reviews',label:'Reviews'},{key:'wrong',label:'Wrong'},{key:'error_rate',label:'Error rate',render:r=>r.error_rate+'%'}]}/>
+      <h3>Most reviewed</h3><AnalyticsTable rows={d.mostReviewed} columns={[{key:'word',label:'Word'},{key:'level',label:'Level'},{key:'reviews',label:'Reviews'},{key:'correct',label:'Correct'},{key:'wrong',label:'Wrong'}]}/>
+      <h3>Suspiciously high accuracy / easy words</h3><AnalyticsTable rows={d.highAccuracy} columns={[{key:'word',label:'Word'},{key:'level',label:'Level'},{key:'reviews',label:'Reviews'},{key:'accuracy',label:'Accuracy',render:r=>r.accuracy+'%'}]}/>
+    </>}
+    {tab==='users'&&<>
+      <div className="grid stats"><Metric title="Active" value={u.active||0}/><Metric title="Suspended" value={u.suspended||0}/><Metric title="Deleted" value={u.deleted||0}/><Metric title="New today" value={u.new_today||0}/><Metric title="New 7d" value={u.new_7d||0}/><Metric title="New 30d" value={u.new_30d||0}/></div>
+      <p className="muted">User-level analytics у цьому dashboard агреговані. Паролі, токени, точна геолокація та інші секрети сюди не потрапляють.</p>
+    </>}
+    {tab==='social'&&<div className="grid stats"><Metric title="Friendships" value={s.friendships||0}/><Metric title="Pending requests" value={s.pending_requests||0}/><Metric title={'Messages / '+days+'d'} value={s.messages_sent||0}/><Metric title="Challenges created" value={s.challenges_created||0}/><Metric title="Challenge joins" value={s.challenge_joins||0}/><Metric title="Challenge completions" value={s.challenge_completions||0}/></div>}
+    {tab==='security'&&<><div className="grid stats"><Metric title={'Security events / '+days+'d'} value={sec.security_events||0}/><Metric title={'Failed logins / '+days+'d'} value={sec.failed_logins||0}/><Metric title="Open reports" value={sec.open_reports||0}/><Metric title={'Reports / '+days+'d'} value={sec.reports_period||0}/></div><h3>Top errors</h3><AnalyticsTable rows={d.errors} columns={[{key:'message',label:'Error'},{key:'n',label:'Count'}]}/></>}
+    {tab==='system'&&<><div className="grid stats"><Metric title="Active sessions" value={sys.active_sessions||0}/><Metric title="Answers / hour" value={sys.answers_hour||0}/><Metric title="Errors / hour" value={sys.errors_hour||0}/><Metric title={'Realtime opens / '+days+'d'} value={sys.realtime_opens||0}/><Metric title={'Realtime reconnects / '+days+'d'} value={sys.realtime_reconnects||0}/><Metric title={'Realtime errors / '+days+'d'} value={sys.realtime_errors||0}/></div><p className="muted">DB latency та live operational health дивись у блоці Monitoring нижче.</p></>}
+  </div>;
+}
 
 function AdminReports(){const [rows,setRows]=useState([]);const load=()=>fetch('/api/reports',{credentials:'include'}).then(r=>r.json()).then(d=>setRows(d.rows||[])).catch(()=>{});useEffect(load,[]);const update=async(id,status)=>{await fetch('/api/reports',{method:'PATCH',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({id,status})});load()};return <div>{rows.slice(0,12).map(r=><div className="word-row" key={r.id}><div><b>#{r.id} · @{r.target_nick}</b><div className="muted small">@{r.reporter_nick} · {r.reason} · {r.status}</div></div><select value={r.status} onChange={e=>update(r.id,e.target.value)}><option>open</option><option>reviewing</option><option>resolved</option><option>dismissed</option></select></div>)}{!rows.length&&<p className="muted">Немає скарг.</p>}</div>}
-function AdminMonitoring(){const [d,setD]=useState(null);useEffect(()=>{const load=()=>fetch('/api/admin-monitoring',{credentials:'include'}).then(r=>r.json()).then(setD).catch(()=>{});load();const t=setInterval(load,15000);return()=>clearInterval(t)},[]);if(!d)return <p className="muted">Завантаження…</p>;return <div className="grid stats"><Card title="DB latency" value={d.dbMs+'ms'} sub="SELECT 1"/><Card title="Sessions" value={d.activeSessions}/><Card title="Answers/hour" value={d.progressLastHour}/><Card title="Open reports" value={d.openReports}/></div>}
+function AdminMonitoring(){const [d,setD]=useState(null);useEffect(()=>{const load=()=>fetch('/api/admin-monitoring',{credentials:'include'}).then(r=>r.json()).then(setD).catch(()=>{});load();const t=setInterval(load,15000);return()=>clearInterval(t)},[]);if(!d)return <p className="muted">Завантаження…</p>;return <div className="grid stats"><Card title="DB latency" value={d.dbMs+'ms'} sub="SELECT 1"/><Card title="Active sessions" value={d.activeSessions}/><Card title="Answers/hour" value={d.progressLastHour}/><Card title="API errors/hour" value={d.apiErrorsHour||0}/><Card title="Realtime online" value={d.realtimeConnections||0}/><Card title="Security events/24h" value={d.security24h||0}/><Card title="Open reports" value={d.openReports}/><Card title="Realtime errors/hour" value={d.realtimeErrorsHour||0}/></div>}
 
 function AdminStats(){const [d,setD]=useState(null);useEffect(()=>{fetch('/api/admin-stats').then(r=>r.json()).then(setD).catch(()=>{})},[]);if(!d)return <p className="muted">Завантаження статистики…</p>;return <div className="grid stats"><Card title="Користувачі" value={d.users?.active||0} sub={`усього ${d.users?.total||0}`}/><Card title="Відповіді" value={d.attempts?.total||0}/><Card title="Слова" value={d.words?.total||0}/><Card title="Повідомлення" value={d.messages?.total||0}/></div>}
 
@@ -1795,72 +1829,6 @@ function PlayerDBSearch({current, save}) {
     </div>
   );
 }
-function AnalyticsPanel() {
-  const [snap, setSnap] = useState(null);
-  useEffect(() => {
-    const ua = navigator.userAgent || '';
-    let device = 'desktop';
-    if (/Mobi|Android/i.test(ua)) device = 'mobile';
-    else if (/Tablet|iPad/i.test(ua)) device = 'tablet';
-    let os = 'Other';
-    if (/Windows/i.test(ua)) os = 'Windows';
-    else if (/Mac OS/i.test(ua)) os = 'macOS';
-    else if (/Android/i.test(ua)) os = 'Android';
-    else if (/iPhone|iPad/i.test(ua)) os = 'iOS';
-    else if (/Linux/i.test(ua)) os = 'Linux';
-    let browser = 'Other';
-    if (/Edg\//i.test(ua)) browser = 'Edge';
-    else if (/Chrome/i.test(ua)) browser = 'Chrome';
-    else if (/Safari/i.test(ua) && !/Chrome/i.test(ua)) browser = 'Safari';
-    else if (/Firefox/i.test(ua)) browser = 'Firefox';
-    const lang = navigator.language || '—';
-    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '—';
-    const w = window.screen?.width || 0;
-    let bucket = 'unknown';
-    if (w < 600) bucket = 'S (<600)';
-    else if (w < 1024) bucket = 'M (600–1024)';
-    else if (w < 1440) bucket = 'L (1024–1440)';
-    else bucket = 'XL (≥1440)';
-    setSnap({
-      1: 'країна — через Vercel Analytics (dashboard)',
-      2: 'регіон — вимкнено (privacy)',
-      3: device,
-      4: os,
-      5: browser,
-      6: lang,
-      7: tz,
-      8: bucket,
-      9: location.hash || location.pathname || '/',
-      10: 'сесії — див. Vercel',
-      11: 'час уроку — local history',
-      12: 'completion — local',
-      13: 'режими — local history.mode',
-      14: 'категорії помилок — local',
-      15: navigator.onLine ? 'online' : 'offline',
-      16: document.documentElement.dataset.skin || 'classic',
-      17: 'Vercel Web Analytics'
-    });
-  }, []);
-  if (!snap) return <div className="skeleton" style={{height:120}}/>;
-  const labels = {
-    1:'Країна',2:'Регіон',3:'Пристрій',4:'ОС',5:'Браузер',6:'Мова',7:'Timezone',8:'Екран',
-    9:'Розділ',10:'Сесії',11:'Час уроку',12:'Completion',13:'Режими',14:'Категорії',15:'Мережа',16:'Skin',17:'Vercel'
-  };
-  return (
-    <div className="analytics-grid">
-      {Object.keys(snap).map(k => (
-        <div className="analytics-item" key={k}>
-          <span className="an-num">{k}</span>
-          <div>
-            <b>{labels[k]}</b>
-            <div className="muted small">{snap[k]}</div>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 function Title({title, text}) { return <div className="title"><h1>{title}</h1><p className="muted">{text}</p></div>; }
 
 function ModeBars({history}) {
