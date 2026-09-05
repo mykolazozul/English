@@ -24,5 +24,5 @@ test('auth -> dashboard -> lesson error state never spins forever', async ({page
 test('about page contains current version and no PWA controls', async ({page})=>{
   await page.goto('/');
   const about=page.getByRole('button',{name:'Про додаток'});
-  if(await about.count()){await about.click();await expect(page.getByText(/Версія інтерфейсу: v2\.5\.0/)).toBeVisible();await expect(page.getByText(/PWA|Встановити застосунок|Перевірити оновлення/)).toHaveCount(0)}
+  if(await about.count()){await about.click();await expect(page.getByText(/Версія інтерфейсу: v2\.6\.0/)).toBeVisible();await expect(page.getByText(/PWA|Встановити застосунок|Перевірити оновлення/)).toHaveCount(0)}
 });

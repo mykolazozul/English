@@ -28,11 +28,21 @@ export async function getChat(_,withNick){return (await api('/api/chat?with='+en
 export async function sendChat(_,to,payload){return (await api('/api/chat',{method:'POST',body:JSON.stringify({to,...payload})})).message||null}
 export function ensureDailyAverage(){const today=new Date().toISOString().slice(0,10);try{const prev=JSON.parse(localStorage.getItem(GLOBAL_AVG)||'{}');if(prev.date===today)return prev}catch{}const data={date:today,avgXp:0,avgStreak:0,players:0,at:new Date().toISOString()};localStorage.setItem(GLOBAL_AVG,JSON.stringify(data));return data}
 export function getDailyAverage(){return ensureDailyAverage()}
-export async function cloudPull(){try{const [r,pr]=await Promise.all([api('/api/profile'),api('/api/progress')]);const p=r.profile||{},v=pr.vocabulary||[];const mastery={},srs={},attempts={};v.forEach(x=>{mastery[x.notion_id]=x.mastery||0;srs[x.notion_id]=x.srs||{};attempts[x.notion_id]=x.attempts||0});return {...(r.profileData||{}),id:p.id,nick:p.nick,name:p.name,role:p.role,xp:p.xp,streak:p.streak,dailyGoal:p.daily_goal,todayXp:p.today_xp,today:p.today,avatar:p.avatar,theme:p.theme,skin:p.skin,settings:p.settings||{},mastery,srs,attempts,history:(pr.history||[]).map(h=>({word:h.notion_id,correct:h.correct,points:h.points,date:h.created_at,mode:h.mode})),badges:[...(r.achievements||[]),...(pr.achievements||[])].filter((x,i,a)=>a.indexOf(x)===i)}}catch{return null}}
+let wordIndex={}; // {lowercased word -> notion_id} — bridges id-scheme mismatches
+export function getWordIdByText(){
+  if(!Object.keys(wordIndex).length){try{const c=JSON.parse(localStorage.getItem('ef-words-cache-v1'));if(Array.isArray(c?.words)){const idx={};c.words.forEach(w=>{if(w&&w.id&&(w.word||'').trim())idx[String(w.word).trim().toLowerCase()]=w.id});wordIndex=idx}}catch{}}
+  return wordIndex;
+}
+async function buildWordIndex(){try{const q=await api('/api/vocabulary');const idx={};(q.words||[]).forEach(w=>{if(w&&w.id&&(w.word||'').trim())idx[String(w.word).trim().toLowerCase()]=w.id});if(Object.keys(idx).length)wordIndex=idx}catch{}}
+export async function cloudPull(nick){
+  // Guest mode is entirely local — never hit the API or we'd trigger a 401
+  // "session expired" kick the moment someone taps "Увійти як гість".
+  if(!nick||String(nick).toLowerCase()==='guest')return {guest:true,nick:'guest'};
+  try{const [r,pr]=await Promise.all([api('/api/profile'),api('/api/progress')]);await buildWordIndex();const p=r.profile||{},v=pr.vocabulary||[];const mastery={},srs={},attempts={};v.forEach(x=>{mastery[x.notion_id]=x.mastery||0;srs[x.notion_id]=x.srs||{};attempts[x.notion_id]=x.attempts||0});return {...(r.profileData||{}),id:p.id,nick:p.nick,name:p.name,role:p.role,xp:p.xp,streak:p.streak,dailyGoal:p.daily_goal,todayXp:p.today_xp,today:p.today,avatar:p.avatar,theme:p.theme,skin:p.skin,settings:p.settings||{},mastery,srs,attempts,history:(pr.history||[]).map(h=>({word:h.notion_id,correct:h.correct,points:h.points,date:h.created_at,mode:h.mode})),badges:[...(r.achievements||[]),...(pr.achievements||[])].filter((x,i,a)=>a.indexOf(x)===i)}}catch{return null}}
 export async function cloudPush(_,data){if(data?.guest)return false;try{const copy={...data};for(const k of ['history','mastery','srs','attempts','admin','passHash','password','adminPassword','password_hash','role','id','todayXp','xp','streak','today','badges','nickHash'])delete copy[k];await api('/api/profile',{method:'PUT',body:JSON.stringify({state:copy})});return true}catch{return false}}
 export function cloudConfigured(){return true}
 export async function cloudLeaderboard(){try{return(await api('/api/leaderboard')).rows||[]}catch{return[]}}
-export async function loadCloudVocabulary(){try{return(await api('/api/vocabulary')).words||[]}catch{return[]}}
+export async function loadCloudVocabulary(){try{const q=await api('/api/vocabulary');const words=q.words||[];const idx={};words.forEach(w=>{if(w&&w.id&&(w.word||'').trim())idx[String(w.word).trim().toLowerCase()]=w.id});if(Object.keys(idx).length)wordIndex=idx;return words}catch{return[]}}
 export async function cloudGetProgress(){try{return await api('/api/progress')}catch{return null}}
 export async function cloudRecordProgress(payload){return api('/api/progress',{method:'POST',body:JSON.stringify(payload)})}
 export async function flushProgressQueue(){return 0}

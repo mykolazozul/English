@@ -4,7 +4,7 @@ import {words as fallbackWords, rules, BADGES} from './data';
 import {notionWords, notionSyncMeta} from './notionWords.generated';
 import { Analytics } from '@vercel/analytics/react';
 import { startRegistration, startAuthentication } from '@simplewebauthn/browser';
-import {listProfiles, saveProfile, loadProfile, getActiveNick, cloudPull, cloudPush, cloudConfigured, isNickTaken, registerNick, setGuestSession, isGuestSession, getFriends, addFriend, acceptFriend, getChat, sendChat, registerChatDevice, getChatDevice, getChatDevices, getMyChatDevices, revokeChatDevice, friendsLeaderboard, getDailyAverage, ensureDailyAverage, serverAuth, loadCloudVocabulary, cloudRecordProgress, cloudStartLesson, cloudFinishLesson, flushProgressQueue, serverMe, loadServerConfig, cloudLeaderboard} from './lib/storage';
+import {saveProfile, loadProfile, getActiveNick, cloudPull, cloudPush, cloudConfigured, isNickTaken, registerNick, setGuestSession, isGuestSession, getFriends, addFriend, acceptFriend, getChat, sendChat, registerChatDevice, getChatDevice, getChatDevices, getMyChatDevices, revokeChatDevice, friendsLeaderboard, getDailyAverage, ensureDailyAverage, serverAuth, loadCloudVocabulary, cloudRecordProgress, cloudStartLesson, cloudFinishLesson, flushProgressQueue, serverMe, loadServerConfig, cloudLeaderboard, getWordIdByText} from './lib/storage';
 import {onCorrect as srsOk, onWrong as srsBad, isDue, todayStr} from './lib/srs';
 import {dbPutProfile, dbGetProfile, dbListProfiles, dbSaveWords, dbLoadWords} from './lib/db.js';
 import {createRealtime} from './lib/realtime.js';
@@ -22,6 +22,7 @@ const ROADMAP_ITEMS = [
   {v:'2.3.0', title:'Custom dropdowns/modals + 3 admin test designs', status:'done'},
   {v:'2.3.0', title:'RPG profile + animated emoji feedback on Home/Stats', status:'done'},
   {v:'2.4.0', title:'E2E chat with device-only P-256 keys + encrypted Neon messages', status:'done'},
+  {v:'2.6.0', title:'Bugfix & stability: correct learned/SRS counts, guest mode, session UX, cloud-only leaderboard', status:'done'},
   {v:'2.5.0', title:'Admin 2.0: bootstrap, roles, 2FA/TOTP, session hardening and Security Lab', status:'done'},
   {v:'2.5.0', title:'Chat Security 2.0: fingerprints, key rotation, multi-device, revoke and encrypted attachments', status:'done'},
   {v:'2.5.0', title:'Playwright E2E + security regression suite: auth, IDOR, XSS, CSRF, fuzz and rate limits', status:'done'},
@@ -32,7 +33,7 @@ const ROADMAP_ITEMS = [
   {v:'future', title:'WebAuthn/passkeys + verified device signatures', status:'planned'},
 ];
 
-const VERSION = '2.5.0';
+const VERSION = '2.6.0';
 const words = (notionWords?.length ? notionWords : fallbackWords).map(w => ({
   id: w.id, word: w.word, translation: w.translation || '—', pronunciation: w.pronunciation || '',
   category: w.category || 'Other', level: w.level || '', explanation: w.explanation || '',
@@ -49,6 +50,20 @@ const emptyState = () => ({
   compareMode: 'global', compareFriend: '', midnightSnap: null, badgeStyle: 'neo',
   settings: { keyboardHints: true, staggerList: true }
 });
+// Resolve a word's progress key across id schemes. The cloud marks each word by its
+// Notion page id (notion_id), but the bundled/IndexedDB copies historically used
+// "n1..n333" or legacy integer ids — so counts silently read 0 when the two disagree.
+// Fall back through a word-text → notion_id index so "Вивчено / SRS due" are right
+// no matter which word source renders, and T0D0AY no longer flashes zero twice.
+const progKey = (w, mastery, srs) => {
+  const m = mastery || {}, s = srs || {};
+  const id = String((w && (w.notion_id || w.id)) || '');
+  if (id && (m[id] != null || s[id] != null)) return id;
+  const t = w ? String(w.word || '').trim().toLowerCase() : '';
+  const nid = t ? getWordIdByText()[t] : '';
+  if (nid && (m[nid] != null || s[nid] != null)) return nid;
+  return id || nid;
+};
 
 function playTone(ok, pack) {
   try {
@@ -234,9 +249,13 @@ export default function App() {
   useEffect(() => {
     const onExpired = e => {
       if (state.guest) return;
-      setPage('onboarding');
-      setLessonCfg(null);
-      setModal({type:'error',title:'Сесію завершено',text:'Сервер більше не приймає цю сесію. Увійди ще раз — локальний профіль залишиться на пристрої.'});
+      const path = String((e && e.detail && e.detail.path) || '');
+      // The lesson flow already surfaces a stale session inline with a retry.
+      // Don't ALSO yank the user off the lesson onto the auth screen.
+      if (path.startsWith('/api/lessons')) return;
+      // For other resources keep the current page and offer a re-login button
+      // instead of silently dumping the user onto the auth screen.
+      setModal({type:'error',title:'Сесію завершено',text:'Сервер більше не приймає цю сесію. Увійди ще раз — локальний профіль залишиться на пристрої.',yes:'Увійти знову',onYes:()=>{setLessonCfg(null);setPage('onboarding')}});
     };
     window.addEventListener('ef-auth-expired', onExpired);
     return () => window.removeEventListener('ef-auth-expired', onExpired);
@@ -387,8 +406,9 @@ export default function App() {
 
   const activeWords = wordsLive?.length ? wordsLive : words;
   const activeCats = [...new Set(activeWords.map(w => w.category))].sort();
-  const learnedCount = activeWords.filter(w => (state.mastery[w.id] || 0) >= state.admin.masteryThreshold).length;
-  const dueCount = activeWords.filter(w => isDue(state.srs[w.id], todayStr()) && (state.mastery[w.id] || 0) > 0).length;
+  const progressOf = (w) => ({ k: progKey(w, state.mastery, state.srs), m: state.mastery || {}, sp: state.srs || {} });
+  const learnedCount = activeWords.filter(w => { const {k,m} = progressOf(w); return (m[k] || 0) >= state.admin.masteryThreshold; }).length;
+  const dueCount = activeWords.filter(w => { const {k,m,sp} = progressOf(w); return isDue(sp[k], todayStr()) && (m[k] || 0) > 0; }).length;
 
   const startLesson = (mode, direction = 'en-ua', category = 'all') => {
     setLessonCfg({mode, direction, category});
@@ -625,8 +645,8 @@ function Dashboard({state, learned, due, words, onLearn, onReview, cloudMsg}) {
       <div className="announce card jungle-announce">
         <span className="vine-deco left" aria-hidden="true">🌿</span>
         <span className="vine-deco right" aria-hidden="true">🌿</span>
-        <span className="eyebrow">UPDATE · v2.5.0</span>
-        <h2>🚀 Велике оновлення вже тут</h2>
+        <span className="eyebrow">UPDATE · v2.6.0</span>
+        <h2>🚀 Стабільність і рахунок прогресу</h2>
         <p>Sprint, SRS, друзі, бейджі. Прогрес зберігається локально та синхронізується з хмарною БД.</p>
       </div>
       <div className="hero">
@@ -726,13 +746,13 @@ function Lesson({cfg, state, save, onExit, onDone, wordsCatalog}) {
   const localItems = useMemo(() => {
     let pool = catalog;
     if (mode === 'srs') {
-      const due = catalog.filter(w => isDue(state.srs[w.id], todayStr()) && (state.mastery[w.id] || 0) > 0);
+      const due = catalog.filter(w => { const k = progKey(w, state.mastery, state.srs); return isDue(state.srs[k], todayStr()) && (state.mastery[k] || 0) > 0; });
       pool = due;
     } else if (mode === 'problems') {
       const stats = {};
       (state.history || []).forEach(h => { const id=String(h.word); if(!stats[id]) stats[id]={w:0,c:0}; if(h.correct) stats[id].c++; else stats[id].w++; });
       const hardIds = new Set(Object.entries(stats).filter(([,v]) => v.w >= 2 && v.w > v.c).map(([id]) => id));
-      pool = catalog.filter(w => hardIds.has(String(w.id)));
+      pool = catalog.filter(w => hardIds.has(progKey(w, state.mastery, state.srs) || String(w.id)));
       // HARD never silently falls back to the whole dictionary.
       if (!pool.length) pool = []; 
     } else if (mode === 'long') {
@@ -1077,7 +1097,7 @@ function Vocabulary({state, setModal, wordsCatalog, cats}) {
       </div>
       <div className="word-list">
         {f.map(w => {
-          const m = state.mastery[w.id] || 0;
+          const m = state.mastery[progKey(w, state.mastery, state.srs)] || 0;
           const learned = m >= state.admin.masteryThreshold;
           return (
             <div className={'word-row card' + (learned ? ' learned' : '')} key={w.id}>
@@ -1287,31 +1307,11 @@ function Leaderboard({state}) {
     cloudLeaderboard().then(r => { if (alive) setRows(Array.isArray(r) ? r : []); }).catch(() => { if (alive) setRows([]); });
     return () => { alive = false; };
   }, []);
-  const cloud = rows || null;
-  const local = Object.values(listProfiles()).sort((a, b) => (b.xp || 0) - (a.xp || 0)).slice(0, 20);
-  const merged = [];
-  if (cloud) {
-    const seen = new Set();
-    cloud.forEach(r => {
-      if (!r) return;
-      const nick = String(r.nick ?? '');
-      if (!nick || seen.has(nick)) return;
-      seen.add(nick);
-      merged.push({ nick, name: r.name, xp: Number(r.xp) || 0, cloud: true, streak: r.streak });
-    });
-    // Local-only profiles still show up beneath the cloud ranking.
-    local.forEach(p => {
-      const nick = String(p.nick ?? '');
-      if (nick && !seen.has(nick)) { seen.add(nick); merged.push({ nick, name: p.name, xp: Number(p.xp) || 0, cloud: false }); }
-    });
-    merged.sort((a, b) => (b.xp || 0) - (a.xp || 0));
-  } else {
-    merged.push(...local.map(p => ({ nick: p.nick, name: p.name, xp: Number(p.xp) || 0, cloud: false })));
-  }
-  if (!merged.length) {
+  // Leaderboard shows the cloud ranking only.
+  if (!rows || !rows.length) {
     return (
     <section>
-      <Title title="Рейтинг" text={cloud ? 'Хмарний рейтинг + локальні профілі' : 'Локальні профілі на цьому пристрої'}/>
+      <Title title="Рейтинг" text="Хмарний рейтинг"/>
       <div className="card">
         <p className="muted">Поки немає інших профілів</p>
       </div>
@@ -1320,17 +1320,21 @@ function Leaderboard({state}) {
   }
   return (
     <section>
-      <Title title="Рейтинг" text={cloud ? 'Хмарний рейтинг + локальні профілі' : 'Локальні профілі на цьому пристрої'}/>
+      <Title title="Рейтинг" text="Хмарний рейтинг"/>
       <div className="card">
-        {merged.slice(0, 100).map((p, i) => (
-          <div className="leader-row" key={p.nick}>
-            <span className="rank">#{i + 1}</span>
-            <b>{p.nick}</b>
-            <span className="muted">{p.name}{p.cloud ? '' : ' · локально'}</span>
-            <strong>{p.xp} XP</strong>
-            {p.nick === state.nick && <span className="pill ok">ти</span>}
-          </div>
-        ))}
+        {rows.slice(0, 100).map((p, i) => {
+          const nick = String((p && p.nick) || '');
+          if (!nick) return null;
+          return (
+            <div className="leader-row" key={nick}>
+              <span className="rank">#{i + 1}</span>
+              <b>{nick}</b>
+              <span className="muted">{p.name}{Number(p.streak) > 0 ? ' · ' + Number(p.streak) + '🔥' : ''}</span>
+              <strong>{Number(p.xp) || 0} XP</strong>
+              {nick === state.nick && <span className="pill ok">ти</span>}
+            </div>
+          );
+        })}
       </div>
     </section>
   );
@@ -1686,6 +1690,7 @@ function AdminDanger({save,state,setModal}) {
 
 function AboutPage() {
   const changelog = [
+    {v:'2.6.0', items:['Коректний рахунок «Вивчено» та «На повторення SRS»: узгодження id між хмарою (Notion id) та локальним словником (match by word)','Виправлено хибне «Сесію завершено» при вході в гостьовий режим','Вхід у завдання більше не викидає на екран реєстрації при простроченій сесії — підказка «Увійти знову»','Рейтинг тепер показує тільки хмарний рейтинг','Фікс стартового cloud-pull, що тихо помирав і лишав лічильники на нулі']},
     {v:'2.5.0', items:['Admin 2.0: bootstrap першого admin, рольова модель, 2FA/TOTP, session hardening та audit','Chat Security 2.0: fingerprints, key rotation, multiple devices, revoke device, encrypted attachments та integrity hash','Security Lab: Playwright E2E + auth/brute-force/session/privilege/XSS/CSRF/IDOR/fuzz/rate-limit regression tests','PWA / Offline видалено: English Flow працює як звичайний online web-app.']},
     {v:'2.4.0', items:['E2E chat: P-256 device-only keys, AES-GCM ciphertext у Neon, сервер не отримує plaintext','Admin/Stats: recovery після session expiry, monitoring errors та стабільний повторний вхід']},
     {v:'2.3.0', items:['Стабілізація Learning Engine: помилка підготовки уроку більше не зависає назавжди','Сервер перевіряє правильність відповіді, а не довіряє client-side correct','Захист уроку від відповідей по словах, яких немає в конкретній сесії','Notion Sync: безпечне оновлення, помилка не маскується старим JSON','Realtime status + ping у «Про додаток»','Chat: realtime + HTTP fallback та privacy/block checks','Адмін: 3 тестові UI-дизайни, custom modals, стабільне повторне блокування','Єдина версія інтерфейсу v2.3.0 та AI project instructions']},
@@ -1736,7 +1741,8 @@ function ConfirmModal({modal, onClose}) {
   useEffect(()=>{if(!modal)return;const onKey=e=>{if(e.key==='Escape')onClose()};document.addEventListener('keydown',onKey);return()=>document.removeEventListener('keydown',onKey)},[modal,onClose]);
   if (!modal) return null;
   const error=modal.type==='error';
-  return <div className="ef-modal-backdrop" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget)onClose()}}><div className="ef-modal card" role="dialog" aria-modal="true" aria-labelledby="ef-modal-title" onMouseDown={e=>e.stopPropagation()}><h2 id="ef-modal-title">{modal.title || (error?'Помилка':'Підтвердження')}</h2><p>{modal.text}</p><div className="row-btns"><button className={error?'primary':'secondary'} type="button" onClick={onClose}>{error?'Закрити':'Скасувати'}</button>{!error&&<button className="primary" type="button" onClick={()=>{modal.onYes?.();onClose()}}>Так, продовжити</button>}</div></div></div>;
+  const hasAction=typeof modal.onYes==='function';
+  return <div className="ef-modal-backdrop" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget)onClose()}}><div className="ef-modal card" role="dialog" aria-modal="true" aria-labelledby="ef-modal-title" onMouseDown={e=>e.stopPropagation()}><h2 id="ef-modal-title">{modal.title || (error?'Помилка':'Підтвердження')}</h2><p>{modal.text}</p><div className="row-btns"><button className={error&&!hasAction?'primary':'secondary'} type="button" onClick={onClose}>{error?'Закрити':'Скасувати'}</button>{!error&&<button className="primary" type="button" onClick={()=>{modal.onYes?.();onClose()}}>{modal.yes||'Так, продовжити'}</button>}{error&&hasAction&&<button className="primary" type="button" onClick={()=>{modal.onYes();onClose()}}>{modal.yes||'Увійти знову'}</button>}</div></div></div>;
 }
 
 
