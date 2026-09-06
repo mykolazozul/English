@@ -1,0 +1,6 @@
+[T1_claude_false] status=200 ms=5004 bytes=272 head={"id":"chatcmpl-1788656544590","object":"chat.completion","created":1788656544,"model":"claude-sonnet-4.5","choices":[{"index":0,"finish_reason":"stop","message
+ERR T2_claude_false_repeat: fetch failed
+ERR T3_qwen_false: fetch failed
+ERR T4_deepseek_false: fetch failed
+ERR T1b_claude_true: fetch failed
+DONE

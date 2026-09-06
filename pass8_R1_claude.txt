@@ -1,0 +1,1 @@
+{"error":{"message":"[400]: Missing bearer [REDACTED] in the authorization header.","type":"invalid_request_error","code":"bad_request"},"upstream_details":{"message":"Missing bearer [REDACTED] in the authorization header.","reason":null}}

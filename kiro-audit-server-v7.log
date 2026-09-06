@@ -1,0 +1,149 @@
+[kiro-audit] hook v2 installed in pid=40552
+[kiro-audit] fetch re-wrapped over identity change (pid=40552)
+[kiro-audit] http(s).request patched
+[kiro-audit] hook v2 active in pid=40552
+▲ Next.js 16.3.1
+- Local:         http://localhost:20129
+- Network:       http://0.0.0.0:20129
+✓ Ready in 0ms
+✓ Running next.config took 19ms
+[DB] Changing cache_size from 65536KB to 16384KB
+[DB] cache_size changed to 16384KB
+[DB] SQLite database ready: C:\Users\mikol\.omniroute\storage.sqlite (DATA_DIR=C:\Users\mikol\.omniroute, SQLITE_FILE=C:\Users\mikol\.omniroute\storage.sqlite)
+[CREDENTIALS] No external credentials file found, using defaults.
+[STARTUP] Global fetch proxy patch initialized
+[STARTUP] JWT_SECRET restored from persistent store
+[proxyLogger] Loaded 200 proxy logs from SQLite
+[Shutdown] Graceful shutdown handlers registered.
+[STARTUP] Spend batch writer started
+[STARTUP] Guardrail registry initialized
+[STARTUP] Builtin skill handlers registered
+[STARTUP] Quota cache background refresh started
+[ProviderLimitsSync] Scheduler started — interval: 70m
+[STARTUP] Provider limits sync scheduler started
+[INFO] [QuotaAutoPing] scheduler started
+[STARTUP] Quota auto-ping scheduler started (opt-in, no-op until enabled)
+[ModelSync] Scheduler started — interval: 24h
+[STARTUP] Cloud/model sync background bootstrap initialized
+[BATCH] Initializing batch processor polling...
+[STARTUP] Batch processor started
+[STARTUP] Runtime settings hydrated: payloadRules, modelAliases, backgroundDegradation, cliCompatProviders, cacheControl, usageTracking, healthCheckLogs, thoughtSignature, modelsDevSync, corsOrigins, ccBridgeTransforms, systemTransforms, authzBypass, bannedSignals
+[STARTUP] Model alias seed: applied=0, skipped=5, removed=0, failed=0
+[HOT_RELOAD] Runtime config hot-reload started (poll=5000ms, fsWatch=on)
+[CredentialHealth] Starting credential health check (initial delay 30s, interval 300s)
+[STARTUP] Credential health scheduler started
+[COMPLIANCE] Audit log table initialized
+[STARTUP] Scheduled VACUUM initialized (#4437)
+[Cleanup] Background cleanup scheduler started (every 6 hours).
+[INFO] [MEMORY_MANAGER] Registered backend {"id":"sqlite","displayName":"SQLite"}
+[AutoRefreshDaemon] Started — checking 0 credentials every 900s
+[ARENA_ELO_SYNC] Starting periodic sync every 86400s
+[PRICING_SYNC] Disabled (set PRICING_SYNC_ENABLED=true to enable)
+[STARTUP] Arena ELO sync initialized
+[ConnectionRecovery] Starting proactive cooldown recovery (tick every 60s)
+[OpenRouterProviderStats] Starting periodic sync every 86400s
+[STARTUP] OpenRouter provider stats sync initialized
+[STARTUP] Live dashboard WebSocket daemon bootstrap invoked
+[STARTUP] Embedded services bootstrap complete
+[MODELS_DEV] Disabled (enable via Settings > AI or MODELS_DEV_SYNC_ENABLED=1)
+[INFO] [MEMORY_MANAGER] Configured backends {"primary":"sqlite","fallbacks":[]}
+[INFO] [SQLITE_BACKEND] sqlite.backend.initialized
+[INFO] [MEMORY_MANAGER] Initialized backend {"id":"sqlite"}
+[EmbedWsProxy] Port 20131 is already in use — embed WS proxy disabled.
+[LiveWS] Failed to start: listen EADDRINUSE: address already in use 127.0.0.1:20132
+[STARTUP] Model catalog cache warmed
+[kiro-audit] fetch re-wrapped over identity change (pid=40552)
+[CredentialHealth] Testing 4/4 connections...
+[Cleanup] Starting auto-cleanup...
+[Cleanup] Deleted 0 quota_snapshots older than 90 days
+[Cleanup] Deleted 0 call_logs older than 90 days
+[Aggregation] usage_history rollup: 0 rows for dates before 2025-09-06
+[Cleanup] Deleted 0 usage_history older than 365 days
+[Cleanup] Deleted 0 compression_analytics older than 30 days
+[Cleanup] Deleted 0 mcp_tool_audit older than 30 days
+[Cleanup] Deleted 0 config_audit_log older than 30 days
+[Cleanup] Deleted 0 a2a_task_events older than 30 days
+[Cleanup] Deleted 0 memory_entries older than 180 days
+[Cleanup] Deleted 0 domain_cost_history older than 30 days
+[Cleanup] Deleted 0 compression_cache_stats older than 30 days
+[Cleanup] Deleted 0 xp_audit_log older than 30 days
+[Cleanup] Error cleaning compression_run_telemetry: SqliteError: no such table: compression_run_telemetry
+    at ignore-listed frames {
+  code: 'SQLITE_ERROR'
+}
+[Cleanup] Deleted 0 proxy_logs older than 90 days
+[Cleanup] Deleted 0 expired ccr_blocks
+[Cleanup] Auto-cleanup complete: 0 deleted, 1 errors
+[Cleanup] Deleted 0 proxy_logs older than 90 days
+[ARENA_ELO_SYNC] Failed to fetch "text" leaderboard: The operation was aborted due to timeout
+[ARENA_ELO_SYNC] Failed to fetch "code" leaderboard: The operation was aborted due to timeout
+[ARENA_ELO_SYNC] Sync failed: All Arena leaderboard fetches failed: The operation was aborted due to timeout; The operation was aborted due to timeout
+[ProxyFetch] Direct response-start timeout (30000ms) on pooled dispatcher — retrying on fresh no-keep-alive dispatcher: openrouter.ai
+[ProxyFetch] Direct response-start timeout (30000ms) on pooled dispatcher — retrying on fresh no-keep-alive dispatcher: openrouter.ai
+[ProxyFetch] Direct response-start timeout (30000ms) on pooled dispatcher — retrying on fresh no-keep-alive dispatcher: openrouter.ai
+[ModelSync] No connections with autoSync enabled — skipping cycle
+[OpenRouterProviderStats] Initial sync failed: The operation was aborted due to timeout
+[ProxyHealth] Starting proxy health scheduler (interval: 600000ms)
+[kiro-audit] hook v2 installed in pid=40552
+[kiro-audit] fetch re-wrapped over identity change (pid=40552)
+[kiro-audit] http(s).request patched
+[kiro-audit] hook v2 active in pid=40552
+[proxyLogger] Loaded 200 proxy logs from SQLite
+[REDIS] REDIS_URL is not set in production. Using in-memory rate limiting.
+[SSE] Translators initialized
+[INFO] [PLUGIN_MANAGER] manager.loadAll {"count":0}
+[bottleneck-patch] Applied doExpire fix for Bottleneck v2.19.5
+[bottleneck-patch] Applied _startHeartbeat fix for Bottleneck v2.19.5
+🛡️ [RATE-LIMIT] Loaded 0 explicit + 3 auto-enabled protection(s)
+{"level":30,"time":"2026-09-06T01:51:49.749Z","service":"omniroute","module":"sse","tag":"HTTP","method":"POST","path":"/v1/chat/completions | kr/deepseek-3.2 | 1 msgs","msg":"📥 POST /v1/chat/completions | kr/deepseek-3.2 | 1 msgs"}
+{"level":30,"time":"2026-09-06T01:51:49.961Z","service":"omniroute","module":"sse","tag":"ROUTING","msg":"kr/deepseek-3.2 → kiro/deepseek-3.2"}
+{"level":30,"time":"2026-09-06T01:51:50.030Z","service":"omniroute","module":"sse","tag":"AUTH","msg":"session_key=input:sha256:ee5ec... has no available affinity target"}
+{"level":30,"time":"2026-09-06T01:51:50.126Z","service":"omniroute","module":"sse","tag":"AUTH","msg":"Using kiro account: ***..."}
+{"level":30,"time":"2026-09-06T01:51:51.566Z","service":"omniroute","module":"sse","tag":"HTTP","method":"POST","path":"/v1/chat/completions | kr/deepseek-3.2 | 1 msgs","msg":"📥 POST /v1/chat/completions | kr/deepseek-3.2 | 1 msgs"}
+{"level":30,"time":"2026-09-06T01:51:51.598Z","service":"omniroute","module":"sse","tag":"ROUTING","msg":"kr/deepseek-3.2 → kiro/deepseek-3.2"}
+{"level":30,"time":"2026-09-06T01:51:51.619Z","service":"omniroute","module":"sse","tag":"AUTH","msg":"session_key=input:sha256:ee5ec... has no available affinity target"}
+{"level":30,"time":"2026-09-06T01:51:51.621Z","service":"omniroute","module":"sse","tag":"AUTH","msg":"Using kiro account: ***..."}
+[03:51:51] 🌊 [STREAM] KIRO | deepseek-3.2 | 313ms | disconnect: request_signal_aborted
+[kiro-audit] fetch re-wrapped over identity change (pid=40552)
+[kiro-audit] hook v2 installed in pid=40552
+[kiro-audit] fetch re-wrapped over identity change (pid=40552)
+[kiro-audit] http(s).request patched
+[kiro-audit] hook v2 active in pid=40552
+[kiro-audit] hook v2 installed in pid=40552
+[kiro-audit] fetch re-wrapped over identity change (pid=40552)
+[kiro-audit] http(s).request patched
+[kiro-audit] hook v2 active in pid=40552
+[03:51:52] 🌊 [STREAM] KIRO | deepseek-3.2 | 528ms | client_disconnect (post-abort)
+[kiro-audit] hook v2 installed in pid=40552
+[kiro-audit] fetch re-wrapped over identity change (pid=40552)
+[kiro-audit] http(s).request patched
+[kiro-audit] hook v2 active in pid=40552
+[CredentialHealth] ❌ cerebras/d578291c-75b9-4814-a15a-b5ea3ec17d9e — Invalid API key [9498ms] (failure #1, next check in 600s)
+[kiro-audit] hook v2 installed in pid=40552
+[kiro-audit] fetch re-wrapped over identity change (pid=40552)
+[kiro-audit] http(s).request patched
+[kiro-audit] hook v2 active in pid=40552
+[kiro-audit] REQ {"pid":40552,"url":"https://codewhisperer.us-east-1.amazonaws.com/generateAssistantResponse","method":"POST","t":"01:51:51.691","bodyBytes":408,"conversationStateBytes":267,"historyLength":0,"currentMessageContentLength":69,"modelId":"deepseek-3.2","toolsCount":0,"currentMessageKeys":null,"status":200,"ms":1962}
+[kiro-audit] HDR {"pid":40552,"resHdrNamesLen":{"cache-control":8,"content-type":16,"date":29,"strict-transport-security":35,"x-amzn-codewhisperer-conversation-id":36,"x-amzn-requestid":36,"x-content-type-options":7,"x-frame-options":4,"x-xss-protection":13}}
+[kiro-audit] RESP {"pid":40552,"req":{"url":"https://codewhisperer.us-east-1.amazonaws.com/generateAssistantResponse","bodyBytes":408,"status":200},"bytes":773,"frames":[{"type":"assistantResponseEvent","payloadKeys":["content","modelId"]},{"type":"assistantResponseEvent","payloadKeys":["content","modelId"]},{"type":"contextUsageEvent","keys":["contextUsagePercentage"],"contextUsagePercentage":2.3231706619262695},{"type":"meteringEvent","payloadKeys":["unit","unitPlural","usage"]}]}
+[ProxyEgress] kiro status=success
+{"level":40,"time":"2026-09-06T01:51:53.745Z","service":"omniroute","module":"sse","tag":"STREAM","msg":"Unexpected SSE response for non-streaming request — buffering"}
+[ConnectionRecovery] proactively restored 1 connection(s) with elapsed cooldown
+{"level":30,"time":"2026-09-06T01:52:43.727Z","service":"omniroute","module":"sse","tag":"AUTH","msg":"Account d578291c error cleared"}
+[CredentialHealth] Testing 3/4 connections...
+[ConnectionRecovery] proactively restored 1 connection(s) with elapsed cooldown
+{"level":30,"time":"2026-09-06T01:59:43.761Z","service":"omniroute","module":"sse","tag":"AUTH","msg":"Account d578291c error cleared"}
+[RATE-LIMIT] Evicting idle limiter: opencode:319775a6-6ce6-436a-876a-ced1568670e3 (inactive for 600s)
+[RATE-LIMIT] Evicting idle limiter: qwen-web:921e020d-c40f-4ddb-93e9-bd51402b5605 (inactive for 600s)
+[RATE-LIMIT] Evicting idle limiter: cerebras:d578291c-75b9-4814-a15a-b5ea3ec17d9e (inactive for 600s)
+[CredentialHealth] Testing 4/4 connections...
+[CredentialHealth] ❌ cerebras/d578291c-75b9-4814-a15a-b5ea3ec17d9e — Invalid API key [433ms] (failure #2, next check in 1800s)
+[kiro-audit] hook v2 installed in pid=40552
+[kiro-audit] fetch re-wrapped over identity change (pid=40552)
+[kiro-audit] http(s).request patched
+[kiro-audit] hook v2 active in pid=40552
+[ConnectionRecovery] proactively restored 1 connection(s) with elapsed cooldown
+{"level":30,"time":"2026-09-06T02:02:43.838Z","service":"omniroute","module":"sse","tag":"AUTH","msg":"Account d578291c error cleared"}
+[CredentialHealth] Testing 3/4 connections...
+[CredentialHealth] Testing 3/4 connections...
+[CredentialHealth] Testing 3/4 connections...
