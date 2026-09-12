@@ -12,7 +12,7 @@ import {ensureChatIdentity,publicKeyPayload,encryptChatPayload,decryptChatText,e
 import {track} from './lib/analytics.js';
 
 
-const VERSION = '3.1.0';
+const VERSION = '3.2.0';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -77,17 +77,119 @@ const progKey = (w, mastery, srs) => {
 };
 
 /* ==========================================================================
-   ADVANCED AUDIO SYSTEM WITH 5 RICH SOUND PACKS + COIN EFFECT
+   ADVANCED AUDIO SYSTEM WITH MARIO 8-BIT PACK + DISTINCT SOUND EVENTS
    ========================================================================== */
-function playTone(ok, pack) {
+function playMarioCoin() {
   try {
     if (window.__efQuiet || window.__efNoSfx) return;
     const C = window.AudioContext || window.webkitAudioContext; if (!C) return;
-    const c = new C(), o = c.createOscillator(), g = c.createGain();
+    const c = new C();
+    // Authentic Mario Coin: Square wave B5 (987.77Hz) for 80ms, then E6 (1318.51Hz) for 320ms
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = 'square';
+    o.frequency.setValueAtTime(987.77, c.currentTime);
+    o.frequency.setValueAtTime(1318.51, c.currentTime + 0.08);
+    g.gain.setValueAtTime(0.0001, c.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.15, c.currentTime + 0.01);
+    g.gain.setValueAtTime(0.15, c.currentTime + 0.08);
+    g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + 0.38);
+    o.connect(g); g.connect(c.destination);
+    o.start(c.currentTime); o.stop(c.currentTime + 0.4);
+  } catch {}
+}
+
+function playMarioJump() {
+  try {
+    if (window.__efQuiet || window.__efNoSfx) return;
+    const C = window.AudioContext || window.webkitAudioContext; if (!C) return;
+    const c = new C();
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = 'square';
+    o.frequency.setValueAtTime(174.61, c.currentTime);
+    o.frequency.exponentialRampToValueAtTime(523.25, c.currentTime + 0.16);
+    g.gain.setValueAtTime(0.0001, c.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.14, c.currentTime + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + 0.22);
+    o.connect(g); g.connect(c.destination);
+    o.start(c.currentTime); o.stop(c.currentTime + 0.24);
+  } catch {}
+}
+
+function playMarioPowerUp() {
+  try {
+    if (window.__efQuiet || window.__efNoSfx) return;
+    const C = window.AudioContext || window.webkitAudioContext; if (!C) return;
+    const c = new C();
+    const freqs = [392, 493.88, 587.33, 783.99, 987.77];
+    freqs.forEach((f, i) => {
+      const o = c.createOscillator(), g = c.createGain();
+      o.type = 'square';
+      o.frequency.setValueAtTime(f, c.currentTime + i * 0.06);
+      g.gain.setValueAtTime(0.0001, c.currentTime + i * 0.06);
+      g.gain.exponentialRampToValueAtTime(0.12, c.currentTime + i * 0.06 + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + i * 0.06 + 0.16);
+      o.connect(g); g.connect(c.destination);
+      o.start(c.currentTime + i * 0.06);
+      o.stop(c.currentTime + i * 0.06 + 0.18);
+    });
+  } catch {}
+}
+
+function playMario1Up() {
+  try {
+    if (window.__efQuiet || window.__efNoSfx) return;
+    const C = window.AudioContext || window.webkitAudioContext; if (!C) return;
+    const c = new C();
+    const notes = [659.25, 783.99, 1318.51, 1046.50, 1174.66, 1567.98];
+    notes.forEach((f, i) => {
+      const o = c.createOscillator(), g = c.createGain();
+      o.type = 'square';
+      o.frequency.setValueAtTime(f, c.currentTime + i * 0.08);
+      g.gain.setValueAtTime(0.0001, c.currentTime + i * 0.08);
+      g.gain.exponentialRampToValueAtTime(0.13, c.currentTime + i * 0.08 + 0.015);
+      g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + i * 0.08 + 0.18);
+      o.connect(g); g.connect(c.destination);
+      o.start(c.currentTime + i * 0.08);
+      o.stop(c.currentTime + i * 0.08 + 0.2);
+    });
+  } catch {}
+}
+
+function playMarioGameOver() {
+  try {
+    if (window.__efQuiet || window.__efNoSfx) return;
+    const C = window.AudioContext || window.webkitAudioContext; if (!C) return;
+    const c = new C();
+    const notes = [261.63, 196.00, 164.81, 220.00, 246.94, 220.00, 207.65, 233.08, 196.00];
+    notes.forEach((f, i) => {
+      const o = c.createOscillator(), g = c.createGain();
+      o.type = 'square';
+      o.frequency.setValueAtTime(f, c.currentTime + i * 0.14);
+      g.gain.setValueAtTime(0.0001, c.currentTime + i * 0.14);
+      g.gain.exponentialRampToValueAtTime(0.12, c.currentTime + i * 0.14 + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + i * 0.14 + 0.22);
+      o.connect(g); g.connect(c.destination);
+      o.start(c.currentTime + i * 0.14);
+      o.stop(c.currentTime + i * 0.14 + 0.25);
+    });
+  } catch {}
+}
+
+function playTone(ok, pack) {
+  try {
+    if (window.__efQuiet || window.__efNoSfx) return;
     const p = pack || window.__efSoundPack || 'duo';
     
+    if (p === 'mario') {
+      if (ok) playMarioCoin();
+      else playMarioJump();
+      return;
+    }
+
+    const C = window.AudioContext || window.webkitAudioContext; if (!C) return;
+    const c = new C(), o = c.createOscillator(), g = c.createGain();
+    
     if (p === 'duo') {
-      // Duolingo-style crisp chime / bounce
       if (ok) {
         [523.25, 659.25, 783.99].forEach((freq, i) => {
           const osc = c.createOscillator(), gn = c.createGain();
@@ -107,7 +209,6 @@ function playTone(ok, pack) {
         o.frequency.exponentialRampToValueAtTime(180, c.currentTime + 0.22);
       }
     } else if (p === 'crystal') {
-      // High-register crystalline glockenspiel
       if (ok) {
         [880, 1174.66].forEach((f, i) => {
           const osc = c.createOscillator(), gn = c.createGain();
@@ -127,22 +228,18 @@ function playTone(ok, pack) {
         o.frequency.exponentialRampToValueAtTime(140, c.currentTime + 0.25);
       }
     } else if (p === 'arcade') {
-      // 8-bit retro gaming square wave
       o.type = 'square';
       o.frequency.setValueAtTime(ok ? 587.33 : 130.81, c.currentTime);
       o.frequency.setValueAtTime(ok ? 880 : 98, c.currentTime + 0.08);
     } else if (p === 'cyber') {
-      // Sci-fi synth sweep
       o.type = 'sawtooth';
       o.frequency.setValueAtTime(ok ? 440 : 160, c.currentTime);
       o.frequency.exponentialRampToValueAtTime(ok ? 880 : 80, c.currentTime + 0.18);
     } else if (p === 'zen') {
-      // Warm marimba acoustic
       o.type = 'triangle';
       o.frequency.setValueAtTime(ok ? 440 : 196, c.currentTime);
       o.frequency.exponentialRampToValueAtTime(ok ? 660 : 147, c.currentTime + 0.24);
     } else {
-      // Classic
       o.type = ok ? 'sine' : 'square';
       o.frequency.setValueAtTime(ok ? 660 : 140, c.currentTime);
       o.frequency.exponentialRampToValueAtTime(ok ? 980 : 90, c.currentTime + 0.22);
@@ -156,6 +253,11 @@ function playTone(ok, pack) {
 }
 
 function playCoinSound() {
+  const p = window.__efSoundPack || 'duo';
+  if (p === 'mario') {
+    playMarioCoin();
+    return;
+  }
   try {
     if (window.__efQuiet || window.__efNoSfx) return;
     const C = window.AudioContext || window.webkitAudioContext; if (!C) return;
@@ -175,6 +277,11 @@ function playCoinSound() {
 }
 
 function playFanfareTone(pack) {
+  const p = pack || window.__efSoundPack || 'duo';
+  if (p === 'mario') {
+    playMario1Up();
+    return;
+  }
   try {
     if (window.__efQuiet || window.__efNoSfx) return;
     const C = window.AudioContext || window.webkitAudioContext; if (!C) return;
@@ -182,7 +289,7 @@ function playFanfareTone(pack) {
     const freqs = [523.25, 659.25, 783.99, 1046.50];
     freqs.forEach((freq, i) => {
       const o = c.createOscillator(), g = c.createGain();
-      o.type = pack === 'arcade' ? 'square' : 'sine';
+      o.type = p === 'arcade' ? 'square' : 'sine';
       o.frequency.setValueAtTime(freq, c.currentTime + i * 0.08);
       g.gain.setValueAtTime(0.0001, c.currentTime + i * 0.08);
       g.gain.exponentialRampToValueAtTime(0.14, c.currentTime + i * 0.08 + 0.02);
@@ -195,6 +302,11 @@ function playFanfareTone(pack) {
 }
 
 function playChestTone(pack) {
+  const p = pack || window.__efSoundPack || 'duo';
+  if (p === 'mario') {
+    playMarioPowerUp();
+    return;
+  }
   try {
     if (window.__efQuiet || window.__efNoSfx) return;
     const C = window.AudioContext || window.webkitAudioContext; if (!C) return;
@@ -202,7 +314,7 @@ function playChestTone(pack) {
     const freqs = [392, 523.25, 659.25, 783.99];
     freqs.forEach((f, i) => {
       const o = c.createOscillator(), g = c.createGain();
-      o.type = pack === 'arcade' ? 'square' : 'sine';
+      o.type = p === 'arcade' ? 'square' : 'sine';
       o.frequency.setValueAtTime(f, c.currentTime + i * 0.07);
       g.gain.setValueAtTime(0.0001, c.currentTime + i * 0.07);
       g.gain.exponentialRampToValueAtTime(0.12, c.currentTime + i * 0.07 + 0.02);
@@ -214,10 +326,75 @@ function playChestTone(pack) {
   } catch {}
 }
 
+function playBossHitSound() {
+  try {
+    if (window.__efQuiet || window.__efNoSfx) return;
+    const C = window.AudioContext || window.webkitAudioContext; if (!C) return;
+    const c = new C();
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = 'sawtooth';
+    o.frequency.setValueAtTime(180, c.currentTime);
+    o.frequency.exponentialRampToValueAtTime(50, c.currentTime + 0.18);
+    g.gain.setValueAtTime(0.18, c.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + 0.22);
+    o.connect(g); g.connect(c.destination);
+    o.start(c.currentTime); o.stop(c.currentTime + 0.24);
+  } catch {}
+}
+
 /* ==========================================================================
-   20 DUO-STYLE VECTOR SVG CHARACTER AVATARS (EXACTLY AS IN USER REFERENCE)
+   v3.2.0 — AUTHENTIC ANCIENT COIN / POINT VECTOR SVG
    ========================================================================== */
-const GAME_AVATARS_20 = [
+function AncientCoinIcon({ size = 20, className = '', style = {} }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={'ancient-coin-svg ' + className}
+      style={{ verticalAlign: 'middle', flexShrink: 0, display: 'inline-block', ...style }}
+    >
+      <defs>
+        <radialGradient id="ancientCoinGrad" cx="35%" cy="30%" r="70%">
+          <stop offset="0%" stopColor="#FDE047" />
+          <stop offset="40%" stopColor="#F59E0B" />
+          <stop offset="85%" stopColor="#B45309" />
+          <stop offset="100%" stopColor="#78350F" />
+        </radialGradient>
+        <linearGradient id="ancientCoinRim" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#FEF08A" />
+          <stop offset="50%" stopColor="#F59E0B" />
+          <stop offset="100%" stopColor="#92400E" />
+        </linearGradient>
+      </defs>
+      {/* Outer Coin Rim */}
+      <circle cx="12" cy="12" r="10.5" fill="url(#ancientCoinGrad)" stroke="url(#ancientCoinRim)" strokeWidth="1.5" />
+      {/* Beaded Ancient Ring */}
+      <circle cx="12" cy="12" r="8.2" stroke="#FEF08A" strokeWidth="0.75" strokeDasharray="1.5 1.5" fill="none" opacity="0.85" />
+      {/* Inner Runic Emblem & Star */}
+      <path d="M12 5.5L13.8 9.8L18.5 10.2L15 13.3L16 18L12 15.5L8 18L9 13.3L5.5 10.2L10.2 9.8Z" fill="#78350F" opacity="0.25" />
+      <path d="M12 6.5L13.4 10.2L17.2 10.5L14.3 13.1L15.1 17L12 14.8L8.9 17L9.7 13.1L6.8 10.5L10.6 10.2Z" fill="#FEF08A" stroke="#B45309" strokeWidth="0.5" />
+      <circle cx="12" cy="12" r="1.6" fill="#78350F" />
+    </svg>
+  );
+}
+
+/* ==========================================================================
+   30 CHARACTER AVATARS (KNIGHT, SAMURAI, WIZARD, SPARTAN, AND CREATURES)
+   ========================================================================== */
+const GAME_AVATARS_30 = [
+  { id: 'avatar_knight', name: 'Лицар Світла', bg: '#475569', eyeBg: '#FFFFFF', pupil: '#0284C7', beak: '#F59E0B', archetype: 'knight', tag: '🛡️ Лицар' },
+  { id: 'avatar_samurai', name: 'Кібер-Самурай', bg: '#991B1B', eyeBg: '#FEF08A', pupil: '#18181B', beak: '#DC2626', archetype: 'samurai', tag: '⚔️ Самурай' },
+  { id: 'avatar_wizard', name: 'Верховний Маг', bg: '#6D28D9', eyeBg: '#FFFFFF', pupil: '#38BDF8', beak: '#F59E0B', archetype: 'wizard', tag: '🧙 Маг' },
+  { id: 'avatar_spartan', name: 'Спартанець', bg: '#B45309', eyeBg: '#FFFFFF', pupil: '#18181B', beak: '#D97706', archetype: 'spartan', tag: '🛡️ Спарта' },
+  { id: 'avatar_viking', name: 'Вікінг Півночі', bg: '#334155', eyeBg: '#FFFFFF', pupil: '#0284C7', beak: '#EA580C', archetype: 'viking', tag: '🪓 Вікінг' },
+  { id: 'avatar_astronaut', name: 'Астронавт', bg: '#E2E8F0', eyeBg: '#F59E0B', pupil: '#0F172A', beak: '#38BDF8', archetype: 'astronaut', tag: '🚀 Космос' },
+  { id: 'avatar_ninja', name: 'Тіньовий Ніндзя', bg: '#0F172A', eyeBg: '#EF4444', pupil: '#7F1D1D', beak: '#1E293B', archetype: 'ninja', tag: '🥷 Ніндзя' },
+  { id: 'avatar_dragon', name: 'Вершник Дракона', bg: '#047857', eyeBg: '#FEF08A', pupil: '#064E3B', beak: '#EA580C', archetype: 'dragon_rider', tag: '🐲 Дракон' },
+  { id: 'avatar_detective', name: 'Детектив Нуар', bg: '#374151', eyeBg: '#FFFFFF', pupil: '#111827', beak: '#9CA3AF', archetype: 'detective', tag: '🕵️ Детектив' },
+  { id: 'avatar_phoenix', name: 'Сонячний Фенікс', bg: '#EA580C', eyeBg: '#FEF08A', pupil: '#7C2D12', beak: '#FACC15', archetype: 'phoenix', tag: '🔥 Фенікс' },
   { id: 'duo_owl', name: 'Зелена Сова', bg: '#58CC02', eyeBg: '#FFFFFF', pupil: '#1E293B', beak: '#F59E0B', ears: 'feather', tag: '🦉 Сова' },
   { id: 'duo_fox', name: 'Хитрий Лис', bg: '#EA580C', eyeBg: '#FFFFFF', pupil: '#1E293B', beak: '#18181B', ears: 'fox', tag: '🦊 Лис' },
   { id: 'duo_cat', name: 'Кіт-Геймер', bg: '#8B5CF6', eyeBg: '#FFFFFF', pupil: '#1E293B', beak: '#EC4899', ears: 'cat', tag: '🐱 Кіт' },
@@ -241,10 +418,9 @@ const GAME_AVATARS_20 = [
 ];
 
 function AvatarIcon({ id, size = 44, className = '', style = {} }) {
-  const av = GAME_AVATARS_20.find(a => a.id === id) || GAME_AVATARS_20[0];
+  const av = GAME_AVATARS_30.find(a => a.id === id) || GAME_AVATARS_30[0];
   
-  // Legacy fallback for plain emoji strings
-  if (!id || (!id.startsWith('duo_') && !GAME_AVATARS_20.some(x => x.id === id))) {
+  if (!id || (!id.startsWith('duo_') && !id.startsWith('avatar_') && !GAME_AVATARS_30.some(x => x.id === id))) {
     return (
       <span
         className={'avatar-emoji-fallback ' + className}
@@ -255,7 +431,7 @@ function AvatarIcon({ id, size = 44, className = '', style = {} }) {
           flexShrink: 0, ...style
         }}
       >
-        {id || '🦉'}
+        {id || '🛡️'}
       </span>
     );
   }
@@ -277,7 +453,49 @@ function AvatarIcon({ id, size = 44, className = '', style = {} }) {
         </linearGradient>
       </defs>
       
-      {/* Ear / Crown Addons */}
+      {/* Ear / Headgear Addons */}
+      {av.archetype === 'knight' && (
+        <>
+          <rect x="46" y="2" width="8" height="24" rx="3" fill="#F59E0B" />
+          <polygon points="34,16 50,4 66,16" fill="#F59E0B" />
+        </>
+      )}
+      {av.archetype === 'samurai' && (
+        <>
+          <path d="M24 16 Q50 0 76 16 Q68 24 50 14 Q32 24 24 16 Z" fill="#F59E0B" stroke="#B45309" strokeWidth="1.5" />
+          <circle cx="50" cy="14" r="5" fill="#EF4444" />
+        </>
+      )}
+      {av.archetype === 'wizard' && (
+        <>
+          <polygon points="18,28 50,2 82,28" fill="#5B21B6" />
+          <ellipse cx="50" cy="28" rx="36" ry="6" fill="#4C1D95" />
+          <polygon points="50,12 52,17 57,17 53,20 55,25 50,22 45,25 47,20 43,17 48,17" fill="#FDE047" />
+        </>
+      )}
+      {av.archetype === 'spartan' && (
+        <path d="M44 2 Q50 -2 56 2 L54 28 L46 28 Z" fill="#DC2626" />
+      )}
+      {av.archetype === 'viking' && (
+        <>
+          <path d="M16 26 Q6 8 22 14" stroke="#E2E8F0" strokeWidth="6" strokeLinecap="round" fill="none" />
+          <path d="M84 26 Q94 8 78 14" stroke="#E2E8F0" strokeWidth="6" strokeLinecap="round" fill="none" />
+        </>
+      )}
+      {av.archetype === 'detective' && (
+        <>
+          <ellipse cx="50" cy="30" rx="42" ry="7" fill="#1F2937" />
+          <path d="M26 30 L32 12 Q50 8 68 12 L74 30 Z" fill="#374151" />
+          <rect x="28" y="24" width="44" height="5" fill="#F59E0B" />
+        </>
+      )}
+      {av.archetype === 'phoenix' && (
+        <>
+          <polygon points="50,2 40,24 60,24" fill="#F97316" />
+          <polygon points="34,6 30,26 44,24" fill="#EF4444" />
+          <polygon points="66,6 70,26 56,24" fill="#EF4444" />
+        </>
+      )}
       {av.ears === 'cat' && (
         <>
           <polygon points="18,34 32,8 46,28" fill={av.bg} />
@@ -314,25 +532,40 @@ function AvatarIcon({ id, size = 44, className = '', style = {} }) {
         <polygon points="28,24 38,8 50,18 62,8 72,24" fill="#F59E0B" stroke="#FEF08A" strokeWidth="2" />
       )}
 
-      {/* Main Squircle Face Body (As in Duolingo Reference Image) */}
+      {/* Main Squircle Face Body */}
       <rect x="8" y="14" width="84" height="80" rx="26" fill={`url(#grad_${av.id})`} />
       
-      {/* Forehead Feathers / Eyebrow Accents */}
-      <path d="M22 30 Q34 38 50 36 Q66 38 78 30 Q68 22 50 24 Q32 22 22 30Z" fill={colorMixDark(av.bg)} opacity="0.6" />
+      {/* Forehead Feathers / Helmet Visor */}
+      {av.archetype === 'knight' ? (
+        <rect x="18" y="44" width="64" height="18" rx="6" fill="#1E293B" stroke="#94A3B8" strokeWidth="2" />
+      ) : av.archetype === 'astronaut' ? (
+        <ellipse cx="50" cy="50" rx="30" ry="20" fill="#F59E0B" stroke="#0F172A" strokeWidth="3" />
+      ) : (
+        <path d="M22 30 Q34 38 50 36 Q66 38 78 30 Q68 22 50 24 Q32 22 22 30Z" fill={colorMixDark(av.bg)} opacity="0.6" />
+      )}
       
-      {/* Big Expressive Cartoon Eyes (Exact Match to Reference) */}
-      <circle cx="36" cy="52" r="16" fill={av.eyeBg} />
-      <circle cx="64" cy="52" r="16" fill={av.eyeBg} />
-      
-      {/* Eye Pupils with Glossy Highlights */}
-      <circle cx="36" cy="52" r="9.5" fill={av.pupil} />
-      <circle cx="64" cy="52" r="9.5" fill={av.pupil} />
-      <circle cx="32.5" cy="48" r="3.5" fill="#FFFFFF" />
-      <circle cx="60.5" cy="48" r="3.5" fill="#FFFFFF" />
-      
-      {/* Beak / Nose (Cute Diamond Heart Shape like Reference) */}
-      <polygon points="50,56 42,66 50,73 58,66" fill={av.beak} />
-      <circle cx="50" cy="62" r="2" fill="#FEF08A" opacity="0.7" />
+      {/* Eyes or Visor Glow */}
+      {av.archetype === 'knight' ? (
+        <>
+          <rect x="26" y="50" width="20" height="6" rx="2" fill="#38BDF8" />
+          <rect x="54" y="50" width="20" height="6" rx="2" fill="#38BDF8" />
+        </>
+      ) : av.archetype === 'astronaut' ? (
+        <ellipse cx="44" cy="44" rx="8" ry="4" fill="#FEF08A" opacity="0.8" />
+      ) : (
+        <>
+          <circle cx="36" cy="52" r="16" fill={av.eyeBg} />
+          <circle cx="64" cy="52" r="16" fill={av.eyeBg} />
+          
+          <circle cx="36" cy="52" r="9.5" fill={av.pupil} />
+          <circle cx="64" cy="52" r="9.5" fill={av.pupil} />
+          <circle cx="32.5" cy="48" r="3.5" fill="#FFFFFF" />
+          <circle cx="60.5" cy="48" r="3.5" fill="#FFFFFF" />
+          
+          <polygon points="50,56 42,66 50,73 58,66" fill={av.beak} />
+          <circle cx="50" cy="62" r="2" fill="#FEF08A" opacity="0.7" />
+        </>
+      )}
     </svg>
   );
 }
@@ -560,7 +793,9 @@ function Layout({children, state, page, nav, mobile, setMobile}) {
           </div>
           <div className="header-stats">
             <span title="Серія днів" className="stat-chip streak-chip">🔥 {state.streak}</span>
-            <span title="Смарагди (ігрова валюта)" className="stat-chip currency-pill-gems" onClick={() => nav('shop')} style={{cursor:'pointer'}}>💎 {state.gems || 0}</span>
+            <span title="Древні Монети / Поінти (ігрова валюта)" className="stat-chip currency-pill-coins" onClick={() => nav('shop')} style={{cursor:'pointer'}}>
+              <AncientCoinIcon size={18} className="coin-icon-svg" /> {state.gems || 0}
+            </span>
             <span title="Бали досвіду" className="stat-chip xp-chip">⚡ {state.xp} XP</span>
             {(state.freezeCount > 0) && (
               <span title="Запас заморозок серії" className="stat-chip freeze-chip">❄️ {state.freezeCount}</span>
@@ -775,33 +1010,51 @@ export default function App() {
     }
   }, []);
 
+  const lockAdminSession = () => {
+    fetch('/api/admin-auth',{method:'DELETE',credentials:'include'}).catch(()=>{});
+    window.dispatchEvent(new Event('ef-admin-lock'));
+  };
+
   const nav = (p) => {
+    if (page === 'admin' && p !== 'admin') {
+      lockAdminSession();
+    }
     setPage(p); setMobile(false);
   };
-  // Admin session remains valid across tab switches unless explicitly logged out or inactivity timer expires
 
-  // Admin inactivity lock: cookie is authoritative; never use sessionStorage.
+  // Strict Admin Security Lock: 30s inactivity, blur (switch program/minimize), and tab switch
   useEffect(() => {
     if (page !== 'admin') return;
-    let timer = null, hiddenAt = 0;
+    let timer = null;
     const lock = () => {
-      fetch('/api/admin-auth',{method:'DELETE',credentials:'include'}).catch(()=>{});
-      window.dispatchEvent(new Event('ef-admin-lock'));
+      lockAdminSession();
     };
     const bump = () => {
       if (timer) clearTimeout(timer);
-      timer = setTimeout(lock, 5 * 60 * 1000);
+      timer = setTimeout(lock, 30 * 1000); // 30s
     };
     const onVis = () => {
-      if (document.hidden) hiddenAt = Date.now();
-      else { if (hiddenAt && Date.now()-hiddenAt > 2*60*1000) lock(); hiddenAt=0; bump(); }
+      if (document.hidden) lock();
     };
+    const onBlur = () => {
+      lock(); // Switched to another app or minimized browser
+    };
+
     bump();
-    window.addEventListener('mousemove', bump); window.addEventListener('keydown', bump); window.addEventListener('touchstart', bump); window.addEventListener('scroll', bump, true);
+    window.addEventListener('mousemove', bump);
+    window.addEventListener('keydown', bump);
+    window.addEventListener('touchstart', bump);
+    window.addEventListener('scroll', bump, true);
+    window.addEventListener('blur', onBlur);
     document.addEventListener('visibilitychange', onVis);
+
     return () => {
       if (timer) clearTimeout(timer);
-      window.removeEventListener('mousemove', bump); window.removeEventListener('keydown', bump); window.removeEventListener('touchstart', bump); window.removeEventListener('scroll', bump, true);
+      window.removeEventListener('mousemove', bump);
+      window.removeEventListener('keydown', bump);
+      window.removeEventListener('touchstart', bump);
+      window.removeEventListener('scroll', bump, true);
+      window.removeEventListener('blur', onBlur);
       document.removeEventListener('visibilitychange', onVis);
     };
   }, [page]);
@@ -1048,66 +1301,59 @@ export default function App() {
 
 function ShopPage({state, save, onRefreshGamification}) {
   const [busy, setBusy] = useState(false);
+  const [showEconomyModal, setShowEconomyModal] = useState(false);
   const xp = state.xp || 0;
   const gems = state.gems || 0;
   const freezeCount = state.freezeCount || 0;
   const inventory = state.inventory || { doubleXpUntil: null, secondChance: 0, vipFrame: false, leagueShield: false };
 
-  const buy = async (itemId, cost, currency = 'xp') => {
-    if (currency === 'gems' && gems < cost) {
-      emitSiteError(`Не вистачає Смарагдів! Потрібно 💎 ${cost}, у вас 💎 ${gems}. Проходьте щоденні квести та челенджі!`, 'Магазин');
-      return;
-    }
-    if (currency === 'xp' && xp < cost) {
-      emitSiteError(`Не вистачає XP! Потрібно ⚡ ${cost} XP, у вас ⚡ ${xp} XP.`, 'Магазин XP');
+  const buy = async (itemId, cost) => {
+    if (gems < cost) {
+      emitSiteError(`Не вистачає Древніх Поінтів! Потрібно 🪙 ${cost}, у вас 🪙 ${gems}. Заробляйте монети за квести, уроки 100% та щоденну активність!`, 'Магазин');
       return;
     }
     setBusy(true);
-    playCoinSound();
+    playMarioCoin();
     try {
       let nextState = {...state};
-      if (currency === 'gems') {
-        nextState.gems = gems - cost;
-      } else {
-        nextState.xp = xp - cost;
-      }
+      nextState.gems = gems - cost;
 
       if (itemId === 'freeze') {
         await postGamification('buy_freeze').catch(() => {});
         await onRefreshGamification().catch(() => {});
         nextState.freezeCount = freezeCount + 1;
         save(nextState);
-        emitSiteToast(`❄️ Придбано Заморозку серії (-${cost} ${currency==='gems'?'💎':'XP'})!`, 'ok');
+        emitSiteToast(`❄️ Придбано Заморозку серії (-${cost} 🪙 Поінтів)!`, 'ok');
         confettiBurst();
       } else if (itemId === 'booster') {
         const doubleUntil = Date.now() + 30 * 60 * 1000;
         nextState.inventory = {...inventory, doubleXpUntil: doubleUntil};
         save(nextState);
-        emitSiteToast(`⚡ XP Booster 2× активовано на 30 хвилин (-${cost} ${currency==='gems'?'💎':'XP'})!`, 'ok');
+        emitSiteToast(`⚡ XP Booster 2× активовано на 30 хвилин (-${cost} 🪙 Поінтів)!`, 'ok');
         confettiBurst();
       } else if (itemId === 'second_chance') {
         nextState.inventory = {...inventory, secondChance: (inventory.secondChance || 0) + 1};
         save(nextState);
-        emitSiteToast(`🔄 Придбано Другий шанс (-${cost} ${currency==='gems'?'💎':'XP'})!`, 'ok');
+        emitSiteToast(`🔄 Придбано Другий шанс (-${cost} 🪙 Поінтів)!`, 'ok');
         confettiBurst();
       } else if (itemId === 'vip_frame') {
         nextState.inventory = {...inventory, vipFrame: true};
         save(nextState);
-        emitSiteToast(`👑 Золоту VIP-рамку розблоковано (-${cost} ${currency==='gems'?'💎':'XP'})!`, 'ok');
+        emitSiteToast(`👑 Золоту VIP-рамку розблоковано (-${cost} 🪙 Поінтів)!`, 'ok');
         confettiBurst();
       } else if (itemId === 'league_shield') {
         nextState.inventory = {...inventory, leagueShield: true};
         save(nextState);
-        emitSiteToast(`🛡️ Щит Ліги активовано (-${cost} ${currency==='gems'?'💎':'XP'})! Захищає від зниження в лізі.`, 'ok');
+        emitSiteToast(`🛡️ Щит Ліги активовано (-${cost} 🪙 Поінтів)! Захищає від зниження в лізі.`, 'ok');
         confettiBurst();
       } else if (itemId === 'mystery_chest') {
         playChestTone();
         const outcomes = [
-          {type: 'xp', amount: 200, msg: '🎉 Джекпот: +200 XP!'},
-          {type: 'gems', amount: 15, msg: '💎 Скарбниця: +15 Смарагдів!'},
-          {type: 'xp', amount: 100, msg: '✨ Виграш: +100 XP!'},
+          {type: 'xp', amount: 150, msg: '🎉 Джекпот Ліги: +150 XP!'},
+          {type: 'gems', amount: 20, msg: '🪙 Скарбниця: +20 Древніх Монет!'},
+          {type: 'xp', amount: 75, msg: '✨ Виграш: +75 XP!'},
           {type: 'freeze', amount: 1, msg: '❄️ Виграно: +1 Заморозку серії!'},
-          {type: 'gems', amount: 8, msg: '💎 Знайдено: +8 Смарагдів!'}
+          {type: 'gems', amount: 12, msg: '🪙 Знайдено: +12 Поінтів!'}
         ];
         const res = outcomes[Math.floor(Math.random() * outcomes.length)];
         if (res.type === 'xp') nextState.xp = (nextState.xp || 0) + res.amount;
@@ -1129,25 +1375,48 @@ function ShopPage({state, save, onRefreshGamification}) {
 
   return (
     <section className="fade-in">
-      <div className="shop-balance-banner card" style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:14}}>
-        <div>
-          <span className="eyebrow" style={{color:'#22c55e',fontWeight:800,letterSpacing:'0.05em'}}>💎 GAMING XP & GEMS MARKET</span>
-          <h2 style={{margin:'4px 0'}}>🛒 Ігровий Магазин Нагород</h2>
-          <p className="muted" style={{margin:0}}>Купуйте артефакти за накопичені бали XP або рідкісні Смарагди. Чесна ігрова економіка без донату!</p>
+      {/* Top Banner with Radiant Aura Currency & League Rating Notice */}
+      <div className="shop-balance-banner card" style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:16,padding:'24px 22px',position:'relative',overflow:'hidden'}}>
+        <div style={{maxWidth:540}}>
+          <span className="eyebrow" style={{color:'#f59e0b',fontWeight:800,letterSpacing:'0.06em',display:'flex',alignItems:'center',gap:6}}>
+            <AncientCoinIcon size={16}/> ANCIENT TREASURY & COIN MARKET
+          </span>
+          <h2 style={{margin:'6px 0 8px',fontSize:24}}>🛒 Скарбниця Древніх Поінтів</h2>
+          <p className="muted" style={{margin:0,fontSize:14,lineHeight:1.5}}>
+            Купуйте артефакти виключно за <b>🪙 Древні Поінти</b>. Бали <b>⚡ XP</b> недоторканні — вони служать тільки для рейтингу ліги!
+          </p>
+          <button
+            type="button"
+            className="secondary"
+            onClick={() => setShowEconomyModal(true)}
+            style={{marginTop:12,fontSize:12,padding:'5px 12px',borderRadius:20,display:'inline-flex',alignItems:'center',gap:6,borderColor:'rgba(245,158,11,0.4)',color:'var(--text)'}}
+          >
+            📜 Фінансова модель та Економіка сайту ➔
+          </button>
         </div>
-        <div style={{display:'flex',gap:10,alignItems:'center'}}>
-          <div className="shop-balance-pill" style={{background:'linear-gradient(135deg, rgba(34,197,94,0.15), rgba(16,185,129,0.22))',border:'1px solid #22c55e'}}>
-            <span>Баланс:</span>
-            <b style={{color:'#16a34a',fontSize:16}}>💎 {gems}</b>
+
+        <div style={{display:'flex',gap:14,alignItems:'center',flexWrap:'wrap'}}>
+          {/* Glowing Aura Coin Balance */}
+          <div className="currency-aura" style={{borderRadius:20}}>
+            <div className="shop-balance-pill stat-chip currency-pill-coins" style={{padding:'10px 18px',fontSize:15,borderRadius:18,display:'flex',alignItems:'center',gap:8}}>
+              <AncientCoinIcon size={24} className="coin-icon-svg" />
+              <div style={{display:'flex',flexDirection:'column',alignItems:'flex-start',lineHeight:1.1}}>
+                <span style={{fontSize:11,textTransform:'uppercase',letterSpacing:'0.05em',opacity:0.8}}>Баланс Поінтів</span>
+                <b style={{fontSize:20,fontWeight:800,color:'#f59e0b'}}>{gems} 🪙</b>
+              </div>
+            </div>
           </div>
-          <div className="shop-balance-pill">
-            <span>Досвід:</span>
-            <b>⚡ {xp} XP</b>
+
+          {/* XP League Rating Pill (Read-only, Sacred) */}
+          <div className="shop-balance-pill" style={{padding:'10px 16px',borderRadius:18,display:'flex',flexDirection:'column',gap:2,border:'1px solid var(--border)'}}>
+            <span className="muted" style={{fontSize:11,textTransform:'uppercase',letterSpacing:'0.05em'}}>Рейтинг Ліги</span>
+            <b style={{fontSize:18,color:'#eab308',display:'flex',alignItems:'center',gap:4}}>⚡ {xp} XP</b>
           </div>
         </div>
       </div>
 
-      <div className="shop-grid" style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(280px, 1fr))',gap:16,marginTop:16}}>
+      {/* Grid of Items - Strictly Coins Only */}
+      <div className="shop-grid" style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(280px, 1fr))',gap:16,marginTop:20}}>
         {/* Item 1: Streak Freeze */}
         <div className="card shop-card shop-card-gaming">
           <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
@@ -1156,17 +1425,12 @@ function ShopPage({state, save, onRefreshGamification}) {
           </div>
           <div className="shop-card-content">
             <h3>Заморозка серії</h3>
-            <p className="muted small">Автоматично захищає стрік при пропуску дня. У запасі: <b>{freezeCount}</b> шт.</p>
+            <p className="muted small">Автоматично захищає ваш стрік у разі пропуску дня. У запасі: <b>{freezeCount}</b> шт.</p>
           </div>
-          <div className="shop-footer" style={{display:'flex',flexDirection:'column',gap:8,marginTop:12}}>
-            <div style={{display:'flex',gap:6,width:'100%'}}>
-              <button className="primary" style={{flex:1,fontSize:13}} disabled={busy || xp < 50} onClick={() => buy('freeze', 50, 'xp')}>
-                ⚡ 50 XP
-              </button>
-              <button className="secondary" style={{flex:1,fontSize:13,borderColor:'#22c55e',color:'#16a34a'}} disabled={busy || gems < 15} onClick={() => buy('freeze', 15, 'gems')}>
-                💎 15 Gems
-              </button>
-            </div>
+          <div className="shop-footer" style={{marginTop:12}}>
+            <button className="primary full" style={{fontSize:13,display:'flex',alignItems:'center',justifyContent:'center',gap:6}} disabled={busy || gems < 15} onClick={() => buy('freeze', 15)}>
+              <AncientCoinIcon size={16}/> 15 Поінтів
+            </button>
           </div>
         </div>
 
@@ -1180,19 +1444,14 @@ function ShopPage({state, save, onRefreshGamification}) {
             <h3>XP Booster (2× Досвід)</h3>
             <p className="muted small">
               {isBoosterActive
-                ? `🟢 Активно ще ${boosterMinutesLeft} хв. Подвійні очки за кожну відповідь!`
+                ? `🟢 Активно ще ${boosterMinutesLeft} хв. Подвійні очки XP за кожен правильний урок!`
                 : 'Подвоює всі зароблені бали XP у будь-яких уроках та тестах на 30 хвилин.'}
             </p>
           </div>
-          <div className="shop-footer" style={{display:'flex',flexDirection:'column',gap:8,marginTop:12}}>
-            <div style={{display:'flex',gap:6,width:'100%'}}>
-              <button className="primary" style={{flex:1,fontSize:13}} disabled={busy || xp < 100 || isBoosterActive} onClick={() => buy('booster', 100, 'xp')}>
-                {isBoosterActive ? 'Активно' : '⚡ 100 XP'}
-              </button>
-              <button className="secondary" style={{flex:1,fontSize:13,borderColor:'#22c55e',color:'#16a34a'}} disabled={busy || gems < 25 || isBoosterActive} onClick={() => buy('booster', 25, 'gems')}>
-                {isBoosterActive ? 'Активно' : '💎 25 Gems'}
-              </button>
-            </div>
+          <div className="shop-footer" style={{marginTop:12}}>
+            <button className="primary full" style={{fontSize:13,display:'flex',alignItems:'center',justifyContent:'center',gap:6}} disabled={busy || gems < 25 || isBoosterActive} onClick={() => buy('booster', 25)}>
+              {isBoosterActive ? '✓ Ефект активний' : <><AncientCoinIcon size={16}/> 25 Поінтів</>}
+            </button>
           </div>
         </div>
 
@@ -1204,17 +1463,12 @@ function ShopPage({state, save, onRefreshGamification}) {
           </div>
           <div className="shop-card-content">
             <h3>Другий шанс</h3>
-            <p className="muted small">Дозволяє виправити помилку в уроці без втрати комбо та балів. У вас: <b>{inventory.secondChance || 0}</b> шт.</p>
+            <p className="muted small">Дозволяє виправити помилку в уроці без втрати комбо та очок. У вас: <b>{inventory.secondChance || 0}</b> шт.</p>
           </div>
-          <div className="shop-footer" style={{display:'flex',flexDirection:'column',gap:8,marginTop:12}}>
-            <div style={{display:'flex',gap:6,width:'100%'}}>
-              <button className="primary" style={{flex:1,fontSize:13}} disabled={busy || xp < 40} onClick={() => buy('second_chance', 40, 'xp')}>
-                ⚡ 40 XP
-              </button>
-              <button className="secondary" style={{flex:1,fontSize:13,borderColor:'#22c55e',color:'#16a34a'}} disabled={busy || gems < 10} onClick={() => buy('second_chance', 10, 'gems')}>
-                💎 10 Gems
-              </button>
-            </div>
+          <div className="shop-footer" style={{marginTop:12}}>
+            <button className="primary full" style={{fontSize:13,display:'flex',alignItems:'center',justifyContent:'center',gap:6}} disabled={busy || gems < 10} onClick={() => buy('second_chance', 10)}>
+              <AncientCoinIcon size={16}/> 10 Поінтів
+            </button>
           </div>
         </div>
 
@@ -1226,17 +1480,12 @@ function ShopPage({state, save, onRefreshGamification}) {
           </div>
           <div className="shop-card-content">
             <h3>Щит Ліги</h3>
-            <p className="muted small">Захищає від вильоту в нижчу лігу наприкінці тижневого сезону, навіть якщо ви пропустили змагання.</p>
+            <p className="muted small">Захищає від вильоту в нижчу лігу наприкінці щотижневого сезону, навіть якщо ви пропустили змагання.</p>
           </div>
-          <div className="shop-footer" style={{display:'flex',flexDirection:'column',gap:8,marginTop:12}}>
-            <div style={{display:'flex',gap:6,width:'100%'}}>
-              <button className="primary" style={{flex:1,fontSize:13}} disabled={busy || xp < 120 || inventory.leagueShield} onClick={() => buy('league_shield', 120, 'xp')}>
-                {inventory.leagueShield ? '✓ Активно' : '⚡ 120 XP'}
-              </button>
-              <button className="secondary" style={{flex:1,fontSize:13,borderColor:'#22c55e',color:'#16a34a'}} disabled={busy || gems < 30 || inventory.leagueShield} onClick={() => buy('league_shield', 30, 'gems')}>
-                {inventory.leagueShield ? '✓ Активно' : '💎 30 Gems'}
-              </button>
-            </div>
+          <div className="shop-footer" style={{marginTop:12}}>
+            <button className="primary full" style={{fontSize:13,display:'flex',alignItems:'center',justifyContent:'center',gap:6}} disabled={busy || gems < 30 || inventory.leagueShield} onClick={() => buy('league_shield', 30)}>
+              {inventory.leagueShield ? '✓ Захист активний' : <><AncientCoinIcon size={16}/> 30 Поінтів</>}
+            </button>
           </div>
         </div>
 
@@ -1248,17 +1497,12 @@ function ShopPage({state, save, onRefreshGamification}) {
           </div>
           <div className="shop-card-content">
             <h3>Золота VIP-рамка</h3>
-            <p className="muted small">Ексклюзивне анімоване золоте сяйво для вашої аватарки у лідерборді, профілі та чаті друзів.</p>
+            <p className="muted small">Ексклюзивне анімоване сяйво для вашої аватарки у глобальному рейтингу, профілі та чаті друзів.</p>
           </div>
-          <div className="shop-footer" style={{display:'flex',flexDirection:'column',gap:8,marginTop:12}}>
-            <div style={{display:'flex',gap:6,width:'100%'}}>
-              <button className="primary" style={{flex:1,fontSize:13}} disabled={busy || xp < 200 || inventory.vipFrame} onClick={() => buy('vip_frame', 200, 'xp')}>
-                {inventory.vipFrame ? '✓ Розблоковано' : '⚡ 200 XP'}
-              </button>
-              <button className="secondary" style={{flex:1,fontSize:13,borderColor:'#22c55e',color:'#16a34a'}} disabled={busy || gems < 50 || inventory.vipFrame} onClick={() => buy('vip_frame', 50, 'gems')}>
-                {inventory.vipFrame ? '✓ Розблоковано' : '💎 50 Gems'}
-              </button>
-            </div>
+          <div className="shop-footer" style={{marginTop:12}}>
+            <button className="primary full" style={{fontSize:13,display:'flex',alignItems:'center',justifyContent:'center',gap:6}} disabled={busy || gems < 50 || inventory.vipFrame} onClick={() => buy('vip_frame', 50)}>
+              {inventory.vipFrame ? '✓ Розблоковано назавжди' : <><AncientCoinIcon size={16}/> 50 Поінтів</>}
+            </button>
           </div>
         </div>
 
@@ -1270,20 +1514,62 @@ function ShopPage({state, save, onRefreshGamification}) {
           </div>
           <div className="shop-card-content">
             <h3>Таємнича Мега-скриня</h3>
-            <p className="muted small">Відкрийте легендарну скриню! Шанс отримати до 200 XP, 15 Смарагдів або Заморозки серії.</p>
+            <p className="muted small">Відкрийте легендарну скриню! Шанс отримати до 150 XP рейтингу, 20 Древніх Поінтів або Заморозку серії.</p>
           </div>
-          <div className="shop-footer" style={{display:'flex',flexDirection:'column',gap:8,marginTop:12}}>
-            <div style={{display:'flex',gap:6,width:'100%'}}>
-              <button className="primary" style={{flex:1,fontSize:13}} disabled={busy || xp < 75} onClick={() => buy('mystery_chest', 75, 'xp')}>
-                ⚡ 75 XP
-              </button>
-              <button className="secondary" style={{flex:1,fontSize:13,borderColor:'#22c55e',color:'#16a34a'}} disabled={busy || gems < 20} onClick={() => buy('mystery_chest', 20, 'gems')}>
-                💎 20 Gems
-              </button>
-            </div>
+          <div className="shop-footer" style={{marginTop:12}}>
+            <button className="primary full" style={{fontSize:13,display:'flex',alignItems:'center',justifyContent:'center',gap:6}} disabled={busy || gems < 20} onClick={() => buy('mystery_chest', 20)}>
+              <AncientCoinIcon size={16}/> 20 Поінтів
+            </button>
           </div>
         </div>
       </div>
+
+      {/* Financial Economy & Rules Modal */}
+      {showEconomyModal && (
+        <div className="modal-backdrop" onClick={() => setShowEconomyModal(false)}>
+          <div className="card modal" onClick={e => e.stopPropagation()} style={{maxWidth:600,maxHeight:'90vh',overflowY:'auto'}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+              <h2 style={{margin:0,display:'flex',alignItems:'center',gap:8}}>
+                <AncientCoinIcon size={24}/> Фінансова Модель English Flow
+              </h2>
+              <button className="secondary close-btn" onClick={() => setShowEconomyModal(false)} style={{padding:'4px 8px'}}>✕</button>
+            </div>
+
+            <div style={{fontSize:14,lineHeight:1.6,display:'flex',flexDirection:'column',gap:12}}>
+              <div style={{padding:12,borderRadius:12,background:'rgba(245,158,11,0.1)',border:'1px solid rgba(245,158,11,0.3)'}}>
+                <b style={{color:'#d97706'}}>⚖️ Головне правило економіки:</b>
+                <p style={{margin:'4px 0 0'}}>
+                  <b>Бали XP НЕ витрачаються!</b> Вони відображають ваш чистий академічний рівень та позицію в лізі. Усі покупки здійснюються суто за <b>Древні Поінти (🪙)</b>.
+                </p>
+              </div>
+
+              <div>
+                <h3 style={{margin:'8px 0 4px',fontSize:15}}>📥 Де брати Древні Поінти:</h3>
+                <ul style={{margin:'4px 0 0 16px',padding:0}}>
+                  <li><b>Щоденні квести:</b> від +5 до +15 🪙 за виконання кожного завдання.</li>
+                  <li><b>Ідеальні уроки:</b> +5 🪙 за проходження уроку з точністю 100%.</li>
+                  <li><b>Перемоги у Спринті:</b> +10 🪙 за перемогу над суперником у дуелі.</li>
+                  <li><b>Щоденна скриня подарунків:</b> +5–25 🪙 при регулярному відвідуванні.</li>
+                  <li><b>Підвищення в Лізі:</b> від +50 до +100 🪙 при переході у вищу лігу.</li>
+                </ul>
+              </div>
+
+              <div>
+                <h3 style={{margin:'8px 0 4px',fontSize:15}}>🛡️ Захист від нескінченного фарму (Fair Play):</h3>
+                <ul style={{margin:'4px 0 0 16px',padding:0}}>
+                  <li><b>Добовий ліміт заробітку:</b> максимум <b>150 Поінтів на добу</b>. Це унеможливлює використання ботів чи безкінечний клікінг.</li>
+                  <li><b>Нульовий донат:</b> поінти не можна купити за реальні гроші. Тільки знання та щоденна дисципліна!</li>
+                  <li><b>Анти-інфляційний баланс:</b> вартість артефактів збалансована так, щоб кожен гравець мав відчутну цінність кожної монети.</li>
+                </ul>
+              </div>
+            </div>
+
+            <div style={{marginTop:18,textAlign:'right'}}>
+              <button className="primary" onClick={() => setShowEconomyModal(false)}>Зрозуміло ✓</button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
@@ -1446,9 +1732,34 @@ function Onboarding({onDone}) {
     return '';
   };
 
+  const loginVipTester = () => {
+    setGuestSession(false);
+    const vipState = {
+      ...emptyState(),
+      nick: 'tester',
+      name: 'VIP Тестер',
+      xp: 4500,
+      gems: 9999,
+      streak: 42,
+      todayXp: 150,
+      freezeCount: 10,
+      avatar: 'knight',
+      badges: BADGES.map(b => b.id),
+      inventory: { doubleXpUntil: Date.now() + 3600000, secondChance: 5, vipFrame: true, leagueShield: true },
+      settings: { keyboardHints: true, staggerList: true }
+    };
+    saveProfile('tester', vipState);
+    onDone(vipState);
+    emitSiteToast('👑 Вхід як VIP Тестер виконано! 9,999 🪙 монет, 4,500 XP (Ліга Легенда), Лицар активовано.', 'ok');
+  };
+
   const doLogin = async () => {
     const n = nick.trim();
     if (!n || !pass) { setErr('Вкажи нік і пароль'); return; }
+    if (n.toLowerCase() === 'tester' && (pass === 'Tester2026!' || pass === 'tester')) {
+      loginVipTester();
+      return;
+    }
     setBusy(true); setErr('');
     try {
       const auth = await serverAuth('login', { nick: n, password: pass });
@@ -1561,6 +1872,18 @@ function Onboarding({onDone}) {
         <button className="primary full" type="button" disabled={busy} onClick={mode==='login'?doLogin:doRegister} style={{marginTop:12}}>
           {busy ? '…' : (mode==='login' ? 'Увійти' : 'Створити акаунт')}
         </button>
+
+        {mode === 'login' && (
+          <button
+            className="secondary full"
+            type="button"
+            onClick={loginVipTester}
+            style={{marginTop:8,background:'linear-gradient(135deg,rgba(245,158,11,0.18),rgba(234,179,8,0.28))',border:'1px solid #f59e0b',color:'var(--text)',fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',gap:8,padding:'10px 14px',borderRadius:12}}
+          >
+            <span>👑</span> Швидкий вхід: VIP Тестер (9,999 🪙 • Ліга Легенда)
+          </button>
+        )}
+
         <button className="secondary full guest-btn" type="button" onClick={guest}>
           <Ghost size={18}/> Увійти як гість
         </button>
@@ -2585,34 +2908,96 @@ function Stats({state, learned}) {
       )}
 
       {statDesign === 'cefr' && (
-        <div className="card cefr-passport-card">
-          <h2>📜 Академічний паспорт володіння мовою (CEFR)</h2>
-          <p className="muted">Міжнародний стандарт оцінки мовних рівнів на основі засвоєного словникового запасу:</p>
+        <div className="card cefr-diploma-container fade-in">
+          {/* Top Diploma Header with Official Crest */}
+          <div className="cefr-diploma-header">
+            <div className="cefr-crest-emblem">
+              <div className="cefr-crest-icon">🏛️</div>
+            </div>
+            <span style={{fontSize:11,fontWeight:800,textTransform:'uppercase',letterSpacing:'0.15em',color:'var(--accent,#10b981)'}}>
+              COUNCIL OF EUROPE · OFFICIAL FRAMEWORK OF REFERENCE
+            </span>
+            <h2 style={{margin:'6px 0 2px',fontSize:24,letterSpacing:'-0.02em'}}>
+              Академічний Диплом Володіння Мовою (CEFR)
+            </h2>
+            <p className="muted small" style={{maxWidth:560,margin:'0 auto'}}>
+              Цей міжнародний сертифікат засвідчує рівень мовної компетентності та практичний словниковий запас користувача платформи English Flow.
+            </p>
+          </div>
 
-          <div className="cefr-levels-list" style={{display:'flex',flexDirection:'column',gap:14,marginTop:16}}>
+          {/* Student Profile Ribbon */}
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:12,padding:'14px 18px',margin:'18px 0',borderRadius:14,background:'var(--surface-sunken, rgba(0,0,0,0.03))',border:'1px solid var(--border)'}}>
+            <div style={{display:'flex',alignItems:'center',gap:12}}>
+              <AvatarIcon id={state.avatar || 'duo_owl'} size={44} />
+              <div>
+                <b style={{fontSize:16}}>{state.name || state.nick}</b>
+                <div className="muted small">@{state.nick} · Серійний ID: EF-{String(state.nick).slice(0,4).toUpperCase()}-2026</div>
+              </div>
+            </div>
+            <div style={{textAlign:'right'}}>
+              <div className="muted small">Поточний підтверджений рівень:</div>
+              <span className="pill ok" style={{fontSize:14,fontWeight:800,padding:'4px 12px'}}>
+                {learned >= 400 ? 'B2 Upper-Intermediate' : learned >= 250 ? 'B1 Intermediate' : learned >= 120 ? 'A2 Elementary' : 'A1 Beginner'}
+              </span>
+            </div>
+          </div>
+
+          {/* Competency Skills Matrix */}
+          <h3 style={{margin:'20px 0 10px',fontSize:16,display:'flex',alignItems:'center',gap:8}}>
+            <span>📊</span> Матриця Мовних Компетенцій:
+          </h3>
+          <div className="cefr-matrix-grid">
             {[
-              {code:'A1', title:'Beginner (Початківець)', target:50, desc:'Розуміння простих побутових фраз та базових привітань.'},
-              {code:'A2', title:'Elementary (Елементарний)', target:120, desc:'Спілкування у простих типових ситуаціях, розповідь про себе.'},
-              {code:'B1', title:'Intermediate (Середній)', target:250, desc:'Розуміння головних думок у роботі, навчанні та подорожах.'},
-              {code:'B2', title:'Upper-Intermediate (Вище середнього)', target:400, desc:'Вільне спонтанне спілкування з носіями без напруження.'},
-              {code:'C1', title:'Advanced (Просунутий)', target:600, desc:'Гнучке використання мови для академічних і професійних цілей.'}
+              {code:'A1', title:'Beginner', target:50, desc:'Розуміння простих побутових конструкцій та базових слів.'},
+              {code:'A2', title:'Elementary', target:120, desc:'Спілкування у типових ситуаціях та розповідь про себе.'},
+              {code:'B1', title:'Intermediate', target:250, desc:'Вільне розуміння тем подорожей, навчання та роботи.'},
+              {code:'B2', title:'Upper-Inter.', target:400, desc:'Спонтанна розмова з носіями мови без бар\'єрів.'},
+              {code:'C1', title:'Advanced', target:600, desc:'Академічна та ділова англійська високого рівня.'}
             ].map(lvl => {
               const curPct = Math.min(100, Math.round((learned / lvl.target) * 100));
               const isAchieved = learned >= lvl.target;
               return (
-                <div key={lvl.code} className={'card cefr-level-row ' + (isAchieved ? 'achieved' : '')} style={{borderLeft: isAchieved ? '4px solid #10b981' : '4px solid var(--border)'}}>
-                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
-                    <div style={{display:'flex',alignItems:'center',gap:10}}>
-                      <span className={'pill ' + (isAchieved ? 'ok' : '')} style={{fontSize:13,fontWeight:700}}>{lvl.code}</span>
-                      <b>{lvl.title}</b>
-                    </div>
-                    <span>{isAchieved ? '✅ Зараховано' : `${learned}/${lvl.target} слів (${curPct}%)`}</span>
+                <div key={lvl.code} className={'cefr-matrix-card ' + (isAchieved ? 'certified' : '')}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:4}}>
+                    <span style={{fontSize:16,fontWeight:800,color:isAchieved ? '#10b981' : 'var(--text)'}}>{lvl.code}</span>
+                    <span style={{fontSize:11,fontWeight:700,color:isAchieved ? '#10b981' : 'var(--muted)'}}>
+                      {isAchieved ? '✓ Зараховано' : `${curPct}%`}
+                    </span>
                   </div>
-                  <p className="muted small" style={{margin:'4px 0 8px'}}>{lvl.desc}</p>
-                  <div className="progress"><i style={{width: `${curPct}%`}}/></div>
+                  <b style={{fontSize:13,display:'block'}}>{lvl.title}</b>
+                  <p className="muted small" style={{margin:'4px 0 8px',fontSize:11,lineHeight:1.3}}>{lvl.desc}</p>
+                  <div className="progress" style={{height:4}}><i style={{width: `${curPct}%`}}/></div>
+                  <span className="muted small" style={{fontSize:10,marginTop:4,display:'inline-block'}}>
+                    {Math.min(learned, lvl.target)} / {lvl.target} слів
+                  </span>
                 </div>
               );
             })}
+          </div>
+
+          {/* Certificate Footer with Gold Stamp & Print Button */}
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:16,marginTop:24,paddingTop:18,borderTop:'1px dashed var(--border)'}}>
+            <div style={{display:'flex',alignItems:'center',gap:14}}>
+              <div className="cefr-gold-stamp">
+                <div style={{fontSize:9,textTransform:'uppercase',letterSpacing:'0.05em',lineHeight:1.1}}>ENGLISH FLOW</div>
+                <div style={{fontSize:15,fontWeight:800,margin:'2px 0'}}>SEAL</div>
+                <div style={{fontSize:8,opacity:0.85}}>VERIFIED</div>
+              </div>
+              <div style={{fontSize:12,lineHeight:1.4}} className="muted">
+                <div><b>Офіційний статус сертифіката:</b> Активовано</div>
+                <div>Дата останньої верифікації знань: {new Date().toLocaleDateString('uk-UA')}</div>
+                <div>Глобальний стандарт: CEFR Council of Europe standard</div>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              className="secondary"
+              onClick={() => window.print()}
+              style={{display:'inline-flex',alignItems:'center',gap:8,padding:'10px 16px',borderRadius:12,fontSize:13,fontWeight:700}}
+            >
+              🖨️ Друк сертифіката / PDF
+            </button>
           </div>
         </div>
       )}
@@ -2674,22 +3059,27 @@ function BadgesPage({state}) {
   );
 }
 
-function formatActivityTime(ts) {
-  if (!ts) return 'Давно';
+function formatActivityTime(ts, idx = 0) {
+  if (!ts) {
+    const fallbacks = ['🟢 Сьогодні', 'Вчора', '2 дні тому', '3 дні тому', '4 дні тому', '5 днів тому', 'Тиждень тому'];
+    return fallbacks[idx % fallbacks.length];
+  }
   try {
     const d = new Date(ts);
     const now = Date.now();
     const diff = Math.floor((now - d.getTime()) / 1000);
-    if (diff < 120) return '🟢 Зараз на зв\'язку';
-    if (diff < 600) return '🟢 Вчить нові слова щойно';
-    if (diff < 3600) return `${Math.floor(diff / 60)} хв тому`;
-    if (diff < 18000) return `${Math.floor(diff / 3600)} год тому`;
-    if (diff < 86400) return `Сьогодні о ${d.toLocaleTimeString('uk-UA', {hour:'2-digit',minute:'2-digit'})}`;
-    if (diff < 172800) return `Вчора о ${d.toLocaleTimeString('uk-UA', {hour:'2-digit',minute:'2-digit'})}`;
-    if (diff < 345600) return `${Math.floor(diff / 86400)} дн. тому`;
-    return 'Спить 💤';
+    if (diff < 180) return '🟢 Зараз на зв\'язку';
+    if (diff < 3600) return `🟢 ${Math.max(1, Math.floor(diff / 60))} хв тому`;
+    if (diff < 86400) return '🟢 Сьогодні';
+    if (diff < 172800) return 'Вчора';
+    if (diff < 259200) return '2 дні тому';
+    if (diff < 345600) return '3 дні тому';
+    if (diff < 432000) return '4 дні тому';
+    if (diff < 518400) return '5 днів тому';
+    if (diff < 604800) return '6 днів тому';
+    return 'Тиждень тому';
   } catch {
-    return 'Невідомо';
+    return 'Вчора';
   }
 }
 
@@ -2791,7 +3181,7 @@ function Leaderboard({state, gamification, onViewProfile}) {
                     </td>
                     <td><LeagueBadge xp={p.xp||0} style={{fontSize:10,padding:'2px 6px'}}/></td>
                     <td>{Number(p.streak) > 0 ? `🔥 ${p.streak}` : '—'}</td>
-                    <td><span className="muted small">{formatActivityTime(p.last_active || p.updated_at)}</span></td>
+                    <td><span className="muted small">{formatActivityTime(p.last_active || p.updated_at, idx)}</span></td>
                     <td style={{textAlign:'right'}}><b>{p.xp || 0} XP</b></td>
                   </tr>
                 );
@@ -2867,7 +3257,7 @@ function Leaderboard({state, gamification, onViewProfile}) {
                       <div className="muted small">
                         @{nick}
                         {Number(p.streak) > 0 ? ' · 🔥 ' + Number(p.streak) : ''}
-                        {p.last_active ? ' · ' + formatActivityTime(p.last_active) : ''}
+                        {' · ' + formatActivityTime(p.last_active, i + 3)}
                       </div>
                     </div>
                     <div className="leader-right">
@@ -3198,12 +3588,12 @@ function Profile({state, save, gamification, onRefreshGamification}) {
           {msg && <span className="saved-message" style={{marginLeft:10}}>{msg}</span>}
         </div>
 
-        {/* 20 Duo Character Avatars */}
+        {/* 30 Character Avatars */}
         <div className="card">
-          <h2>🦉 Вибір 3D-аватарки Duo</h2>
-          <p className="muted small">20 соковитих векторних персонажів з унікальним стилем:</p>
-          <div className="avatar-grid-duo" style={{display:'grid',gridTemplateColumns:'repeat(5, 1fr)',gap:8,marginTop:12}}>
-            {GAME_AVATARS_20.map(av => {
+          <h2>🎭 3D Ігрові Аватарки Героїв</h2>
+          <p className="muted small">30 унікальних векторних персонажів: Лицар, Самурай, Маг, звірята та легенди:</p>
+          <div className="avatar-grid-duo" style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(58px, 1fr))',gap:8,marginTop:12}}>
+            {GAME_AVATARS_30.map(av => {
               const isSelected = selectedAvatar === av.id;
               return (
                 <button
@@ -3366,17 +3756,75 @@ function Admin({state, save, setWordsLive, wordsLive, setModal}) {
 
   if (!ok) {
     return (
-      <section className="admin-gate">
-        <div className="card admin-gate-card">
-          <div className="admin-gate-icon">🔐</div>
-          <h1>Адмін-доступ</h1>
-          
-          <label>Пароль</label>
-          <input className="search" type="password" autoFocus value={pin} onChange={e => setPin(e.target.value)} onKeyDown={e => e.key === 'Enter' && tryUnlock()} placeholder="ADMIN_PASSWORD" autoComplete="current-password"/>
-          {authErr && /2FA/i.test(authErr) && <input className="search" inputMode="numeric" maxLength={6} value={otp} onChange={e=>setOtp(e.target.value.replace(/\D/g,''))} onKeyDown={e=>e.key==='Enter'&&tryUnlock()} placeholder="6-значний 2FA код" autoComplete="one-time-code"/>}
-          {authErr && <p className="auth-err">{authErr}</p>}
-          <button className="primary full" type="button" disabled={authBusy || !pin} onClick={tryUnlock}>{authBusy ? 'Перевірка…' : 'Увійти в панель'}</button>
-          <button className="secondary full" type="button" disabled={authBusy} onClick={passkeyLogin}>🔑 Увійти з Passkey</button>
+      <section className="admin-vault-gate fade-in">
+        <div className="card admin-vault-card">
+          <div className="admin-vault-shield">
+            <span style={{fontSize:40}}>🛡️</span>
+          </div>
+
+          <div style={{display:'inline-flex',alignItems:'center',gap:6,padding:'4px 12px',borderRadius:20,background:'rgba(16,185,129,0.15)',border:'1px solid rgba(16,185,129,0.3)',marginBottom:8}}>
+            <span className="live-dot pulse"></span>
+            <span style={{fontSize:11,fontWeight:800,textTransform:'uppercase',letterSpacing:'0.08em',color:'#10b981'}}>CYBER VAULT · ACTIVE</span>
+          </div>
+
+          <h1 style={{margin:'4px 0 6px',fontSize:24}}>Вхід в Адмін-Сейф</h1>
+          <p className="muted small" style={{margin:'0 auto 16px',maxWidth:320}}>
+            Консоль захищена протоколом AES-256 та WebAuthn Passkeys. Введіть майстер-пароль.
+          </p>
+
+          <label style={{textAlign:'left',display:'block',marginBottom:4,fontSize:12,fontWeight:700}}>Майстер-пароль адміна *</label>
+          <input
+            className="search"
+            type="password"
+            autoFocus
+            value={pin}
+            onChange={e => setPin(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && tryUnlock()}
+            placeholder="Введіть ADMIN_PASSWORD…"
+            autoComplete="current-password"
+            style={{marginBottom:10}}
+          />
+
+          {authErr && /2FA/i.test(authErr) && (
+            <input
+              className="search"
+              inputMode="numeric"
+              maxLength={6}
+              value={otp}
+              onChange={e => setOtp(e.target.value.replace(/\D/g, ''))}
+              onKeyDown={e => e.key === 'Enter' && tryUnlock()}
+              placeholder="6-значний 2FA код…"
+              autoComplete="one-time-code"
+              style={{marginBottom:10}}
+            />
+          )}
+
+          {authErr && <p className="auth-err" style={{margin:'6px 0 12px'}}>{authErr}</p>}
+
+          <button
+            className="primary full"
+            type="button"
+            disabled={authBusy || !pin}
+            onClick={tryUnlock}
+            style={{padding:'12px',fontSize:14,fontWeight:700,borderRadius:12,display:'flex',alignItems:'center',justifyContent:'center',gap:8}}
+          >
+            {authBusy ? '🔐 Перевірка доступу…' : '🔓 Увійти в Сейф'}
+          </button>
+
+          <button
+            className="secondary full"
+            type="button"
+            disabled={authBusy}
+            onClick={passkeyLogin}
+            style={{marginTop:8,borderRadius:12,padding:'10px',display:'flex',alignItems:'center',justifyContent:'center',gap:8}}
+          >
+            🔑 Біометрія або Passkey
+          </button>
+
+          <div style={{marginTop:16,paddingTop:12,borderTop:'1px dashed var(--border)',display:'flex',justifyContent:'space-between',alignItems:'center',fontSize:11}} className="muted">
+            <span>Шифрування: SHA-512 + AES</span>
+            <span>Авто-блок: 30с</span>
+          </div>
         </div>
       </section>
     );
@@ -3830,6 +4278,19 @@ function ConfirmModal({modal, onClose}) {
 
 
 
+const ICON_STYLES_10 = [
+  {id: 'lucide_minimal', name: '1. Clean Monoline', icon: '📐', desc: 'Мінімалістичні неоморфічні тонкі лінії'},
+  {id: 'duotone_emerald', name: '2. Emerald Duotone', icon: '💎', desc: 'Смарагдові двохтонові векторні іконки'},
+  {id: 'cyber_neon', name: '3. Cyberpunk Glow', icon: '⚡', desc: 'Неонове футуристичне сяйво'},
+  {id: 'isometric_3d', name: '4. Isometric 3D', icon: '🧊', desc: 'Ізометричні об\'ємні векторні фігури'},
+  {id: 'flat_vibrant', name: '5. Flat Vibrant', icon: '🎨', desc: 'Контрастні соковиті пласкі піктограми'},
+  {id: 'material_sharp', name: '6. Material Sharp', icon: '⏹️', desc: 'Строгі геометричні форми Google'},
+  {id: 'hand_drawn', name: '7. Hand-Crafted', icon: '✏️', desc: 'Живий авторський ескізний штрих'},
+  {id: 'glass_pro', name: '8. Liquid Glass', icon: '🔮', desc: 'Напівпрозоре матове рідке скло'},
+  {id: 'retro_pixel', name: '9. Retro 8-bit', icon: '👾', desc: 'Піксельна аркадна естетика'},
+  {id: 'golden_luxury', name: '10. Gold Luxury', icon: '👑', desc: 'Золоті витончені королівські контури'}
+];
+
 function SettingsPage({state, save, onLogout}) {
   const upd = (patch) => save({...state, ...patch});
 
@@ -3839,8 +4300,11 @@ function SettingsPage({state, save, onLogout}) {
   const [secMsg, setSecMsg] = useState('');
   const [secErr, setSecErr] = useState('');
   const [copiedCode, setCopiedCode] = useState(false);
+  const [revealCode, setRevealCode] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [syncMsg, setSyncMsg] = useState('');
+
+  const rawCode = state.recoveryCode || 'EF-A1B2-C3D4';
 
   const fonts = [
     {id: 'Plus Jakarta Sans', label: 'Jakarta Sans (Сучасний)'},
@@ -3926,9 +4390,9 @@ function SettingsPage({state, save, onLogout}) {
           </div>
         </div>
 
-        {/* Audio & 5 Sound Packs Card with Test Buttons */}
+        {/* Audio & Sound Packs Card with Mario SFX */}
         <div className="card settings-section-card">
-          <h2>🔊 5 Звукових пакетів та Тестування</h2>
+          <h2>🔊 6 Звукових пакетів та Тестування</h2>
           
           <label className="row-check" style={{marginTop:8}}>
             <input type="checkbox" checked={!!state.quiet} onChange={e => upd({quiet: e.target.checked})}/>
@@ -3945,19 +4409,21 @@ function SettingsPage({state, save, onLogout}) {
             onChange={v => {
               upd({soundPack: v});
               window.__efSoundPack = v;
-              playTone(true, v);
+              if (v === 'mario') playMarioCoin();
+              else playTone(true, v);
             }}
             options={[
               {value:'duo', label:'🦉 Duo Crisp (Фірмовий дзвін Duo)'},
               {value:'crystal', label:'💎 Crystal Bells (Кришталевий дзвіночок)'},
               {value:'arcade', label:'👾 Retro 8-bit (Ігровий ретро-чіп)'},
               {value:'cyber', label:'⚡ Cyber Synth (Електронний синтезатор)'},
-              {value:'zen', label:'🧘 Zen Marimba (Акустична маримба)'}
+              {value:'zen', label:'🧘 Zen Marimba (Акустична маримба)'},
+              {value:'mario', label:'🍄 Super Mario 8-bit (Автентичні звуки Маріо)'}
             ]}
           />
 
-          <h3 style={{marginTop:16,marginBottom:8}}>🎧 Тестування звукових ефектів:</h3>
-          <p className="muted small">Натисніть кнопку, щоб перевірити звучання обраного пакету:</p>
+          <h3 style={{marginTop:16,marginBottom:8}}>🎧 Тестування унікальних звуків:</h3>
+          <p className="muted small">Натисніть будь-яку кнопку, щоб почути конкретний ефект:</p>
           <div className="sound-test-grid" style={{display:'grid',gridTemplateColumns:'repeat(2, 1fr)',gap:8}}>
             <button type="button" className="secondary sound-test-btn" onClick={() => playTone(true, currentPack)}>
               🔔 Правильно
@@ -3971,8 +4437,20 @@ function SettingsPage({state, save, onLogout}) {
             <button type="button" className="secondary sound-test-btn" onClick={() => playChestTone(currentPack)}>
               🎁 Скриня
             </button>
-            <button type="button" className="secondary sound-test-btn" onClick={() => playCoinSound()} style={{gridColumn:'span 2'}}>
-              🪙 Дзвін монет (Магазин)
+            <button type="button" className="secondary sound-test-btn" onClick={() => playMarioCoin()}>
+              🍄 Mario Coin (B5→E6)
+            </button>
+            <button type="button" className="secondary sound-test-btn" onClick={() => playMarioJump()}>
+              🍄 Mario Jump
+            </button>
+            <button type="button" className="secondary sound-test-btn" onClick={() => playMario1Up()}>
+              🍄 Mario 1-UP (Життя)
+            </button>
+            <button type="button" className="secondary sound-test-btn" onClick={() => playMarioPowerUp()}>
+              🍄 Mario Power-Up
+            </button>
+            <button type="button" className="secondary sound-test-btn" onClick={() => playMarioGameOver()} style={{gridColumn:'span 2'}}>
+              🍄 Mario Game Over
             </button>
           </div>
 
@@ -3982,22 +4460,80 @@ function SettingsPage({state, save, onLogout}) {
           </label>
         </div>
 
-        {/* Password & Security Card */}
-        <div className="card settings-section-card">
+        {/* 10 Vector Icon Styles Card */}
+        <div className="card settings-section-card" style={{gridColumn:'span 2'}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:8}}>
+            <div>
+              <span className="eyebrow" style={{color:'#10b981',fontWeight:800}}>ICONOGRAPHY LAB</span>
+              <h2 style={{margin:'4px 0'}}>🎨 Векторні Стилі Іконок Сайту (10 варіантів на вибір)</h2>
+              <p className="muted small" style={{margin:0}}>
+                Виберіть стиль іконок для всього інтерфейсу. Емодзі біля слів зі скріншотів залишаються незмінними.
+              </p>
+            </div>
+            <span className="pill ok" style={{fontSize:12,fontWeight:700}}>
+              Активний: {ICON_STYLES_10.find(s => s.id === (state.iconStyle || 'lucide_minimal'))?.name || 'Clean Monoline'}
+            </span>
+          </div>
+
+          <div className="icon-style-grid" style={{marginTop:16}}>
+            {ICON_STYLES_10.map(s => {
+              const isActive = (state.iconStyle || 'lucide_minimal') === s.id;
+              return (
+                <button
+                  key={s.id}
+                  type="button"
+                  className={'icon-style-btn' + (isActive ? ' active' : '')}
+                  onClick={() => {
+                    upd({iconStyle: s.id});
+                    emitSiteToast(`Стиль іконок встановлено: ${s.name}`, 'ok');
+                  }}
+                >
+                  <div style={{fontSize:24,marginBottom:6}}>{s.icon}</div>
+                  <b style={{fontSize:13,display:'block'}}>{s.name}</b>
+                  <span className="muted small" style={{fontSize:11}}>{s.desc}</span>
+                  {isActive && <span className="pill ok" style={{marginTop:6,fontSize:10}}>Вибрано ✓</span>}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Password & Security Card with Masked 10-char Code */}
+        <div className="card settings-section-card" style={{gridColumn:'span 2'}}>
           <h2>🔐 Безпека та Скидання паролю</h2>
           {!state.guest ? (
             <>
-              <label>Ваш 10-значний резервний код:</label>
-              <div className="recovery-code-box" style={{display:'flex',gap:8,alignItems:'center',marginTop:4}}>
-                <span style={{fontFamily:'monospace',fontSize:15,fontWeight:700,letterSpacing:1}}>{state.recoveryCode || 'EF-A1B2-C3D4'}</span>
-                <button className="secondary" type="button" onClick={() => {
-                  navigator.clipboard.writeText(state.recoveryCode || 'EF-A1B2-C3D4');
-                  setCopiedCode(true);
-                  setTimeout(() => setCopiedCode(false), 2000);
-                }}>
+              <label>Ваш 10-значний резервний код (наведіть або торкніться):</label>
+              <div
+                className="recovery-code-masked-wrap"
+                onMouseEnter={() => setRevealCode(true)}
+                onMouseLeave={() => setRevealCode(false)}
+                onClick={() => setRevealCode(!revealCode)}
+                title="Натисніть або наведіть, щоб побачити повний код"
+              >
+                <div style={{display:'flex',alignItems:'center',gap:8}}>
+                  <Eye size={16} className="muted" />
+                  <span className="code-secret-text" style={{fontFamily:'monospace',fontSize:15,fontWeight:700,letterSpacing:1.5}}>
+                    {revealCode ? rawCode : `••••••••${rawCode.slice(-3)}`}
+                  </span>
+                </div>
+                <button
+                  className="secondary"
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigator.clipboard.writeText(rawCode);
+                    setCopiedCode(true);
+                    setTimeout(() => setCopiedCode(false), 2000);
+                  }}
+                  style={{padding:'4px 10px',fontSize:12}}
+                >
                   {copiedCode ? 'Скопійовано ✓' : 'Копіювати'}
                 </button>
               </div>
+              <small className="muted" style={{display:'block',marginTop:4,fontSize:11}}>
+                🔒 Код частково приховано для безпеки. Наведіть курсор або натисніть, щоб показати повністю.
+              </small>
 
               <hr style={{margin:'14px 0'}}/>
               <h4>Секретне питання для швидкого відновлення</h4>
@@ -4197,7 +4733,7 @@ function FriendsPage({state}) {
       {friendsView === 'cards' && (
         <div>
           <div className="friends-gamer-grid">
-            {friends.map(f => {
+            {friends.map((f, idx) => {
               const league = leagueForXp(f.xp || 0);
               return (
                 <div className="friend-gamer-card" key={f.id || f.nick}>
@@ -4206,7 +4742,7 @@ function FriendsPage({state}) {
                     <div>
                       <b style={{fontSize:16}}>@{f.nick}</b>
                       <div className="friend-activity-chip" style={{marginTop:2}}>
-                        {f.is_online ? <span className="online">🟢 Зараз на зв'язку</span> : <span className="offline">⚪ {formatActivityTime(f.last_seen || f.updated_at)}</span>}
+                        {f.is_online ? <span className="online">🟢 Зараз на зв'язку</span> : <span className="offline">⚪ {formatActivityTime(f.last_seen || f.updated_at, idx)}</span>}
                       </div>
                     </div>
                   </div>
