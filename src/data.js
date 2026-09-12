@@ -72,4 +72,28 @@ export const BADGES = [
 {id:'accuracy_90',title:'Точність',desc:'90%+ на 100 відповідях',icon:'🎯'},
 {id:'xp_5000',title:'Потік 5000',desc:'Набери 5000 XP',icon:'💎'},
 {id:'streak_30',title:'Місяць без пауз',desc:'Streak ≥ 30',icon:'👑'},
+// Gamification v3 badges
+{id:'quest_master',title:'Квест-майстер',desc:'Виконай усі 3 щоденних квести',icon:'🎯'},
+{id:'league_bronze',title:'Бронзова ліга',desc:'Набери 100 XP',icon:'🥉'},
+{id:'league_gold',title:'Золота ліга',desc:'Набери 700 XP',icon:'🥇'},
+{id:'league_legend',title:'Легенда',desc:'Набери 3000 XP',icon:'👑'},
+{id:'freeze_used',title:'Крижаний щит',desc:'Використай заморозку стріку',icon:'❄️'},
+{id:'gift_opened',title:'Мисливець за скарбами',desc:'Відкрий 7 щоденних скринь',icon:'🎁'},
+{id:'social_star',title:'Зірка соціалки',desc:'Додай 3 друзів',icon:'⭐'},
+{id:'combo_king',title:'Combo King',desc:'Зроби 10 правильних поспіль',icon:'🔥'},
 ];
+
+// League tiers — used in both frontend and referenced by backend
+export const LEAGUES = [
+  {id:'legend',  label:'👑 Легенда', min:3000, color:'#b45309', gradient:'linear-gradient(135deg,#fef3c7,#f59e0b,#b45309)'},
+  {id:'platinum',label:'💎 Платина',  min:1500, color:'#0284c7', gradient:'linear-gradient(135deg,#e0f2fe,#38bdf8,#0284c7)'},
+  {id:'gold',    label:'🥇 Золото',   min:700,  color:'#d97706', gradient:'linear-gradient(135deg,#fef9c3,#fbbf24,#d97706)'},
+  {id:'silver',  label:'🥈 Срібло',   min:300,  color:'#6b7280', gradient:'linear-gradient(135deg,#f3f4f6,#9ca3af,#6b7280)'},
+  {id:'bronze',  label:'🥉 Бронза',   min:100,  color:'#92400e', gradient:'linear-gradient(135deg,#fef3c7,#d97706,#92400e)'},
+  {id:'beginner',label:'🌱 Новачок',  min:0,    color:'#16a34a', gradient:'linear-gradient(135deg,#dcfce7,#4ade80,#16a34a)'},
+];
+export function leagueForXp(xp){
+  const n=Number(xp)||0;
+  for(const l of LEAGUES){if(n>=l.min)return l;}
+  return LEAGUES[LEAGUES.length-1];
+}

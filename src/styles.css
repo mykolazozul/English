@@ -55,9 +55,31 @@ button,input,select{font:inherit}button{cursor:pointer}button:disabled{opacity:.
 .option.wrong{background:#fdecec !important;border-color:#d94b4b !important;color:#a11 !important;animation:answerFlashWrong .45s ease}
 .option.dimmed{opacity:.45}
 .points.positive{color:var(--accent);font-weight:800}.points.negative{color:var(--danger);font-weight:800}
-.feedback{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;margin-top:14px;padding:12px;border-radius:14px}
-.feedback-correct{background:#e8f8ef}.feedback-wrong{background:#fdecec}
-.feedback-copy{display:flex;flex-direction:column;gap:4px}
+.feedback{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;margin-top:16px;padding:14px 16px;border-radius:16px;transition:all .25s ease}
+.feedback.ok, .feedback-correct{
+  background: color-mix(in srgb, var(--accent, #22a06b) 12%, var(--surface));
+  border: 1.5px solid color-mix(in srgb, var(--accent, #22a06b) 45%, var(--border));
+  box-shadow: 0 4px 18px color-mix(in srgb, var(--accent, #22a06b) 18%, transparent);
+}
+.feedback.bad, .feedback-wrong{
+  background: color-mix(in srgb, #e53935 12%, var(--surface));
+  border: 1.5px solid color-mix(in srgb, #e53935 45%, var(--border));
+  box-shadow: 0 4px 18px rgba(229, 57, 53, 0.14);
+}
+[data-theme=dark] .feedback.ok, [data-theme=dark] .feedback-correct{
+  background: #143528;
+  border-color: #22a06b;
+}
+[data-theme=dark] .feedback.bad, [data-theme=dark] .feedback-wrong{
+  background: #3a1818;
+  border-color: #e53935;
+}
+.feedback-row{display:flex;align-items:flex-start;gap:12px}
+.feedback-icon.ok{color:var(--accent,#22a06b);flex-shrink:0;margin-top:2px}
+.feedback-icon.bad{color:#e53935;flex-shrink:0;margin-top:2px}
+.feedback-copy{display:flex;flex-direction:column;gap:3px;flex:1}
+.feedback-hint{margin:2px 0 3px;font-size:14px;line-height:1.35;color:var(--text)}
+.pulse-on-answer{animation:pulseSoft 1.2s infinite ease-in-out}
 .flash-correct{animation:cardCorrect .6s ease}.flash-wrong{animation:cardWrong .6s ease}
 .score-float{position:absolute;right:18px;top:48px;font-size:22px;font-weight:800;animation:scoreFloat .9s ease forwards;pointer-events:none}
 .score-float.up{color:var(--accent)}.score-float.down{color:var(--danger)}
@@ -418,6 +440,40 @@ html[data-theme=custom]{--bg:var(--custom-bg);--surface:var(--custom-surface)}
 .tone-fire strong{color:#ff6d00}
 @keyframes fireFlicker{0%,100%{transform:scale(1);filter:brightness(1)}50%{transform:scale(1.12);filter:brightness(1.25)}}
 
+/* Combo streak & celebration banner */
+.combo-pill {
+  background: linear-gradient(135deg, rgba(255, 109, 0, 0.15), rgba(255, 171, 0, 0.2)) !important;
+  color: #ff6d00 !important;
+  border: 1px solid rgba(255, 109, 0, 0.4) !important;
+  font-weight: 800 !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  animation: pop .35s ease;
+}
+.combo-pill .fire-icon {
+  animation: fireFlicker 1.2s infinite ease-in-out;
+}
+.combo-toast-banner {
+  margin: 10px auto 4px;
+  padding: 8px 18px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #ff6d00, #ff9100);
+  color: #fff;
+  font-weight: 800;
+  font-size: 14px;
+  letter-spacing: .03em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 6px 24px rgba(255, 109, 0, 0.45);
+  animation: pop .45s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.sparkle-ico {
+  animation: fireFlicker 1s infinite alternate;
+}
+
 /* Steam achievement */
 @keyframes steamIn{0%{transform:translateY(40px);opacity:0}20%{opacity:1;transform:translateY(0)}80%{opacity:1}100%{opacity:0;transform:translateY(-10px)}}
 .steam-toast{position:fixed;left:20px;bottom:24px;z-index:300;min-width:260px;max-width:90vw;
@@ -551,7 +607,22 @@ img, svg { max-width: 100%; height: auto; }
   .lb-row { flex-wrap: wrap; }
   .jungle-announce { padding-left: 18px; padding-right: 18px; }
   .jungle-announce .vine { display: none; }
-  .version-badge { bottom: 12px; right: 12px; font-size: 11px; }
+  .version-badge { display: none !important; }
+  .feedback {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+    padding: 14px !important;
+  }
+  .feedback .next-btn {
+    width: 100% !important;
+    justify-content: center !important;
+    padding: 13px 18px !important;
+    font-size: 15px !important;
+    font-weight: 700 !important;
+  }
+  .main { padding-bottom: calc(90px + env(safe-area-inset-bottom, 0px)) !important; }
   .steam-toast { left: 12px; right: 12px; bottom: 16px; min-width: 0; }
   .primary, .secondary { min-height: 44px; }
   .nav { min-height: 44px; }
@@ -726,3 +797,99 @@ html[data-stagger="0"] .stagger .word-row{animation:none !important}
 /* v2.5 Chat Security 2.0 */
 .chat-devices-card .device-list{display:grid;gap:8px;margin-top:12px}.device-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:color-mix(in srgb,var(--surface) 94%,var(--accent))}.fingerprint-box{display:grid;gap:7px;margin-top:12px;padding:12px;border:1px solid var(--border);border-radius:12px}.fingerprint-box.changed{border-color:var(--danger);background:color-mix(in srgb,var(--danger) 7%,var(--surface))}.fingerprint-box code,.secret-code{word-break:break-all;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}.chat-attachment{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:7px;padding:7px 9px;border:1px solid var(--border);border-radius:10px;background:color-mix(in srgb,var(--accent) 6%,var(--surface))}.attachment-open{padding:6px 9px!important;font-size:12px!important}.security-2fa-ok{display:grid;gap:8px}
 .passkey-box{display:grid;gap:6px;margin-top:10px;padding:11px 12px;border:1px solid var(--border);border-radius:12px;background:color-mix(in srgb,var(--accent) 5%,var(--surface))}
+/* ===== Gamification v3 — Leagues, Quests, Gift, Podium ===== */
+
+/* League Badge */
+.league-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 12px;border-radius:20px;font-size:12px;font-weight:700;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.3);box-shadow:0 2px 8px rgba(0,0,0,.18);white-space:nowrap}
+.league-badge.league-legend{background:linear-gradient(135deg,#fef3c7,#f59e0b,#b45309)!important;color:#78350f}
+.league-badge.league-platinum{background:linear-gradient(135deg,#e0f2fe,#38bdf8,#0284c7)!important;color:#0c4a6e}
+.league-badge.league-gold{background:linear-gradient(135deg,#fef9c3,#fbbf24,#d97706)!important;color:#78350f}
+.league-badge.league-silver{background:linear-gradient(135deg,#f3f4f6,#9ca3af,#6b7280)!important;color:#1f2937}
+.league-badge.league-bronze{background:linear-gradient(135deg,#fef3c7,#d97706,#92400e)!important;color:#7c2d12}
+.league-badge.league-beginner{background:linear-gradient(135deg,#dcfce7,#4ade80,#16a34a)!important;color:#14532d}
+
+/* Hero league row */
+.hero-league-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:6px 0 10px}
+
+/* Freeze chip */
+.freeze-chip{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:16px;font-size:12px;font-weight:600;background:linear-gradient(135deg,#dbeafe,#93c5fd);color:#1e40af;border:1px solid #93c5fd}
+
+/* Daily Quests */
+.quests-panel{margin-top:18px}
+.quests-header{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.quest-date{font-size:12px;color:var(--muted);margin-left:auto}
+.quests-list{display:grid;gap:10px}
+.quest-item{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:12px;border:1px solid var(--border);background:color-mix(in srgb,var(--surface) 96%,var(--accent));transition:border-color .2s,box-shadow .2s}
+.quest-item.completed{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,var(--surface))}
+.quest-icon{font-size:22px;flex:0 0 28px;text-align:center}
+.quest-body{flex:1;min-width:0}
+.quest-label{font-size:14px;font-weight:600}
+.quest-track{display:flex;align-items:center;gap:8px;margin-top:5px}
+.quest-bar{flex:1;height:6px;border-radius:3px;background:var(--border);overflow:hidden}
+.quest-bar i{display:block;height:100%;border-radius:3px;background:var(--accent);transition:width .4s cubic-bezier(.34,1.56,.64,1)}
+.quest-count{font-size:11px;color:var(--muted);white-space:nowrap}
+.quest-xp{font-size:11px;font-weight:700;color:var(--accent);white-space:nowrap}
+
+/* League chart */
+.league-chart{margin-bottom:20px}
+.league-tiers{display:grid;gap:8px}
+.league-tier{display:flex;align-items:center;gap:10px;padding:6px 10px;border-radius:10px;border:1px solid transparent;transition:border-color .2s}
+.league-tier.active{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 7%,var(--surface))}
+.league-tier-label{display:inline-flex;align-items:center;gap:5px;padding:3px 14px;border-radius:20px;font-size:12px;font-weight:700;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.25);min-width:110px;justify-content:center}
+.league-tier-xp{font-size:12px;color:var(--muted)}
+
+/* Podium */
+.leaderboard-podium{display:flex;align-items:flex-end;justify-content:center;gap:12px;margin:20px 0;padding-bottom:16px}
+.podium-slot{display:flex;flex-direction:column;align-items:center;cursor:pointer;transition:transform .2s;padding:12px 14px 0;border-radius:16px 16px 0 0;min-width:100px;max-width:130px;position:relative}
+.podium-slot:hover{transform:translateY(-4px)}
+.podium-crown{font-size:24px;margin-bottom:4px}
+.podium-avatar{font-size:36px;margin-bottom:2px}
+.podium-medal{font-size:22px;margin-bottom:4px}
+.podium-name{font-size:12px;font-weight:700;text-align:center;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:110px}
+.podium-xp{font-size:11px;color:var(--accent);font-weight:700;margin:4px 0 8px}
+.podium-bar{width:100%;min-height:12px;border-radius:6px 6px 0 0}
+.podium-1{background:linear-gradient(135deg,#fef9c3,#fef3c7)}.podium-bar.h-1{height:60px;background:linear-gradient(to top,#f59e0b,#fbbf24)}
+.podium-2{background:linear-gradient(135deg,#f3f4f6,#e5e7eb)}.podium-bar.h-2{height:44px;background:linear-gradient(to top,#9ca3af,#d1d5db)}
+.podium-3{background:linear-gradient(135deg,#fef3c7,#fde68a)}.podium-bar.h-3{height:30px;background:linear-gradient(to top,#d97706,#f59e0b)}
+
+/* Leader list */
+.leader-list{padding:0}
+.leader-row{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s}
+.leader-row:last-child{border-bottom:none}
+.leader-row:hover{background:color-mix(in srgb,var(--accent) 6%,var(--surface))}
+.leader-row:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.leader-me{background:color-mix(in srgb,var(--accent) 10%,var(--surface))!important;border-left:3px solid var(--accent)}
+.leader-avatar{font-size:24px;flex:0 0 32px;text-align:center}
+.leader-info{flex:1;min-width:0}
+.leader-info .small{font-size:11px}
+.leader-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.leader-xp{font-size:13px;color:var(--accent)}
+
+/* Daily Gift Modal */
+.gift-modal{text-align:center;padding:32px 24px;display:flex;flex-direction:column;align-items:center;gap:6px;max-width:380px}
+.gift-box{font-size:64px;transition:transform .4s cubic-bezier(.34,1.56,.64,1);cursor:default;user-select:none}
+.gift-box.opening{transform:scale(1.25) rotate(15deg)}
+.gift-lid{animation:bounce 1.2s ease-in-out infinite}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+
+/* Public Profile Modal */
+.public-profile-modal{max-width:460px;padding:24px;display:flex;flex-direction:column;gap:0}
+.pub-profile-hero{display:flex;align-items:center;gap:16px;margin-bottom:8px}
+.pub-badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.pub-badge{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 10px;border-radius:12px;border:1px solid var(--border);background:color-mix(in srgb,var(--surface) 95%,var(--accent));min-width:64px;font-size:20px;cursor:default}
+.pub-badge-title{font-size:10px;font-weight:600;color:var(--muted);text-align:center;white-space:nowrap}
+
+/* Freeze section in profile */
+.freeze-section{margin-top:16px}
+.freeze-section h3{margin-bottom:6px}
+
+/* Dark theme overrides for leagues */
+[data-theme=dark] .league-badge.league-legend{color:#fef3c7}
+[data-theme=dark] .league-badge.league-platinum{color:#e0f2fe}
+[data-theme=dark] .league-badge.league-gold{color:#fef9c3}
+[data-theme=dark] .league-badge.league-silver{color:#f9fafb}
+[data-theme=dark] .league-badge.league-bronze{color:#fef3c7}
+[data-theme=dark] .league-badge.league-beginner{color:#dcfce7}
+[data-theme=dark] .podium-1{background:linear-gradient(135deg,#451a03,#78350f)}
+[data-theme=dark] .podium-2{background:linear-gradient(135deg,#1f2937,#374151)}
+[data-theme=dark] .podium-3{background:linear-gradient(135deg,#451a03,#6b3a0e)}

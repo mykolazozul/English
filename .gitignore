@@ -1,4 +1,9 @@
 node_modules
 dist
 .env
+.env.local
+.env.*.local
+*.pem
+credentials.json
+*.log
 .DS_Store

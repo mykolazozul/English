@@ -24,6 +24,7 @@ import profile from '../lib/server/api-handlers/profile.js';
 import progress from '../lib/server/api-handlers/progress.js';
 import reports from '../lib/server/api-handlers/reports.js';
 import social from '../lib/server/api-handlers/social.js';
+import gamification from '../lib/server/api-handlers/gamification.js';
 import vocabulary from '../lib/server/api-handlers/vocabulary.js';
 
 const handlers = {
@@ -50,6 +51,7 @@ const handlers = {
   'profile': profile,
   'progress': progress,
   'reports': reports,
+  'gamification': gamification,
   'social': social,
   'vocabulary': vocabulary,
 };
@@ -61,3 +63,4 @@ export default async function handler(req,res){
   if (!fn) return res.status(404).json({ok:false,error:'API route not found'});
   return fn(req,res);
 }
+

@@ -1,10 +1,10 @@
 import React, {useEffect, useMemo, useState, useCallback, useRef, lazy, Suspense} from 'react';
 import {BarChart3, BookOpen, Check, CheckCircle2, ChevronRight, ChevronDown, Flame, Home, Lock, Menu, Moon, Palette, Play, RotateCcw, Settings, Sun, Target, Trophy, User, Volume2, X, XCircle, Shield, SlidersHorizontal, Brain, Sparkles, Keyboard, Layers, Award, Cloud, Users, MessageCircle, Ghost, VolumeX, Swords, ShieldAlert, Eye, Bell, Wifi} from 'lucide-react';
-import {words as fallbackWords, rules, BADGES} from './data';
+import {words as fallbackWords, rules, BADGES, LEAGUES, leagueForXp} from './data';
 import {notionWords, notionSyncMeta} from './notionWords.generated';
 import { Analytics } from '@vercel/analytics/react';
 import { startRegistration, startAuthentication } from '@simplewebauthn/browser';
-import {saveProfile, loadProfile, getActiveNick, cloudPull, cloudPush, cloudConfigured, isNickTaken, registerNick, setGuestSession, isGuestSession, getFriends, addFriend, acceptFriend, getChat, sendChat, registerChatDevice, getChatDevice, getChatDevices, getMyChatDevices, revokeChatDevice, friendsLeaderboard, getDailyAverage, ensureDailyAverage, serverAuth, loadCloudVocabulary, cloudRecordProgress, cloudStartLesson, cloudFinishLesson, flushProgressQueue, serverMe, loadServerConfig, cloudLeaderboard, getWordIdByText} from './lib/storage';
+import {saveProfile, loadProfile, getActiveNick, cloudPull, cloudPush, cloudConfigured, isNickTaken, registerNick, setGuestSession, isGuestSession, getFriends, addFriend, acceptFriend, getChat, sendChat, registerChatDevice, getChatDevice, getChatDevices, getMyChatDevices, revokeChatDevice, friendsLeaderboard, getDailyAverage, ensureDailyAverage, serverAuth, loadCloudVocabulary, cloudRecordProgress, cloudStartLesson, cloudFinishLesson, flushProgressQueue, serverMe, loadServerConfig, cloudLeaderboard, getWordIdByText, getGamification, postGamification, getPublicProfile} from './lib/storage';
 import {onCorrect as srsOk, onWrong as srsBad, isDue, todayStr} from './lib/srs';
 import {dbPutProfile, dbGetProfile, dbListProfiles, dbSaveWords, dbLoadWords} from './lib/db.js';
 import {createRealtime} from './lib/realtime.js';
@@ -21,7 +21,7 @@ const ROADMAP_ITEMS = [
   {v:'2.3.0', title:'Realtime status + ping + chat privacy parity', status:'done'},
   {v:'2.3.0', title:'Custom dropdowns/modals + 3 admin test designs', status:'done'},
   {v:'2.3.0', title:'RPG profile + animated emoji feedback on Home/Stats', status:'done'},
-  {v:'2.4.0', title:'E2E chat with device-only P-256 keys + encrypted Neon messages', status:'done'},
+  {v:'2.6.1', title:'Fix 1/10 counter, auto-advance, universal Notion sync & UI-UX polish', status:'done'},
   {v:'2.6.0', title:'Bugfix & stability: correct learned/SRS counts, guest mode, session UX, cloud-only leaderboard', status:'done'},
   {v:'2.5.0', title:'Admin 2.0: bootstrap, roles, 2FA/TOTP, session hardening and Security Lab', status:'done'},
   {v:'2.5.0', title:'Chat Security 2.0: fingerprints, key rotation, multi-device, revoke and encrypted attachments', status:'done'},
@@ -31,9 +31,10 @@ const ROADMAP_ITEMS = [
   {v:'2.2.0', title:'Product & Learning Analytics 1–17', status:'done'},
 
   {v:'future', title:'WebAuthn/passkeys + verified device signatures', status:'planned'},
+  {v:'2.7.0', title:'Gamification v3: Leagues, Streak Freeze, Daily Quests, Gift Box, Public Profiles', status:'planned'},
 ];
 
-const VERSION = '2.6.0';
+const VERSION = '2.7.0';
 const words = (notionWords?.length ? notionWords : fallbackWords).map(w => ({
   id: w.id, word: w.word, translation: w.translation || '—', pronunciation: w.pronunciation || '',
   category: w.category || 'Other', level: w.level || '', explanation: w.explanation || '',
@@ -155,6 +156,26 @@ function emitSiteError(message, title='Помилка') {
 function emitSiteToast(message, kind='info') {
   window.dispatchEvent(new CustomEvent('ef-toast', {detail:{message:String(message||''),kind}}));
 }
+function confettiBurst() {
+  try {
+    const colors = ['#22c55e','#f59e0b','#3b82f6','#ec4899','#a78bfa'];
+    for (let i = 0; i < 36; i++) {
+      const el = document.createElement('div');
+      el.style.cssText = `position:fixed;pointer-events:none;z-index:9999;width:8px;height:8px;border-radius:2px;
+        background:${colors[i%colors.length]};top:50%;left:50%;
+        transform:translate(-50%,-50%);transition:transform 1s ease-out,opacity 1s;opacity:1`;
+      document.body.appendChild(el);
+      const angle = (i / 36) * 2 * Math.PI;
+      const dist = 120 + Math.random() * 120;
+      const tx = Math.cos(angle) * dist, ty = Math.sin(angle) * dist;
+      requestAnimationFrame(() => {
+        el.style.transform = `translate(calc(-50% + ${tx}px),calc(-50% + ${ty}px)) rotate(${Math.random()*360}deg)`;
+        el.style.opacity = '0';
+      });
+      setTimeout(() => el.remove(), 1200);
+    }
+  } catch {}
+}
 
 function UiSelect({value,onChange,options=[],className='',disabled=false}) {
   const [open,setOpen]=useState(false);
@@ -246,6 +267,14 @@ export default function App() {
   });
   const [toast, setToast] = useState(null);
   const [modal, setModal] = useState(null);
+  // Gamification state
+  const [gamification, setGamification] = useState(null);
+  const [giftModal, setGiftModal] = useState(false);
+  const [publicProfileNick, setPublicProfileNick] = useState(null);
+  const refreshGamification = useCallback(async () => {
+    if (state.guest) return;
+    try { const g = await getGamification(); if (g?.ok) { setGamification(g); if (g.giftAvailable) setGiftModal(true); } } catch {}
+  }, [state.guest]);
   useEffect(() => {
     const onExpired = e => {
       if (state.guest) return;
@@ -272,6 +301,8 @@ export default function App() {
   }, []);
   useEffect(() => { track('app_open',{page:location.pathname}); }, []);
   useEffect(() => { if (state.nick) track('page_view',{page}); }, [page, state.nick]);
+  // Load gamification on page load for authenticated users
+  useEffect(() => { if (state.nick && !state.guest) refreshGamification(); }, [state.nick, state.guest]);
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 2800); };
 
   const profileSyncTimer = useRef(null);
@@ -507,18 +538,18 @@ export default function App() {
   return (
     <>
       <Layout>
-        {page === 'dashboard' && <Dashboard state={state} learned={learnedCount} due={dueCount} words={activeWords.length} onLearn={() => nav('learn')} onReview={() => nav('review')} cloudMsg={cloudMsg} />}
+        {page === 'dashboard' && <Dashboard state={state} learned={learnedCount} due={dueCount} words={activeWords.length} onLearn={() => nav('learn')} onReview={() => nav('review')} cloudMsg={cloudMsg} quests={gamification?.quests} />}
         {page === 'learn' && <Learn state={state} cats={activeCats} onStart={startLesson} />}
         {page === 'vocabulary' && <Vocabulary state={state} setModal={setModal} wordsCatalog={activeWords} cats={activeCats} />}
         {page === 'review' && <ReviewPage state={state} due={dueCount} onStart={() => startLesson('srs', 'en-ua', 'all')} />}
         {page === 'stats' && <Stats state={state} learned={learnedCount} />}
         {page === 'badges' && <BadgesPage state={state} />}
         {page === 'problems' && <ProblemsPage state={state} save={save} wordsCatalog={wordsLive} onStart={(m,d,c) => { setLessonCfg({mode:m,direction:d,category:c}); setPage('lesson'); }} />}
-        {page === 'leaderboard' && <Leaderboard state={state} />}
+        {page === 'leaderboard' && <Leaderboard state={state} gamification={gamification} onViewProfile={setPublicProfileNick} />}
         {page === 'settings' && <SettingsPage state={state} save={save} />}
         {page === 'friends' && <FriendsPage state={state} />}
         {page === 'challenges' && <ChallengesPage state={state} />}
-        {page === 'profile' && <Profile state={state} save={save} />}
+        {page === 'profile' && <Profile state={state} save={save} gamification={gamification} onRefreshGamification={refreshGamification} />}
         {page === 'about' && <AboutPage />}
         {page === '404' && <section className="page-error card"><h1>404</h1><p>Такої сторінки немає.</p><button className="primary" type="button" onClick={() => nav('dashboard')}>На головну</button></section>}
         {page === 'admin' && <Admin state={state} save={save} setWordsLive={setWordsLive} wordsLive={wordsLive} />}
@@ -529,13 +560,27 @@ export default function App() {
             state={state}
             save={save}
             onExit={() => nav('learn')}
-            onDone={() => nav('dashboard')}
+            onDone={() => { nav('dashboard'); refreshGamification(); }}
           />
         )}
       </Layout>
       <div className="version-badge">v{VERSION}</div>
       <Toast msg={toast} />
       <ConfirmModal modal={modal} onClose={() => setModal(null)} />
+      {giftModal && <DailyGiftModal onClose={() => setGiftModal(false)} onOpen={async () => {
+        try {
+          const r = await postGamification('open_gift');
+          if (r?.ok) {
+            const msgs = {xp_100:'🎉 +100 XP!', xp_50:'✨ +50 XP!', xp_25:'🎊 +25 XP!', freeze:'❄️ +1 Заморозка стріку!'};
+            emitSiteToast(msgs[r.prize] || '🎁 Приз отримано!', 'ok');
+            if (r.xpGain > 0) save({...state, xp: (state.xp||0) + r.xpGain});
+            confettiBurst();
+            refreshGamification();
+          }
+        } catch {}
+        setGiftModal(false);
+      }} />}
+      {publicProfileNick && <PublicProfileModal nick={publicProfileNick} onClose={() => setPublicProfileNick(null)} />}
       <Analytics />
     </>
   );
@@ -639,20 +684,67 @@ function Onboarding({onDone}) {
     </div>
   );
 }
-function Dashboard({state, learned, due, words, onLearn, onReview, cloudMsg}) {
+function LeagueBadge({xp, style={}}) {
+  const l = leagueForXp(xp);
+  return (
+    <span className={'league-badge league-'+l.id} style={{background: l.gradient, ...style}} title={l.label}>
+      {l.label}
+    </span>
+  );
+}
+
+function DailyQuests({quests}) {
+  if (!quests || !quests.length) return null;
+  const real = quests.filter(q => q.quest_type !== '_bonus');
+  const allDone = real.length > 0 && real.every(q => q.completed);
+  return (
+    <div className="quests-panel card">
+      <div className="quests-header">
+        <span className="eyebrow">DAILY QUESTS</span>
+        <span className="quest-date">{new Date().toLocaleDateString('uk-UA', {weekday:'short',day:'numeric',month:'short'})}</span>
+        {allDone && <span className="pill ok">✓ Всі виконано!</span>}
+      </div>
+      <div className="quests-list">
+        {real.map(q => {
+          const pct = Math.min(100, Math.round((Number(q.progress)||0) / Math.max(1, Number(q.goal)) * 100));
+          return (
+            <div key={q.quest_type} className={'quest-item' + (q.completed ? ' completed' : '')}>
+              <div className="quest-icon">{q.icon || '🎯'}</div>
+              <div className="quest-body">
+                <div className="quest-label">{q.label}</div>
+                <div className="quest-track">
+                  <div className="quest-bar"><i style={{width: pct+'%'}}/></div>
+                  <span className="quest-count">{q.completed ? '✓' : `${q.progress}/${q.goal}`}</span>
+                </div>
+              </div>
+              <div className="quest-xp">+{q.xp_reward} XP</div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function Dashboard({state, learned, due, words, onLearn, onReview, cloudMsg, quests}) {
+  const league = leagueForXp(state.xp || 0);
   return (
     <section>
       <div className="announce card jungle-announce">
         <span className="vine-deco left" aria-hidden="true">🌿</span>
         <span className="vine-deco right" aria-hidden="true">🌿</span>
-        <span className="eyebrow">UPDATE · v2.6.0</span>
-        <h2>🚀 Стабільність і рахунок прогресу</h2>
-        <p>Sprint, SRS, друзі, бейджі. Прогрес зберігається локально та синхронізується з хмарною БД.</p>
+        <span className="eyebrow">UPDATE · v2.7.0</span>
+        <h2>🏆 Ліги, Квести, Скриня та Профілі</h2>
+        <p>Нові ліги по XP, щоденні квести, заморозка стріку та публічні профілі гравців.</p>
       </div>
       <div className="hero">
         <div>
           <span className="eyebrow">TODAY</span>
           <h1>Привіт, {state.name || state.nick} 👋</h1>
+          <div className="hero-league-row">
+            <LeagueBadge xp={state.xp || 0} />
+            {state.streak > 0 && <span className="freeze-chip">🔥 {state.streak} днів</span>}
+          </div>
           <p>Слів у базі: <b>{words}</b> · Вивчено: <b>{learned}</b> · На повторення SRS: <b>{due}</b></p>
           {cloudMsg && <p className="saved-message">{cloudMsg}</p>}
           <div className="row-btns">
@@ -669,9 +761,12 @@ function Dashboard({state, learned, due, words, onLearn, onReview, cloudMsg}) {
         <Card icon={<Target/>} title="Ціль" value={`${Math.min(100, Math.round((state.todayXp / state.dailyGoal) * 100))}%`} sub={`${state.todayXp}/${state.dailyGoal}`} />
         <Card icon={<Brain/>} title="Вивчено" value={learned} sub={`з ${words}`} />
       </div>
+      <DailyQuests quests={quests} />
     </section>
   );
 }
+
+
 
 function Learn({state, cats, onStart}) {
   const [direction, setDirection] = useState('en-ua');
@@ -742,18 +837,21 @@ function Lesson({cfg, state, save, onExit, onDone, wordsCatalog}) {
   const [serverItems, setServerItems] = useState(null);
   const [loadError, setLoadError] = useState('');
   const [retry, setRetry] = useState(0);
+  const [useLocalFallback, setUseLocalFallback] = useState(false);
   const catalog = (wordsCatalog && wordsCatalog.length) ? wordsCatalog : words;
-  const localItems = useMemo(() => {
+
+  // Snapshot initial question pool ONCE when lesson starts or on retry.
+  // CRITICAL: Do NOT list `state` in dependencies, otherwise every answer re-shuffles the quiz and resets to 1/10!
+  const initialLocalItems = useMemo(() => {
     let pool = catalog;
     if (mode === 'srs') {
       const due = catalog.filter(w => { const k = progKey(w, state.mastery, state.srs); return isDue(state.srs[k], todayStr()) && (state.mastery[k] || 0) > 0; });
-      pool = due;
+      pool = due.length ? due : catalog;
     } else if (mode === 'problems') {
       const stats = {};
       (state.history || []).forEach(h => { const id=String(h.word); if(!stats[id]) stats[id]={w:0,c:0}; if(h.correct) stats[id].c++; else stats[id].w++; });
       const hardIds = new Set(Object.entries(stats).filter(([,v]) => v.w >= 2 && v.w > v.c).map(([id]) => id));
       pool = catalog.filter(w => hardIds.has(progKey(w, state.mastery, state.srs) || String(w.id)));
-      // HARD never silently falls back to the whole dictionary.
       if (!pool.length) pool = []; 
     } else if (mode === 'long') {
       pool = catalog.filter(w => (w.word || '').replace(/\s/g, '').length > 6);
@@ -762,32 +860,74 @@ function Lesson({cfg, state, save, onExit, onDone, wordsCatalog}) {
     if (state.admin.shuffleQuestions !== false) pool = shuffle(pool);
     if (mode === 'match') return pool.slice(0, 6);
     return makeQuizItems(pool, state.admin.lessonSize, cfg.direction, 'all');
-  }, [catalog, mode, cfg.direction, cfg.category, state]);
-  const items = serverItems?.length ? serverItems : localItems;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [catalog, mode, cfg.direction, cfg.category, retry]);
+
+  const items = (serverItems?.length && !useLocalFallback) ? serverItems : initialLocalItems;
+
   useEffect(() => {
-    let cancelled=false;
-    setLoadError(''); setLessonId(''); setServerItems(null);
+    let cancelled = false;
+    setLoadError(''); setLessonId(''); setServerItems(null); setUseLocalFallback(false);
     if (state.guest) return;
-    if (!localItems.length) {
+    if (!initialLocalItems.length) {
       const msg = mode==='problems' ? 'Поки немає проблемних слів. Вони зʼявляться після реальних помилок.' : mode==='srs' ? 'Наразі немає карток, які потрібно повторити.' : 'У словнику немає доступних слів для цього уроку.';
       setLoadError(msg); return;
     }
-    const timer=setTimeout(()=>{if(!cancelled)setLoadError('Сервер не відповів вчасно. Перевір зʼєднання та спробуй ще раз.')},15000);
-    cloudStartLesson(mode, Math.min(localItems.length, 100), cfg.direction, cfg.category).then(r => {
-      if(cancelled)return; clearTimeout(timer); setLoadError(''); setLessonId(r.lessonId || '');
-      if (Array.isArray(r.items) && r.items.length) setServerItems(r.items); else setLoadError('Сервер не повернув питання для уроку.');
-    }).catch(e => { clearTimeout(timer); if(cancelled)return; setLoadError(e.status===401 ? 'Сесія закінчилась. Увійди знову.' : (e.message || 'Не вдалося створити захищену сесію.')); });
-    return ()=>{cancelled=true;clearTimeout(timer)};
-  }, [mode, state.guest, localItems.length, cfg.direction, cfg.category, retry]);
+    // Fall back to local items if cloud session takes more than 6s so the user is never stuck
+    const timer = setTimeout(() => {
+      if (!cancelled) setUseLocalFallback(true);
+    }, 6000);
 
-  if (!state.guest && (!lessonId || !serverItems?.length)) return <section><button className="back" onClick={onExit}>← Назад</button><div className="card lesson-loading-card"><h2>{loadError ? 'Не вдалося підготувати урок' : 'Готуємо персональний урок…'}</h2><p className="muted">{loadError || 'Learning Engine підбирає слова та створює захищену сесію.'}</p>{loadError&&<div className="row-btns"><button className="primary" onClick={()=>{setLoadError('');setLessonId('');setServerItems(null);setRetry(r=>r+1)}}>Спробувати ще раз</button><button className="secondary" onClick={onExit}>Назад</button></div>}</div></section>;
-  if (mode === 'match') return <MatchGame key="match-board" items={items} state={state} save={save} onExit={onExit} onDone={onDone} lessonId={lessonId} direction={cfg.direction} />;
-  if (mode === 'dictation') return <SprintGame items={items} mode={mode} state={state} save={save} onExit={onExit} onDone={onDone} lessonId={lessonId} direction={cfg.direction} />; 
-  return <SprintGame items={items} mode={mode} state={state} save={save} onExit={onExit} onDone={onDone} lessonId={lessonId} direction={cfg.direction} />;
+    cloudStartLesson(mode, Math.min(initialLocalItems.length, 100), cfg.direction, cfg.category).then(r => {
+      if (cancelled) return;
+      clearTimeout(timer);
+      setLoadError('');
+      setLessonId(r.lessonId || '');
+      if (Array.isArray(r.items) && r.items.length) {
+        setServerItems(r.items);
+      } else {
+        setUseLocalFallback(true);
+      }
+    }).catch(e => {
+      clearTimeout(timer);
+      if (cancelled) return;
+      if (initialLocalItems.length) {
+        setUseLocalFallback(true);
+      } else {
+        setLoadError(e.status===401 ? 'Сесія закінчилась. Увійди знову.' : (e.message || 'Не вдалося створити захищену сесію.'));
+      }
+    });
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [mode, state.guest, cfg.direction, cfg.category, retry]);
+
+  if (!state.guest && !useLocalFallback && (!lessonId || !serverItems?.length)) {
+    return (
+      <section>
+        <button className="back" onClick={onExit}>← Назад</button>
+        <div className="card lesson-loading-card">
+          <h2>{loadError ? 'Не вдалося підготувати урок' : 'Готуємо персональний урок…'}</h2>
+          <p className="muted">{loadError || 'Learning Engine підбирає слова та створює захищену сесію.'}</p>
+          {loadError && (
+            <div className="row-btns">
+              <button className="primary" onClick={() => { setLoadError(''); setLessonId(''); setServerItems(null); setRetry(r => r + 1); }}>Спробувати ще раз</button>
+              {initialLocalItems.length > 0 && (
+                <button className="secondary" onClick={() => setUseLocalFallback(true)}>Грати офлайн</button>
+              )}
+              <button className="secondary" onClick={onExit}>Назад</button>
+            </div>
+          )}
+        </div>
+      </section>
+    );
+  }
+
+  const lessonKey = `${lessonId || (useLocalFallback ? 'local' : 'init')}-${mode}-${cfg.direction || 'en-ua'}-${cfg.category || 'all'}-${retry}`;
+  if (mode === 'match') return <MatchGame key={`match-${lessonKey}`} items={items} state={state} save={save} onExit={onExit} onDone={onDone} lessonId={lessonId} direction={cfg.direction} />;
+  return <SprintGame key={`sprint-${lessonKey}`} items={items} mode={mode} state={state} save={save} onExit={onExit} onDone={onDone} lessonId={lessonId} direction={cfg.direction} />;
 }
 
 function SprintGame({items, mode, state, save, onExit, onDone, lessonId}) {
-  // Freeze quiz list once — never re-read from props
+  // Freeze quiz list once per lesson mount
   const quizRef = useRef(null);
   if (!quizRef.current) {
     quizRef.current = Array.isArray(items) && items.length ? items.slice() : [];
@@ -803,7 +943,11 @@ function SprintGame({items, mode, state, save, onExit, onDone, lessonId}) {
   const [slowAudio, setSlowAudio] = useState(false);
   const [leaveAsk, setLeaveAsk] = useState(false);
   const [mist, setMist] = useState(null);
+  const [combo, setCombo] = useState(0);
+  const [comboPop, setComboPop] = useState(null);
   const pendingProgress = useRef([]);
+  const autoAdvanceTimer = useRef(null);
+  const feedbackRef = useRef(null);
 
   const stateRef = useRef(state);
   stateRef.current = state;
@@ -834,12 +978,49 @@ function SprintGame({items, mode, state, save, onExit, onDone, lessonId}) {
         .catch(() => null);
       pendingProgress.current.push(pending);
     }
-    if (ok) setOkCount(c => c + 1); else { setBadCount(c => c + 1); setSlowAudio(true); }
+    if (ok) {
+      setOkCount(c => c + 1);
+      setCombo(prev => {
+        const next = prev + 1;
+        if (next > 0 && next % 5 === 0) {
+          // Festive mini-celebration (confetti burst) for every 5 perfect answers in a row!
+          confettiBurst();
+          setComboPop(`${next} ПОСПІЛЬ! 🔥`);
+          emitSiteToast(`Серія: ${next} правильних відповідей поспіль! 🔥`, 'ok');
+          setTimeout(() => setComboPop(null), 2200);
+        }
+        return next;
+      });
+    } else {
+      setBadCount(c => c + 1);
+      setSlowAudio(true);
+      setCombo(0);
+    }
     setScorePop({pts: points, ok, key: Date.now()});
     setMist(ok ? 'ok' : 'bad');
     playTone(ok);
     setTimeout(() => { setScorePop(null); setMist(null); }, 700);
-  }, [mode, save]);
+  }, [mode, save, lessonId]);
+
+  const goNext = useCallback(() => {
+    if (autoAdvanceTimer.current) {
+      clearTimeout(autoAdvanceTimer.current);
+      autoAdvanceTimer.current = null;
+    }
+    const i = stepRef.current;
+    const len = quizRef.current.length;
+    setPicked(null);
+    setScorePop(null);
+    setMist(null);
+    if (i + 1 >= len) {
+      setDone(true);
+    } else {
+      setStep(i + 1);
+      try {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } catch {}
+    }
+  }, []);
 
   const answer = useCallback((opt) => {
     if (pickedRef.current !== null) return;
@@ -848,17 +1029,31 @@ function SprintGame({items, mode, state, save, onExit, onDone, lessonId}) {
     const ok = opt === wordObj.answer;
     setPicked(opt);
     applyAnswer(ok, wordObj, opt);
-  }, [applyAnswer]);
 
-  const goNext = useCallback(() => {
-    const i = stepRef.current;
-    const len = quizRef.current.length;
-    setPicked(null);
-    setScorePop(null);
-    setMist(null);
-    if (i + 1 >= len) setDone(true);
-    else setStep(i + 1);
+    // Auto-advance to next question upon correct answer after pleasant 1050ms pause
+    if (autoAdvanceTimer.current) clearTimeout(autoAdvanceTimer.current);
+    if (ok) {
+      autoAdvanceTimer.current = setTimeout(() => {
+        goNext();
+      }, 1050);
+    }
+  }, [applyAnswer, goNext]);
+
+  // Clean up auto-advance timer on unmount
+  useEffect(() => {
+    return () => {
+      if (autoAdvanceTimer.current) clearTimeout(autoAdvanceTimer.current);
+    };
   }, []);
+
+  // Auto-scroll feedback into view so Next button is immediately visible on mobile
+  useEffect(() => {
+    if (picked !== null && feedbackRef.current) {
+      try {
+        feedbackRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      } catch {}
+    }
+  }, [picked]);
 
   useEffect(() => {
     const onKey = (e) => {
@@ -941,10 +1136,22 @@ function SprintGame({items, mode, state, save, onExit, onDone, lessonId}) {
         <div className="lesson-top">
           <span className="pill">{mode === 'dictation' ? 'DICTATION' : mode === 'srs' ? 'SRS' : 'SPRINT'}</span>
           <span className="pill soft">{(w.direction || 'en-ua') === 'en-ua' ? 'EN→UA' : 'UA→EN'}</span>
+          {combo >= 2 && (
+            <span className="pill combo-pill" key={'combo'+combo}>
+              <Flame size={12} className="fire-icon"/> {combo} поспіль
+            </span>
+          )}
           <span className={'points' + (picked != null ? (correct ? ' up' : ' down') : '')}>
             {picked != null ? (correct ? `+${state.admin.correctPoints}` : `${state.admin.wrongPoints}`) : '·'}
           </span>
         </div>
+        {comboPop && (
+          <div className="combo-toast-banner" key={comboPop}>
+            <Sparkles size={16} className="sparkle-ico"/>
+            <span>{comboPop}</span>
+            <Sparkles size={16} className="sparkle-ico"/>
+          </div>
+        )}
         <div className="prompt-block">
           <p className="prompt-label muted">Питання {step + 1}</p>
           <h2 className="prompt" key={'p'+step}>{mode === 'dictation' ? 'Напиши слово на слух' : (w.prompt || w.word)}</h2>
@@ -985,12 +1192,12 @@ function SprintGame({items, mode, state, save, onExit, onDone, lessonId}) {
           </div>
         )}
         {picked != null && (
-          <div className={'feedback ' + (correct ? 'ok' : 'bad')}>
+          <div ref={feedbackRef} className={'feedback ' + (correct ? 'ok' : 'bad')}>
             <div className="feedback-row">
-              {correct ? <CheckCircle2/> : <XCircle/>}
-              <div>
-                <b>{correct ? 'Правильно!' : 'Неправильно'}</b>
-                <p className="muted">{w.explanation || w.translation}</p>
+              {correct ? <CheckCircle2 className="feedback-icon ok" size={24}/> : <XCircle className="feedback-icon bad" size={24}/>}
+              <div className="feedback-copy">
+                <b>{correct ? 'Чудово! Правильно' : 'Не зовсім так'}</b>
+                <p className="feedback-hint">{w.explanation || w.translation}</p>
                 <small className="muted">Mastery {masteryNow}/{state.admin.masteryThreshold}</small>
               </div>
             </div>
@@ -999,7 +1206,7 @@ function SprintGame({items, mode, state, save, onExit, onDone, lessonId}) {
                 {scorePop.ok ? '+' : ''}{scorePop.pts}
               </div>
             )}
-            <button className="primary next-btn" type="button" onClick={goNext}>
+            <button className="primary next-btn pulse-on-answer" type="button" onClick={goNext}>
               {step + 1 >= total ? 'Завершити' : 'Далі'} <span className="arrow-ico">→</span>
             </button>
           </div>
@@ -1300,49 +1507,225 @@ function BadgesPage({state}) {
   );
 }
 
-function Leaderboard({state}) {
+function Leaderboard({state, gamification, onViewProfile}) {
+  const [tab, setTab] = useState('global');
+  const [loading, setLoading] = useState(!gamification);
   const [rows, setRows] = useState(null);
+
   useEffect(() => {
+    if (gamification?.leaderboard) {
+      setRows(gamification.leaderboard);
+      setLoading(false);
+      return;
+    }
     let alive = true;
-    cloudLeaderboard().then(r => { if (alive) setRows(Array.isArray(r) ? r : []); }).catch(() => { if (alive) setRows([]); });
+    setLoading(true);
+    cloudLeaderboard().then(r => {
+      if (alive) { setRows({global: Array.isArray(r) ? r : [], friends: []}); setLoading(false); }
+    }).catch(() => { if (alive) { setRows({global:[], friends:[]}); setLoading(false); } });
     return () => { alive = false; };
-  }, []);
-  // Leaderboard shows the cloud ranking only.
-  if (!rows || !rows.length) {
-    return (
-    <section>
-      <Title title="Рейтинг" text="Хмарний рейтинг"/>
-      <div className="card">
-        <p className="muted">Поки немає інших профілів</p>
-      </div>
-    </section>
-    );
-  }
+  }, [gamification]);
+
+  const list = rows ? (tab === 'global' ? (rows.global || []) : (rows.friends || [])) : [];
+  const podium = list.slice(0, 3);
+  const rest = list.slice(3);
+
+  const rankMedal = (i) => ['🥇','🥈','🥉'][i] || `#${i+1}`;
+
   return (
-    <section>
-      <Title title="Рейтинг" text="Хмарний рейтинг"/>
-      <div className="card">
-        {rows.slice(0, 100).map((p, i) => {
-          const nick = String((p && p.nick) || '');
-          if (!nick) return null;
-          return (
-            <div className="leader-row" key={nick}>
-              <span className="rank">#{i + 1}</span>
-              <b>{nick}</b>
-              <span className="muted">{p.name}{Number(p.streak) > 0 ? ' · ' + Number(p.streak) + '🔥' : ''}</span>
-              <strong>{Number(p.xp) || 0} XP</strong>
-              {nick === state.nick && <span className="pill ok">ти</span>}
-            </div>
-          );
-        })}
+    <section className="fade-in">
+      <Title title="Рейтинг" text="Глобальний та серед друзів · Ліги по очках XP" />
+
+      {/* League chart */}
+      <div className="league-chart card">
+        <h3 style={{marginBottom:12}}>Система ліг</h3>
+        <div className="league-tiers">
+          {LEAGUES.slice().reverse().map(l => {
+            const active = leagueForXp(state.xp||0).id === l.id;
+            return (
+              <div key={l.id} className={'league-tier' + (active ? ' active' : '')} title={l.min + '+ XP'}>
+                <span className="league-tier-label" style={{background: l.gradient}}>{l.label}</span>
+                <span className="league-tier-xp">{l.min === 0 ? '0+' : l.min+'+'} XP</span>
+                {active && <span className="pill ok" style={{fontSize:10}}>Ти тут</span>}
+              </div>
+            );
+          })}
+        </div>
       </div>
+
+      {/* Tabs */}
+      <div className="row-btns" style={{marginBottom:16}}>
+        <button type="button" className={tab==='global'?'primary':'secondary'} onClick={()=>setTab('global')}>🌍 Глобальний</button>
+        <button type="button" className={tab==='friends'?'primary':'secondary'} onClick={()=>setTab('friends')}>👥 Друзі</button>
+      </div>
+
+      {loading && <div className="card"><p className="muted">Завантаження рейтингу…</p></div>}
+
+      {!loading && !list.length && (
+        <div className="card">
+          <p className="muted">{tab==='friends' ? 'Додай друзів, щоб побачити їх у рейтингу.' : 'Ще немає гравців у рейтингу.'}</p>
+        </div>
+      )}
+
+      {/* Podium Top-3 */}
+      {!loading && podium.length > 0 && (
+        <div className="leaderboard-podium">
+          {/* Silver (2nd) */}
+          {podium[1] && (
+            <div className="podium-slot podium-2" onClick={() => podium[1].nick && onViewProfile?.(podium[1].nick)}>
+              <div className="podium-avatar">{podium[1].avatar || '🎓'}</div>
+              <div className="podium-medal">🥈</div>
+              <div className="podium-name">{podium[1].nick === state.nick ? '👤 Ти' : (podium[1].name || podium[1].nick)}</div>
+              <LeagueBadge xp={podium[1].xp} style={{fontSize:10, padding:'2px 8px'}} />
+              <div className="podium-xp">{podium[1].xp} XP</div>
+              <div className="podium-bar h-2" />
+            </div>
+          )}
+          {/* Gold (1st) */}
+          {podium[0] && (
+            <div className="podium-slot podium-1" onClick={() => podium[0].nick && onViewProfile?.(podium[0].nick)}>
+              <div className="podium-crown">👑</div>
+              <div className="podium-avatar">{podium[0].avatar || '🎓'}</div>
+              <div className="podium-medal">🥇</div>
+              <div className="podium-name">{podium[0].nick === state.nick ? '👤 Ти' : (podium[0].name || podium[0].nick)}</div>
+              <LeagueBadge xp={podium[0].xp} style={{fontSize:10, padding:'2px 8px'}} />
+              <div className="podium-xp">{podium[0].xp} XP</div>
+              <div className="podium-bar h-1" />
+            </div>
+          )}
+          {/* Bronze (3rd) */}
+          {podium[2] && (
+            <div className="podium-slot podium-3" onClick={() => podium[2].nick && onViewProfile?.(podium[2].nick)}>
+              <div className="podium-avatar">{podium[2].avatar || '🎓'}</div>
+              <div className="podium-medal">🥉</div>
+              <div className="podium-name">{podium[2].nick === state.nick ? '👤 Ти' : (podium[2].name || podium[2].nick)}</div>
+              <LeagueBadge xp={podium[2].xp} style={{fontSize:10, padding:'2px 8px'}} />
+              <div className="podium-xp">{podium[2].xp} XP</div>
+              <div className="podium-bar h-3" />
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Rest of list */}
+      {!loading && rest.length > 0 && (
+        <div className="card leader-list">
+          {rest.map((p, i) => {
+            const nick = String((p && p.nick) || '');
+            if (!nick) return null;
+            const isMe = nick === state.nick;
+            const league = leagueForXp(p.xp || 0);
+            return (
+              <div
+                className={'leader-row' + (isMe ? ' leader-me' : '')}
+                key={nick}
+                onClick={() => onViewProfile?.(nick)}
+                role="button" tabIndex={0}
+                onKeyDown={e => e.key==='Enter' && onViewProfile?.(nick)}
+              >
+                <span className="rank">{rankMedal(i + 3)}</span>
+                <span className="leader-avatar">{p.avatar || '🎓'}</span>
+                <div className="leader-info">
+                  <b>{isMe ? '👤 Ти' : (p.name || nick)}</b>
+                  <div className="muted small">@{nick}{Number(p.streak) > 0 ? ' · 🔥' + Number(p.streak) : ''}</div>
+                </div>
+                <div className="leader-right">
+                  <LeagueBadge xp={p.xp||0} style={{fontSize:10,padding:'2px 8px'}}/>
+                  <strong className="leader-xp">{Number(p.xp)||0} XP</strong>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </section>
   );
 }
 
-function Profile({state, save}) {
+function DailyGiftModal({onClose, onOpen}) {
+  const [opened, setOpened] = useState(false);
+  const [busy, setBusy] = useState(false);
+  return (
+    <div className="ef-modal-backdrop" role="presentation" onMouseDown={e => { if (e.target===e.currentTarget) onClose(); }}>
+      <div className="ef-modal card gift-modal" role="dialog" aria-modal="true" onMouseDown={e=>e.stopPropagation()}>
+        <div className={'gift-box' + (opened ? ' opening' : '')} aria-hidden="true">
+          <div className="gift-lid">🎁</div>
+        </div>
+        <h2>Щоденний подарунок!</h2>
+        <p className="muted">Відкривай скриню кожен день та отримуй XP або заморозку стріку.</p>
+        {!opened && (
+          <button className="primary" style={{marginTop:16}} disabled={busy} onClick={async () => {
+            setBusy(true); setOpened(true);
+            await onOpen();
+            setBusy(false);
+          }}>
+            {busy ? '…' : '🎁 Відкрити скриню'}
+          </button>
+        )}
+        <button className="secondary" style={{marginTop:8}} onClick={onClose}>Пізніше</button>
+      </div>
+    </div>
+  );
+}
+
+function PublicProfileModal({nick, onClose}) {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    let alive = true;
+    getPublicProfile(nick).then(r => {
+      if (alive) { setData(r); setLoading(false); }
+    }).catch(() => { if (alive) setLoading(false); });
+    return () => { alive = false; };
+  }, [nick]);
+  const p = data?.profile;
+  const earned = new Set(data?.achievements || []);
+  const league = leagueForXp(p?.xp || 0);
+  return (
+    <div className="ef-modal-backdrop" role="presentation" onMouseDown={e => { if (e.target===e.currentTarget) onClose(); }}>
+      <div className="ef-modal card public-profile-modal" role="dialog" aria-modal="true" onMouseDown={e=>e.stopPropagation()}>
+        <button className="icon" style={{alignSelf:'flex-end',marginBottom:-8}} onClick={onClose}><X size={18}/></button>
+        {loading && <p className="muted">Завантаження…</p>}
+        {!loading && !p && <p className="muted">Профіль не знайдено або прихований.</p>}
+        {!loading && p && (<>
+          <div className="pub-profile-hero">
+            <div className="rpg-avatar" style={{fontSize:40}}>{p.avatar || '🎓'}</div>
+            <div>
+              <h2 style={{margin:'4px 0'}}>{p.name || p.nick}</h2>
+              <div className="muted">@{p.nick}</div>
+              <LeagueBadge xp={p.xp||0} style={{marginTop:6,display:'inline-block'}} />
+            </div>
+          </div>
+          <div className="grid stats" style={{marginTop:16}}>
+            <Card icon={<Sparkles/>} title="XP" value={p.xp||0} sub="" />
+            <Card icon={<Flame/>} title="Streak" value={p.streak||0} sub="днів" />
+          </div>
+          {data?.achievements?.length > 0 && (
+            <div style={{marginTop:16}}>
+              <h3 style={{marginBottom:8}}>🏅 Бейджі</h3>
+              <div className="pub-badges">
+                {BADGES.filter(b => earned.has(b.id)).map(b => (
+                  <div key={b.id} className="pub-badge" title={b.desc}>
+                    <span>{b.icon}</span>
+                    <span className="pub-badge-title">{b.title}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </>)}
+      </div>
+    </div>
+  );
+}
+
+
+
+function Profile({state, save, gamification, onRefreshGamification}) {
   const level = Math.max(1, Math.floor((state.xp || 0) / 100) + 1);
   const xpInto = (state.xp || 0) % 100;
+  const freezeCount = gamification?.freezeCount ?? 0;
+  const [freezeBusy, setFreezeBusy] = useState(false);
 
   const [name, setName] = useState(state.name);
   const [goal, setGoal] = useState(Math.max(1, state.dailyGoal || 50));
@@ -1377,10 +1760,34 @@ function Profile({state, save}) {
           <div className="rpg-level">Рівень {level}</div>
           <h2 style={{margin:'4px 0'}}>{state.name || state.nick} {(String(state.nick||'').toLowerCase()==='boss' || String(state.name||'').toLowerCase()==='boss') && '👑'}</h2>
           <div className="muted">@{state.nick} · {state.xp || 0} XP · 🔥 {state.streak || 0}</div>
+          <div style={{marginTop:8,display:'flex',gap:8,flexWrap:'wrap',alignItems:'center'}}>
+            <LeagueBadge xp={state.xp||0} />
+            {freezeCount > 0 && <span className="freeze-chip">❄️ ×{freezeCount} заморозки</span>}
+          </div>
           <div className="xp-bar" title="До наступного рівня"><i style={{width: xpInto + '%'}}/></div>
           <small className="muted">{xpInto}/100 XP до рівня {level + 1}</small>
         </div>
       </div>
+      {/* Freeze actions */}
+      {!state.guest && (
+        <div className="card freeze-section">
+          <h3>❄️ Заморозка стріку</h3>
+          <p className="muted small">Захисти свій стрік, якщо пропустиш день. Купуй за 50 XP або використовуй наявні.</p>
+          <div className="row-btns">
+            <button className="secondary" disabled={freezeBusy || (state.xp||0) < 50} onClick={async () => {
+              setFreezeBusy(true);
+              try { await postGamification('buy_freeze'); await onRefreshGamification(); } catch {}
+              setFreezeBusy(false);
+            }}>💰 Купити ({(state.xp||0) < 50 ? 'потрібно 50 XP' : '-50 XP'})</button>
+            {freezeCount > 0 && <button className="secondary" disabled={freezeBusy} onClick={async () => {
+              setFreezeBusy(true);
+              try { await postGamification('use_freeze'); await onRefreshGamification(); } catch {}
+              setFreezeBusy(false);
+            }}>❄️ Активувати заморозку</button>}
+          </div>
+          {freezeBusy && <p className="muted small">…</p>}
+        </div>
+      )}
       <Title title="Профіль" text={`Нік @${state.nick}`}/>
       <div className="grid two">
         <div className="card">
@@ -1690,6 +2097,7 @@ function AdminDanger({save,state,setModal}) {
 
 function AboutPage() {
   const changelog = [
+    {v:'2.6.1', items:['Виправлено зависання лічильника 1/10 у всіх завданнях (Sprint/SRS/Problems/Dictation)','Додано авто-перехід (1с) при правильній відповіді без зайвих кліків','Надійна синхронізація таблиць Notion: підтримка databases/data_sources та будь-яких назв колонок','Оновлено скрипт sync:notion з авто-підтягуванням .env та прямим записом у Neon','Додано роль UI/UX Дизайнера та покращено мобільний вигляд feedback/кнопок']},
     {v:'2.6.0', items:['Коректний рахунок «Вивчено» та «На повторення SRS»: узгодження id між хмарою (Notion id) та локальним словником (match by word)','Виправлено хибне «Сесію завершено» при вході в гостьовий режим','Вхід у завдання більше не викидає на екран реєстрації при простроченій сесії — підказка «Увійти знову»','Рейтинг тепер показує тільки хмарний рейтинг','Фікс стартового cloud-pull, що тихо помирав і лишав лічильники на нулі']},
     {v:'2.5.0', items:['Admin 2.0: bootstrap першого admin, рольова модель, 2FA/TOTP, session hardening та audit','Chat Security 2.0: fingerprints, key rotation, multiple devices, revoke device, encrypted attachments та integrity hash','Security Lab: Playwright E2E + auth/brute-force/session/privilege/XSS/CSRF/IDOR/fuzz/rate-limit regression tests','PWA / Offline видалено: English Flow працює як звичайний online web-app.']},
     {v:'2.4.0', items:['E2E chat: P-256 device-only keys, AES-GCM ciphertext у Neon, сервер не отримує plaintext','Admin/Stats: recovery після session expiry, monitoring errors та стабільний повторний вхід']},

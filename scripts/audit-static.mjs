@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 const root=process.cwd();
 const files=[];
-function walk(dir){for(const e of fs.readdirSync(dir,{withFileTypes:true})){const p=path.join(dir,e.name);if(e.isDirectory()&&!['node_modules','.git','dist'].includes(e.name))walk(p);else if(/\.(js|jsx|mjs|sql|json)$/.test(e.name)&&!p.endsWith('scripts/audit-static.mjs'))files.push(p)}}
+function walk(dir){for(const e of fs.readdirSync(dir,{withFileTypes:true})){const p=path.join(dir,e.name);if(e.isDirectory()&&!['node_modules','.git','dist'].includes(e.name))walk(p);else if(/\.(js|jsx|mjs|sql|json)$/.test(e.name)&&!p.replace(/\\/g,'/').endsWith('scripts/audit-static.mjs'))files.push(p)}}
 walk(root);
 const checks=[
  ['client XP writes to API profile', /fetch\(['"]\/api\/profile['"][^]*xp\s*[:=]/i],

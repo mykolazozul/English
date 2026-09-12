@@ -48,4 +48,7 @@ export async function cloudRecordProgress(payload){return api('/api/progress',{m
 export async function flushProgressQueue(){return 0}
 export async function cloudStartLesson(mode,total,direction='en-ua',category='all'){const c=new AbortController(),timer=setTimeout(()=>c.abort(),15000);try{return await api('/api/lessons',{method:'POST',body:JSON.stringify({mode,total,direction,category}),signal:c.signal})}catch(e){if(e?.name==='AbortError')throw Object.assign(new Error('Сервер не відповів вчасно. Перевір зʼєднання та спробуй ще раз.'),{status:504});throw e}finally{clearTimeout(timer)}}
 export async function cloudFinishLesson(lessonId){return api('/api/lessons',{method:'PATCH',body:JSON.stringify({lessonId})})}
+export async function getGamification(){try{return await api('/api/gamification')}catch{return null}}
+export async function postGamification(action,payload={}){return api('/api/gamification',{method:'POST',body:JSON.stringify({action,...payload})})}
+export async function getPublicProfile(nick){try{return await api('/api/profile?nick='+encodeURIComponent(nick))}catch{return null}}
 export {hashPassword}
