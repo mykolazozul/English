@@ -1,10 +1,22 @@
-:root{
-  font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;
-  --accent:#22a06b;--bg:#f6f8f6;--surface:#fff;--text:#18201c;--muted:#718078;
-  --border:#e3e9e5;--danger:#d94b4b;--shadow:0 10px 30px rgba(20,35,28,.06);--radius:16px;
-  color:var(--text);background:var(--bg);
+:root {
+  --font-main: 'Plus Jakarta Sans', Inter, system-ui, -apple-system, sans-serif;
+  font-family: var(--font-main);
+  --accent: #22c55e;
+  --bg: #f6f8f6;
+  --surface: #fff;
+  --text: #18201c;
+  --muted: #718078;
+  --border: #e3e9e5;
+  --danger: #d94b4b;
+  --shadow: 0 10px 30px rgba(20,35,28,.06);
+  --radius: 16px;
+  color: var(--text);
+  background: var(--bg);
 }
-*{box-sizing:border-box}
+body, button, input, select, textarea {
+  font-family: var(--font-main) !important;
+}
+* { box-sizing: border-box; }
 /* v2.5 custom scrollbars — no native-looking app chrome */
 *{scrollbar-width:thin;scrollbar-color:color-mix(in srgb,var(--accent) 58%,var(--border)) transparent}
 *::-webkit-scrollbar{width:10px;height:10px}
@@ -1756,5 +1768,585 @@ input[type="checkbox"]:focus-visible {
   0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.2); }
   50% { box-shadow: 0 0 16px 4px rgba(245, 158, 11, 0.25); }
 }
+
+/* ==========================================================================
+   v3.1.0 PREMIUM GAMING SHOP & CURRENCIES (XP + GEMS 💎)
+   ========================================================================== */
+.currency-pill-gems {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.18), rgba(6, 182, 212, 0.18));
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: #10b981;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.15);
+}
+.shop-card-gaming {
+  position: relative;
+  overflow: hidden;
+  border-radius: 20px;
+  padding: 20px;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.shop-card-gaming:hover {
+  transform: translateY(-4px);
+}
+.shop-card-gaming.rarity-common {
+  border-color: #64748b;
+  box-shadow: 0 8px 24px rgba(100, 116, 139, 0.1);
+}
+.shop-card-gaming.rarity-rare {
+  border-color: #3b82f6;
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.18);
+}
+.shop-card-gaming.rarity-epic {
+  border-color: #a855f7;
+  box-shadow: 0 8px 24px rgba(168, 85, 247, 0.2);
+}
+.shop-card-gaming.rarity-legendary {
+  border-color: #f59e0b;
+  background: linear-gradient(145deg, var(--surface), color-mix(in srgb, #f59e0b 8%, var(--surface)));
+  box-shadow: 0 8px 28px rgba(245, 158, 11, 0.25);
+}
+.shop-card-gaming .rarity-badge {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+.rarity-common .rarity-badge { background: #64748b22; color: #64748b; }
+.rarity-rare .rarity-badge { background: #3b82f622; color: #3b82f6; }
+.rarity-epic .rarity-badge { background: #a855f722; color: #a855f7; }
+.rarity-legendary .rarity-badge { background: #f59e0b28; color: #f59e0b; border: 1px solid #f59e0b55; }
+
+.shop-art-box {
+  font-size: 48px;
+  width: 72px;
+  height: 72px;
+  display: grid;
+  place-items: center;
+  border-radius: 18px;
+  margin-bottom: 14px;
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+  box-shadow: inset 0 2px 6px rgba(0,0,0,0.06);
+}
+
+/* ==========================================================================
+   v3.1.0 TELEGRAM-STYLE SLIDE-DOWN NOTIFICATION BANNER WITH QUICK REPLY
+   ========================================================================== */
+.telegram-notify-banner {
+  position: fixed;
+  top: 18px;
+  right: 20px;
+  width: calc(100% - 40px);
+  max-width: 420px;
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.28), 0 0 0 1px rgba(34, 197, 94, 0.2);
+  border-radius: 18px;
+  padding: 14px 16px;
+  z-index: 1000;
+  animation: tgSlideDown 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  backdrop-filter: blur(14px);
+}
+@keyframes tgSlideDown {
+  from { opacity: 0; transform: translateY(-30px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.telegram-notify-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.telegram-notify-header .tg-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  background: #22c55e22;
+  font-size: 20px;
+}
+.telegram-notify-header .tg-sender {
+  flex: 1;
+  min-width: 0;
+}
+.telegram-notify-header .tg-sender b {
+  display: block;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.telegram-notify-header .tg-time {
+  font-size: 11px;
+  color: var(--muted);
+}
+.telegram-notify-msg {
+  font-size: 13px;
+  margin: 0 0 10px;
+  line-height: 1.4;
+  color: var(--text);
+  background: color-mix(in srgb, var(--surface) 60%, var(--bg));
+  padding: 8px 12px;
+  border-radius: 10px;
+}
+.telegram-notify-reply {
+  display: flex;
+  gap: 8px;
+}
+.telegram-notify-reply input {
+  flex: 1;
+  margin: 0;
+  padding: 8px 12px;
+  font-size: 13px;
+  border-radius: 10px;
+}
+.telegram-notify-reply button {
+  padding: 8px 14px;
+  font-size: 13px;
+  border-radius: 10px;
+}
+
+/* ==========================================================================
+   v3.1.0 DUO-STYLE VECTOR SVG AVATARS (20 CHARACTER HEROES)
+   ========================================================================== */
+.avatar-vector-squircle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 18px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  overflow: hidden;
+}
+.avatar-vector-squircle:hover {
+  transform: scale(1.06);
+}
+.avatar-grid-duo {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+.avatar-item-duo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 8px;
+  border-radius: 16px;
+  border: 2px solid var(--border);
+  background: var(--surface);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.avatar-item-duo:hover {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface));
+  transform: translateY(-2px);
+}
+.avatar-item-duo.active {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 15%, var(--surface));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+.avatar-item-duo span {
+  font-size: 11px;
+  font-weight: 700;
+  margin-top: 6px;
+  text-align: center;
+  color: var(--text);
+}
+
+/* ==========================================================================
+   v3.1.0 INTERACTIVE CHALLENGES DIRECTLY ON THE PAGE
+   ========================================================================== */
+.boss-arena-box {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.08), rgba(185, 28, 28, 0.04));
+  border: 2px solid #ef444455;
+  border-radius: 20px;
+  padding: 22px;
+  margin-bottom: 20px;
+}
+.boss-header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+.boss-hp-track {
+  width: 100%;
+  height: 16px;
+  border-radius: 999px;
+  background: rgba(0,0,0,0.15);
+  overflow: hidden;
+  margin: 10px 0;
+  border: 1px solid rgba(239,68,68,0.3);
+}
+.boss-hp-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ef4444, #f97316);
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+.player-hearts {
+  display: flex;
+  gap: 4px;
+  font-size: 20px;
+}
+.boss-question-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 18px;
+  margin-top: 14px;
+}
+
+/* ==========================================================================
+   v3.1.0 FRIENDS PAGE: 3 STYLES (Gamer Cards, Cyber Chat, Rivalry Hall)
+   ========================================================================== */
+.friends-gamer-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+  margin-top: 16px;
+}
+.friend-gamer-card {
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: 18px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.friend-gamer-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--accent);
+  box-shadow: 0 10px 24px rgba(0,0,0,0.07);
+}
+.friend-activity-chip {
+  font-size: 11px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.friend-activity-chip.online {
+  color: #10b981;
+}
+.friend-activity-chip.offline {
+  color: var(--muted);
+}
+.rivalry-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+.rivalry-vs-badge {
+  background: linear-gradient(135deg, #ef4444, #f59e0b);
+  color: #fff;
+  font-weight: 900;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 8px;
+}
+
+/* ==========================================================================
+   v3.1.0 TELEGRAM NOTIFICATION FLOATING BANNER
+   ========================================================================== */
+.telegram-notify-banner {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 92%;
+  max-width: 440px;
+  background: var(--surface, #ffffff);
+  border: 1.5px solid var(--border, rgba(0,0,0,0.1));
+  box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 14px 16px;
+  z-index: 10000;
+  animation: slideDownIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+@keyframes slideDownIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -24px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+}
+
+.telegram-notify-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.telegram-notify-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.telegram-notify-user b {
+  font-size: 14px;
+  display: block;
+}
+.telegram-notify-user span {
+  font-size: 11px;
+  color: var(--muted);
+}
+.telegram-notify-close {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 18px;
+  line-height: 1;
+  padding: 4px;
+  border-radius: 6px;
+  transition: color 0.15s;
+}
+.telegram-notify-close:hover {
+  color: var(--text);
+  background: rgba(0,0,0,0.05);
+}
+.telegram-notify-msg {
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--text);
+  margin-bottom: 10px;
+  padding: 8px 12px;
+  background: var(--surface-sunken, rgba(0,0,0,0.03));
+  border-radius: 12px;
+}
+.telegram-notify-reply-bar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.telegram-notify-input {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--input-bg, #ffffff);
+  font-size: 13px;
+  color: var(--text);
+  outline: none;
+}
+.telegram-notify-input:focus {
+  border-color: #22c55e;
+}
+.telegram-notify-send-btn {
+  background: #22c55e;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: opacity 0.15s;
+}
+.telegram-notify-send-btn:hover {
+  opacity: 0.9;
+}
+.telegram-notify-send-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ==========================================================================
+   v3.1.0 FLOATING CORNER CHAT (Bottom Right for Laptop & Mobile)
+   ========================================================================== */
+.floating-chat-root {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+}
+
+@media (max-width: 768px) {
+  .floating-chat-root {
+    bottom: 78px;
+    right: 16px;
+  }
+}
+
+.floating-chat-fab {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #22c55e, #15803d);
+  color: white;
+  border: none;
+  box-shadow: 0 8px 24px rgba(34, 197, 94, 0.35);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.floating-chat-fab:hover {
+  transform: scale(1.06);
+  box-shadow: 0 12px 28px rgba(34, 197, 94, 0.45);
+}
+.floating-chat-fab.active {
+  transform: rotate(15deg);
+}
+.floating-chat-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 12px;
+  height: 12px;
+  background: #38bdf8;
+  border: 2px solid white;
+  border-radius: 50%;
+}
+
+.floating-chat-window {
+  position: absolute;
+  bottom: 66px;
+  right: 0;
+  width: 310px;
+  height: 380px;
+  background: var(--surface, #ffffff);
+  border: 1.5px solid var(--border);
+  border-radius: 20px;
+  box-shadow: 0 16px 36px rgba(0,0,0,0.18);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: slideUpFade 0.25s ease;
+}
+
+@keyframes slideUpFade {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.floating-chat-header {
+  padding: 12px 14px;
+  background: var(--surface-sunken, rgba(0,0,0,0.03));
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.floating-chat-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  overflow-x: auto;
+}
+.floating-chat-tab {
+  background: transparent;
+  border: none;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  padding: 4px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.floating-chat-tab.active {
+  color: var(--accent);
+  background: rgba(34, 197, 94, 0.1);
+}
+.floating-chat-messages {
+  flex: 1;
+  padding: 12px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.floating-chat-msg {
+  max-width: 82%;
+  padding: 8px 12px;
+  border-radius: 14px;
+  font-size: 12px;
+  line-height: 1.35;
+  background: var(--surface-sunken, rgba(0,0,0,0.05));
+  align-self: flex-start;
+  color: var(--text);
+}
+.floating-chat-msg.me {
+  background: #22c55e;
+  color: white;
+  align-self: flex-end;
+}
+.floating-chat-input-bar {
+  display: flex;
+  padding: 8px 10px;
+  border-top: 1px solid var(--border);
+  gap: 6px;
+  background: var(--surface);
+}
+.floating-chat-input-bar input {
+  flex: 1;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  font-size: 12px;
+  outline: none;
+}
+.floating-chat-input-bar button {
+  background: #22c55e;
+  border: none;
+  color: white;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
 
 

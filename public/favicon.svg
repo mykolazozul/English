@@ -1,12 +1,25 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
   <defs>
-    <linearGradient id="efGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#10b981" />
-      <stop offset="50%" stop-color="#06b6d4" />
-      <stop offset="100%" stop-color="#3b82f6" />
+    <linearGradient id="greenGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#58CC02" />
+      <stop offset="45%" stop-color="#22C55E" />
+      <stop offset="100%" stop-color="#15803D" />
+    </linearGradient>
+    <linearGradient id="innerGlow" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#86EFAC" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#22C55E" stop-opacity="0"/>
     </linearGradient>
   </defs>
-  <rect width="64" height="64" rx="18" fill="url(#efGrad)"/>
-  <path d="M18 20H46C47.1 20 48 20.9 48 22V25C48 26.1 47.1 27 46 27H27V30H41C42.1 30 43 30.9 43 32V35C43 36.1 42.1 37 41 37H27V44H18V20Z" fill="#ffffff"/>
-  <circle cx="46" cy="43" r="5" fill="#fbbf24"/>
+  <!-- Main Rounded Squircle in Bright Duo Green -->
+  <rect width="64" height="64" rx="19" fill="url(#greenGrad)"/>
+  <rect x="2" y="2" width="60" height="30" rx="17" fill="url(#innerGlow)"/>
+  
+  <!-- Stylized Open Book & Flow Wings in Clean White -->
+  <path d="M16 22C21 20 28 21.5 32 25C36 21.5 43 20 48 22V42C43 40 36 41.5 32 45C28 41.5 21 40 16 42V22Z" fill="#FFFFFF"/>
+  <path d="M32 25V45" stroke="#22C55E" stroke-width="2.5" stroke-linecap="round"/>
+  
+  <!-- Dynamic Audio/Energy Waves & Spark -->
+  <circle cx="32" cy="17" r="4.5" fill="#FEF08A"/>
+  <circle cx="48" cy="18" r="2.5" fill="#FEF08A"/>
+  <circle cx="16" cy="18" r="2.5" fill="#FEF08A"/>
 </svg>
