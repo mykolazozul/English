@@ -55,9 +55,31 @@ button,input,select{font:inherit}button{cursor:pointer}button:disabled{opacity:.
 .option.wrong{background:#fdecec !important;border-color:#d94b4b !important;color:#a11 !important;animation:answerFlashWrong .45s ease}
 .option.dimmed{opacity:.45}
 .points.positive{color:var(--accent);font-weight:800}.points.negative{color:var(--danger);font-weight:800}
-.feedback{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;margin-top:14px;padding:12px;border-radius:14px}
-.feedback-correct{background:#e8f8ef}.feedback-wrong{background:#fdecec}
-.feedback-copy{display:flex;flex-direction:column;gap:4px}
+.feedback{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;margin-top:16px;padding:14px 16px;border-radius:16px;transition:all .25s ease}
+.feedback.ok, .feedback-correct{
+  background: color-mix(in srgb, var(--accent, #22a06b) 12%, var(--surface));
+  border: 1.5px solid color-mix(in srgb, var(--accent, #22a06b) 45%, var(--border));
+  box-shadow: 0 4px 18px color-mix(in srgb, var(--accent, #22a06b) 18%, transparent);
+}
+.feedback.bad, .feedback-wrong{
+  background: color-mix(in srgb, #e53935 12%, var(--surface));
+  border: 1.5px solid color-mix(in srgb, #e53935 45%, var(--border));
+  box-shadow: 0 4px 18px rgba(229, 57, 53, 0.14);
+}
+[data-theme=dark] .feedback.ok, [data-theme=dark] .feedback-correct{
+  background: #143528;
+  border-color: #22a06b;
+}
+[data-theme=dark] .feedback.bad, [data-theme=dark] .feedback-wrong{
+  background: #3a1818;
+  border-color: #e53935;
+}
+.feedback-row{display:flex;align-items:flex-start;gap:12px}
+.feedback-icon.ok{color:var(--accent,#22a06b);flex-shrink:0;margin-top:2px}
+.feedback-icon.bad{color:#e53935;flex-shrink:0;margin-top:2px}
+.feedback-copy{display:flex;flex-direction:column;gap:3px;flex:1}
+.feedback-hint{margin:2px 0 3px;font-size:14px;line-height:1.35;color:var(--text)}
+.pulse-on-answer{animation:pulseSoft 1.2s infinite ease-in-out}
 .flash-correct{animation:cardCorrect .6s ease}.flash-wrong{animation:cardWrong .6s ease}
 .score-float{position:absolute;right:18px;top:48px;font-size:22px;font-weight:800;animation:scoreFloat .9s ease forwards;pointer-events:none}
 .score-float.up{color:var(--accent)}.score-float.down{color:var(--danger)}
@@ -418,6 +440,40 @@ html[data-theme=custom]{--bg:var(--custom-bg);--surface:var(--custom-surface)}
 .tone-fire strong{color:#ff6d00}
 @keyframes fireFlicker{0%,100%{transform:scale(1);filter:brightness(1)}50%{transform:scale(1.12);filter:brightness(1.25)}}
 
+/* Combo streak & celebration banner */
+.combo-pill {
+  background: linear-gradient(135deg, rgba(255, 109, 0, 0.15), rgba(255, 171, 0, 0.2)) !important;
+  color: #ff6d00 !important;
+  border: 1px solid rgba(255, 109, 0, 0.4) !important;
+  font-weight: 800 !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  animation: pop .35s ease;
+}
+.combo-pill .fire-icon {
+  animation: fireFlicker 1.2s infinite ease-in-out;
+}
+.combo-toast-banner {
+  margin: 10px auto 4px;
+  padding: 8px 18px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #ff6d00, #ff9100);
+  color: #fff;
+  font-weight: 800;
+  font-size: 14px;
+  letter-spacing: .03em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 6px 24px rgba(255, 109, 0, 0.45);
+  animation: pop .45s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.sparkle-ico {
+  animation: fireFlicker 1s infinite alternate;
+}
+
 /* Steam achievement */
 @keyframes steamIn{0%{transform:translateY(40px);opacity:0}20%{opacity:1;transform:translateY(0)}80%{opacity:1}100%{opacity:0;transform:translateY(-10px)}}
 .steam-toast{position:fixed;left:20px;bottom:24px;z-index:300;min-width:260px;max-width:90vw;
@@ -551,7 +607,22 @@ img, svg { max-width: 100%; height: auto; }
   .lb-row { flex-wrap: wrap; }
   .jungle-announce { padding-left: 18px; padding-right: 18px; }
   .jungle-announce .vine { display: none; }
-  .version-badge { bottom: 12px; right: 12px; font-size: 11px; }
+  .version-badge { display: none !important; }
+  .feedback {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+    padding: 14px !important;
+  }
+  .feedback .next-btn {
+    width: 100% !important;
+    justify-content: center !important;
+    padding: 13px 18px !important;
+    font-size: 15px !important;
+    font-weight: 700 !important;
+  }
+  .main { padding-bottom: calc(90px + env(safe-area-inset-bottom, 0px)) !important; }
   .steam-toast { left: 12px; right: 12px; bottom: 16px; min-width: 0; }
   .primary, .secondary { min-height: 44px; }
   .nav { min-height: 44px; }

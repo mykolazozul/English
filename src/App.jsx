@@ -21,7 +21,7 @@ const ROADMAP_ITEMS = [
   {v:'2.3.0', title:'Realtime status + ping + chat privacy parity', status:'done'},
   {v:'2.3.0', title:'Custom dropdowns/modals + 3 admin test designs', status:'done'},
   {v:'2.3.0', title:'RPG profile + animated emoji feedback on Home/Stats', status:'done'},
-  {v:'2.4.0', title:'E2E chat with device-only P-256 keys + encrypted Neon messages', status:'done'},
+  {v:'2.6.1', title:'Fix 1/10 counter, auto-advance, universal Notion sync & UI-UX polish', status:'done'},
   {v:'2.6.0', title:'Bugfix & stability: correct learned/SRS counts, guest mode, session UX, cloud-only leaderboard', status:'done'},
   {v:'2.5.0', title:'Admin 2.0: bootstrap, roles, 2FA/TOTP, session hardening and Security Lab', status:'done'},
   {v:'2.5.0', title:'Chat Security 2.0: fingerprints, key rotation, multi-device, revoke and encrypted attachments', status:'done'},
@@ -33,7 +33,7 @@ const ROADMAP_ITEMS = [
   {v:'future', title:'WebAuthn/passkeys + verified device signatures', status:'planned'},
 ];
 
-const VERSION = '2.6.0';
+const VERSION = '2.6.1';
 const words = (notionWords?.length ? notionWords : fallbackWords).map(w => ({
   id: w.id, word: w.word, translation: w.translation || '—', pronunciation: w.pronunciation || '',
   category: w.category || 'Other', level: w.level || '', explanation: w.explanation || '',
@@ -742,18 +742,21 @@ function Lesson({cfg, state, save, onExit, onDone, wordsCatalog}) {
   const [serverItems, setServerItems] = useState(null);
   const [loadError, setLoadError] = useState('');
   const [retry, setRetry] = useState(0);
+  const [useLocalFallback, setUseLocalFallback] = useState(false);
   const catalog = (wordsCatalog && wordsCatalog.length) ? wordsCatalog : words;
-  const localItems = useMemo(() => {
+
+  // Snapshot initial question pool ONCE when lesson starts or on retry.
+  // CRITICAL: Do NOT list `state` in dependencies, otherwise every answer re-shuffles the quiz and resets to 1/10!
+  const initialLocalItems = useMemo(() => {
     let pool = catalog;
     if (mode === 'srs') {
       const due = catalog.filter(w => { const k = progKey(w, state.mastery, state.srs); return isDue(state.srs[k], todayStr()) && (state.mastery[k] || 0) > 0; });
-      pool = due;
+      pool = due.length ? due : catalog;
     } else if (mode === 'problems') {
       const stats = {};
       (state.history || []).forEach(h => { const id=String(h.word); if(!stats[id]) stats[id]={w:0,c:0}; if(h.correct) stats[id].c++; else stats[id].w++; });
       const hardIds = new Set(Object.entries(stats).filter(([,v]) => v.w >= 2 && v.w > v.c).map(([id]) => id));
       pool = catalog.filter(w => hardIds.has(progKey(w, state.mastery, state.srs) || String(w.id)));
-      // HARD never silently falls back to the whole dictionary.
       if (!pool.length) pool = []; 
     } else if (mode === 'long') {
       pool = catalog.filter(w => (w.word || '').replace(/\s/g, '').length > 6);
@@ -762,32 +765,74 @@ function Lesson({cfg, state, save, onExit, onDone, wordsCatalog}) {
     if (state.admin.shuffleQuestions !== false) pool = shuffle(pool);
     if (mode === 'match') return pool.slice(0, 6);
     return makeQuizItems(pool, state.admin.lessonSize, cfg.direction, 'all');
-  }, [catalog, mode, cfg.direction, cfg.category, state]);
-  const items = serverItems?.length ? serverItems : localItems;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [catalog, mode, cfg.direction, cfg.category, retry]);
+
+  const items = (serverItems?.length && !useLocalFallback) ? serverItems : initialLocalItems;
+
   useEffect(() => {
-    let cancelled=false;
-    setLoadError(''); setLessonId(''); setServerItems(null);
+    let cancelled = false;
+    setLoadError(''); setLessonId(''); setServerItems(null); setUseLocalFallback(false);
     if (state.guest) return;
-    if (!localItems.length) {
+    if (!initialLocalItems.length) {
       const msg = mode==='problems' ? 'Поки немає проблемних слів. Вони зʼявляться після реальних помилок.' : mode==='srs' ? 'Наразі немає карток, які потрібно повторити.' : 'У словнику немає доступних слів для цього уроку.';
       setLoadError(msg); return;
     }
-    const timer=setTimeout(()=>{if(!cancelled)setLoadError('Сервер не відповів вчасно. Перевір зʼєднання та спробуй ще раз.')},15000);
-    cloudStartLesson(mode, Math.min(localItems.length, 100), cfg.direction, cfg.category).then(r => {
-      if(cancelled)return; clearTimeout(timer); setLoadError(''); setLessonId(r.lessonId || '');
-      if (Array.isArray(r.items) && r.items.length) setServerItems(r.items); else setLoadError('Сервер не повернув питання для уроку.');
-    }).catch(e => { clearTimeout(timer); if(cancelled)return; setLoadError(e.status===401 ? 'Сесія закінчилась. Увійди знову.' : (e.message || 'Не вдалося створити захищену сесію.')); });
-    return ()=>{cancelled=true;clearTimeout(timer)};
-  }, [mode, state.guest, localItems.length, cfg.direction, cfg.category, retry]);
+    // Fall back to local items if cloud session takes more than 6s so the user is never stuck
+    const timer = setTimeout(() => {
+      if (!cancelled) setUseLocalFallback(true);
+    }, 6000);
 
-  if (!state.guest && (!lessonId || !serverItems?.length)) return <section><button className="back" onClick={onExit}>← Назад</button><div className="card lesson-loading-card"><h2>{loadError ? 'Не вдалося підготувати урок' : 'Готуємо персональний урок…'}</h2><p className="muted">{loadError || 'Learning Engine підбирає слова та створює захищену сесію.'}</p>{loadError&&<div className="row-btns"><button className="primary" onClick={()=>{setLoadError('');setLessonId('');setServerItems(null);setRetry(r=>r+1)}}>Спробувати ще раз</button><button className="secondary" onClick={onExit}>Назад</button></div>}</div></section>;
-  if (mode === 'match') return <MatchGame key="match-board" items={items} state={state} save={save} onExit={onExit} onDone={onDone} lessonId={lessonId} direction={cfg.direction} />;
-  if (mode === 'dictation') return <SprintGame items={items} mode={mode} state={state} save={save} onExit={onExit} onDone={onDone} lessonId={lessonId} direction={cfg.direction} />; 
-  return <SprintGame items={items} mode={mode} state={state} save={save} onExit={onExit} onDone={onDone} lessonId={lessonId} direction={cfg.direction} />;
+    cloudStartLesson(mode, Math.min(initialLocalItems.length, 100), cfg.direction, cfg.category).then(r => {
+      if (cancelled) return;
+      clearTimeout(timer);
+      setLoadError('');
+      setLessonId(r.lessonId || '');
+      if (Array.isArray(r.items) && r.items.length) {
+        setServerItems(r.items);
+      } else {
+        setUseLocalFallback(true);
+      }
+    }).catch(e => {
+      clearTimeout(timer);
+      if (cancelled) return;
+      if (initialLocalItems.length) {
+        setUseLocalFallback(true);
+      } else {
+        setLoadError(e.status===401 ? 'Сесія закінчилась. Увійди знову.' : (e.message || 'Не вдалося створити захищену сесію.'));
+      }
+    });
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [mode, state.guest, cfg.direction, cfg.category, retry]);
+
+  if (!state.guest && !useLocalFallback && (!lessonId || !serverItems?.length)) {
+    return (
+      <section>
+        <button className="back" onClick={onExit}>← Назад</button>
+        <div className="card lesson-loading-card">
+          <h2>{loadError ? 'Не вдалося підготувати урок' : 'Готуємо персональний урок…'}</h2>
+          <p className="muted">{loadError || 'Learning Engine підбирає слова та створює захищену сесію.'}</p>
+          {loadError && (
+            <div className="row-btns">
+              <button className="primary" onClick={() => { setLoadError(''); setLessonId(''); setServerItems(null); setRetry(r => r + 1); }}>Спробувати ще раз</button>
+              {initialLocalItems.length > 0 && (
+                <button className="secondary" onClick={() => setUseLocalFallback(true)}>Грати офлайн</button>
+              )}
+              <button className="secondary" onClick={onExit}>Назад</button>
+            </div>
+          )}
+        </div>
+      </section>
+    );
+  }
+
+  const lessonKey = `${lessonId || (useLocalFallback ? 'local' : 'init')}-${mode}-${cfg.direction || 'en-ua'}-${cfg.category || 'all'}-${retry}`;
+  if (mode === 'match') return <MatchGame key={`match-${lessonKey}`} items={items} state={state} save={save} onExit={onExit} onDone={onDone} lessonId={lessonId} direction={cfg.direction} />;
+  return <SprintGame key={`sprint-${lessonKey}`} items={items} mode={mode} state={state} save={save} onExit={onExit} onDone={onDone} lessonId={lessonId} direction={cfg.direction} />;
 }
 
 function SprintGame({items, mode, state, save, onExit, onDone, lessonId}) {
-  // Freeze quiz list once — never re-read from props
+  // Freeze quiz list once per lesson mount
   const quizRef = useRef(null);
   if (!quizRef.current) {
     quizRef.current = Array.isArray(items) && items.length ? items.slice() : [];
@@ -803,7 +848,11 @@ function SprintGame({items, mode, state, save, onExit, onDone, lessonId}) {
   const [slowAudio, setSlowAudio] = useState(false);
   const [leaveAsk, setLeaveAsk] = useState(false);
   const [mist, setMist] = useState(null);
+  const [combo, setCombo] = useState(0);
+  const [comboPop, setComboPop] = useState(null);
   const pendingProgress = useRef([]);
+  const autoAdvanceTimer = useRef(null);
+  const feedbackRef = useRef(null);
 
   const stateRef = useRef(state);
   stateRef.current = state;
@@ -834,12 +883,49 @@ function SprintGame({items, mode, state, save, onExit, onDone, lessonId}) {
         .catch(() => null);
       pendingProgress.current.push(pending);
     }
-    if (ok) setOkCount(c => c + 1); else { setBadCount(c => c + 1); setSlowAudio(true); }
+    if (ok) {
+      setOkCount(c => c + 1);
+      setCombo(prev => {
+        const next = prev + 1;
+        if (next > 0 && next % 5 === 0) {
+          // Festive mini-celebration (confetti burst) for every 5 perfect answers in a row!
+          confettiBurst();
+          setComboPop(`${next} ПОСПІЛЬ! 🔥`);
+          emitSiteToast(`Серія: ${next} правильних відповідей поспіль! 🔥`, 'ok');
+          setTimeout(() => setComboPop(null), 2200);
+        }
+        return next;
+      });
+    } else {
+      setBadCount(c => c + 1);
+      setSlowAudio(true);
+      setCombo(0);
+    }
     setScorePop({pts: points, ok, key: Date.now()});
     setMist(ok ? 'ok' : 'bad');
     playTone(ok);
     setTimeout(() => { setScorePop(null); setMist(null); }, 700);
-  }, [mode, save]);
+  }, [mode, save, lessonId]);
+
+  const goNext = useCallback(() => {
+    if (autoAdvanceTimer.current) {
+      clearTimeout(autoAdvanceTimer.current);
+      autoAdvanceTimer.current = null;
+    }
+    const i = stepRef.current;
+    const len = quizRef.current.length;
+    setPicked(null);
+    setScorePop(null);
+    setMist(null);
+    if (i + 1 >= len) {
+      setDone(true);
+    } else {
+      setStep(i + 1);
+      try {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } catch {}
+    }
+  }, []);
 
   const answer = useCallback((opt) => {
     if (pickedRef.current !== null) return;
@@ -848,17 +934,31 @@ function SprintGame({items, mode, state, save, onExit, onDone, lessonId}) {
     const ok = opt === wordObj.answer;
     setPicked(opt);
     applyAnswer(ok, wordObj, opt);
-  }, [applyAnswer]);
 
-  const goNext = useCallback(() => {
-    const i = stepRef.current;
-    const len = quizRef.current.length;
-    setPicked(null);
-    setScorePop(null);
-    setMist(null);
-    if (i + 1 >= len) setDone(true);
-    else setStep(i + 1);
+    // Auto-advance to next question upon correct answer after pleasant 1050ms pause
+    if (autoAdvanceTimer.current) clearTimeout(autoAdvanceTimer.current);
+    if (ok) {
+      autoAdvanceTimer.current = setTimeout(() => {
+        goNext();
+      }, 1050);
+    }
+  }, [applyAnswer, goNext]);
+
+  // Clean up auto-advance timer on unmount
+  useEffect(() => {
+    return () => {
+      if (autoAdvanceTimer.current) clearTimeout(autoAdvanceTimer.current);
+    };
   }, []);
+
+  // Auto-scroll feedback into view so Next button is immediately visible on mobile
+  useEffect(() => {
+    if (picked !== null && feedbackRef.current) {
+      try {
+        feedbackRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      } catch {}
+    }
+  }, [picked]);
 
   useEffect(() => {
     const onKey = (e) => {
@@ -941,10 +1041,22 @@ function SprintGame({items, mode, state, save, onExit, onDone, lessonId}) {
         <div className="lesson-top">
           <span className="pill">{mode === 'dictation' ? 'DICTATION' : mode === 'srs' ? 'SRS' : 'SPRINT'}</span>
           <span className="pill soft">{(w.direction || 'en-ua') === 'en-ua' ? 'EN→UA' : 'UA→EN'}</span>
+          {combo >= 2 && (
+            <span className="pill combo-pill" key={'combo'+combo}>
+              <Flame size={12} className="fire-icon"/> {combo} поспіль
+            </span>
+          )}
           <span className={'points' + (picked != null ? (correct ? ' up' : ' down') : '')}>
             {picked != null ? (correct ? `+${state.admin.correctPoints}` : `${state.admin.wrongPoints}`) : '·'}
           </span>
         </div>
+        {comboPop && (
+          <div className="combo-toast-banner" key={comboPop}>
+            <Sparkles size={16} className="sparkle-ico"/>
+            <span>{comboPop}</span>
+            <Sparkles size={16} className="sparkle-ico"/>
+          </div>
+        )}
         <div className="prompt-block">
           <p className="prompt-label muted">Питання {step + 1}</p>
           <h2 className="prompt" key={'p'+step}>{mode === 'dictation' ? 'Напиши слово на слух' : (w.prompt || w.word)}</h2>
@@ -985,12 +1097,12 @@ function SprintGame({items, mode, state, save, onExit, onDone, lessonId}) {
           </div>
         )}
         {picked != null && (
-          <div className={'feedback ' + (correct ? 'ok' : 'bad')}>
+          <div ref={feedbackRef} className={'feedback ' + (correct ? 'ok' : 'bad')}>
             <div className="feedback-row">
-              {correct ? <CheckCircle2/> : <XCircle/>}
-              <div>
-                <b>{correct ? 'Правильно!' : 'Неправильно'}</b>
-                <p className="muted">{w.explanation || w.translation}</p>
+              {correct ? <CheckCircle2 className="feedback-icon ok" size={24}/> : <XCircle className="feedback-icon bad" size={24}/>}
+              <div className="feedback-copy">
+                <b>{correct ? 'Чудово! Правильно' : 'Не зовсім так'}</b>
+                <p className="feedback-hint">{w.explanation || w.translation}</p>
                 <small className="muted">Mastery {masteryNow}/{state.admin.masteryThreshold}</small>
               </div>
             </div>
@@ -999,7 +1111,7 @@ function SprintGame({items, mode, state, save, onExit, onDone, lessonId}) {
                 {scorePop.ok ? '+' : ''}{scorePop.pts}
               </div>
             )}
-            <button className="primary next-btn" type="button" onClick={goNext}>
+            <button className="primary next-btn pulse-on-answer" type="button" onClick={goNext}>
               {step + 1 >= total ? 'Завершити' : 'Далі'} <span className="arrow-ico">→</span>
             </button>
           </div>
@@ -1690,6 +1802,7 @@ function AdminDanger({save,state,setModal}) {
 
 function AboutPage() {
   const changelog = [
+    {v:'2.6.1', items:['Виправлено зависання лічильника 1/10 у всіх завданнях (Sprint/SRS/Problems/Dictation)','Додано авто-перехід (1с) при правильній відповіді без зайвих кліків','Надійна синхронізація таблиць Notion: підтримка databases/data_sources та будь-яких назв колонок','Оновлено скрипт sync:notion з авто-підтягуванням .env та прямим записом у Neon','Додано роль UI/UX Дизайнера та покращено мобільний вигляд feedback/кнопок']},
     {v:'2.6.0', items:['Коректний рахунок «Вивчено» та «На повторення SRS»: узгодження id між хмарою (Notion id) та локальним словником (match by word)','Виправлено хибне «Сесію завершено» при вході в гостьовий режим','Вхід у завдання більше не викидає на екран реєстрації при простроченій сесії — підказка «Увійти знову»','Рейтинг тепер показує тільки хмарний рейтинг','Фікс стартового cloud-pull, що тихо помирав і лишав лічильники на нулі']},
     {v:'2.5.0', items:['Admin 2.0: bootstrap першого admin, рольова модель, 2FA/TOTP, session hardening та audit','Chat Security 2.0: fingerprints, key rotation, multiple devices, revoke device, encrypted attachments та integrity hash','Security Lab: Playwright E2E + auth/brute-force/session/privilege/XSS/CSRF/IDOR/fuzz/rate-limit regression tests','PWA / Offline видалено: English Flow працює як звичайний online web-app.']},
     {v:'2.4.0', items:['E2E chat: P-256 device-only keys, AES-GCM ciphertext у Neon, сервер не отримує plaintext','Admin/Stats: recovery після session expiry, monitoring errors та стабільний повторний вхід']},
