@@ -1,4 +1,12 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" rx="14" fill="#16a34a"/>
-  <text x="32" y="43" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="800" font-size="26" fill="#fff">EF</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="efGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10b981" />
+      <stop offset="50%" stop-color="#06b6d4" />
+      <stop offset="100%" stop-color="#3b82f6" />
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="18" fill="url(#efGrad)"/>
+  <path d="M18 20H46C47.1 20 48 20.9 48 22V25C48 26.1 47.1 27 46 27H27V30H41C42.1 30 43 30.9 43 32V35C43 36.1 42.1 37 41 37H27V44H18V20Z" fill="#ffffff"/>
+  <circle cx="46" cy="43" r="5" fill="#fbbf24"/>
 </svg>

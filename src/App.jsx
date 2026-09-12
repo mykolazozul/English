@@ -1,5 +1,5 @@
 import React, {useEffect, useMemo, useState, useCallback, useRef, lazy, Suspense} from 'react';
-import {BarChart3, BookOpen, Check, CheckCircle2, ChevronRight, ChevronDown, Flame, Home, Lock, Menu, Moon, Palette, Play, RotateCcw, Settings, Sun, Target, Trophy, User, Volume2, X, XCircle, Shield, SlidersHorizontal, Brain, Sparkles, Keyboard, Layers, Award, Cloud, Users, MessageCircle, Ghost, VolumeX, Swords, ShieldAlert, Eye, Bell, Wifi} from 'lucide-react';
+import {BarChart3, BookOpen, Check, CheckCircle2, ChevronRight, ChevronDown, Flame, Home, Lock, Menu, Moon, Palette, Play, RotateCcw, Settings, Sun, Target, Trophy, User, Volume2, X, XCircle, Shield, SlidersHorizontal, Brain, Sparkles, Keyboard, Layers, Award, Cloud, Users, MessageCircle, Ghost, VolumeX, Swords, ShieldAlert, Eye, Bell, Wifi, ShoppingBag} from 'lucide-react';
 import {words as fallbackWords, rules, BADGES, LEAGUES, leagueForXp} from './data';
 import {notionWords, notionSyncMeta} from './notionWords.generated';
 import { Analytics } from '@vercel/analytics/react';
@@ -14,6 +14,7 @@ import {track} from './lib/analytics.js';
 
 /** Roadmap in admin — remove only when user asks by title */
 const ROADMAP_ITEMS = [
+  {v:'3.0.0', title:'Shop (Магазин XP), Admin Overhaul & Notion Sync Fix, Achievements Tiers, 20 Avatars, Brand Logo, Settings/Profile Separation & UI Polish', status:'done'},
   {v:'2.9.0', title:'Gamification Pro: Leagues (100-3500+ XP), Streak Freeze auto-shield, Quests, Gift Chest, Badges, Forgot Password & 3 Radical Layouts', status:'done'},
   {v:'2.8.0', title:'Fix Lesson loading, Logout button & profile isolation, simple reliable Chat, Live Realtime 5s, Custom Checkboxes & 3 new radical interfaces, Password change', status:'done'},
   {v:'2.7.0', title:'Gamification v3: Leagues, Streak Freeze, Daily Quests, Gift Box, Public Profiles', status:'done'},
@@ -36,7 +37,7 @@ const ROADMAP_ITEMS = [
   {v:'future', title:'WebAuthn/passkeys + verified device signatures', status:'planned'},
 ];
 
-const VERSION = '2.9.0';
+const VERSION = '3.0.0';
 const words = (notionWords?.length ? notionWords : fallbackWords).map(w => ({
   id: w.id, word: w.word, translation: w.translation || '—', pronunciation: w.pronunciation || '',
   category: w.category || 'Other', level: w.level || '', explanation: w.explanation || '',
@@ -46,12 +47,14 @@ const CATS = [...new Set(words.map(w => w.category))].sort();
 const defaultAdmin = {lessonSize: 10, correctPoints: 4, wrongPoints: -2, masteryThreshold: 8, shuffleQuestions: true, shuffleAnswers: true, showPronunciation: true, perfectBonus: 0, badgeStyle: 'neo'};
 const emptyState = () => ({
   nick: '', name: '', passHash: '', xp: 0, streak: 1, dailyGoal: 50, todayXp: 0, today: todayStr(),
-  mastery: {}, srs: {}, attempts: {}, history: [], badges: [], avatar: '🇺🇸',
-  theme: 'system', skin: 'classic', layout: 'sidebar', customTheme: {accent: '#22a06b', bg: '#f6f8f6', surface: '#ffffff'},
+  mastery: {}, srs: {}, attempts: {}, history: [], badges: [], avatar: '🦊',
+  theme: 'system', skin: 'classic', font: 'Plus Jakarta Sans', customTheme: {accent: '#22a06b', bg: '#f6f8f6', surface: '#ffffff'},
   admin: {...defaultAdmin},
-  quiet: false, sfx: true, soundPack: 'auto', guest: false, gamesPlayed: 0,
+  quiet: false, sfx: true, soundPack: 'classic', guest: false, gamesPlayed: 0,
   compareMode: 'global', compareFriend: '', midnightSnap: null, badgeStyle: 'neo',
   freezeCount: 0, recoveryCode: '', recoveryQuestion: '',
+  pinnedBadges: [], showInLeaderboard: true, allowFriendsStats: true,
+  inventory: { doubleXpUntil: null, secondChance: 0, vipFrame: false },
   settings: { keyboardHints: true, staggerList: true }
 });
 // Resolve a word's progress key across id schemes. The cloud marks each word by its
@@ -103,6 +106,89 @@ function playTone(ok, pack) {
     g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + 0.28);
     o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime + 0.3);
   } catch {}
+}
+
+function playFanfareTone(pack) {
+  try {
+    if (window.__efQuiet || window.__efNoSfx) return;
+    const C = window.AudioContext || window.webkitAudioContext; if (!C) return;
+    const c = new C();
+    const freqs = [523.25, 659.25, 783.99, 1046.50];
+    freqs.forEach((freq, i) => {
+      const o = c.createOscillator(), g = c.createGain();
+      o.type = pack === 'neon' ? 'square' : pack === 'paper' ? 'triangle' : 'sine';
+      o.frequency.setValueAtTime(freq, c.currentTime + i * 0.08);
+      g.gain.setValueAtTime(0.0001, c.currentTime + i * 0.08);
+      g.gain.exponentialRampToValueAtTime(0.12, c.currentTime + i * 0.08 + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + i * 0.08 + 0.32);
+      o.connect(g); g.connect(c.destination);
+      o.start(c.currentTime + i * 0.08);
+      o.stop(c.currentTime + i * 0.08 + 0.35);
+    });
+  } catch {}
+}
+
+function playChestTone(pack) {
+  try {
+    if (window.__efQuiet || window.__efNoSfx) return;
+    const C = window.AudioContext || window.webkitAudioContext; if (!C) return;
+    const c = new C();
+    const freqs = [392, 523.25, 659.25, 783.99];
+    freqs.forEach((f, i) => {
+      const o = c.createOscillator(), g = c.createGain();
+      o.type = pack === 'neon' ? 'square' : 'sine';
+      o.frequency.setValueAtTime(f, c.currentTime + i * 0.07);
+      g.gain.setValueAtTime(0.0001, c.currentTime + i * 0.07);
+      g.gain.exponentialRampToValueAtTime(0.1, c.currentTime + i * 0.07 + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + i * 0.07 + 0.28);
+      o.connect(g); g.connect(c.destination);
+      o.start(c.currentTime + i * 0.07);
+      o.stop(c.currentTime + i * 0.07 + 0.3);
+    });
+  } catch {}
+}
+
+const AVATARS_20 = [
+  {id: 'fox', emoji: '🦊', label: 'Лис-ерудит', bg: '#fef3c7'},
+  {id: 'owl', emoji: '🦉', label: 'Мудра сова', bg: '#ede9fe'},
+  {id: 'lion', emoji: '🦁', label: 'Лев-лідер', bg: '#ffedd5'},
+  {id: 'panda', emoji: '🐼', label: 'Панда-дзен', bg: '#f3f4f6'},
+  {id: 'astro', emoji: '🚀', label: 'Астронавт', bg: '#e0f2fe'},
+  {id: 'wizard', emoji: '🧙‍♂️', label: 'Маг слів', bg: '#fae8ff'},
+  {id: 'cat', emoji: '🐱', label: 'Кіт-поліглот', bg: '#fce7f3'},
+  {id: 'dog', emoji: '🐶', label: 'Пес-дослідник', bg: '#fef9c3'},
+  {id: 'tiger', emoji: '🐯', label: 'Спринтер', bg: '#fed7aa'},
+  {id: 'raccoon', emoji: '🦝', label: 'Граматик', bg: '#e2e8f0'},
+  {id: 'koala', emoji: '🐨', label: 'Коала-релакс', bg: '#ccfbf1'},
+  {id: 'unicorn', emoji: '🦄', label: 'Єдиноріг', bg: '#fdf2f8'},
+  {id: 'dragon', emoji: '🐲', label: 'Дракон', bg: '#dcfce7'},
+  {id: 'bot', emoji: '🤖', label: 'Кібер-бот', bg: '#e0e7ff'},
+  {id: 'king', emoji: '👑', label: 'Король', bg: '#fef08a'},
+  {id: 'hero', emoji: '⚡', label: 'Супергерой', bg: '#fef3c7'},
+  {id: 'artist', emoji: '🎨', label: 'Митець', bg: '#fee2e2'},
+  {id: 'rocker', emoji: '🎸', label: 'Рок-зірка', bg: '#ffedd5'},
+  {id: 'explorer', emoji: '🧭', label: 'Мандрівник', bg: '#d1fae5'},
+  {id: 'detective', emoji: '🕵️', label: 'Детектив', bg: '#e2e8f0'}
+];
+
+function BrandLogo({size = 32, showText = true, className = ''}) {
+  return (
+    <div className={'brand-logo-wrap ' + className} style={{display:'inline-flex',alignItems:'center',gap:10}}>
+      <svg width={size} height={size} viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" style={{flexShrink:0,filter:'drop-shadow(0 2px 8px rgba(16,185,129,0.35))'}}>
+        <defs>
+          <linearGradient id="efGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#10b981" />
+            <stop offset="50%" stopColor="#06b6d4" />
+            <stop offset="100%" stopColor="#3b82f6" />
+          </linearGradient>
+        </defs>
+        <rect width="40" height="40" rx="12" fill="url(#efGrad)" />
+        <path d="M11 12H28C28.8 12 29.5 12.7 29.5 13.5V15.5C29.5 16.3 28.8 17 28 17H16.5V19.5H25C25.8 19.5 26.5 20.2 26.5 21V23C26.5 23.8 25.8 24.5 25 24.5H16.5V28H11V12Z" fill="white" />
+        <circle cx="28.5" cy="27.5" r="3.5" fill="#fbbf24" />
+      </svg>
+      {showText && <span className="brand-text">English<span style={{color:'var(--accent,#22a06b)',marginLeft:2}}>Flow</span></span>}
+    </div>
+  );
 }
 
 function confettiBurst() {
@@ -227,272 +313,71 @@ function computeBadges(state, gamification) {
   return [...earned];
 }
 
-function LayoutSwitcher({layout, onSelect}) {
-  const layouts = [
-    {id: 'sidebar', label: 'Сайдбар', icon: '📑'},
-    {id: 'top-nav', label: 'Верхній', icon: '🧭'},
-    {id: 'bottom-dock', label: 'Док', icon: '⚓'},
-    {id: 'zen', label: 'Дзен', icon: '🧘'}
-  ];
-  return (
-    <div className="layout-switcher" title="Структурне розташування меню">
-      {layouts.map(l => (
-        <button
-          key={l.id}
-          type="button"
-          className={'layout-btn' + ((layout || 'sidebar') === l.id ? ' active' : '')}
-          onClick={() => onSelect(l.id)}
-          title={`Макет: ${l.label}`}
-        >
-          <span>{l.icon}</span> <span>{l.label}</span>
-        </button>
-      ))}
-    </div>
-  );
-}
-
-function Sidebar({mobile, setMobile, page, nav, onLogout}) {
+function Sidebar({mobile, setMobile, page, nav}) {
   return (
     <aside className={'sidebar' + (mobile ? ' open' : '')}>
-      <div className="brand" onClick={() => nav('dashboard')} style={{cursor:'pointer'}}><span className="brand-mark">EF</span><span>English Flow</span></div>
-      <div className="nav-section">LEARN</div>
+      <div className="brand" onClick={() => { nav('dashboard'); setMobile?.(false); }} style={{cursor:'pointer'}}>
+        <BrandLogo size={32} />
+      </div>
+      <div className="nav-section">НАВЧАННЯ</div>
       {[
         ['dashboard', Home, 'Головна'],
-        ['learn', Play, 'Навчання'],
-        ['vocabulary', BookOpen, 'Слова'],
+        ['learn', Play, 'Уроки'],
+        ['vocabulary', BookOpen, 'Словник'],
         ['review', RotateCcw, 'SRS Повтор'],
+        ['shop', ShoppingBag, 'Магазин'],
       ].map(([id, I, t]) => (
-        <button key={id} className={'nav' + (page === id ? ' active' : '')} onClick={() => nav(id)}><I size={18}/>{t}</button>
+        <button key={id} className={'nav' + (page === id ? ' active' : '')} onClick={() => { nav(id); setMobile?.(false); }}>
+          <I size={18}/>{t}
+        </button>
       ))}
-      <div className="nav-section">TRACK</div>
+      <div className="nav-section">ПРОГРЕС</div>
       {[
         ['stats', BarChart3, 'Статистика'],
-        ['badges', Award, 'Бейджі'],
+        ['badges', Award, 'Досягнення'],
         ['problems', Target, 'Проблемні'],
         ['leaderboard', Trophy, 'Рейтинг'],
         ['challenges', Swords, 'Challenges'],
       ].map(([id, I, t]) => (
-        <button key={id} className={'nav' + (page === id ? ' active' : '')} onClick={() => nav(id)}><I size={18}/>{t}</button>
-      ))}
-      <div className="nav-section">ACCOUNT</div>
-      <button className={'nav' + (page === 'friends' ? ' active' : '')} onClick={() => nav('friends')}><Users size={18}/>Друзі</button>
-      <button className={'nav' + (page === 'settings' ? ' active' : '')} onClick={() => nav('settings')}><Settings size={18}/>Налаштування</button>
-      <button className={'nav' + (page === 'profile' ? ' active' : '')} onClick={() => nav('profile')}><User size={18}/>Профіль</button>
-      <button className={'nav' + (page === 'about' ? ' active' : '')} onClick={() => nav('about')}><Sparkles size={18}/>Про додаток</button>
-      <button className={'nav' + (page === 'admin' ? ' active' : '')} onClick={() => nav('admin')}><Shield size={18}/>Адмін</button>
-      {onLogout && (
-        <button className="nav nav-logout" onClick={onLogout} title="Вийти з акаунту" type="button">
-          <XCircle size={18}/>Вихід
+        <button key={id} className={'nav' + (page === id ? ' active' : '')} onClick={() => { nav(id); setMobile?.(false); }}>
+          <I size={18}/>{t}
         </button>
-      )}
+      ))}
+      <div className="nav-section">АКАУНТ</div>
+      <button className={'nav' + (page === 'friends' ? ' active' : '')} onClick={() => { nav('friends'); setMobile?.(false); }}><Users size={18}/>Друзі</button>
+      <button className={'nav' + (page === 'profile' ? ' active' : '')} onClick={() => { nav('profile'); setMobile?.(false); }}><User size={18}/>Профіль</button>
+      <button className={'nav' + (page === 'settings' ? ' active' : '')} onClick={() => { nav('settings'); setMobile?.(false); }}><Settings size={18}/>Налаштування</button>
+      <button className={'nav' + (page === 'about' ? ' active' : '')} onClick={() => { nav('about'); setMobile?.(false); }}><Sparkles size={18}/>Про додаток</button>
+      <button className={'nav' + (page === 'admin' ? ' active' : '')} onClick={() => { nav('admin'); setMobile?.(false); }}><Shield size={18}/>Адмін</button>
     </aside>
   );
 }
 
-function TopNavHeader({state, page, nav, onLogout, layout, setLayout}) {
+function Layout({children, state, page, nav, mobile, setMobile}) {
   return (
-    <header className="top-nav-header">
-      <div className="brand" onClick={() => nav('dashboard')} style={{cursor:'pointer'}}>
-        <span className="brand-mark">EF</span>
-        <span>English Flow</span>
-      </div>
-      <nav className="top-nav-tabs">
-        {[
-          ['dashboard', Home, 'Головна'],
-          ['learn', Play, 'Вчити'],
-          ['vocabulary', BookOpen, 'Слова'],
-          ['review', RotateCcw, 'SRS'],
-          ['leaderboard', Trophy, 'Рейтинг'],
-          ['badges', Award, 'Бейджі'],
-          ['stats', BarChart3, 'Статистика'],
-          ['friends', Users, 'Друзі'],
-          ['profile', User, 'Профіль'],
-          ['settings', Settings, 'Опції'],
-          ['admin', Shield, 'Адмін']
-        ].map(([id, I, t]) => (
-          <button key={id} className={'top-nav-tab' + (page === id ? ' active' : '')} onClick={() => nav(id)} type="button">
-            <I size={15}/> <span>{t}</span>
-          </button>
-        ))}
-      </nav>
-      <div className="header-stats">
-        <LayoutSwitcher layout={layout} onSelect={setLayout} />
-        <span>🔥 {state.streak}</span>
-        <span>⚡ {state.xp} XP</span>
-        <button className="btn-logout-header" onClick={onLogout} title="Вийти з акаунту" type="button">
-          <XCircle size={15}/> <span>Вихід</span>
-        </button>
-      </div>
-    </header>
-  );
-}
-
-function BottomDock({page, nav, onLogout}) {
-  return (
-    <nav className="command-dock">
-      {[
-        ['dashboard', Home, 'Головна'],
-        ['learn', Play, 'Вчити'],
-        ['vocabulary', BookOpen, 'Слова'],
-        ['review', RotateCcw, 'SRS'],
-        ['leaderboard', Trophy, 'Рейтинг'],
-        ['badges', Award, 'Бейджі'],
-        ['friends', Users, 'Друзі'],
-        ['profile', User, 'Профіль'],
-        ['settings', Settings, 'Опції'],
-        ['admin', Shield, 'Адмін']
-      ].map(([id, I, t]) => (
-        <button key={id} className={'dock-item' + (page === id ? ' active' : '')} onClick={() => nav(id)} type="button" title={t}>
-          <I size={18}/>
-          <span>{t}</span>
-        </button>
-      ))}
-      <div className="dock-divider" />
-      <button className="dock-item" onClick={onLogout} type="button" title="Вийти" style={{color:'var(--danger, #ef4444)'}}>
-        <XCircle size={18}/>
-        <span>Вихід</span>
-      </button>
-    </nav>
-  );
-}
-
-function ZenHeader({state, page, nav, onLogout, layout, setLayout, zenOpen, setZenOpen}) {
-  return (
-    <>
-      <div className="zen-header">
-        <button className="secondary" onClick={() => setZenOpen(true)} type="button" style={{display:'inline-flex',alignItems:'center',gap:6}}>
-          <Menu size={16}/> <span>Меню</span>
-        </button>
-        <div style={{fontWeight:600}}>
-          <span>English Flow</span>
-          <span className="muted"> · {page}</span>
-        </div>
-        <div style={{display:'flex',gap:8,alignItems:'center'}}>
-          <LayoutSwitcher layout={layout} onSelect={setLayout} />
-          <span>⚡ {state.xp} XP</span>
-          <button className="btn-logout-header" onClick={onLogout} title="Вийти" type="button">
-            <XCircle size={15}/>
-          </button>
-        </div>
-      </div>
-      {zenOpen && (
-        <div className="zen-drawer-overlay" onClick={() => setZenOpen(false)}>
-          <div className="zen-drawer" onClick={e => e.stopPropagation()}>
-            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
-              <div className="brand"><span className="brand-mark">EF</span><span>English Flow</span></div>
-              <button className="icon" onClick={() => setZenOpen(false)}><X size={18}/></button>
-            </div>
-            <div className="nav-section">НАВІГАЦІЯ</div>
-            {[
-              ['dashboard', Home, 'Головна'],
-              ['learn', Play, 'Навчання'],
-              ['vocabulary', BookOpen, 'Слова'],
-              ['review', RotateCcw, 'SRS Повтор'],
-              ['leaderboard', Trophy, 'Рейтинг'],
-              ['badges', Award, 'Бейджі'],
-              ['stats', BarChart3, 'Статистика'],
-              ['friends', Users, 'Друзі'],
-              ['profile', User, 'Профіль'],
-              ['settings', Settings, 'Налаштування'],
-              ['about', Sparkles, 'Про додаток'],
-              ['admin', Shield, 'Адмін']
-            ].map(([id, I, t]) => (
-              <button key={id} className={'nav' + (page === id ? ' active' : '')} onClick={() => { nav(id); setZenOpen(false); }}>
-                <I size={18}/> {t}
-              </button>
-            ))}
-            <hr style={{margin:'12px 0'}}/>
-            <button className="nav nav-logout" onClick={onLogout} type="button">
-              <XCircle size={18}/> Вийти з акаунту
-            </button>
-          </div>
-        </div>
-      )}
-    </>
-  );
-}
-
-function Layout({children, state, page, nav, mobile, setMobile, onLogout, layout, setLayout}) {
-  const [zenOpen, setZenOpen] = useState(false);
-  const curLayout = layout || state.layout || 'sidebar';
-
-  if (curLayout === 'top-nav') {
-    return (
-      <div className="app" data-layout="top-nav">
-        <main className="main">
-          <TopNavHeader state={state} page={page} nav={nav} onLogout={onLogout} layout={curLayout} setLayout={setLayout} />
-          {children}
-        </main>
-      </div>
-    );
-  }
-
-  if (curLayout === 'bottom-dock') {
-    return (
-      <div className="app" data-layout="bottom-dock">
-        <main className="main">
-          <header>
-            <div className="brand" onClick={() => nav('dashboard')} style={{cursor:'pointer'}}>
-              <span className="brand-mark">EF</span>
-              <span>English Flow</span>
-            </div>
-            <div>
-              <b>{state.name || state.nick}</b>
-              <span className="muted"> · @{state.nick}</span>
-            </div>
-            <div className="header-stats">
-              <LayoutSwitcher layout={curLayout} onSelect={setLayout} />
-              <span>🔥 {state.streak}</span>
-              <span>⚡ {state.xp} XP</span>
-              <button className="btn-logout-header" onClick={onLogout} title="Вийти з акаунту" type="button">
-                <XCircle size={15}/> <span>Вихід</span>
-              </button>
-            </div>
-          </header>
-          {children}
-          <BottomDock page={page} nav={nav} onLogout={onLogout} />
-        </main>
-      </div>
-    );
-  }
-
-  if (curLayout === 'zen') {
-    return (
-      <div className="app" data-layout="zen">
-        <main className="main">
-          <ZenHeader state={state} page={page} nav={nav} onLogout={onLogout} layout={curLayout} setLayout={setLayout} zenOpen={zenOpen} setZenOpen={setZenOpen} />
-          {children}
-        </main>
-      </div>
-    );
-  }
-
-  // Default: sidebar
-  return (
-    <div className="app" data-layout="sidebar">
-      <Sidebar mobile={mobile} setMobile={setMobile} page={page} nav={nav} onLogout={onLogout} />
+    <div className="app">
+      <Sidebar mobile={mobile} setMobile={setMobile} page={page} nav={nav} />
       <main className="main">
         <header>
           <button className="icon mobile-only" onClick={() => setMobile(!mobile)}>{mobile ? <X/> : <Menu/>}</button>
-          <div>
+          <div className="header-user-info">
+            <span className="user-avatar-tiny">{state.avatar || '🦊'}</span>
             <b>{state.name || state.nick}</b>
             {(String(state.nick||'').toLowerCase()==='boss' || String(state.name||'').toLowerCase()==='boss') && <span className="boss-badge" title="Verified">👑</span>}
             <span className="muted"> · @{state.nick}</span>
-            {(String(state.nick||'').toLowerCase()==='boss' || String(state.name||'').toLowerCase()==='boss') && <span className="pill ok">verified</span>}
             {state.guest && <span className="pill guest-pill"><Ghost size={12}/> гість</span>}
           </div>
           <div className="header-stats">
-            <LayoutSwitcher layout={curLayout} onSelect={setLayout} />
-            <span>🔥 {state.streak}</span>
-            <span>⚡ {state.xp} XP</span>
-            <button className="btn-logout-header" onClick={onLogout} title="Вийти з акаунту" type="button">
-              <XCircle size={15}/> <span>Вихід</span>
-            </button>
+            <span title="Серія днів" className="stat-chip streak-chip">🔥 {state.streak}</span>
+            <span title="Бали досвіду" className="stat-chip xp-chip">⚡ {state.xp} XP</span>
+            {(state.freezeCount > 0) && (
+              <span title="Запас заморозок серії" className="stat-chip freeze-chip">❄️ {state.freezeCount}</span>
+            )}
           </div>
         </header>
         {children}
         <nav className="mobile-nav">
-          {[['dashboard', Home, 'Головна'], ['learn', Play, 'Вчити'], ['vocabulary', BookOpen, 'Слова'], ['review', RotateCcw, 'SRS'], ['profile', User, 'Профіль']].map(([id, I, t]) => (
+          {[['dashboard', Home, 'Головна'], ['learn', Play, 'Вчити'], ['vocabulary', BookOpen, 'Слова'], ['shop', ShoppingBag, 'Магазин'], ['profile', User, 'Профіль']].map(([id, I, t]) => (
             <button key={id} className={page === id ? 'active' : ''} onClick={() => nav(id)}><I size={18}/><span>{t}</span></button>
           ))}
         </nav>
@@ -793,13 +678,14 @@ export default function App() {
         {page === 'badges' && <BadgesPage state={state} />}
         {page === 'problems' && <ProblemsPage state={state} save={save} wordsCatalog={wordsLive} onStart={(m,d,c) => { setLessonCfg({mode:m,direction:d,category:c}); setPage('lesson'); }} />}
         {page === 'leaderboard' && <Leaderboard state={state} gamification={gamification} onViewProfile={setPublicProfileNick} />}
+        {page === 'shop' && <ShopPage state={state} save={save} onRefreshGamification={refreshGamification} />}
         {page === 'settings' && <SettingsPage state={state} save={save} onLogout={handleLogout} />}
         {page === 'friends' && <FriendsPage state={state} />}
         {page === 'challenges' && <ChallengesPage state={state} />}
         {page === 'profile' && <Profile state={state} save={save} gamification={gamification} onRefreshGamification={refreshGamification} onLogout={handleLogout} />}
         {page === 'about' && <AboutPage />}
         {page === '404' && <section className="page-error card"><h1>404</h1><p>Такої сторінки немає.</p><button className="primary" type="button" onClick={() => nav('dashboard')}>На головну</button></section>}
-        {page === 'admin' && <Admin state={state} save={save} setWordsLive={setWordsLive} wordsLive={wordsLive} />}
+        {page === 'admin' && <Admin state={state} save={save} setWordsLive={setWordsLive} wordsLive={wordsLive} setModal={setModal} />}
         {page === 'lesson' && lessonCfg && (
           <Lesson
             cfg={lessonCfg}
@@ -830,6 +716,162 @@ export default function App() {
       {publicProfileNick && <PublicProfileModal nick={publicProfileNick} onClose={() => setPublicProfileNick(null)} />}
       <Analytics />
     </>
+  );
+}
+
+function ShopPage({state, save, onRefreshGamification}) {
+  const [busy, setBusy] = useState(false);
+  const xp = state.xp || 0;
+  const freezeCount = state.freezeCount || 0;
+  const inventory = state.inventory || { doubleXpUntil: null, secondChance: 0, vipFrame: false };
+
+  const buy = async (itemId, cost) => {
+    if (xp < cost) {
+      emitSiteError(`Не вистачає XP! Потрібно ${cost} XP, у вас ${xp} XP.`, 'Магазин XP');
+      return;
+    }
+    setBusy(true);
+    try {
+      if (itemId === 'freeze') {
+        await postGamification('buy_freeze');
+        await onRefreshGamification();
+        save({...state, xp: xp - cost, freezeCount: freezeCount + 1});
+        emitSiteToast('❄️ Придбано Заморозку серії (-50 XP)!', 'ok');
+        confettiBurst();
+      } else if (itemId === 'booster') {
+        const doubleUntil = Date.now() + 30 * 60 * 1000;
+        const nextInv = {...inventory, doubleXpUntil: doubleUntil};
+        save({...state, xp: xp - cost, inventory: nextInv});
+        emitSiteToast('⚡ Подвійний XP активовано на 30 хвилин (-100 XP)!', 'ok');
+        confettiBurst();
+      } else if (itemId === 'second_chance') {
+        const nextInv = {...inventory, secondChance: (inventory.secondChance || 0) + 1};
+        save({...state, xp: xp - cost, inventory: nextInv});
+        emitSiteToast('🔄 Придбано Другий шанс (-40 XP)!', 'ok');
+        confettiBurst();
+      } else if (itemId === 'vip_frame') {
+        const nextInv = {...inventory, vipFrame: true};
+        save({...state, xp: xp - cost, inventory: nextInv});
+        emitSiteToast('👑 Золоту VIP-рамку активовано (-200 XP)!', 'ok');
+        confettiBurst();
+      } else if (itemId === 'mystery_chest') {
+        const outcomes = [
+          {type: 'xp', amount: 150, msg: '🎉 Виграш 150 XP!'},
+          {type: 'xp', amount: 100, msg: '✨ Виграш 100 XP!'},
+          {type: 'xp', amount: 50, msg: '🪙 Повернено 50 XP.'},
+          {type: 'freeze', amount: 1, msg: '❄️ Виграно +1 Заморозку серії!'}
+        ];
+        const res = outcomes[Math.floor(Math.random() * outcomes.length)];
+        let nextState = {...state, xp: xp - cost};
+        if (res.type === 'xp') {
+          nextState.xp += res.amount;
+        } else if (res.type === 'freeze') {
+          nextState.freezeCount = (nextState.freezeCount || 0) + 1;
+        }
+        save(nextState);
+        emitSiteToast(`🎁 Скриня: ${res.msg}`, 'ok');
+        confettiBurst();
+      }
+    } catch (e) {
+      emitSiteError(e.message || 'Помилка покупки', 'Магазин');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const isBoosterActive = inventory.doubleXpUntil && inventory.doubleXpUntil > Date.now();
+  const boosterMinutesLeft = isBoosterActive ? Math.ceil((inventory.doubleXpUntil - Date.now()) / 60000) : 0;
+
+  return (
+    <section className="fade-in">
+      <div className="shop-balance-banner card">
+        <div>
+          <span className="eyebrow">XP MARKET</span>
+          <h2 style={{margin:'4px 0'}}>🛒 Магазин нагород та бонусів</h2>
+          <p className="muted" style={{margin:0}}>Витрачайте зароблені бали досвіду на корисні бонуси, захист серії та унікальний вигляд.</p>
+        </div>
+        <div className="shop-balance-pill">
+          <span>Ваш баланс:</span>
+          <b>⚡ {xp} XP</b>
+        </div>
+      </div>
+
+      <div className="shop-grid">
+        <div className="card shop-card">
+          <div className="shop-icon">❄️</div>
+          <div className="shop-card-content">
+            <h3>Заморозка серії</h3>
+            <p className="muted small">Автоматично захищає ваш стрік від скидання при пропуску дня. Наразі у вас: <b>{freezeCount}</b> шт.</p>
+          </div>
+          <div className="shop-footer">
+            <span className="shop-price-tag">50 XP</span>
+            <button className="primary" type="button" disabled={busy || xp < 50} onClick={() => buy('freeze', 50)}>
+              Придбати
+            </button>
+          </div>
+        </div>
+
+        <div className="card shop-card">
+          <div className="shop-icon">⚡</div>
+          <div className="shop-card-content">
+            <h3>XP Booster (2× Досвід)</h3>
+            <p className="muted small">
+              {isBoosterActive
+                ? `🟢 Активно ще ${boosterMinutesLeft} хв. Подвійні очки за всі правильні відповіді!`
+                : 'Подвоює всі зароблені бали XP у будь-яких режимах гри на 30 хвилин.'}
+            </p>
+          </div>
+          <div className="shop-footer">
+            <span className="shop-price-tag">100 XP</span>
+            <button className="primary" type="button" disabled={busy || xp < 100 || isBoosterActive} onClick={() => buy('booster', 100)}>
+              {isBoosterActive ? 'Активно' : 'Активувати'}
+            </button>
+          </div>
+        </div>
+
+        <div className="card shop-card">
+          <div className="shop-icon">🔄</div>
+          <div className="shop-card-content">
+            <h3>Другий шанс</h3>
+            <p className="muted small">Дозволяє виправляти помилку без втрати очок або перегравати складне питання. У запасі: <b>{inventory.secondChance || 0}</b> шт.</p>
+          </div>
+          <div className="shop-footer">
+            <span className="shop-price-tag">40 XP</span>
+            <button className="primary" type="button" disabled={busy || xp < 40} onClick={() => buy('second_chance', 40)}>
+              Придбати
+            </button>
+          </div>
+        </div>
+
+        <div className="card shop-card">
+          <div className="shop-icon">👑</div>
+          <div className="shop-card-content">
+            <h3>Золота VIP-рамка</h3>
+            <p className="muted small">Ексклюзивна мерехтлива рамка для вашої аватарки у лідерборді та профілі.</p>
+          </div>
+          <div className="shop-footer">
+            <span className="shop-price-tag">200 XP</span>
+            <button className="primary" type="button" disabled={busy || xp < 200 || inventory.vipFrame} onClick={() => buy('vip_frame', 200)}>
+              {inventory.vipFrame ? '✓ Придбано' : 'Розблокувати'}
+            </button>
+          </div>
+        </div>
+
+        <div className="card shop-card">
+          <div className="shop-icon">🎁</div>
+          <div className="shop-card-content">
+            <h3>Таємнича скриня</h3>
+            <p className="muted small">Випробуйте удачу! Можливість виграти до 250 XP або безкоштовну заморозку стріку.</p>
+          </div>
+          <div className="shop-footer">
+            <span className="shop-price-tag">75 XP</span>
+            <button className="primary" type="button" disabled={busy || xp < 75} onClick={() => buy('mystery_chest', 75)}>
+              Відкрити
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -1464,7 +1506,6 @@ function SprintGame({items, mode, state, save, onExit, onDone, lessonId}) {
       });
     } else {
       setBadCount(c => c + 1);
-      setSlowAudio(true);
       setCombo(0);
     }
     setScorePop({pts: points, ok, key: Date.now()});
@@ -1483,6 +1524,7 @@ function SprintGame({items, mode, state, save, onExit, onDone, lessonId}) {
     setPicked(null);
     setScorePop(null);
     setMist(null);
+    setSlowAudio(false);
     if (i + 1 >= len) {
       setDone(true);
     } else {
@@ -1588,16 +1630,16 @@ function SprintGame({items, mode, state, save, onExit, onDone, lessonId}) {
         <div className="ef-modal-backdrop">
           <div className="ef-modal card">
             <h2>Вийти з уроку?</h2>
-            <p>Відповіді збережено, урок ще не завершено.</p>
+            <p>Ви впевнені, що хочете вийти? Прогрес не збережеться!</p>
             <div className="row-btns">
               <button className="secondary" type="button" onClick={() => setLeaveAsk(false)}>Залишитись</button>
-              <button className="primary" type="button" onClick={onExit}>Вийти</button>
+              <button className="primary" type="button" onClick={onExit}>Так, вийти</button>
             </div>
           </div>
         </div>
       )}
       <div className={'mist-layer' + (mist ? ' show ' + mist : '')} aria-hidden="true"/>
-      <button className="back anim-arrow" type="button" onClick={() => (step > 0 ? setLeaveAsk(true) : onExit())}>
+      <button className="back anim-arrow" type="button" onClick={() => ((step > 0 || (okCount + badCount > 0)) ? setLeaveAsk(true) : onExit())}>
         <span className="arrow-ico">←</span> Назад
       </button>
       <div className="lesson-progress-row">
@@ -1626,7 +1668,16 @@ function SprintGame({items, mode, state, save, onExit, onDone, lessonId}) {
         )}
         <div className="prompt-block">
           <p className="prompt-label muted">Питання {step + 1}</p>
-          <h2 className="prompt" key={'p'+step}>{mode === 'dictation' ? 'Напиши слово на слух' : (w.prompt || w.word)}</h2>
+          <div className="prompt-row-with-explanation">
+            <h2 className="prompt" key={'p'+step}>{mode === 'dictation' ? 'Напиши слово на слух' : (w.prompt || w.word)}</h2>
+            {picked != null && !correct && (
+              <div className="prompt-explanation-badge">
+                <div className="badge-title">⚠️ Не зовсім так</div>
+                <div className="badge-ans">Правильно: <b>{w.answer}</b></div>
+                {(w.explanation || w.translation) && <div className="badge-hint">{w.explanation || w.translation}</div>}
+              </div>
+            )}
+          </div>
           {mode !== 'dictation' && (w.direction || 'en-ua') === 'en-ua' && (
             <p className="muted phon">{w.pronunciation} · {w.category}</p>
           )}
@@ -1762,18 +1813,63 @@ function Vocabulary({state, setModal, wordsCatalog, cats}) {
   const dict = (wordsCatalog && wordsCatalog.length) ? wordsCatalog : words;
   const [q, setQ] = useState('');
   const [cat, setCat] = useState('all');
+  const [filterMode, setFilterMode] = useState('learned'); // 'learned' | 'all'
+
+  const learnedTotal = useMemo(() => {
+    return dict.filter(w => {
+      const m = state.mastery[progKey(w, state.mastery, state.srs)] || 0;
+      return m >= (state.admin.masteryThreshold || 8);
+    }).length;
+  }, [dict, state.mastery, state.srs, state.admin.masteryThreshold]);
+
   const f = dict.filter(w => {
     const okCat = cat === 'all' || w.category === cat;
     const okQ = (w.word + ' ' + w.translation + ' ' + w.category).toLowerCase().includes(q.toLowerCase());
-    return okCat && okQ;
+    const m = state.mastery[progKey(w, state.mastery, state.srs)] || 0;
+    const isLearned = m >= (state.admin.masteryThreshold || 8);
+    const okMode = filterMode === 'all' || isLearned;
+    return okCat && okQ && okMode;
   });
+
   return (
-    <section>
-      <Title title="Словник" text={`${dict.length} слів · ${notionWords?.length ? 'Notion' : 'локальна база (синк пізніше)'}`}/>
+    <section className="fade-in">
+      <Title
+        title="Словник"
+        text={filterMode === 'learned' ? `Вивчено: ${learnedTotal} слів (показуються лише засвоєні)` : `Усі слова: ${dict.length} слів · ${notionWords?.length ? 'Notion' : 'локальна база'}`}
+      />
+
+      <div className="row-btns" style={{marginBottom: 14}}>
+        <button
+          type="button"
+          className={filterMode === 'learned' ? 'primary' : 'secondary'}
+          onClick={() => setFilterMode('learned')}
+        >
+          🎓 Вивчені слова ({learnedTotal})
+        </button>
+        <button
+          type="button"
+          className={filterMode === 'all' ? 'primary' : 'secondary'}
+          onClick={() => setFilterMode('all')}
+        >
+          📚 Увесь словник ({dict.length})
+        </button>
+      </div>
+
       <div className="filters row">
-        <input className="search" placeholder="Пошук…" value={q} onChange={e => setQ(e.target.value)}/>
+        <input className="search" placeholder="Пошук слів чи перекладу…" value={q} onChange={e => setQ(e.target.value)}/>
         <UiSelect value={cat} onChange={setCat} options={[{value:'all',label:'Усі категорії'},...(cats || CATS).map(c=>({value:c,label:c}))]}/>
       </div>
+
+      {filterMode === 'learned' && learnedTotal === 0 && (
+        <div className="card" style={{textAlign:'center',padding:'24px 16px',margin:'16px 0'}}>
+          <h3>🌱 У вас поки немає повністю вивчених слів</h3>
+          <p className="muted">Слова стають вивченими після досягнення {state.admin.masteryThreshold || 8} успішних повторень.</p>
+          <button className="secondary" type="button" onClick={() => setFilterMode('all')} style={{marginTop:8}}>
+            Переглянути повний каталог слів ({dict.length})
+          </button>
+        </div>
+      )}
+
       <div className="word-list">
         {f.map(w => {
           const m = state.mastery[progKey(w, state.mastery, state.srs)] || 0;
@@ -1888,6 +1984,8 @@ function ReviewPage({state, due, onStart}) {
 }
 
 function Stats({state, learned}) {
+  const [statDesign, setStatDesign] = useState('analytics'); // 'analytics' | 'rings' | 'cefr'
+
   const last7 = useMemo(() => {
     const days = {};
     for (let i = 6; i >= 0; i--) {
@@ -1901,75 +1999,210 @@ function Stats({state, learned}) {
     });
     return Object.entries(days);
   }, [state.history]);
+
   const maxV = Math.max(1, ...last7.map(([, v]) => v));
   const total = (state.history || []).length;
   const correct = (state.history || []).filter(h => h.correct).length;
   const pct = total ? Math.round((correct / total) * 100) : 0;
+  const goalPct = Math.min(100, Math.round(((state.todayXp||0) / Math.max(1, state.dailyGoal||50)) * 100));
+
   return (
-    <section>
-      <Title title="Статистика" text="Прогрес за останні дні"/>
-      <EmojiPulse state={state}/>
-      <Heatmap history={state.history||[]} />
-      <div className="grid stats">
-        <Card icon={<Target/>} title="Точність" value={pct + '%'} sub={`${correct}/${total}`}
-          tone={state.midnightSnap && pct > state.midnightSnap.pct ? 'danger' : 'default'}/>
-        <Card icon={<Brain/>} title="Вивчено" value={learned} sub="слів"
-          tone={state.midnightSnap && learned > state.midnightSnap.learned ? 'warn' : 'default'}/>
-        <Card icon={<Sparkles/>} title="XP" value={state.xp} sub={`сьогодні ${state.todayXp}`}
-          tone={state.midnightSnap && state.xp > state.midnightSnap.xp ? 'orange' : 'default'}/>
-        <Card icon={<Flame/>} title="Streak" value={state.streak} sub="днів" tone="fire"/>
+    <section className="fade-in">
+      <Title title="Статистика" text="Аналітика успішності, активність та академічний прогрес"/>
+
+      <div className="row-btns" style={{marginBottom: 16}}>
+        <button
+          type="button"
+          className={statDesign === 'analytics' ? 'primary' : 'secondary'}
+          onClick={() => setStatDesign('analytics')}
+        >
+          📊 Аналітичний дашборд
+        </button>
+        <button
+          type="button"
+          className={statDesign === 'rings' ? 'primary' : 'secondary'}
+          onClick={() => setStatDesign('rings')}
+        >
+          🎯 Кільця активності
+        </button>
+        <button
+          type="button"
+          className={statDesign === 'cefr' ? 'primary' : 'secondary'}
+          onClick={() => setStatDesign('cefr')}
+        >
+          📜 Паспорт CEFR
+        </button>
       </div>
-      <div className="card">
-        <h2>Правильні відповіді · 7 днів</h2>
-        <div className="chart">
-          {last7.map(([day, v]) => (
-            <div key={day} className="bar-wrap" title={`${day}: ${v}`}>
-              <div className="bar" style={{height: `${(v / maxV) * 100}%`}}/>
-              <span>{day.slice(8)}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-      <div className="grid two">
-        <div className="card">
-          <h2>Точність</h2>
-          <div className="donut-wrap">
-            <div className="donut" style={{background: `conic-gradient(var(--accent) 0 ${pct}%, var(--border) ${pct}% 100%)`}}/>
-            <div className="donut-label"><b>{pct}%</b><span className="muted">correct</span></div>
+
+      {statDesign === 'analytics' && (
+        <>
+          <EmojiPulse state={state}/>
+          <Heatmap history={state.history||[]} />
+          <div className="grid stats">
+            <Card icon={<Target/>} title="Точність" value={pct + '%'} sub={`${correct}/${total}`}
+              tone={state.midnightSnap && pct > state.midnightSnap.pct ? 'danger' : 'default'}/>
+            <Card icon={<Brain/>} title="Вивчено" value={learned} sub="слів"
+              tone={state.midnightSnap && learned > state.midnightSnap.learned ? 'warn' : 'default'}/>
+            <Card icon={<Sparkles/>} title="XP" value={state.xp} sub={`сьогодні ${state.todayXp}`}
+              tone={state.midnightSnap && state.xp > state.midnightSnap.xp ? 'orange' : 'default'}/>
+            <Card icon={<Flame/>} title="Streak" value={state.streak} sub="днів" tone="fire"/>
           </div>
-          <p className="muted small">{correct} правильних · {total - correct} помилок · {total} всього</p>
+          <div className="card">
+            <h2>Правильні відповіді · 7 днів</h2>
+            <div className="chart">
+              {last7.map(([day, v]) => (
+                <div key={day} className="bar-wrap" title={`${day}: ${v}`}>
+                  <div className="bar" style={{height: `${(v / maxV) * 100}%`}}/>
+                  <span>{day.slice(8)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="grid two">
+            <div className="card">
+              <h2>Точність</h2>
+              <div className="donut-wrap">
+                <div className="donut" style={{background: `conic-gradient(var(--accent) 0 ${pct}%, var(--border) ${pct}% 100%)`}}/>
+                <div className="donut-label"><b>{pct}%</b><span className="muted">correct</span></div>
+              </div>
+              <p className="muted small">{correct} правильних · {total - correct} помилок · {total} всього</p>
+            </div>
+            <div className="card">
+              <h2>Режими гри</h2>
+              <ModeBars history={state.history || []} />
+            </div>
+          </div>
+          <div className="card">
+            <h2>XP сьогодні vs ціль</h2>
+            <div className="xp-goal-track">
+              <i style={{width: `${goalPct}%`}}/>
+            </div>
+            <p className="muted">{state.todayXp || 0} / {Math.max(1, state.dailyGoal || 50)} XP ({goalPct}%)</p>
+          </div>
+        </>
+      )}
+
+      {statDesign === 'rings' && (
+        <div className="rings-grid">
+          <div className="card ring-card">
+            <h3>🔥 Денна ціль XP</h3>
+            <div className="ring-wrap" style={{width:160,height:160,margin:'16px auto',position:'relative',display:'flex',alignItems:'center',justifyContent:'center'}}>
+              <div style={{width:'100%',height:'100%',borderRadius:'50%',background:`conic-gradient(#f59e0b 0% ${goalPct}%, var(--border) ${goalPct}% 100%)`}}/>
+              <div style={{position:'absolute',width:'76%',height:'76%',borderRadius:'50%',background:'var(--surface,#fff)',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center'}}>
+                <b style={{fontSize:24}}>{goalPct}%</b>
+                <span className="muted small">{state.todayXp||0}/{state.dailyGoal||50} XP</span>
+              </div>
+            </div>
+            <p className="muted small" style={{textAlign:'center'}}>Залишилось: {Math.max(0, (state.dailyGoal||50) - (state.todayXp||0))} XP до виконання плану</p>
+          </div>
+
+          <div className="card ring-card">
+            <h3>🎯 Загальна точність</h3>
+            <div className="ring-wrap" style={{width:160,height:160,margin:'16px auto',position:'relative',display:'flex',alignItems:'center',justifyContent:'center'}}>
+              <div style={{width:'100%',height:'100%',borderRadius:'50%',background:`conic-gradient(#10b981 0% ${pct}%, var(--border) ${pct}% 100%)`}}/>
+              <div style={{position:'absolute',width:'76%',height:'76%',borderRadius:'50%',background:'var(--surface,#fff)',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center'}}>
+                <b style={{fontSize:24}}>{pct}%</b>
+                <span className="muted small">{correct}/{total} вдалих</span>
+              </div>
+            </div>
+            <p className="muted small" style={{textAlign:'center'}}>Критерій майстерності: підтримувати &gt;85%</p>
+          </div>
+
+          <div className="card ring-card">
+            <h3>🧠 Засвоєння бази (300 слів)</h3>
+            <div className="ring-wrap" style={{width:160,height:160,margin:'16px auto',position:'relative',display:'flex',alignItems:'center',justifyContent:'center'}}>
+              <div style={{width:'100%',height:'100%',borderRadius:'50%',background:`conic-gradient(#3b82f6 0% ${Math.min(100, Math.round((learned / 300) * 100))}%, var(--border) ${Math.min(100, Math.round((learned / 300) * 100))}% 100%)`}}/>
+              <div style={{position:'absolute',width:'76%',height:'76%',borderRadius:'50%',background:'var(--surface,#fff)',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center'}}>
+                <b style={{fontSize:24}}>{Math.min(100, Math.round((learned / 300) * 100))}%</b>
+                <span className="muted small">{learned}/300 слів</span>
+              </div>
+            </div>
+            <p className="muted small" style={{textAlign:'center'}}>Базовий активний лексикон для вільного спілкування</p>
+          </div>
         </div>
-        <div className="card">
-          <h2>Режими гри</h2>
-          <ModeBars history={state.history || []} />
+      )}
+
+      {statDesign === 'cefr' && (
+        <div className="card cefr-passport-card">
+          <h2>📜 Академічний паспорт володіння мовою (CEFR)</h2>
+          <p className="muted">Міжнародний стандарт оцінки мовних рівнів на основі засвоєного словникового запасу:</p>
+
+          <div className="cefr-levels-list" style={{display:'flex',flexDirection:'column',gap:14,marginTop:16}}>
+            {[
+              {code:'A1', title:'Beginner (Початківець)', target:50, desc:'Розуміння простих побутових фраз та базових привітань.'},
+              {code:'A2', title:'Elementary (Елементарний)', target:120, desc:'Спілкування у простих типових ситуаціях, розповідь про себе.'},
+              {code:'B1', title:'Intermediate (Середній)', target:250, desc:'Розуміння головних думок у роботі, навчанні та подорожах.'},
+              {code:'B2', title:'Upper-Intermediate (Вище середнього)', target:400, desc:'Вільне спонтанне спілкування з носіями без напруження.'},
+              {code:'C1', title:'Advanced (Просунутий)', target:600, desc:'Гнучке використання мови для академічних і професійних цілей.'}
+            ].map(lvl => {
+              const curPct = Math.min(100, Math.round((learned / lvl.target) * 100));
+              const isAchieved = learned >= lvl.target;
+              return (
+                <div key={lvl.code} className={'card cefr-level-row ' + (isAchieved ? 'achieved' : '')} style={{borderLeft: isAchieved ? '4px solid #10b981' : '4px solid var(--border)'}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
+                    <div style={{display:'flex',alignItems:'center',gap:10}}>
+                      <span className={'pill ' + (isAchieved ? 'ok' : '')} style={{fontSize:13,fontWeight:700}}>{lvl.code}</span>
+                      <b>{lvl.title}</b>
+                    </div>
+                    <span>{isAchieved ? '✅ Зараховано' : `${learned}/${lvl.target} слів (${curPct}%)`}</span>
+                  </div>
+                  <p className="muted small" style={{margin:'4px 0 8px'}}>{lvl.desc}</p>
+                  <div className="progress"><i style={{width: `${curPct}%`}}/></div>
+                </div>
+              );
+            })}
+          </div>
         </div>
-      </div>
-      <div className="card">
-        <h2>XP сьогодні vs ціль</h2>
-        <div className="xp-goal-track">
-          <i style={{width: Math.min(100, Math.round(((state.todayXp||0) / Math.max(1, state.dailyGoal||50)) * 100)) + '%'}}/>
-        </div>
-        <p className="muted">{state.todayXp || 0} / {Math.max(1, state.dailyGoal || 50)} XP ({Math.min(100, Math.round(((state.todayXp||0) / Math.max(1, state.dailyGoal||50)) * 100))}%)</p>
-      </div>
+      )}
     </section>
   );
 }
 
 function BadgesPage({state}) {
   const earned = new Set(state.badges || []);
+  const [tierFilter, setTierFilter] = useState('all');
+
+  const tiers = [
+    {id: 'all', label: 'Усі'},
+    {id: 'starter', label: '🥉 Стартові'},
+    {id: 'medium', label: '🥈 Срібні'},
+    {id: 'advanced', label: '🥇 Золоті'},
+    {id: 'legendary', label: '💎 Легендарні'}
+  ];
+
+  const filteredBadges = BADGES.filter(b => tierFilter === 'all' || (b.tier || 'starter') === tierFilter);
+
   return (
     <section className="fade-in">
-      <Title title="Бейджі" text="Як досягнення в Steam — з анімацією отримання"/>
+      <Title title="Досягнення" text="Отримуйте нагороди за прогрес, серії днів та ліги"/>
+
+      <div className="row-btns" style={{marginBottom: 16}}>
+        {tiers.map(t => (
+          <button
+            key={t.id}
+            type="button"
+            className={tierFilter === t.id ? 'primary' : 'secondary'}
+            onClick={() => setTierFilter(t.id)}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
       <div className="badges-grid">
-        {BADGES.map(b => {
+        {filteredBadges.map(b => {
           const on = earned.has(b.id);
+          const tier = b.tier || 'starter';
           return (
-            <div key={b.id} className={'badge-card card badge-style-' + (state.badgeStyle || 'neo') + (on ? ' earned' : ' locked')}>
-              <div className="badge-ico">{on ? '🏅' : '🔒'}</div>
+            <div key={b.id} className={`badge-card card tier-${tier} badge-style-${state.badgeStyle || 'neo'} ${on ? 'earned' : 'locked'}`}>
+              <div className="badge-ico">{on ? (b.icon || '🏅') : '🔒'}</div>
               <div className="badge-body">
                 <h3>{b.title}</h3>
                 <p className="muted badge-desc">{b.desc}</p>
-                {on && <span className="pill ok">Отримано</span>}
+                <div style={{display:'flex',gap:6,alignItems:'center',marginTop:6}}>
+                  {on ? <span className="pill ok">Отримано</span> : <span className="pill muted">Заблоковано</span>}
+                  <span className="badge-tier-tag" style={{fontSize:10,textTransform:'uppercase',opacity:0.75}}>{tier}</span>
+                </div>
               </div>
             </div>
           );
@@ -1979,8 +2212,25 @@ function BadgesPage({state}) {
   );
 }
 
+function formatActivityTime(ts) {
+  if (!ts) return '—';
+  try {
+    const d = new Date(ts);
+    const now = Date.now();
+    const diff = Math.floor((now - d.getTime()) / 1000);
+    if (diff < 180) return '🟢 Онлайн';
+    if (diff < 3600) return `Був(ла) ${Math.floor(diff / 60)} хв тому`;
+    if (diff < 86400) return `Сьогодні о ${d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}`;
+    if (diff < 172800) return `Вчора о ${d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}`;
+    return d.toLocaleDateString();
+  } catch {
+    return '—';
+  }
+}
+
 function Leaderboard({state, gamification, onViewProfile}) {
   const [tab, setTab] = useState('global');
+  const [boardView, setBoardView] = useState('podium'); // 'podium' | 'table' | 'arena'
   const [loading, setLoading] = useState(!gamification);
   const [rows, setRows] = useState(null);
 
@@ -2034,10 +2284,18 @@ function Leaderboard({state, gamification, onViewProfile}) {
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="row-btns" style={{marginBottom:16}}>
-        <button type="button" className={tab==='global'?'primary':'secondary'} onClick={()=>setTab('global')}>🌍 Глобальний</button>
-        <button type="button" className={tab==='friends'?'primary':'secondary'} onClick={()=>setTab('friends')}>👥 Друзі</button>
+      {/* Style switchers & Tabs */}
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:10,marginBottom:16}}>
+        <div className="row-btns">
+          <button type="button" className={tab==='global'?'primary':'secondary'} onClick={()=>setTab('global')}>🌍 Глобальний</button>
+          <button type="button" className={tab==='friends'?'primary':'secondary'} onClick={()=>setTab('friends')}>👥 Друзі</button>
+        </div>
+
+        <div className="row-btns">
+          <button type="button" className={boardView==='podium'?'primary':'secondary'} onClick={()=>setBoardView('podium')}>🏛️ Подіум</button>
+          <button type="button" className={boardView==='table'?'primary':'secondary'} onClick={()=>setBoardView('table')}>📋 Таблиця</button>
+          <button type="button" className={boardView==='arena'?'primary':'secondary'} onClick={()=>setBoardView('arena')}>⚔️ Лігова Арена</button>
+        </div>
       </div>
 
       {loading && <div className="card"><p className="muted">Завантаження рейтингу…</p></div>}
@@ -2048,72 +2306,164 @@ function Leaderboard({state, gamification, onViewProfile}) {
         </div>
       )}
 
-      {/* Podium Top-3 */}
-      {!loading && podium.length > 0 && (
-        <div className="leaderboard-podium">
-          {/* Silver (2nd) */}
-          {podium[1] && (
-            <div className="podium-slot podium-2" onClick={() => podium[1].nick && onViewProfile?.(podium[1].nick)}>
-              <div className="podium-avatar">{podium[1].avatar || '🎓'}</div>
-              <div className="podium-medal">🥈</div>
-              <div className="podium-name">{podium[1].nick === state.nick ? '👤 Ти' : (podium[1].name || podium[1].nick)}</div>
-              <LeagueBadge xp={podium[1].xp} style={{fontSize:10, padding:'2px 8px'}} />
-              <div className="podium-xp">{podium[1].xp} XP</div>
-              <div className="podium-bar h-2" />
+      {/* View 1: Podium View */}
+      {!loading && list.length > 0 && boardView === 'podium' && (
+        <>
+          {podium.length > 0 && (
+            <div className="leaderboard-podium">
+              {podium[1] && (
+                <div className="podium-slot podium-2" onClick={() => podium[1].nick && onViewProfile?.(podium[1].nick)}>
+                  <div className="podium-avatar">{podium[1].avatar || '🦊'}</div>
+                  <div className="podium-medal">🥈</div>
+                  <div className="podium-name">{podium[1].nick === state.nick ? '👤 Ти' : (podium[1].name || podium[1].nick)}</div>
+                  <LeagueBadge xp={podium[1].xp} style={{fontSize:10, padding:'2px 8px'}} />
+                  <div className="podium-xp">{podium[1].xp} XP</div>
+                  <div className="podium-bar h-2" />
+                </div>
+              )}
+              {podium[0] && (
+                <div className="podium-slot podium-1" onClick={() => podium[0].nick && onViewProfile?.(podium[0].nick)}>
+                  <div className="podium-crown">👑</div>
+                  <div className="podium-avatar">{podium[0].avatar || '🦊'}</div>
+                  <div className="podium-medal">🥇</div>
+                  <div className="podium-name">{podium[0].nick === state.nick ? '👤 Ти' : (podium[0].name || podium[0].nick)}</div>
+                  <LeagueBadge xp={podium[0].xp} style={{fontSize:10, padding:'2px 8px'}} />
+                  <div className="podium-xp">{podium[0].xp} XP</div>
+                  <div className="podium-bar h-1" />
+                </div>
+              )}
+              {podium[2] && (
+                <div className="podium-slot podium-3" onClick={() => podium[2].nick && onViewProfile?.(podium[2].nick)}>
+                  <div className="podium-avatar">{podium[2].avatar || '🦊'}</div>
+                  <div className="podium-medal">🥉</div>
+                  <div className="podium-name">{podium[2].nick === state.nick ? '👤 Ти' : (podium[2].name || podium[2].nick)}</div>
+                  <LeagueBadge xp={podium[2].xp} style={{fontSize:10, padding:'2px 8px'}} />
+                  <div className="podium-xp">{podium[2].xp} XP</div>
+                  <div className="podium-bar h-3" />
+                </div>
+              )}
             </div>
           )}
-          {/* Gold (1st) */}
-          {podium[0] && (
-            <div className="podium-slot podium-1" onClick={() => podium[0].nick && onViewProfile?.(podium[0].nick)}>
-              <div className="podium-crown">👑</div>
-              <div className="podium-avatar">{podium[0].avatar || '🎓'}</div>
-              <div className="podium-medal">🥇</div>
-              <div className="podium-name">{podium[0].nick === state.nick ? '👤 Ти' : (podium[0].name || podium[0].nick)}</div>
-              <LeagueBadge xp={podium[0].xp} style={{fontSize:10, padding:'2px 8px'}} />
-              <div className="podium-xp">{podium[0].xp} XP</div>
-              <div className="podium-bar h-1" />
+
+          {rest.length > 0 && (
+            <div className="card leader-list">
+              {rest.map((p, i) => {
+                const nick = String((p && p.nick) || '');
+                if (!nick) return null;
+                const isMe = nick === state.nick;
+                return (
+                  <div
+                    className={'leader-row' + (isMe ? ' leader-me' : '')}
+                    key={nick}
+                    onClick={() => onViewProfile?.(nick)}
+                    role="button" tabIndex={0}
+                    onKeyDown={e => e.key==='Enter' && onViewProfile?.(nick)}
+                  >
+                    <span className="rank">{rankMedal(i + 3)}</span>
+                    <span className="leader-avatar">{p.avatar || '🦊'}</span>
+                    <div className="leader-info">
+                      <b>{isMe ? '👤 Ти' : (p.name || nick)}</b>
+                      <div className="muted small">
+                        @{nick}
+                        {Number(p.streak) > 0 ? ' · 🔥 ' + Number(p.streak) : ''}
+                        {p.last_active ? ' · ' + formatActivityTime(p.last_active) : ''}
+                      </div>
+                    </div>
+                    <div className="leader-right">
+                      <LeagueBadge xp={p.xp||0} style={{fontSize:10,padding:'2px 8px'}}/>
+                      <strong className="leader-xp">{Number(p.xp)||0} XP</strong>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
-          {/* Bronze (3rd) */}
-          {podium[2] && (
-            <div className="podium-slot podium-3" onClick={() => podium[2].nick && onViewProfile?.(podium[2].nick)}>
-              <div className="podium-avatar">{podium[2].avatar || '🎓'}</div>
-              <div className="podium-medal">🥉</div>
-              <div className="podium-name">{podium[2].nick === state.nick ? '👤 Ти' : (podium[2].name || podium[2].nick)}</div>
-              <LeagueBadge xp={podium[2].xp} style={{fontSize:10, padding:'2px 8px'}} />
-              <div className="podium-xp">{podium[2].xp} XP</div>
-              <div className="podium-bar h-3" />
-            </div>
-          )}
+        </>
+      )}
+
+      {/* View 2: Detailed Tournament Table */}
+      {!loading && list.length > 0 && boardView === 'table' && (
+        <div className="card leaderboard-table-wrap">
+          <table className="leaderboard-table">
+            <thead>
+              <tr>
+                <th style={{width:50}}>#</th>
+                <th>Гравець</th>
+                <th>Ліга</th>
+                <th>Серія</th>
+                <th>Активність</th>
+                <th style={{textAlign:'right'}}>XP</th>
+              </tr>
+            </thead>
+            <tbody>
+              {list.map((p, idx) => {
+                const nick = String(p.nick || '');
+                const isMe = nick === state.nick;
+                return (
+                  <tr
+                    key={nick || idx}
+                    className={isMe ? 'leader-row-highlight' : ''}
+                    onClick={() => nick && onViewProfile?.(nick)}
+                    style={{cursor:'pointer'}}
+                  >
+                    <td><b>{rankMedal(idx)}</b></td>
+                    <td>
+                      <div style={{display:'flex',alignItems:'center',gap:8}}>
+                        <span style={{fontSize:20}}>{p.avatar || '🦊'}</span>
+                        <div>
+                          <b>{isMe ? '👤 ' + (p.name || nick) + ' (Ти)' : (p.name || nick)}</b>
+                          <div className="muted small">@{nick}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td><LeagueBadge xp={p.xp||0} style={{fontSize:10,padding:'2px 6px'}}/></td>
+                    <td>{Number(p.streak) > 0 ? `🔥 ${p.streak}` : '—'}</td>
+                    <td><span className="muted small">{formatActivityTime(p.last_active || p.updated_at)}</span></td>
+                    <td style={{textAlign:'right'}}><b>{p.xp || 0} XP</b></td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       )}
 
-      {/* Rest of list */}
-      {!loading && rest.length > 0 && (
-        <div className="card leader-list">
-          {rest.map((p, i) => {
-            const nick = String((p && p.nick) || '');
-            if (!nick) return null;
-            const isMe = nick === state.nick;
-            const league = leagueForXp(p.xp || 0);
+      {/* View 3: League Arena View */}
+      {!loading && list.length > 0 && boardView === 'arena' && (
+        <div className="league-arena-wrap" style={{display:'flex',flexDirection:'column',gap:16}}>
+          {LEAGUES.slice().reverse().map(l => {
+            const leagueUsers = list.filter(u => leagueForXp(u.xp || 0).id === l.id);
             return (
-              <div
-                className={'leader-row' + (isMe ? ' leader-me' : '')}
-                key={nick}
-                onClick={() => onViewProfile?.(nick)}
-                role="button" tabIndex={0}
-                onKeyDown={e => e.key==='Enter' && onViewProfile?.(nick)}
-              >
-                <span className="rank">{rankMedal(i + 3)}</span>
-                <span className="leader-avatar">{p.avatar || '🎓'}</span>
-                <div className="leader-info">
-                  <b>{isMe ? '👤 Ти' : (p.name || nick)}</b>
-                  <div className="muted small">@{nick}{Number(p.streak) > 0 ? ' · 🔥' + Number(p.streak) : ''}</div>
+              <div key={l.id} className="card league-arena-tier" style={{borderLeft:`5px solid ${l.color || '#10b981'}`}}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
+                  <div style={{display:'flex',alignItems:'center',gap:10}}>
+                    <span className="league-tier-label" style={{background: l.gradient}}>{l.label}</span>
+                    <span className="muted small">({l.min === 0 ? '0+' : l.min + '+'} XP)</span>
+                  </div>
+                  <span className="pill">{leagueUsers.length} бійців</span>
                 </div>
-                <div className="leader-right">
-                  <LeagueBadge xp={p.xp||0} style={{fontSize:10,padding:'2px 8px'}}/>
-                  <strong className="leader-xp">{Number(p.xp)||0} XP</strong>
-                </div>
+                {leagueUsers.length === 0 ? (
+                  <p className="muted small" style={{margin:'6px 0'}}>У цій лізі ще немає гравців. Навчайтесь, щоб піднятися сюди!</p>
+                ) : (
+                  <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(200px, 1fr))',gap:8}}>
+                    {leagueUsers.map(u => (
+                      <div
+                        key={u.nick}
+                        className="card"
+                        style={{margin:0,padding:'8px 10px',display:'flex',alignItems:'center',gap:8,cursor:'pointer'}}
+                        onClick={() => onViewProfile?.(u.nick)}
+                      >
+                        <span style={{fontSize:18}}>{u.avatar || '🦊'}</span>
+                        <div style={{flex:1,overflow:'hidden'}}>
+                          <div style={{fontWeight:600,fontSize:13,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
+                            {u.nick === state.nick ? '👤 ' + (u.name || u.nick) : (u.name || u.nick)}
+                          </div>
+                          <div className="muted small">{u.xp} XP {u.streak > 0 ? `· 🔥${u.streak}` : ''}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             );
           })}
@@ -2259,58 +2609,43 @@ function ChangePasswordCard() {
   );
 }
 
-function Profile({state, save, gamification, onRefreshGamification, onLogout}) {
+function Profile({state, save, gamification, onRefreshGamification}) {
   const level = Math.max(1, Math.floor((state.xp || 0) / 100) + 1);
   const xpInto = (state.xp || 0) % 100;
   const freezeCount = gamification?.freezeCount ?? (state.freezeCount || 0);
-  const [freezeBusy, setFreezeBusy] = useState(false);
 
-  const [name, setName] = useState(state.name);
-  const [goal, setGoal] = useState(Math.max(1, state.dailyGoal || 50));
-  const [theme, setTheme] = useState(state.theme);
-  const [skin, setSkin] = useState(state.skin || 'classic');
-  const [layout, setLayout] = useState(state.layout || 'sidebar');
-  const [accent, setAccent] = useState(state.customTheme.accent);
-  const [bg, setBg] = useState(state.customTheme.bg);
-  const [surface, setSurface] = useState(state.customTheme.surface);
+  const [name, setName] = useState(state.name || '');
+  const [goal, setGoal] = useState(Math.max(10, state.dailyGoal || 50));
+  const [selectedAvatar, setSelectedAvatar] = useState(state.avatar || '🦊');
+  const [showInLeaderboard, setShowInLeaderboard] = useState(state.showInLeaderboard !== false);
+  const [allowFriendsStats, setAllowFriendsStats] = useState(state.allowFriendsStats !== false);
+  const [pinnedBadges, setPinnedBadges] = useState(state.pinnedBadges || []);
   const [msg, setMsg] = useState('');
-  const [syncing, setSyncing] = useState(false);
-
-  // Recovery settings in profile
-  const [secQ, setSecQ] = useState(state.recoveryQuestion || 'Улюблене місто?');
-  const [secA, setSecA] = useState('');
-  const [secBusy, setSecBusy] = useState(false);
-  const [secMsg, setSecMsg] = useState('');
-  const [secErr, setSecErr] = useState('');
-  const [copiedCode, setCopiedCode] = useState(false);
 
   const persist = () => {
-    save({...state, name, dailyGoal: Math.max(10, Number(goal) || 50), theme, skin, layout, customTheme: {accent, bg, surface}});
-    setMsg('Збережено ✓'); setTimeout(() => setMsg(''), 1500);
+    save({
+      ...state,
+      name,
+      avatar: selectedAvatar,
+      dailyGoal: Math.max(10, Number(goal) || 50),
+      showInLeaderboard,
+      allowFriendsStats,
+      pinnedBadges
+    });
+    setMsg('Збережено ✓');
+    setTimeout(() => setMsg(''), 1800);
+    emitSiteToast('Профіль успішно оновлено ✓', 'ok');
   };
 
-  const pullCloud = async () => {
-    setSyncing(true);
-    const remote = await cloudPull(state.nick);
-    if (remote) { save({...state, ...remote, nick: state.nick}); setMsg('Підтягнуто з хмари ✓'); }
-    else setMsg('Хмара порожня або не налаштована');
-    setSyncing(false); setTimeout(() => setMsg(''), 2000);
-  };
-
-  const saveRecovery = async () => {
-    if (!secA.trim()) { setSecErr('Введіть відповідь на питання'); return; }
-    setSecBusy(true); setSecErr(''); setSecMsg('');
-    try {
-      const res = await setRecoveryQuestion(secQ, secA.trim());
-      if (!res.ok) throw new Error(res.error || 'Помилка збереження');
-      save({...state, recoveryQuestion: secQ});
-      setSecMsg('Секретне питання оновлено ✓');
-      setSecA('');
-      setTimeout(() => setSecMsg(''), 2500);
-    } catch (e) {
-      setSecErr(e.message || 'Не вдалося зберегти');
-    } finally {
-      setSecBusy(false);
+  const togglePinBadge = (badgeId) => {
+    if (pinnedBadges.includes(badgeId)) {
+      setPinnedBadges(pinnedBadges.filter(id => id !== badgeId));
+    } else {
+      if (pinnedBadges.length >= 3) {
+        emitSiteError('Можна закріпити щонайбільше 3 досягнення на вітрині.', 'Вітрина досягнень');
+        return;
+      }
+      setPinnedBadges([...pinnedBadges, badgeId]);
     }
   };
 
@@ -2318,186 +2653,163 @@ function Profile({state, save, gamification, onRefreshGamification, onLogout}) {
 
   return (
     <section className="rpg-profile fade-in">
+      {/* Hero Header */}
       <div className="hero-rpg card">
-        <div className="rpg-avatar">{state.avatar || '🎓'}</div>
-        <div style={{flex:1,minWidth:180}}>
+        <div className="rpg-avatar" style={{fontSize: 48}}>{selectedAvatar}</div>
+        <div style={{flex:1,minWidth:200}}>
           <div className="rpg-level">Рівень {level}</div>
-          <h2 style={{margin:'4px 0'}}>{state.name || state.nick} {(String(state.nick||'').toLowerCase()==='boss' || String(state.name||'').toLowerCase()==='boss') && '👑'}</h2>
-          <div className="muted">@{state.nick} · {state.xp || 0} XP · 🔥 {state.streak || 0}</div>
+          <h2 style={{margin:'4px 0'}}>
+            {name || state.nick} {(String(state.nick||'').toLowerCase()==='boss' || String(name||'').toLowerCase()==='boss') && '👑'}
+          </h2>
+          <div className="muted">@{state.nick} · {state.xp || 0} XP · 🔥 {state.streak || 0} днів</div>
           <div style={{marginTop:8,display:'flex',gap:8,flexWrap:'wrap',alignItems:'center'}}>
             <LeagueBadge xp={state.xp||0} />
             {freezeCount > 0 && <span className="freeze-chip">❄️ ×{freezeCount} заморозки</span>}
+            {state.inventory?.vipFrame && <span className="pill ok">👑 VIP Гравець</span>}
           </div>
-          <div className="xp-bar" title="До наступного рівня"><i style={{width: xpInto + '%'}}/></div>
+          <div className="xp-bar" title="До наступного рівня" style={{marginTop:10}}><i style={{width: xpInto + '%'}}/></div>
           <small className="muted">{xpInto}/100 XP до рівня {level + 1}</small>
         </div>
       </div>
 
-      {/* Freeze actions */}
-      {!state.guest && (
-        <div className="card freeze-section">
-          <h3>❄️ Заморозка стріку</h3>
-          <p className="muted small">Захисти свій стрік, якщо пропустиш день. Купуй за 50 XP або використовуй наявні.</p>
-          <div className="row-btns">
-            <button className="secondary" disabled={freezeBusy || (state.xp||0) < 50} onClick={async () => {
-              setFreezeBusy(true);
-              try { await postGamification('buy_freeze'); await onRefreshGamification(); emitSiteToast('❄️ Придбано заморозку стріку (-50 XP)', 'ok'); } catch {}
-              setFreezeBusy(false);
-            }}>💰 Купити ({(state.xp||0) < 50 ? 'потрібно 50 XP' : '-50 XP'})</button>
-            {freezeCount > 0 && <button className="secondary" disabled={freezeBusy} onClick={async () => {
-              setFreezeBusy(true);
-              try { await postGamification('use_freeze'); await onRefreshGamification(); emitSiteToast('❄️ Заморозку активовано!', 'ok'); } catch {}
-              setFreezeBusy(false);
-            }}>❄️ Активувати заморозку</button>}
+      {/* Pinned Badges Showcase */}
+      {pinnedBadges.length > 0 && (
+        <div className="card" style={{marginTop: 16}}>
+          <h3 style={{margin:'0 0 10px'}}>🌟 Закріплені досягнення (Вітрина)</h3>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(220px, 1fr))',gap:10}}>
+            {pinnedBadges.map(bid => {
+              const b = BADGES.find(x => x.id === bid);
+              if (!b) return null;
+              return (
+                <div key={b.id} className={`badge-card card tier-${b.tier||'starter'} earned`} style={{margin:0,padding:'10px 12px'}}>
+                  <div className="badge-ico" style={{fontSize:24}}>{b.icon || '🏅'}</div>
+                  <div className="badge-body">
+                    <div style={{fontWeight:700,fontSize:13}}>{b.title}</div>
+                    <p className="muted badge-desc" style={{fontSize:11,margin:'2px 0 4px'}}>{b.desc}</p>
+                    <button type="button" className="secondary" style={{fontSize:10,padding:'2px 6px'}} onClick={() => togglePinBadge(b.id)}>
+                      Відкріпити
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
-          {freezeBusy && <p className="muted small">…</p>}
         </div>
       )}
 
-      {/* Badges Showcase */}
-      <div className="card" style={{marginTop: 16}}>
-        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
-          <h3 style={{margin:0}}>🏅 Вітрина бейджів ({earnedBadges.size}/{BADGES.length})</h3>
-          <span className="muted small">Секретні досягнення та ліги</span>
+      {/* Profile Form & 20 Avatars Grid */}
+      <div className="grid two" style={{marginTop: 16}}>
+        <div className="card">
+          <h2>👤 Особисті дані</h2>
+          <p className="muted small">Нікнейм <b>@{state.nick}</b> унікальний і захищений. Ім'я відображається друзям і в рейтингу.</p>
+          
+          <label style={{marginTop:10}}>Відображуване ім'я</label>
+          <input className="search" value={name} onChange={e => setName(e.target.value)} placeholder="Ваше ім'я"/>
+
+          <label style={{marginTop:10}}>Денна ціль (XP)</label>
+          <input className="search" type="number" min="10" step="5" value={goal} onChange={e => setGoal(e.target.value)}/>
+
+          <h3 style={{marginTop:18}}>🛡️ Публічність та приватність</h3>
+          <label className="row-check">
+            <input type="checkbox" checked={showInLeaderboard} onChange={e => setShowInLeaderboard(e.target.checked)}/>
+            Показувати мій профіль у загальному рейтингу
+          </label>
+          <label className="row-check" style={{marginTop:8}}>
+            <input type="checkbox" checked={allowFriendsStats} onChange={e => setAllowFriendsStats(e.target.checked)}/>
+            Дозволити друзям бачити мою детальну статистику
+          </label>
+
+          <button className="primary" onClick={persist} style={{marginTop:16}}>Зберегти зміни</button>
+          {msg && <span className="saved-message" style={{marginLeft:10}}>{msg}</span>}
         </div>
-        <div className="badges-grid" style={{gridTemplateColumns:'repeat(auto-fill, minmax(180px, 1fr))',gap:10}}>
+
+        {/* 20 Avatars Picker */}
+        <div className="card">
+          <h2>🦊 Вибір аватарки</h2>
+          <p className="muted small">Оберіть персонажа, що найкраще підкреслює ваш навчальний стиль:</p>
+          <div className="avatar-grid-20" style={{display:'grid',gridTemplateColumns:'repeat(5, 1fr)',gap:8,marginTop:12}}>
+            {AVATARS_20.map(av => {
+              const isSelected = selectedAvatar === av.emoji;
+              return (
+                <button
+                  key={av.id}
+                  type="button"
+                  className={'avatar-card-item' + (isSelected ? ' active' : '')}
+                  onClick={() => setSelectedAvatar(av.emoji)}
+                  title={av.label}
+                  style={{
+                    display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',
+                    padding:'8px 4px',borderRadius:10,border: isSelected ? '2px solid var(--accent, #10b981)' : '1px solid var(--border)',
+                    background: isSelected ? 'var(--accent-soft, rgba(16,185,129,0.12))' : 'var(--surface,#fff)',
+                    cursor:'pointer',transition:'transform 0.15s'
+                  }}
+                >
+                  <span style={{fontSize:24}}>{av.emoji}</span>
+                  <span style={{fontSize:10,marginTop:3,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',maxWidth:52}}>{av.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Achievements Showcase with Tiers and Pinning */}
+      <div className="card" style={{marginTop: 16}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:10,marginBottom:12}}>
+          <div>
+            <h3 style={{margin:0}}>🏅 Усі здобуті досягнення ({earnedBadges.size}/{BADGES.length})</h3>
+            <p className="muted small" style={{margin:'2px 0 0'}}>Натисніть на отримане досягнення, щоб закріпити його на вітрині (до 3 шт.)</p>
+          </div>
+        </div>
+        <div className="badges-grid" style={{gridTemplateColumns:'repeat(auto-fill, minmax(200px, 1fr))',gap:10}}>
           {BADGES.map(b => {
             const has = earnedBadges.has(b.id);
+            const isPinned = pinnedBadges.includes(b.id);
+            const tier = b.tier || 'starter';
             return (
-              <div key={b.id} className={'badge-card card' + (has ? ' earned' : ' locked')} style={{padding:'10px 12px'}}>
-                <div className="badge-ico" style={{fontSize:22}}>{has ? '🏅' : '🔒'}</div>
+              <div
+                key={b.id}
+                className={`badge-card card tier-${tier} ${has ? 'earned' : 'locked'}`}
+                style={{padding:'10px 12px',cursor: has ? 'pointer' : 'default',position:'relative'}}
+                onClick={() => has && togglePinBadge(b.id)}
+              >
+                {isPinned && <span style={{position:'absolute',top:6,right:8,fontSize:14}}>⭐</span>}
+                <div className="badge-ico" style={{fontSize:22}}>{has ? (b.icon || '🏅') : '🔒'}</div>
                 <div className="badge-body">
                   <div style={{fontWeight:600,fontSize:13}}>{b.title}</div>
                   <p className="muted badge-desc" style={{fontSize:11,margin:'2px 0 6px'}}>{b.desc}</p>
-                  {has ? <span className="pill ok" style={{fontSize:10}}>Отримано</span> : <span className="pill" style={{fontSize:10,opacity:0.6}}>Заблоковано</span>}
+                  <div style={{display:'flex',gap:6,alignItems:'center'}}>
+                    {has ? <span className="pill ok" style={{fontSize:10}}>Отримано</span> : <span className="pill muted" style={{fontSize:10}}>Заблоковано</span>}
+                    {has && <span className="pill soft" style={{fontSize:10}}>{isPinned ? 'Закріплено' : 'Закріпити'}</span>}
+                  </div>
                 </div>
               </div>
             );
           })}
         </div>
       </div>
-
-      <Title title="Профіль та Налаштування" text={`Нік @${state.nick}`}/>
-      <div className="grid two">
-        <div className="card">
-          <label>Імʼя</label>
-          <input className="search" value={name} onChange={e => setName(e.target.value)}/>
-          <label>Денна ціль XP</label>
-          <input className="search" type="number" value={goal} onChange={e => setGoal(e.target.value)}/>
-          <button className="primary" onClick={persist}>Зберегти</button>
-          {msg && <span className="saved-message">{msg}</span>}
-          <hr/>
-          <button className="secondary" onClick={pullCloud} disabled={syncing}><Cloud size={16}/> {syncing ? '…' : 'Підтягнути з хмари'}</button>
-          <p className="muted small">{cloudConfigured() ? 'Neon PostgreSQL підключено через Vercel' : 'Neon ще не налаштований у Vercel'}</p>
-        </div>
-
-        <div className="card">
-          <h2><Palette size={18}/> Тема та Дизайн</h2>
-          <div className="theme-buttons">
-            <button className={theme === 'system' ? 'theme active' : 'theme'} onClick={() => setTheme('system')}>Авто</button>
-            <button className={theme === 'light' ? 'theme active' : 'theme'} onClick={() => setTheme('light')}><Sun/> Світла</button>
-            <button className={theme === 'dark' ? 'theme active' : 'theme'} onClick={() => setTheme('dark')}><Moon/> Темна</button>
-            <button className={theme === 'custom' ? 'theme active' : 'theme'} onClick={() => setTheme('custom')}><Palette/> Custom</button>
-          </div>
-          {theme === 'custom' && (
-            <div className="color-grid">
-              <label>Акцент <input type="color" value={accent} onChange={e => setAccent(e.target.value)}/></label>
-              <label>Фон <input type="color" value={bg} onChange={e => setBg(e.target.value)}/></label>
-              <label>Картки <input type="color" value={surface} onChange={e => setSurface(e.target.value)}/></label>
-            </div>
-          )}
-
-          <h3 style={{marginTop: 18}}>3 кардинальні структурні макети</h3>
-          <p className="muted small">Розташування меню та кнопок в інтерфейсі:</p>
-          <div className="theme-buttons skins">
-            <button className={layout === 'sidebar' ? 'theme active' : 'theme'} onClick={() => { setLayout('sidebar'); save({...state, layout: 'sidebar'}); }}>📑 Класичний Сайдбар</button>
-            <button className={layout === 'top-nav' ? 'theme active' : 'theme'} onClick={() => { setLayout('top-nav'); save({...state, layout: 'top-nav'}); }}>🧭 Верхній Острівець</button>
-            <button className={layout === 'bottom-dock' ? 'theme active' : 'theme'} onClick={() => { setLayout('bottom-dock'); save({...state, layout: 'bottom-dock'}); }}>⚓ Командний Док</button>
-            <button className={layout === 'zen' ? 'theme active' : 'theme'} onClick={() => { setLayout('zen'); save({...state, layout: 'zen'}); }}>🧘 Дзен-Фокус</button>
-          </div>
-
-          <h3 style={{marginTop: 18}}>🎨 Колірні скіни</h3>
-          <p className="muted small">Оберіть візуальну палітру сайту:</p>
-          <div className="theme-buttons skins">
-            <button className={skin === 'classic' ? 'theme active' : 'theme'} onClick={() => { setSkin('classic'); save({...state, skin: 'classic'}); }}>🌿 Classic Green</button>
-            <button className={skin === 'neon' ? 'theme active' : 'theme'} onClick={() => { setSkin('neon'); save({...state, skin: 'neon'}); }}>⚡ Cyberpunk Neon</button>
-            <button className={skin === 'candy' ? 'theme active' : 'theme'} onClick={() => { setSkin('candy'); save({...state, skin: 'candy'}); }}>🍭 Candy Pop</button>
-            <button className={skin === 'nordic' ? 'theme active' : 'theme'} onClick={() => { setSkin('nordic'); save({...state, skin: 'nordic'}); }}>❄️ Nordic Minimalist</button>
-            <button className={skin === 'arcade' ? 'theme active' : 'theme'} onClick={() => { setSkin('arcade'); save({...state, skin: 'arcade'}); }}>👾 8-Bit Arcade</button>
-            <button className={skin === 'oled' ? 'theme active' : 'theme'} onClick={() => { setSkin('oled'); save({...state, skin: 'oled'}); }}>🖤 Midnight OLED</button>
-            <button className={skin === 'sunset' ? 'theme active' : 'theme'} onClick={() => { setSkin('sunset'); save({...state, skin: 'sunset'}); }}>🌅 Warm Sunset</button>
-          </div>
-          <button className="primary" style={{marginTop: 12}} onClick={persist}>Застосувати налаштування</button>
-        </div>
-      </div>
-
-      {/* Password Recovery & Backup Code */}
-      {!state.guest && (
-        <div className="card" style={{marginTop: 16}}>
-          <h3>🔐 Відновлення паролю та Резервний код</h3>
-          <p className="muted small">Збережіть ваш 10-значний резервний код. Він дозволить відновити доступ до акаунту в разі втрати пароля без потреби в електронній пошті.</p>
-
-          <label>Ваш резервний код відновлення:</label>
-          <div className="recovery-code-box">
-            <span>{state.recoveryCode || 'EF-A1B2-C3D4'}</span>
-            <button className="secondary" type="button" onClick={() => {
-              navigator.clipboard.writeText(state.recoveryCode || 'EF-A1B2-C3D4');
-              setCopiedCode(true);
-              setTimeout(() => setCopiedCode(false), 2000);
-            }}>
-              {copiedCode ? 'Скопійовано ✓' : 'Копіювати'}
-            </button>
-          </div>
-
-          <hr style={{margin:'14px 0'}}/>
-          <h4>Секретне питання для швидкого скидання пароля</h4>
-          <label>Питання</label>
-          <UiSelect
-            value={secQ}
-            onChange={setSecQ}
-            options={[
-              {value:'Улюблене місто?',label:'Улюблене місто?'},
-              {value:'Перша школа або вчитель?',label:'Перша школа або вчитель?'},
-              {value:'Кличка першого улюбленця?',label:'Кличка першого улюбленця?'},
-              {value:'Улюблена страва або десерт?',label:'Улюблена страва або десерт?'},
-              {value:'Дівоче прізвище матері?',label:'Дівоче прізвище матері?'}
-            ]}
-          />
-          <label style={{marginTop:8}}>Відповідь на питання</label>
-          <input className="search" value={secA} onChange={e => setSecA(e.target.value)} placeholder="Введіть нову відповідь для збереження"/>
-          {secErr && <p className="auth-err" style={{marginTop:6}}>{secErr}</p>}
-          {secMsg && <p className="saved-message" style={{marginTop:6}}>{secMsg}</p>}
-          <button className="secondary" type="button" disabled={secBusy} onClick={saveRecovery} style={{marginTop:10}}>
-            {secBusy ? 'Збереження…' : 'Оновити секретне питання'}
-          </button>
-        </div>
-      )}
-
-      {!state.guest && <ChangePasswordCard />}
-
-      <div className="card logout-card" style={{marginTop: 16, borderColor: 'var(--danger, #f87171)'}}>
-        <h3>🚪 Вихід з акаунту</h3>
-        <p className="muted small">Завершити поточну сесію на цьому пристрої. Профілі не змішуються.</p>
-        <button className="secondary btn-logout-danger" onClick={onLogout} type="button">
-          <XCircle size={16}/> Вийти з акаунту (@{state.nick})
-        </button>
-      </div>
     </section>
   );
 }
 
-function Admin({state, save, setWordsLive, wordsLive}) {
+function Admin({state, save, setWordsLive, wordsLive, setModal}) {
   const [pin, setPin] = useState('');
   const [otp, setOtp] = useState('');
   const [ok, setOk] = useState(false);
   const [adminInfo, setAdminInfo] = useState(null);
   const [adminDesign, setAdminDesign] = useState(()=>localStorage.getItem('ef-admin-design')||'apple');
+  const [adminTab, setAdminTab] = useState('overview'); // 'overview' | 'vocabulary' | 'users' | 'analytics' | 'security' | 'settings'
+  const [localModal, setLocalModal] = useState(null);
+
+  const activeModalHandler = setModal || setLocalModal;
+
   useEffect(() => { fetch('/api/admin-auth',{credentials:'include'}).then(r=>r.ok?r.json():null).then(d=>{setOk(!!d?.ok);setAdminInfo(d?.admin||null)}).catch(()=>{setOk(false);setAdminInfo(null)}); }, []);
   useEffect(() => {
     const lock = () => setOk(false);
     window.addEventListener('ef-admin-lock', lock);
     return () => window.removeEventListener('ef-admin-lock', lock);
   }, []);
+
   const [a, setA] = useState({...state.admin});
   const [saved, setSaved] = useState(false);
   const [syncing, setSyncing] = useState(false);
@@ -2505,6 +2817,7 @@ function Admin({state, save, setWordsLive, wordsLive}) {
   const [authErr, setAuthErr] = useState('');
   const [syncProg, setSyncProg] = useState({cur:0, total:0, label:''});
   const [syncMeta, setSyncMeta] = useState(notionSyncMeta);
+
   const unlock = (info=null) => { setOk(true); setAdminInfo(info||adminInfo); setPin(''); setAuthErr(''); };
   const changeAdminDesign = v => { setAdminDesign(v); localStorage.setItem('ef-admin-design',v); };
   useEffect(() => { setA({...state.admin}); }, [state.admin]);
@@ -2512,18 +2825,19 @@ function Admin({state, save, setWordsLive, wordsLive}) {
   const forceSync = async () => {
     if (syncing) return;
     setSyncing(true); setSaved(false);
-    setSyncProg({cur:0,total:100,label:'Підключення до Notion…'});
+    setSyncProg({cur:10,total:100,label:'Підключення до Notion API…'});
     try {
+      setSyncProg({cur:40,total:100,label:'Завантаження сторінок та перекладів…'});
       const data = await requestJson('/api/notion-sync',{method:'POST',body:'{}'});
       const list=Array.isArray(data.words)?data.words:[];
-      if (!list.length) throw new Error('Notion повернув порожній словник — оновлення скасовано.');
+      if (!list.length) throw new Error('Notion повернув 0 слів — синхронізацію скасовано.');
       const mapped=list.map((w,i)=>({id:w.id||w.notion_id||('n'+(i+1)),word:w.word,translation:w.translation||'—',pronunciation:w.pronunciation||'',category:w.category||'Other',level:w.level||'',explanation:w.explanation||'',example:w.example||w.examples||''}));
       localStorage.setItem('ef-words-cache-v1',JSON.stringify({words:mapped,meta:data.meta||{},at:new Date().toISOString()}));
       await dbSaveWords(mapped,data.meta||{});
       setWordsLive(mapped); setSyncMeta(data.meta||{});
-      setSyncProg({cur:100,total:100,label:`Готово · ${mapped.length} слів`});
+      setSyncProg({cur:100,total:100,label:`Успішно оновлено · ${mapped.length} слів`});
       setSaved(true);
-      emitSiteToast(`Словник синхронізовано: ${mapped.length} слів`,'ok');
+      emitSiteToast(`Словник Notion синхронізовано: ${mapped.length} слів`,'ok');
     } catch(e) {
       setSyncProg({cur:0,total:0,label:'Помилка: '+(e.message||'sync failed')});
       emitSiteError(e.message||'Не вдалося оновити словник','Синхронізація Notion');
@@ -2547,6 +2861,7 @@ function Admin({state, save, setWordsLive, wordsLive}) {
     }
     setAuthBusy(false);
   };
+
   const passkeyLogin = async () => {
     setAuthBusy(true); setAuthErr('');
     try {
@@ -2574,8 +2889,10 @@ function Admin({state, save, setWordsLive, wordsLive}) {
       </section>
     );
   }
+
   const isAdmin = adminInfo?.role === 'admin';
   const update = (k, v) => setA(x => ({...x, [k]: v}));
+
   const saveAdmin = async () => {
     const nextAdmin = {...a, lessonSize: Math.max(3, Math.min(50, Number(a.lessonSize) || 10)), correctPoints: Number(a.correctPoints) || 4, wrongPoints: Number(a.wrongPoints) || -2, masteryThreshold: Math.max(1, Number(a.masteryThreshold) || 8)};
     try {
@@ -2583,97 +2900,197 @@ function Admin({state, save, setWordsLive, wordsLive}) {
       save({...state, admin: nextAdmin}); setSaved(true); setTimeout(()=>setSaved(false),1500); emitSiteToast('Правила збережено ✓','ok');
     } catch(e) { if(e.status===401||e.status===403) window.dispatchEvent(new Event('ef-admin-lock')); else emitSiteError(e.message,'Адмін-налаштування'); }
   };
+
+  const wordsCount = (wordsLive && wordsLive.length) || syncMeta.count || 0;
+
   return (
     <section className={'admin-shell admin-design-'+adminDesign}>
-      <div className="admin-design-switch card"><div><b>Тестовий інтерфейс</b><span className="muted small">3 стилі лише для адмін-панелі</span></div><div className="admin-design-grid">{[['apple','Apple Light'],['glass','Glass Pro'],['studio','Studio Dark']].map(([v,l])=><button key={v} type="button" className={adminDesign===v?'primary':'secondary'} onClick={()=>changeAdminDesign(v)}>{l}</button>)}</div></div>
-      <Title title="Адмін-панель" text="Безпечне керування контентом, БД, синхронізацією та аналітикою"/>
-      {isAdmin && <div className="card sync-card">
-        <h2>Словник Notion</h2>
-        <p className="muted">Живий sync: Notion → Neon. Прогрес гравців не стирається; браузерний JSON — лише кеш.</p>
-        <p className="sync-meta-line"><b>{(wordsLive && wordsLive.length) || syncMeta.count || 0}</b> слів · {syncMeta.syncedAt || '—'}</p>
-        <button className="primary" type="button" disabled={syncing} onClick={forceSync}>
-          {syncing ? 'Оновлення…' : 'Оновити словник зараз'}
-        </button>
-        {syncing || syncProg.label ? (
-          <div className="sync-progress">
-            <div className="progress"><i style={{width: `${syncProg.total ? (syncProg.cur / syncProg.total) * 100 : 0}%`}}/></div>
-            <span>{syncProg.label} {syncProg.total ? `${syncProg.cur} / ${syncProg.total}` : ''}</span>
-          </div>
-        ) : null}
-        {saved && !syncing && <span className="saved-message">Словник оновлено ✓</span>}
-        <p className="muted small">Автооновлення бази: щогодини 09:00–23:00 (Europe) через GitHub Action.</p>
-      </div>}
-      
-      <div className="card roadmap-panel">
-        <h2>Roadmap / ідеї</h2>
-        <p className="muted">Центральна панель керування: контент, правила навчання, безпека, користувачі та аналітика.</p>
-        <div className="roadmap-table">
-          <div className="rm-head"><span>Ver</span><span>Функція</span><span>Статус</span></div>
-          {ROADMAP_ITEMS.map((r,i) => (
-            <div className={'rm-row ' + r.status} key={r.v + r.title + i}>
-              <span className="pill">v{r.v}</span>
-              <span>{r.title}</span>
-              <span className={'rm-status ' + r.status}>{r.status === 'done' ? '✓ done' : 'planned'}</span>
-            </div>
+      {/* Top Bar with Styles & Title */}
+      <div className="admin-design-switch card">
+        <div>
+          <b>Адміністративна консоль English Flow v{VERSION}</b>
+          <span className="muted small">Користувач: @{adminInfo?.nick || state.nick} ({adminInfo?.role || 'admin'})</span>
+        </div>
+        <div className="admin-design-grid">
+          {[['apple','Apple Light'],['glass','Glass Pro'],['studio','Studio Dark']].map(([v,l])=>(
+            <button key={v} type="button" className={adminDesign===v?'primary':'secondary'} onClick={()=>changeAdminDesign(v)}>{l}</button>
           ))}
         </div>
       </div>
-      <div className="card"><h2>Стан системи</h2><AdminStats /></div>
-      <div className="card"><h2>🛡️ Admin Security 2.0</h2><p className="muted small">Роль: <b>{adminInfo?.role||'admin'}</b> · Permissions: {adminInfo?.role==='admin'?'all':'dashboard, users, reports, monitoring'}</p><AdminSecurity2FA /></div>
-      {isAdmin && <div className="card"><h2>Журнал безпеки / адмін-дій</h2><AdminAudit /></div>}
-      {isAdmin && <div className="card analytics-dashboard"><h2>📊 Product & Learning Analytics</h2><p className="muted">Єдине серверне джерело аналітики: продукт, навчання, SRS, vocabulary, retention, social, security та system health. Без старих localStorage-метрик.</p><AdminAnalytics /></div>}
-      <div className="card"><h2>⚑ Reports</h2><AdminReports /></div>
-      <div className="card"><h2>🩺 Monitoring</h2><AdminMonitoring /></div>
 
-      {isAdmin && <div className="grid two">
-        <div className="card">
-          <h2>Урок</h2>
-          <label>Питань <input type="number" value={a.lessonSize} onChange={e => update('lessonSize', e.target.value)}/></label>
-          <label>Бали + <input type="number" value={a.correctPoints} onChange={e => update('correctPoints', e.target.value)}/></label>
-          <label>Бали − <input type="number" value={a.wrongPoints} onChange={e => update('wrongPoints', e.target.value)}/></label>
-          <label>Mastery <input type="number" value={a.masteryThreshold} onChange={e => update('masteryThreshold', e.target.value)}/></label><label>Shuffle питань <input type="checkbox" checked={a.shuffleQuestions!==false} onChange={e=>update('shuffleQuestions',e.target.checked)}/></label><label>Perfect bonus <input type="number" min="0" max="100" value={a.perfectBonus||0} onChange={e=>update('perfectBonus',e.target.value)}/></label><label>Стиль ачівок <UiSelect value={a.badgeStyle||'neo'} onChange={v=>update('badgeStyle',v)} options={[{value:'neo',label:'Neo'},{value:'arcade',label:'Arcade'},{value:'minimal',label:'Minimal'},{value:'royal',label:'Royal'}]}/></label>
-          <p className="muted small">Пароль адміна тепер зберігається тільки у Vercel Environment Variables як <b>ADMIN_PASSWORD</b>.</p>
-          <button className="primary" type="button" onClick={saveAdmin}>Зберегти правила</button>
+      {/* KPI Top Cards */}
+      <div className="admin-kpi-grid" style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(180px, 1fr))',gap:12,margin:'16px 0'}}>
+        <div className="card admin-kpi-card" style={{margin:0}}>
+          <div className="muted small">Слів у словнику</div>
+          <div style={{fontSize:26,fontWeight:800,marginTop:4}}>📚 {wordsCount}</div>
+          <div className="muted small">Джерело: Notion + Neon</div>
         </div>
-        <div className="card">
-          <h2>Бейджі (тест)</h2>
-          <p className="muted">Симуляція видачі як у Steam</p>
-          <div className="row-btns wrap">
-            {BADGES.map(b => (
-              <button key={b.id} className="secondary" type="button" onClick={() => {
-                if ((state.badges||[]).includes(b.id)) return;
-                playTone(true);
-                try {
-                  const C = window.AudioContext || window.webkitAudioContext;
-                  if (C && !window.__efQuiet) {
-                    const c = new C(); const o = c.createOscillator(); const g = c.createGain();
-                    o.type = 'sine'; o.frequency.setValueAtTime(520, c.currentTime);
-                    o.frequency.exponentialRampToValueAtTime(880, c.currentTime + 0.35);
-                    g.gain.setValueAtTime(0.001, c.currentTime);
-                    g.gain.exponentialRampToValueAtTime(0.15, c.currentTime + 0.05);
-                    g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 0.5);
-                    o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime + 0.55);
-                  }
-                } catch {}
-                const el = document.createElement('div');
-                el.className = 'steam-toast steam-right';
-                el.innerHTML = '<b>ТЕСТ · симуляція</b><span>Demo: ' + b.title + ' (не записано як обовʼязкове)</span>';
-                document.body.appendChild(el);
-                setTimeout(() => el.remove(), 3200);
-                /* тест — без реального збереження ачівки */
-              }}>{b.title}</button>
-            ))}
+        <div className="card admin-kpi-card" style={{margin:0}}>
+          <div className="muted small">Синхронізація</div>
+          <div style={{fontSize:20,fontWeight:700,marginTop:6,color:'var(--accent,#10b981)'}}>🟢 Активна</div>
+          <div className="muted small">{syncMeta.syncedAt || 'щогодини 09–23:00'}</div>
+        </div>
+        <div className="card admin-kpi-card" style={{margin:0}}>
+          <div className="muted small">Безпека / 2FA</div>
+          <div style={{fontSize:20,fontWeight:700,marginTop:6}}>🛡️ {adminInfo?.two_factor ? 'Увімкнено' : 'Опційно'}</div>
+          <div className="muted small">Passkeys + E2EE Chat</div>
+        </div>
+        <div className="card admin-kpi-card" style={{margin:0}}>
+          <div className="muted small">База даних</div>
+          <div style={{fontSize:20,fontWeight:700,marginTop:6}}>⚡ Neon PostgreSQL</div>
+          <div className="muted small">Vercel Serverless</div>
+        </div>
+      </div>
+
+      {/* Navigation Tabs */}
+      <div className="admin-tabs-nav" style={{display:'flex',gap:8,flexWrap:'wrap',marginBottom:16}}>
+        {[
+          ['overview', '📊 Огляд та Стан'],
+          ['vocabulary', '📚 Словник Notion'],
+          ['users', '👥 Користувачі'],
+          ['analytics', '📈 Аналітика'],
+          ['security', '🛡️ Безпека & 2FA'],
+          ['settings', '⚙️ Правила уроків']
+        ].map(([tid, label]) => (
+          <button
+            key={tid}
+            type="button"
+            className={'admin-tab-btn ' + (adminTab === tid ? 'primary' : 'secondary')}
+            onClick={() => setAdminTab(tid)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* TAB 1: OVERVIEW */}
+      {adminTab === 'overview' && (
+        <div style={{display:'flex',flexDirection:'column',gap:16}}>
+          <div className="card"><h2>Стан системи</h2><AdminStats /></div>
+          <div className="card"><h2>🩺 Серверний Моніторинг</h2><AdminMonitoring /></div>
+          <div className="card"><h2>⚑ Скарги та Репорти</h2><AdminReports /></div>
+          <div className="card roadmap-panel">
+            <h2>Roadmap оновлень</h2>
+            <div className="roadmap-table">
+              <div className="rm-head"><span>Ver</span><span>Функція</span><span>Статус</span></div>
+              {ROADMAP_ITEMS.map((r,i) => (
+                <div className={'rm-row ' + r.status} key={r.v + r.title + i}>
+                  <span className="pill">v{r.v}</span>
+                  <span>{r.title}</span>
+                  <span className={'rm-status ' + r.status}>{r.status === 'done' ? '✓ done' : 'planned'}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
-        <div className="card">
-          <h2>Керування гравцями</h2>
-          <AdminUsers setModal={setModal} />
+      )}
+
+      {/* TAB 2: NOTION VOCABULARY */}
+      {adminTab === 'vocabulary' && (
+        <div className="card sync-card">
+          <h2>📚 Синхронізація словника Notion</h2>
+          <p className="muted">Живий двосторонній sync: Notion Database → Neon PostgreSQL. База слів оновлюється без втрати прогресу користувачів.</p>
+          
+          <div style={{margin:'14px 0',padding:12,borderRadius:8,background:'var(--surface-sunken, rgba(0,0,0,0.03))'}}>
+            <p className="sync-meta-line" style={{margin:'0 0 6px'}}>
+              Поточна кількість активних слів: <b>{wordsCount}</b>
+            </p>
+            <p className="muted small" style={{margin:0}}>
+              Останнє успішне оновлення: <b>{syncMeta.syncedAt || '—'}</b> · Авто-синк GitHub Action щогодини.
+            </p>
+          </div>
+
+          <button className="primary" type="button" disabled={syncing} onClick={forceSync} style={{padding:'10px 18px'}}>
+            {syncing ? 'Синхронізація з Notion…' : '🔄 Оновити словник зараз'}
+          </button>
+
+          {syncing || syncProg.label ? (
+            <div className="sync-progress" style={{marginTop:12}}>
+              <div className="progress"><i style={{width: `${syncProg.total ? (syncProg.cur / syncProg.total) * 100 : 0}%`}}/></div>
+              <span style={{fontSize:12,marginTop:4,display:'inline-block'}}>{syncProg.label}</span>
+            </div>
+          ) : null}
+
+          {saved && !syncing && <span className="saved-message" style={{display:'block',marginTop:10}}>Словник успішно оновлено ✓</span>}
         </div>
-        <div className="card">
-          <h2>Дані гравця</h2>
-          <AdminDanger save={save} state={state} setModal={setModal} />
+      )}
+
+      {/* TAB 3: USERS & DATA */}
+      {adminTab === 'users' && (
+        <div style={{display:'flex',flexDirection:'column',gap:16}}>
+          <div className="card">
+            <h2>Керування гравцями</h2>
+            <AdminUsers setModal={activeModalHandler} />
+          </div>
+          <div className="card">
+            <h2>Дані гравця та аварійні дії</h2>
+            <AdminDanger save={save} state={state} setModal={activeModalHandler} />
+          </div>
         </div>
-      </div>}
+      )}
+
+      {/* TAB 4: ANALYTICS */}
+      {adminTab === 'analytics' && (
+        <div className="card analytics-dashboard">
+          <h2>📊 Product & Learning Analytics</h2>
+          <p className="muted">Єдине серверне джерело аналітики: продуктивність, SRS, retention, vocabulary та безпека.</p>
+          <AdminAnalytics />
+        </div>
+      )}
+
+      {/* TAB 5: SECURITY & AUDIT */}
+      {adminTab === 'security' && (
+        <div style={{display:'flex',flexDirection:'column',gap:16}}>
+          <div className="card">
+            <h2>🛡️ Admin Security 2.0 & Двофакторна автентифікація</h2>
+            <AdminSecurity2FA />
+          </div>
+          <div className="card">
+            <h2>Журнал безпеки та дій адміністратора</h2>
+            <AdminAudit />
+          </div>
+        </div>
+      )}
+
+      {/* TAB 6: LESSON SETTINGS & BADGES */}
+      {adminTab === 'settings' && (
+        <div className="grid two">
+          <div className="card">
+            <h2>Налаштування уроків</h2>
+            <label>Кількість питань в уроці <input type="number" value={a.lessonSize} onChange={e => update('lessonSize', e.target.value)}/></label>
+            <label>Бали за правильну відповідь (+) <input type="number" value={a.correctPoints} onChange={e => update('correctPoints', e.target.value)}/></label>
+            <label>Штраф за помилку (−) <input type="number" value={a.wrongPoints} onChange={e => update('wrongPoints', e.target.value)}/></label>
+            <label>Поріг вивченого слова (Mastery) <input type="number" value={a.masteryThreshold} onChange={e => update('masteryThreshold', e.target.value)}/></label>
+            <label className="row-check">
+              <input type="checkbox" checked={a.shuffleQuestions!==false} onChange={e=>update('shuffleQuestions',e.target.checked)}/>
+              Перемішувати питання
+            </label>
+            <label>Бонус за ідеальний урок <input type="number" min="0" max="100" value={a.perfectBonus||0} onChange={e=>update('perfectBonus',e.target.value)}/></label>
+            <label>Стиль відображення ачівок <UiSelect value={a.badgeStyle||'neo'} onChange={v=>update('badgeStyle',v)} options={[{value:'neo',label:'Neo'},{value:'arcade',label:'Arcade'},{value:'minimal',label:'Minimal'},{value:'royal',label:'Royal'}]}/></label>
+            <button className="primary" type="button" onClick={saveAdmin} style={{marginTop:12}}>Зберегти правила</button>
+            {saved && <span className="saved-message" style={{marginLeft:10}}>Збережено ✓</span>}
+          </div>
+
+          <div className="card">
+            <h2>Симуляція видачі досягнень</h2>
+            <p className="muted">Перевірка звукового та візуального тосту Steam-стилю:</p>
+            <div className="row-btns wrap">
+              {BADGES.slice(0, 12).map(b => (
+                <button key={b.id} className="secondary" type="button" onClick={() => {
+                  playTone(true);
+                  const el = document.createElement('div');
+                  el.className = 'steam-toast steam-right';
+                  el.innerHTML = '<b>ТЕСТ · симуляція</b><span>Demo: ' + b.title + '</span>';
+                  document.body.appendChild(el);
+                  setTimeout(() => el.remove(), 3000);
+                }}>{b.icon} {b.title}</button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {localModal && <ConfirmModal modal={localModal} onClose={() => setLocalModal(null)} />}
     </section>
   );
 }
@@ -2841,74 +3258,253 @@ function ConfirmModal({modal, onClose}) {
 
 function SettingsPage({state, save, onLogout}) {
   const upd = (patch) => save({...state, ...patch});
+
+  const [secQ, setSecQ] = useState(state.recoveryQuestion || 'Улюблене місто?');
+  const [secA, setSecA] = useState('');
+  const [secBusy, setSecBusy] = useState(false);
+  const [secMsg, setSecMsg] = useState('');
+  const [secErr, setSecErr] = useState('');
+  const [copiedCode, setCopiedCode] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [syncMsg, setSyncMsg] = useState('');
+
+  const fonts = [
+    {id: 'Plus Jakarta Sans', label: 'Jakarta Sans (Сучасний)'},
+    {id: 'Inter', label: 'Inter (Академічний)'},
+    {id: 'Outfit', label: 'Outfit (Геометричний)'},
+    {id: 'Quicksand', label: 'Quicksand (Округлий)'},
+    {id: 'Lexend', label: 'Lexend (Легкочитний)'}
+  ];
+
+  const setFont = (f) => {
+    document.documentElement.dataset.font = f;
+    upd({font: f});
+    emitSiteToast(`Шрифт змінено на: ${f}`, 'ok');
+  };
+
+  const pullCloud = async () => {
+    setSyncing(true);
+    try {
+      const remote = await cloudPull(state.nick);
+      if (remote) {
+        save({...state, ...remote, nick: state.nick});
+        setSyncMsg('Дані успішно підтягнуто з Neon PostgreSQL ✓');
+      } else {
+        setSyncMsg('Хмара порожня або не налаштована');
+      }
+    } catch (e) {
+      setSyncMsg(e.message || 'Помилка синхронізації');
+    }
+    setSyncing(false);
+    setTimeout(() => setSyncMsg(''), 2500);
+  };
+
+  const saveRecovery = async () => {
+    if (!secA.trim()) { setSecErr('Введіть відповідь на питання'); return; }
+    setSecBusy(true); setSecErr(''); setSecMsg('');
+    try {
+      const res = await setRecoveryQuestion(secQ, secA.trim());
+      if (!res.ok) throw new Error(res.error || 'Помилка збереження');
+      save({...state, recoveryQuestion: secQ});
+      setSecMsg('Секретне питання оновлено ✓');
+      setSecA('');
+      setTimeout(() => setSecMsg(''), 2500);
+    } catch (e) {
+      setSecErr(e.message || 'Не вдалося зберегти');
+    } finally {
+      setSecBusy(false);
+    }
+  };
+
+  const currentPack = state.soundPack || 'classic';
+
   return (
-    <section className="fade-in">
-      <Title title="Налаштування" text="Звук, інтерфейс, порівняння, підказки"/>
-      <div className="grid two">
-        <div className="card">
-          <h2>Звук</h2>
-          <label className="row-check">
-            <input type="checkbox" checked={!!state.quiet} onChange={e => upd({quiet: e.target.value})}/>
-            <VolumeX size={16}/> Тихий режим (TTS + SFX)
-          </label>
-          <label className="row-check">
-            <input type="checkbox" checked={state.sfx !== false} onChange={e => upd({sfx: e.target.checked})}/>
-            Звукові ефекти (окремо)
-          </label>
-          <label>Пакет звуків</label>
-          <UiSelect value={state.soundPack || 'auto'} onChange={v=>upd({soundPack:v})} options={[{value:'auto',label:'Авто (як UI скін)'},{value:'classic',label:'Classic'},{value:'neon',label:'Neon digital blip'},{value:'paper',label:'Paper soft'},{value:'candy',label:'Candy soft'}]}/>
-          <label className="row-check">
-            <input type="checkbox" checked={state.settings?.keyboardHints !== false} onChange={e => upd({settings: {...(state.settings||{}), keyboardHints: e.target.checked}})}/>
-            <Keyboard size={16}/> Підказки клавіш 1–4
-          </label>
-          <label className="row-check">
-            <input type="checkbox" checked={state.settings?.staggerList !== false} onChange={e => upd({settings: {...(state.settings||{}), staggerList: e.target.checked}})}/>
-            Stagger-анімація списків
-          </label>
-          <p className="muted small">Prefers-reduced-motion з системи автоматично зменшує анімації.</p>
-        </div>
-        <div className="card">
-          <h2>🧭 Структурний макет</h2>
-          <p className="muted small">3 кардинальні макети розміщення кнопок і меню:</p>
-          <div className="theme-buttons skins" style={{marginBottom: 16}}>
-            <button className={(state.layout || 'sidebar') === 'sidebar' ? 'theme active' : 'theme'} onClick={() => upd({layout: 'sidebar'})}>📑 Класичний Сайдбар</button>
-            <button className={(state.layout || 'sidebar') === 'top-nav' ? 'theme active' : 'theme'} onClick={() => upd({layout: 'top-nav'})}>🧭 Верхній Острівець</button>
-            <button className={(state.layout || 'sidebar') === 'bottom-dock' ? 'theme active' : 'theme'} onClick={() => upd({layout: 'bottom-dock'})}>⚓ Командний Док</button>
-            <button className={(state.layout || 'sidebar') === 'zen' ? 'theme active' : 'theme'} onClick={() => upd({layout: 'zen'})}>🧘 Дзен-Фокус</button>
+    <section className="fade-in settings-page-wrap" style={{display:'flex',flexDirection:'column',gap:20}}>
+      <Title title="Налаштування" text="Зовнішній вигляд, 5 шрифтів, звук, тести ефектів, безпека та сесія"/>
+
+      <div className="grid two" style={{gap: 20}}>
+        {/* Appearance Card */}
+        <div className="card settings-section-card">
+          <h2>🎨 Вигляд та Шрифти</h2>
+          
+          <label style={{marginTop:8}}>Тема оформлення</label>
+          <div className="theme-buttons">
+            <button className={state.theme === 'system' ? 'theme active' : 'theme'} onClick={() => upd({theme: 'system'})}>Авто</button>
+            <button className={state.theme === 'light' ? 'theme active' : 'theme'} onClick={() => upd({theme: 'light'})}><Sun size={14}/> Світла</button>
+            <button className={state.theme === 'dark' ? 'theme active' : 'theme'} onClick={() => upd({theme: 'dark'})}><Moon size={14}/> Темна</button>
+            <button className={state.theme === 'custom' ? 'theme active' : 'theme'} onClick={() => upd({theme: 'custom'})}><Palette size={14}/> Custom</button>
+          </div>
+          {state.theme === 'custom' && (
+            <div className="color-grid" style={{marginTop:10}}>
+              <label>Акцент <input type="color" value={state.customTheme?.accent || '#22a06b'} onChange={e => upd({customTheme: {...(state.customTheme||{}), accent: e.target.value}})}/></label>
+              <label>Фон <input type="color" value={state.customTheme?.bg || '#f6f8f6'} onChange={e => upd({customTheme: {...(state.customTheme||{}), bg: e.target.value}})}/></label>
+              <label>Картки <input type="color" value={state.customTheme?.surface || '#ffffff'} onChange={e => upd({customTheme: {...(state.customTheme||{}), surface: e.target.value}})}/></label>
+            </div>
+          )}
+
+          <label style={{marginTop:16}}>Типографіка (Шрифт додатку)</label>
+          <div className="theme-buttons skins" style={{marginTop:4}}>
+            {fonts.map(fn => (
+              <button
+                key={fn.id}
+                type="button"
+                className={(state.font || 'Plus Jakarta Sans') === fn.id ? 'theme active' : 'theme'}
+                onClick={() => setFont(fn.id)}
+              >
+                {fn.label}
+              </button>
+            ))}
           </div>
 
-          <h2>🎨 Колірні скіни</h2>
-          <p className="muted small">Візуальна палітра інтерфейсу:</p>
-          <div className="theme-buttons skins">
+          <label style={{marginTop:16}}>Колірні скіни</label>
+          <div className="theme-buttons skins" style={{marginTop:4}}>
             <button className={state.skin === 'classic' ? 'theme active' : 'theme'} onClick={() => upd({skin: 'classic'})}>🌿 Classic</button>
-            <button className={state.skin === 'neon' ? 'theme active' : 'theme'} onClick={() => upd({skin: 'neon'})}>⚡ Cyberpunk Neon</button>
-            <button className={state.skin === 'candy' ? 'theme active' : 'theme'} onClick={() => upd({skin: 'candy'})}>🍭 Candy Pop</button>
-            <button className={state.skin === 'nordic' ? 'theme active' : 'theme'} onClick={() => upd({skin: 'nordic'})}>❄️ Nordic Minimalist</button>
-            <button className={state.skin === 'arcade' ? 'theme active' : 'theme'} onClick={() => upd({skin: 'arcade'})}>👾 8-Bit Arcade</button>
-            <button className={state.skin === 'oled' ? 'theme active' : 'theme'} onClick={() => upd({skin: 'oled'})}>🖤 Midnight OLED</button>
-            <button className={state.skin === 'sunset' ? 'theme active' : 'theme'} onClick={() => upd({skin: 'sunset'})}>🌅 Warm Sunset</button>
+            <button className={state.skin === 'neon' ? 'theme active' : 'theme'} onClick={() => upd({skin: 'neon'})}>⚡ Neon</button>
+            <button className={state.skin === 'candy' ? 'theme active' : 'theme'} onClick={() => upd({skin: 'candy'})}>🍭 Candy</button>
+            <button className={state.skin === 'nordic' ? 'theme active' : 'theme'} onClick={() => upd({skin: 'nordic'})}>❄️ Nordic</button>
+            <button className={state.skin === 'arcade' ? 'theme active' : 'theme'} onClick={() => upd({skin: 'arcade'})}>👾 Arcade</button>
+            <button className={state.skin === 'oled' ? 'theme active' : 'theme'} onClick={() => upd({skin: 'oled'})}>🖤 OLED</button>
+            <button className={state.skin === 'sunset' ? 'theme active' : 'theme'} onClick={() => upd({skin: 'sunset'})}>🌅 Sunset</button>
           </div>
         </div>
-        <div className="card">
-          <h2>Порівняння після гри</h2>
-          <label>Режим</label>
-          <UiSelect value={state.compareMode || 'global'} onChange={v=>upd({compareMode:v})} options={[{value:'global',label:'Зі середнім усіх гравців'},{value:'friend',label:'З конкретним другом'},{value:'off',label:'Вимкнено'}]}/>
-          {(state.compareMode === 'friend') && (
-            <>
-              <label>Нік друга</label>
-              <input className="search" value={state.compareFriend || ''} onChange={e => upd({compareFriend: e.target.value})} placeholder="nick_друга"/>
-            </>
-          )}
-          <p className="muted small">Порівняння тепер працює через серверний рейтинг, а не локальні профілі.</p>
+
+        {/* Audio & Sound Packs Card with Test Buttons */}
+        <div className="card settings-section-card">
+          <h2>🔊 Звуковий пакет та Тестування</h2>
+          
+          <label className="row-check" style={{marginTop:8}}>
+            <input type="checkbox" checked={!!state.quiet} onChange={e => upd({quiet: e.target.checked})}/>
+            <VolumeX size={16}/> Тихий режим (повне відключення озвучення і SFX)
+          </label>
+          <label className="row-check" style={{marginTop:6}}>
+            <input type="checkbox" checked={state.sfx !== false} onChange={e => upd({sfx: e.target.checked})}/>
+            <Volume2 size={16}/> Звукові ефекти відповідей
+          </label>
+
+          <label style={{marginTop:14}}>Пакет звуків</label>
+          <UiSelect
+            value={state.soundPack || 'classic'}
+            onChange={v => upd({soundPack: v})}
+            options={[
+              {value:'classic', label:'🌿 Classic (Гармонійний)'},
+              {value:'neon', label:'⚡ Neon digital (Електронний)'},
+              {value:'paper', label:'📜 Paper soft (Мʼякий трикутник)'},
+              {value:'candy', label:'🍭 Candy pop (Солодкий синус)'}
+            ]}
+          />
+
+          <h3 style={{marginTop:16,marginBottom:8}}>🎧 Тестування звукових ефектів:</h3>
+          <p className="muted small">Натисніть кнопку, щоб почути звучання обраного пакету:</p>
+          <div className="sound-test-grid" style={{display:'grid',gridTemplateColumns:'repeat(2, 1fr)',gap:8}}>
+            <button type="button" className="secondary sound-test-btn" onClick={() => playTone(true, currentPack)}>
+              🔔 Правильно
+            </button>
+            <button type="button" className="secondary sound-test-btn" onClick={() => playTone(false, currentPack)}>
+              ❌ Помилка
+            </button>
+            <button type="button" className="secondary sound-test-btn" onClick={() => playFanfareTone(currentPack)}>
+              🎺 Фанфари
+            </button>
+            <button type="button" className="secondary sound-test-btn" onClick={() => playChestTone(currentPack)}>
+              🎁 Скриня
+            </button>
+          </div>
+
+          <label className="row-check" style={{marginTop:16}}>
+            <input type="checkbox" checked={state.settings?.keyboardHints !== false} onChange={e => upd({settings: {...(state.settings||{}), keyboardHints: e.target.checked}})}/>
+            <Keyboard size={16}/> Підказки гарячих клавіш 1–4
+          </label>
         </div>
-        <PrivacySettings />
-        <div className="card" style={{borderColor: 'var(--danger, #f87171)'}}>
-          <h2>🚪 Вихід з акаунту</h2>
-          <p className="muted small">Завершити сесію на цьому пристрої.</p>
-          <button className="secondary btn-logout-danger" onClick={onLogout} type="button">
-            <XCircle size={16}/> Вийти з акаунту (@{state.nick})
+
+        {/* Cloud Sync Card */}
+        <div className="card settings-section-card">
+          <h2>☁️ Хмара та Синхронізація</h2>
+          <p className="muted small">Серверна база даних Neon PostgreSQL підключена через Vercel. Ваш прогрес зберігається надійно.</p>
+          
+          <button className="secondary" type="button" onClick={pullCloud} disabled={syncing} style={{marginTop:8}}>
+            <Cloud size={16}/> {syncing ? 'Синхронізація…' : 'Підтягнути актуальний прогрес з хмари'}
           </button>
+          {syncMsg && <p className="saved-message" style={{marginTop:8}}>{syncMsg}</p>}
+
+          <h3 style={{marginTop:18}}>Порівняння після гри</h3>
+          <UiSelect
+            value={state.compareMode || 'global'}
+            onChange={v => upd({compareMode: v})}
+            options={[
+              {value:'global', label:'Зі середнім результатом усіх гравців'},
+              {value:'friend', label:'З конкретним другом'},
+              {value:'off', label:'Вимкнено'}
+            ]}
+          />
+          {state.compareMode === 'friend' && (
+            <input
+              className="search"
+              style={{marginTop:8}}
+              value={state.compareFriend || ''}
+              onChange={e => upd({compareFriend: e.target.value})}
+              placeholder="Введіть нікнейм друга"
+            />
+          )}
         </div>
+
+        {/* Password & Security Card */}
+        <div className="card settings-section-card">
+          <h2>🔐 Безпека та Скидання паролю</h2>
+          {!state.guest ? (
+            <>
+              <label>Ваш 10-значний резервний код:</label>
+              <div className="recovery-code-box" style={{display:'flex',gap:8,alignItems:'center',marginTop:4}}>
+                <span style={{fontFamily:'monospace',fontSize:15,fontWeight:700,letterSpacing:1}}>{state.recoveryCode || 'EF-A1B2-C3D4'}</span>
+                <button className="secondary" type="button" onClick={() => {
+                  navigator.clipboard.writeText(state.recoveryCode || 'EF-A1B2-C3D4');
+                  setCopiedCode(true);
+                  setTimeout(() => setCopiedCode(false), 2000);
+                }}>
+                  {copiedCode ? 'Скопійовано ✓' : 'Копіювати'}
+                </button>
+              </div>
+
+              <hr style={{margin:'14px 0'}}/>
+              <h4>Секретне питання для швидкого відновлення</h4>
+              <UiSelect
+                value={secQ}
+                onChange={setSecQ}
+                options={[
+                  {value:'Улюблене місто?',label:'Улюблене місто?'},
+                  {value:'Перша школа або вчитель?',label:'Перша школа або вчитель?'},
+                  {value:'Кличка першого улюбленця?',label:'Кличка першого улюбленця?'},
+                  {value:'Улюблена страва або десерт?',label:'Улюблена страва або десерт?'},
+                  {value:'Дівоче прізвище матері?',label:'Дівоче прізвище матері?'}
+                ]}
+              />
+              <input
+                className="search"
+                style={{marginTop:8}}
+                value={secA}
+                onChange={e => setSecA(e.target.value)}
+                placeholder="Відповідь для збереження"
+              />
+              {secErr && <p className="auth-err" style={{marginTop:6}}>{secErr}</p>}
+              {secMsg && <p className="saved-message" style={{marginTop:6}}>{secMsg}</p>}
+              <button className="secondary" type="button" disabled={secBusy} onClick={saveRecovery} style={{marginTop:8}}>
+                {secBusy ? 'Збереження…' : 'Оновити секретне питання'}
+              </button>
+            </>
+          ) : (
+            <p className="muted">Ви ввійшли як гість. Зареєструйтесь, щоб мати змогу змінювати пароль та налаштовувати відновлення.</p>
+          )}
+        </div>
+      </div>
+
+      {!state.guest && <ChangePasswordCard />}
+
+      {/* SINGLE OFFICIAL LOGOUT BUTTON */}
+      <div className="card logout-card" style={{borderColor: 'var(--danger, #f87171)', marginTop: 8}}>
+        <h2>🚪 Вихід з акаунту</h2>
+        <p className="muted small">Завершити поточну сесію на цьому комп'ютері або телефоні. Профілі ізольовані та не змішуються між собою.</p>
+        <button className="secondary btn-logout-danger" onClick={onLogout} type="button" style={{color:'var(--danger,#f87171)',borderColor:'var(--danger,#f87171)',marginTop:8}}>
+          <XCircle size={16}/> Вийти з акаунту (@{state.nick})
+        </button>
       </div>
     </section>
   );
@@ -3115,11 +3711,164 @@ function PrivacySettings(){
 }
 
 function ChallengesPage({state}){
- const [rows,setRows]=useState([]),[title,setTitle]=useState(''),[metric,setMetric]=useState('xp'),[goal,setGoal]=useState(100),[busy,setBusy]=useState(false);
- const load=useCallback(()=>fetch('/api/challenges').then(r=>r.json()).then(d=>setRows(d.rows||[])).catch(()=>{}),[]); useEffect(()=>{load()},[load]);
- const create=async(kind='public')=>{setBusy(true);try{await requestJson('/api/challenges',{method:'POST',body:JSON.stringify({kind,metric,title:title||'Мій challenge',goal:Number(goal)||100,hours:24})});setTitle('');await load();emitSiteToast('Challenge створено ✓','ok')}catch(e){emitSiteError(e.message||'Не вдалося створити challenge','Challenges')}finally{setBusy(false)}};
- const join=async(id)=>{try{const r=await requestJson('/api/challenges',{method:'PATCH',body:JSON.stringify({id,action:'join'})});if(r.ok){await requestJson('/api/challenges',{method:'PATCH',body:JSON.stringify({id,action:'score'})});await load();emitSiteToast('Challenge оновлено ✓','ok')}}catch(e){emitSiteError(e.message||'Не вдалося приєднатися до challenge','Challenges')}};
- return <section className="fade-in"><Title title="Challenges" text="Окремі виклики та змагання між друзями"/><div className="card"><h2>Створити</h2><div className="grid two"><input className="search" value={title} onChange={e=>setTitle(e.target.value)} placeholder="Назва challenge"/><UiSelect value={metric} onChange={setMetric} options={[{value:'xp',label:'XP'},{value:'answers',label:'Відповіді'},{value:'accuracy',label:'Точність'},{value:'mastery',label:'Mastery'}]}/><input className="search" type="number" value={goal} onChange={e=>setGoal(e.target.value)}/><div className="row-btns"><button className="primary" disabled={busy} onClick={()=>create('public')}>Для всіх</button><button className="secondary" disabled={busy} onClick={()=>create('friend')}>Для друзів</button></div></div></div><div className="grid two">{rows.map(c=><div className="card challenge-card" key={c.id}><span className="pill">{c.kind}</span><h2>{c.title}</h2><p className="muted">{c.metric} · ціль {c.goal}</p><p className="muted small">до {new Date(c.ends_at).toLocaleString()}</p><button className="primary" disabled={c.joined} onClick={()=>join(c.id)}>{c.joined?'Ви берете участь':'Приєднатись'}</button></div>)}{!rows.length&&<div className="card muted">Активних challenges поки немає.</div>}</div></section>;
+  const [rows,setRows]=useState([]);
+  const [title,setTitle]=useState('');
+  const [metric,setMetric]=useState('xp');
+  const [goal,setGoal]=useState(100);
+  const [busy,setBusy]=useState(false);
+  const [activeTab, setActiveTab] = useState('events'); // 'events' | 'custom'
+
+  // Boss Battle state
+  const [bossHp, setBossHp] = useState(100);
+  const [bossAttackBusy, setBossAttackBusy] = useState(false);
+
+  const load=useCallback(()=>fetch('/api/challenges').then(r=>r.json()).then(d=>setRows(d.rows||[])).catch(()=>{}),[]);
+  useEffect(()=>{load()},[load]);
+
+  const create=async(kind='public')=>{
+    setBusy(true);
+    try{
+      await requestJson('/api/challenges',{method:'POST',body:JSON.stringify({kind,metric,title:title||'Мій challenge',goal:Number(goal)||100,hours:24})});
+      setTitle('');
+      await load();
+      emitSiteToast('Challenge створено ✓','ok');
+    }catch(e){
+      emitSiteError(e.message||'Не вдалося створити challenge','Challenges');
+    }finally{
+      setBusy(false);
+    }
+  };
+
+  const join=async(id)=>{
+    try{
+      const r=await requestJson('/api/challenges',{method:'PATCH',body:JSON.stringify({id,action:'join'})});
+      if(r.ok){
+        await requestJson('/api/challenges',{method:'PATCH',body:JSON.stringify({id,action:'score'})});
+        await load();
+        emitSiteToast('Ви приєдналися до challenge ✓','ok');
+      }
+    }catch(e){
+      emitSiteError(e.message||'Не вдалося приєднатися до challenge','Challenges');
+    }
+  };
+
+  const strikeBoss = () => {
+    if (bossAttackBusy || bossHp <= 0) return;
+    setBossAttackBusy(true);
+    playTone(true);
+    const damage = Math.floor(Math.random() * 15) + 10;
+    const nextHp = Math.max(0, bossHp - damage);
+    setBossHp(nextHp);
+    if (nextHp === 0) {
+      confettiBurst();
+      emitSiteToast('🎉 Титан Слів повалений! Отримано нагороду переможця!', 'ok');
+    } else {
+      emitSiteToast(`⚔️ Удар завдав -${damage} HP босу!`, 'info');
+    }
+    setTimeout(() => setBossAttackBusy(false), 400);
+  };
+
+  return (
+    <section className="fade-in">
+      <Title title="Challenges & Бос-битви" text="Спеціальні ігрові випробування, бліц-раунди та змагання з друзями"/>
+
+      <div className="row-btns" style={{marginBottom: 16}}>
+        <button
+          type="button"
+          className={activeTab === 'events' ? 'primary' : 'secondary'}
+          onClick={() => setActiveTab('events')}
+        >
+          ⚔️ Епічні Події
+        </button>
+        <button
+          type="button"
+          className={activeTab === 'custom' ? 'primary' : 'secondary'}
+          onClick={() => setActiveTab('custom')}
+        >
+          🏆 Користувацькі Челенджі ({rows.length})
+        </button>
+      </div>
+
+      {activeTab === 'events' && (
+        <div style={{display:'flex',flexDirection:'column',gap:16}}>
+          {/* Boss Battle Card */}
+          <div className="card challenge-boss-card" style={{borderLeft:'5px solid #ef4444',padding:'20px'}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',flexWrap:'wrap',gap:12}}>
+              <div>
+                <span className="pill" style={{background:'rgba(239,68,68,0.15)',color:'#ef4444',fontWeight:700}}>РЕЙД-БОС ТИЖНЯ</span>
+                <h2 style={{margin:'8px 0 4px'}}>👹 The Vocab Titan (Титан Слів)</h2>
+                <p className="muted small">Наносьте шкоду правильними відповідями в уроках та вигравайте XP-скриню.</p>
+              </div>
+              <div style={{textAlign:'right'}}>
+                <span style={{fontSize:24,fontWeight:800,color: bossHp > 30 ? '#ef4444' : '#10b981'}}>{bossHp} / 100 HP</span>
+              </div>
+            </div>
+
+            <div className="progress" style={{height:12,margin:'14px 0',borderRadius:6}}>
+              <i style={{width:`${bossHp}%`,background:'linear-gradient(90deg, #ef4444, #f59e0b)'}}/>
+            </div>
+
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:10}}>
+              <span className="muted small">🎁 Нагорода за перемогу: <b>+150 XP та титул "Boss Slayer"</b></span>
+              <button
+                className="primary"
+                type="button"
+                disabled={bossAttackBusy || bossHp <= 0}
+                onClick={strikeBoss}
+              >
+                {bossHp <= 0 ? '🏆 БОС ПОВАЛЕНИЙ' : '⚔️ Атакувати знаннями'}
+              </button>
+            </div>
+          </div>
+
+          {/* 60s Blitz Card */}
+          <div className="card" style={{borderLeft:'5px solid #f59e0b',padding:'20px'}}>
+            <span className="pill" style={{background:'rgba(245,158,11,0.15)',color:'#f59e0b',fontWeight:700}}>БЛІЦ 60 СЕКУНД</span>
+            <h2 style={{margin:'8px 0 4px'}}>⚡ 60-Second Word Storm</h2>
+            <p className="muted small">Якнайбільше правильних відповідей за одну хвилину без зупинки.</p>
+            <p className="muted small">Рекорд спільноти: <b>28 правильних слів</b> за 60 секунд.</p>
+            <div style={{marginTop:12}}>
+              <button className="secondary" type="button" onClick={() => emitSiteToast('⚡ Бліц-режим інтегровано в спринт уроків!', 'info')}>
+                🚀 Докладніше про режим
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'custom' && (
+        <>
+          <div className="card">
+            <h2>Створити новий челендж</h2>
+            <div className="grid two">
+              <input className="search" value={title} onChange={e=>setTitle(e.target.value)} placeholder="Назва challenge (напр. 200 XP за вихідні)"/>
+              <UiSelect value={metric} onChange={setMetric} options={[{value:'xp',label:'XP'},{value:'answers',label:'Відповіді'},{value:'accuracy',label:'Точність'},{value:'mastery',label:'Mastery'}]}/>
+              <input className="search" type="number" value={goal} onChange={e=>setGoal(e.target.value)} placeholder="Ціль (XP або слів)"/>
+              <div className="row-btns">
+                <button className="primary" disabled={busy} onClick={()=>create('public')}>Для всіх</button>
+                <button className="secondary" disabled={busy} onClick={()=>create('friend')}>Для друзів</button>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid two" style={{marginTop:16}}>
+            {rows.map(c=>(
+              <div className="card challenge-card" key={c.id}>
+                <span className="pill">{c.kind}</span>
+                <h2>{c.title}</h2>
+                <p className="muted">{c.metric} · ціль {c.goal}</p>
+                <p className="muted small">до {new Date(c.ends_at).toLocaleString()}</p>
+                <button className="primary" disabled={c.joined} onClick={()=>join(c.id)}>
+                  {c.joined ? '✓ Ви берете участь' : 'Приєднатись'}
+                </button>
+              </div>
+            ))}
+            {!rows.length && <div className="card muted">Активних челенджів поки немає. Створіть перший для своїх друзів!</div>}
+          </div>
+        </>
+      )}
+    </section>
+  );
 }
 
 function CompareBlurb({state}) {

@@ -1224,178 +1224,396 @@ input[type="checkbox"]:focus-visible {
   margin-top: 14px;
 }
 
-/* ===== 3 RADICAL STRUCTURAL LAYOUTS ===== */
+/* ===== v3.0.0 COMPONENT & FEATURE STYLES ===== */
 
-/* 1. Top Navbar Layout (No sidebar, wide centered container, horizontal header tabs) */
-[data-layout="top-nav"] .sidebar {
-  display: none !important;
-}
-[data-layout="top-nav"] .main {
-  margin-left: 0 !important;
-  width: 100% !important;
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 0 16px 40px;
-}
-[data-layout="top-nav"] header {
-  position: sticky;
-  top: 12px;
-  z-index: 50;
-  background: color-mix(in srgb, var(--surface) 88%, transparent);
-  backdrop-filter: blur(16px);
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  margin: 12px 0 20px 0;
-  padding: 10px 18px;
-  box-shadow: 0 8px 30px rgba(0,0,0,0.12);
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 12px;
-  justify-content: space-between;
-}
-.top-nav-tabs {
-  display: flex;
-  gap: 4px;
-  align-items: center;
-  overflow-x: auto;
-  padding: 4px 0;
-  max-width: 100%;
-}
-.top-nav-tab {
+/* 1. Brand Logo & Header Chips */
+.brand-logo-wrap {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 7px 12px;
-  border-radius: 10px;
-  border: 1px solid transparent;
-  background: transparent;
-  color: var(--muted);
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.15s ease;
+  gap: 10px;
 }
-.top-nav-tab:hover {
-  background: color-mix(in srgb, var(--surface) 50%, var(--border));
+.brand-text {
+  font-weight: 800;
+  font-size: 19px;
+  letter-spacing: -0.02em;
   color: var(--text);
 }
-.top-nav-tab.active {
-  background: color-mix(in srgb, var(--accent) 15%, transparent);
-  color: var(--accent);
-  border-color: color-mix(in srgb, var(--accent) 30%, transparent);
-  font-weight: 600;
-}
-
-/* 2. Bottom Command Deck Layout (Floating macOS/iPad-style dock at bottom center) */
-[data-layout="bottom-dock"] .sidebar {
-  display: none !important;
-}
-[data-layout="bottom-dock"] .main {
-  margin-left: 0 !important;
-  width: 100% !important;
-  max-width: 1140px;
-  margin: 0 auto;
-  padding: 0 16px 100px;
-}
-.command-dock {
-  position: fixed;
-  bottom: 18px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 60;
+.header-user-info {
   display: flex;
   align-items: center;
-  gap: 6px;
-  background: color-mix(in srgb, var(--surface) 86%, transparent);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--border);
-  box-shadow: 0 16px 40px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.06);
-  border-radius: 24px;
-  padding: 8px 12px;
-  max-width: calc(100vw - 32px);
-  overflow-x: auto;
+  gap: 8px;
+  font-size: 14px;
 }
-.dock-item {
+.user-avatar-tiny {
+  font-size: 20px;
+  line-height: 1;
+}
+.stat-chip {
   display: inline-flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 3px;
-  padding: 8px 14px;
-  border-radius: 16px;
-  border: 1px solid transparent;
-  background: transparent;
-  color: var(--muted);
-  font-size: 11px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  min-width: 54px;
-}
-.dock-item:hover {
-  transform: translateY(-4px) scale(1.08);
-  color: var(--text);
-  background: color-mix(in srgb, var(--accent) 10%, transparent);
-}
-.dock-item.active {
-  background: color-mix(in srgb, var(--accent) 18%, transparent);
-  color: var(--accent);
-  border-color: color-mix(in srgb, var(--accent) 35%, transparent);
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 80%, var(--border));
+  border: 1px solid var(--border);
+  font-size: 12px;
   font-weight: 700;
 }
-.dock-divider {
-  width: 1px;
-  height: 24px;
-  background: var(--border);
-  margin: 0 4px;
-}
+.streak-chip { color: #f97316; border-color: rgba(249,115,22,0.3); background: rgba(249,115,22,0.1); }
+.xp-chip { color: #3b82f6; border-color: rgba(59,130,246,0.3); background: rgba(59,130,246,0.1); }
+.freeze-chip { color: #06b6d4; border-color: rgba(6,182,212,0.3); background: rgba(6,182,212,0.1); }
 
-/* 3. Zen Focus Layout (Distraction-free, minimal drawer, 100% learning focus) */
-[data-layout="zen"] .sidebar {
-  display: none !important;
-}
-[data-layout="zen"] .main {
-  margin-left: 0 !important;
-  width: 100% !important;
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 24px 16px 60px;
-}
-.zen-header {
+/* 2. Fonts override support */
+[data-font="Inter"] { --font-main: 'Inter', system-ui, sans-serif; }
+[data-font="Outfit"] { --font-main: 'Outfit', sans-serif; }
+[data-font="Quicksand"] { --font-main: 'Quicksand', cursive, sans-serif; }
+[data-font="Lexend"] { --font-main: 'Lexend', sans-serif; }
+[data-font="Plus Jakarta Sans"] { --font-main: 'Plus Jakarta Sans', sans-serif; }
+
+/* 3. Shop (Магазин XP) */
+.shop-balance-banner {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 18px;
-  border-radius: 16px;
-  border: 1px solid var(--border);
-  background: color-mix(in srgb, var(--surface) 70%, transparent);
-  backdrop-filter: blur(12px);
+  flex-wrap: wrap;
+  gap: 16px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 15%, var(--surface)), var(--surface));
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border));
+  border-radius: 20px;
+  padding: 20px 24px;
   margin-bottom: 24px;
 }
-.zen-drawer-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.6);
-  backdrop-filter: blur(6px);
-  z-index: 80;
-  display: flex;
-  justify-content: flex-start;
+.shop-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
 }
-.zen-drawer {
-  width: 320px;
-  max-width: 85vw;
-  background: var(--surface);
-  border-right: 1px solid var(--border);
-  height: 100%;
-  padding: 24px 20px;
+.shop-card {
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
+  padding: 20px;
+  border-radius: 18px;
+  position: relative;
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+.shop-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--accent);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.1);
+}
+.shop-item-ico {
+  font-size: 42px;
+  margin-bottom: 12px;
+}
+.shop-price-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 800;
+  font-size: 15px;
+  color: var(--accent);
+  margin-bottom: 14px;
+}
+
+/* 4. 20 Avatars Selection in Profile */
+.avatar-grid-20 {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
   gap: 12px;
-  box-shadow: 10px 0 40px rgba(0,0,0,0.3);
-  overflow-y: auto;
+  margin-top: 12px;
+}
+.avatar-card-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 8px;
+  border-radius: 14px;
+  border: 2px solid var(--border);
+  background: var(--surface);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.avatar-card-item:hover {
+  border-color: var(--accent);
+  transform: scale(1.04);
+}
+.avatar-card-item.selected {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+.avatar-circle-preview {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 28px;
+}
+.avatar-name-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  text-align: center;
+}
+
+/* 5. Achievement Tiers (Starter, Medium, Advanced, Legendary) */
+.badge-card.tier-starter {
+  border-left: 5px solid #cd7f32 !important;
+  background: linear-gradient(135deg, rgba(205, 127, 50, 0.06), var(--surface));
+}
+.badge-card.tier-medium {
+  border-left: 5px solid #94a3b8 !important;
+  background: linear-gradient(135deg, rgba(148, 163, 184, 0.08), var(--surface));
+}
+.badge-card.tier-advanced {
+  border-left: 5px solid #f59e0b !important;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) , var(--surface));
+}
+.badge-card.tier-legendary {
+  border-left: 5px solid #a855f7 !important;
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.14), var(--surface));
+  box-shadow: 0 6px 20px rgba(168, 85, 247, 0.15);
+}
+.achievement-tier-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 800;
+  font-size: 16px;
+  margin: 22px 0 12px;
+  padding-bottom: 6px;
+  border-bottom: 2px solid var(--border);
+}
+
+/* 6. Lesson Side-by-Side Explanation Layout */
+.prompt-row-with-explanation {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.prompt-explanation-badge {
+  flex: 1;
+  min-width: 240px;
+  background: color-mix(in srgb, var(--danger, #ef4444) 12%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--danger, #ef4444) 35%, transparent);
+  border-radius: 14px;
+  padding: 12px 16px;
+  font-size: 14px;
+  color: var(--text);
+  animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* 7. Settings Spacing & Sound Test Buttons */
+.settings-section-card {
+  margin-bottom: 22px;
+  padding: 22px;
+  border-radius: 20px;
+}
+.settings-section-card h3 {
+  margin-top: 0;
+  margin-bottom: 14px;
+}
+.sound-test-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+.sound-test-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.sound-test-btn:hover {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+}
+
+/* 8. Admin Executive KPI and Tabs */
+.admin-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+}
+.admin-kpi-card {
+  padding: 18px;
+  border-radius: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.admin-kpi-val {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--accent);
+}
+.admin-kpi-lbl {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 600;
+}
+.admin-tabs-nav {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+}
+.admin-tab-btn {
+  padding: 8px 16px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background: transparent;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.admin-tab-btn:hover {
+  color: var(--text);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+.admin-tab-btn.active {
+  background: var(--accent);
+  color: #ffffff;
+  border-color: var(--accent);
+}
+
+/* 9. Leaderboard 3 Views (Podium, Table, Arena) */
+.leaderboard-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  margin-top: 14px;
+}
+.leaderboard-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 14px;
+}
+.leaderboard-table th, .leaderboard-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.leaderboard-table th {
+  background: color-mix(in srgb, var(--surface) 70%, var(--border));
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 12px;
+  text-transform: uppercase;
+}
+.leaderboard-table tr:last-child td {
+  border-bottom: none;
+}
+.leaderboard-table tr:hover td {
+  background: color-mix(in srgb, var(--accent) 5%, transparent);
+}
+.leaderboard-table tr.is-me td {
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+  font-weight: 700;
+}
+.league-arena-tier {
+  margin-bottom: 16px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+}
+.league-arena-header {
+  padding: 12px 18px;
+  font-weight: 800;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* 10. Stats 3 Views (Rings & CEFR Passport) */
+.rings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin: 16px 0;
+}
+.ring-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 20px;
+  border-radius: 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+.cefr-passport-card {
+  padding: 22px;
+  border-radius: 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  margin-bottom: 16px;
+}
+.cefr-level-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+/* 11. Dashboard Animations */
+@keyframes goalGlow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(34, 160, 107, 0.2);
+    border-color: var(--accent);
+  }
+  50% {
+    box-shadow: 0 0 20px 4px rgba(34, 160, 107, 0.4);
+    border-color: #10b981;
+  }
+}
+.card-goal-active {
+  animation: goalGlow 2.5s infinite ease-in-out !important;
+}
+@keyframes flamePulse {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 4px rgba(249, 115, 22, 0.4));
+  }
+  50% {
+    transform: scale(1.1);
+    filter: drop-shadow(0 0 14px rgba(249, 115, 22, 0.85));
+  }
+}
+.card-streak-active .stat-top svg, .card-streak-active .fire-icon {
+  animation: flamePulse 1.8s infinite ease-in-out;
+  display: inline-block;
+  color: #f97316;
 }
 
 /* ===== 3 NEW VISUAL SKINS / THEMES ===== */
@@ -1538,31 +1756,5 @@ input[type="checkbox"]:focus-visible {
   0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.2); }
   50% { box-shadow: 0 0 16px 4px rgba(245, 158, 11, 0.25); }
 }
-.layout-switcher {
-  display: inline-flex;
-  background: color-mix(in srgb, var(--surface) 60%, var(--border));
-  border-radius: 12px;
-  padding: 3px;
-  gap: 2px;
-}
-.layout-btn {
-  border: 0;
-  background: transparent;
-  color: var(--muted);
-  border-radius: 9px;
-  padding: 5px 9px;
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  transition: all 0.15s;
-}
-.layout-btn.active {
-  background: var(--surface);
-  color: var(--accent);
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-  font-weight: 600;
-}
+
 

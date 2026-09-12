@@ -60,32 +60,40 @@ export const rules = [
 ];
 
 export const BADGES = [
-{id:'first_steps',title:'Перші кроки',desc:'Пройди перший урок',icon:'🌱'},
-{id:'streak_3',title:'3 дні поспіль',desc:'Streak ≥ 3',icon:'🔥'},
-{id:'streak_7',title:'Тиждень вогню',desc:'Streak ≥ 7',icon:'🔥'},
-{id:'words_20',title:'20 слів',desc:'Вивчи 20 слів',icon:'📚'},
-{id:'words_50',title:'50 слів',desc:'Вивчи 50 слів',icon:'🏆'},
-{id:'xp_500',title:'500 XP',desc:'Набери 500 XP',icon:'⚡'},
-{id:'perfect_lesson',title:'Без помилок',desc:'Урок без жодної помилки',icon:'💎'},
-{id:'dictation',title:'Диктант',desc:'Пройди режим диктанту',icon:'✍️'},
-{id:'match_master',title:'Match Master',desc:'Виграй Match-гру',icon:'🎯'},
-{id:'accuracy_90',title:'Точність',desc:'90%+ на 100 відповідях',icon:'🎯'},
-{id:'xp_5000',title:'Потік 5000',desc:'Набери 5000 XP',icon:'💎'},
-{id:'streak_30',title:'Місяць без пауз',desc:'Streak ≥ 30',icon:'👑'},
-// Gamification v3 badges
-{id:'quest_master',title:'Квест-майстер',desc:'Виконай усі 3 щоденних квести',icon:'🎯'},
-{id:'league_bronze',title:'Бронзова ліга',desc:'Набери 100 XP',icon:'🥉'},
-{id:'league_silver',title:'Срібна ліга',desc:'Набери 200 XP',icon:'🥈'},
-{id:'league_gold',title:'Золота ліга',desc:'Набери 500 XP',icon:'🥇'},
-{id:'league_platinum',title:'Платинова ліга',desc:'Набери 1000 XP',icon:'💎'},
-{id:'league_diamond',title:'Діамантова ліга',desc:'Набери 2000 XP',icon:'🔮'},
-{id:'league_legend',title:'Легенда',desc:'Набери 3500 XP',icon:'👑'},
-{id:'freeze_used',title:'Крижаний щит',desc:'Використай заморозку стріку',icon:'❄️'},
-{id:'freeze_master',title:'Володар холоду',desc:'Збережи запас заморозок',icon:'🧊'},
-{id:'gift_opened',title:'Мисливець за скарбами',desc:'Відкрий 7 щоденних скринь',icon:'🎁'},
-{id:'social_star',title:'Зірка соціалки',desc:'Додай 3 друзів',icon:'⭐'},
-{id:'combo_king',title:'Combo King',desc:'Зроби 10 правильних поспіль',icon:'🔥'},
-{id:'word_wizard',title:'Майстер слів',desc:'Вивчи 100 слів у словнику',icon:'🧙‍♂️'},
+  // Початковий рівень (Starter / Bronze)
+  {id:'first_steps',title:'Перші кроки',desc:'Пройди свій перший урок',icon:'🌱',tier:'starter'},
+  {id:'words_20',title:'Перші 20 слів',desc:'Вивчи 20 слів у словнику',icon:'📚',tier:'starter'},
+  {id:'dictation',title:'Уважне вухо',desc:'Пройди режим аудіо-диктанту',icon:'✍️',tier:'starter'},
+  {id:'league_bronze',title:'Бронзова ліга',desc:'Набери перші 100 XP',icon:'🥉',tier:'starter'},
+  {id:'gift_opened',title:'Перший подарунок',desc:'Відкрий щоденну скриню скарбів',icon:'🎁',tier:'starter'},
+
+  // Середній рівень (Medium / Silver)
+  {id:'streak_3',title:'3 дні поспіль',desc:'Тримай серію 3 дні поспіль',icon:'🔥',tier:'medium'},
+  {id:'words_50',title:'Словниковий запас 50',desc:'Вивчи 50 слів англійською',icon:'🏆',tier:'medium'},
+  {id:'perfect_lesson',title:'Бездоганний урок',desc:'Пройди урок без жодної помилки',icon:'✨',tier:'medium'},
+  {id:'match_master',title:'Майстер пар',desc:'Успішно зіграй у режим Match',icon:'🎯',tier:'medium'},
+  {id:'league_silver',title:'Срібна ліга',desc:'Досягни позначки 200 XP',icon:'🥈',tier:'medium'},
+  {id:'quest_master',title:'Квест-майстер',desc:'Виконай усі 3 щоденних квести',icon:'🎖️',tier:'medium'},
+  {id:'freeze_used',title:'Крижаний порятунок',desc:'Врятуй серію заморозкою стріку',icon:'❄️',tier:'medium'},
+  {id:'social_star',title:'Коло друзів',desc:'Додай перших 3 друзів',icon:'⭐',tier:'medium'},
+
+  // Просунутий рівень (Advanced / Gold)
+  {id:'streak_7',title:'Тиждень вогню',desc:'Утримуй серію 7 днів поспіль',icon:'⚡',tier:'advanced'},
+  {id:'words_100',title:'Словниковий магнат',desc:'Опануй 100 слів у базі',icon:'🧙‍♂️',tier:'advanced'},
+  {id:'xp_500',title:'Золотий клуб 500',desc:'Набери 500 XP за навчання',icon:'🥇',tier:'advanced'},
+  {id:'league_gold',title:'Золота ліга',desc:'Піднімися до Золотої ліги (500 XP)',icon:'👑',tier:'advanced'},
+  {id:'combo_king',title:'Combo King',desc:'Зроби 10 правильних відповідей поспіль',icon:'🔥',tier:'advanced'},
+  {id:'accuracy_90',title:'Снайперська точність',desc:'90%+ правильних на 100 відповідях',icon:'🎯',tier:'advanced'},
+  {id:'freeze_master',title:'Володар холоду',desc:'Збери запас із 3+ заморозок у магазині',icon:'🧊',tier:'advanced'},
+  {id:'shop_patron',title:'Постійний клієнт',desc:'Придбай артефакт у магазині XP',icon:'🛍️',tier:'advanced'},
+
+  // Легендарний рівень (Legendary / Diamond)
+  {id:'streak_30',title:'Місяць сили',desc:'Утримуй серію 30 днів поспіль',icon:'👑',tier:'legendary'},
+  {id:'words_300',title:'Енциклопедист',desc:'Опануй 300+ слів у словнику',icon:'💎',tier:'legendary'},
+  {id:'league_platinum',title:'Платинова еліта',desc:'Набери 1000 XP (Платинова ліга)',icon:'💠',tier:'legendary'},
+  {id:'league_diamond',title:'Діамантовий титан',desc:'Набери 2000 XP (Діамантова ліга)',icon:'🔮',tier:'legendary'},
+  {id:'league_legend',title:'Легенда English Flow',desc:'Набери 3500+ XP та увійди в історію',icon:'🌟',tier:'legendary'},
+  {id:'boss_slayer',title:'Переможець Боса',desc:'Здолай Боса граматики у челенджах',icon:'⚔️',tier:'legendary'}
 ];
 
 // League tiers — thresholds: 100, 200, 500, 1000, 2000, 3500+ XP
