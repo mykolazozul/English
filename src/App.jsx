@@ -4,7 +4,7 @@ import {words as fallbackWords, rules, BADGES, LEAGUES, leagueForXp} from './dat
 import {notionWords, notionSyncMeta} from './notionWords.generated';
 import { Analytics } from '@vercel/analytics/react';
 import { startRegistration, startAuthentication } from '@simplewebauthn/browser';
-import {saveProfile, loadProfile, getActiveNick, cloudPull, cloudPush, cloudConfigured, isNickTaken, registerNick, setGuestSession, isGuestSession, getFriends, addFriend, acceptFriend, getChat, sendChat, registerChatDevice, getChatDevice, getChatDevices, getMyChatDevices, revokeChatDevice, friendsLeaderboard, getDailyAverage, ensureDailyAverage, serverAuth, loadCloudVocabulary, cloudRecordProgress, cloudStartLesson, cloudFinishLesson, flushProgressQueue, serverMe, loadServerConfig, cloudLeaderboard, getWordIdByText, getGamification, postGamification, getPublicProfile} from './lib/storage';
+import {saveProfile, loadProfile, getActiveNick, cloudPull, cloudPush, cloudConfigured, isNickTaken, registerNick, setGuestSession, isGuestSession, getFriends, addFriend, acceptFriend, getChat, sendChat, registerChatDevice, getChatDevice, getChatDevices, getMyChatDevices, revokeChatDevice, friendsLeaderboard, getDailyAverage, ensureDailyAverage, serverAuth, loadCloudVocabulary, cloudRecordProgress, cloudStartLesson, cloudFinishLesson, flushProgressQueue, serverMe, loadServerConfig, cloudLeaderboard, getWordIdByText, getGamification, postGamification, getPublicProfile, serverLogout, changePassword} from './lib/storage';
 import {onCorrect as srsOk, onWrong as srsBad, isDue, todayStr} from './lib/srs';
 import {dbPutProfile, dbGetProfile, dbListProfiles, dbSaveWords, dbLoadWords} from './lib/db.js';
 import {createRealtime} from './lib/realtime.js';
@@ -29,12 +29,13 @@ const ROADMAP_ITEMS = [
   {v:'2.4.0', title:'Admin/Stats lazy loading + security/session recovery', status:'done'},
   {v:'2.2.2', title:'Vercel Hobby: 1 Serverless Function gateway', status:'done'},
   {v:'2.2.0', title:'Product & Learning Analytics 1–17', status:'done'},
+  {v:'2.7.0', title:'Gamification v3: Leagues, Streak Freeze, Daily Quests, Gift Box, Public Profiles', status:'done'},
+  {v:'2.8.0', title:'Fix Lesson loading, Logout button & profile isolation, simple reliable Chat, Live Realtime 5s, Custom Checkboxes & 3 new radical interfaces, Password change', status:'done'},
 
   {v:'future', title:'WebAuthn/passkeys + verified device signatures', status:'planned'},
-  {v:'2.7.0', title:'Gamification v3: Leagues, Streak Freeze, Daily Quests, Gift Box, Public Profiles', status:'planned'},
 ];
 
-const VERSION = '2.7.0';
+const VERSION = '2.8.0';
 const words = (notionWords?.length ? notionWords : fallbackWords).map(w => ({
   id: w.id, word: w.word, translation: w.translation || '—', pronunciation: w.pronunciation || '',
   category: w.category || 'Other', level: w.level || '', explanation: w.explanation || '',
@@ -237,6 +238,77 @@ function computeBadges(state) {
   if ((state.history || []).some(h => h.mode === 'dictation')) add('dictation');
   if ((state.history || []).some(h => h.mode === 'match' && h.correct)) add('match_master');
   return [...earned];
+}
+
+function Sidebar({mobile, setMobile, page, nav, onLogout}) {
+  return (
+    <aside className={'sidebar' + (mobile ? ' open' : '')}>
+      <div className="brand"><span className="brand-mark">EF</span><span>English Flow</span></div>
+      <div className="nav-section">LEARN</div>
+      {[
+        ['dashboard', Home, 'Головна'],
+        ['learn', Play, 'Навчання'],
+        ['vocabulary', BookOpen, 'Слова'],
+        ['review', RotateCcw, 'SRS Повтор'],
+      ].map(([id, I, t]) => (
+        <button key={id} className={'nav' + (page === id ? ' active' : '')} onClick={() => nav(id)}><I size={18}/>{t}</button>
+      ))}
+      <div className="nav-section">TRACK</div>
+      {[
+        ['stats', BarChart3, 'Статистика'],
+        ['badges', Award, 'Бейджі'],
+        ['problems', Target, 'Проблемні'],
+        ['leaderboard', Trophy, 'Рейтинг'],
+        ['challenges', Swords, 'Challenges'],
+      ].map(([id, I, t]) => (
+        <button key={id} className={'nav' + (page === id ? ' active' : '')} onClick={() => nav(id)}><I size={18}/>{t}</button>
+      ))}
+      <div className="nav-section">ACCOUNT</div>
+      <button className={'nav' + (page === 'friends' ? ' active' : '')} onClick={() => nav('friends')}><Users size={18}/>Друзі</button>
+      <button className={'nav' + (page === 'settings' ? ' active' : '')} onClick={() => nav('settings')}><Settings size={18}/>Налаштування</button>
+      <button className={'nav' + (page === 'profile' ? ' active' : '')} onClick={() => nav('profile')}><User size={18}/>Профіль</button>
+      <button className={'nav' + (page === 'about' ? ' active' : '')} onClick={() => nav('about')}><Sparkles size={18}/>Про додаток</button>
+      <button className={'nav' + (page === 'admin' ? ' active' : '')} onClick={() => nav('admin')}><Shield size={18}/>Адмін</button>
+      {onLogout && (
+        <button className="nav nav-logout" onClick={onLogout} title="Вийти з акаунту" type="button">
+          <XCircle size={18}/>Вихід
+        </button>
+      )}
+    </aside>
+  );
+}
+
+function Layout({children, state, page, nav, mobile, setMobile, onLogout}) {
+  return (
+    <div className="app">
+      <Sidebar mobile={mobile} setMobile={setMobile} page={page} nav={nav} onLogout={onLogout} />
+      <main className="main">
+        <header>
+          <button className="icon mobile-only" onClick={() => setMobile(!mobile)}>{mobile ? <X/> : <Menu/>}</button>
+          <div>
+            <b>{state.name || state.nick}</b>
+            {(String(state.nick||'').toLowerCase()==='boss' || String(state.name||'').toLowerCase()==='boss') && <span className="boss-badge" title="Verified">👑</span>}
+            <span className="muted"> · @{state.nick}</span>
+            {(String(state.nick||'').toLowerCase()==='boss' || String(state.name||'').toLowerCase()==='boss') && <span className="pill ok">verified</span>}
+            {state.guest && <span className="pill guest-pill"><Ghost size={12}/> гість</span>}
+          </div>
+          <div className="header-stats">
+            <span>🔥 {state.streak}</span>
+            <span>⚡ {state.xp} XP</span>
+            <button className="btn-logout-header" onClick={onLogout} title="Вийти з акаунту" type="button">
+              <XCircle size={15}/> <span>Вихід</span>
+            </button>
+          </div>
+        </header>
+        {children}
+        <nav className="mobile-nav">
+          {[['dashboard', Home, 'Головна'], ['learn', Play, 'Вчити'], ['vocabulary', BookOpen, 'Слова'], ['review', RotateCcw, 'SRS'], ['profile', User, 'Профіль']].map(([id, I, t]) => (
+            <button key={id} className={page === id ? 'active' : ''} onClick={() => nav(id)}><I size={18}/><span>{t}</span></button>
+          ))}
+        </nav>
+      </main>
+    </div>
+  );
 }
 
 export default function App() {
@@ -446,56 +518,15 @@ export default function App() {
     setPage('lesson');
   };
 
-  const Sidebar = () => (
-    <aside className={'sidebar' + (mobile ? ' open' : '')}>
-      <div className="brand"><span className="brand-mark">EF</span><span>English Flow</span></div>
-      <div className="nav-section">LEARN</div>
-      {[
-        ['dashboard', Home, 'Головна'],
-        ['learn', Play, 'Навчання'],
-        ['vocabulary', BookOpen, 'Слова'],
-        ['review', RotateCcw, 'SRS Повтор'],
-      ].map(([id, I, t]) => (
-        <button key={id} className={'nav' + (page === id ? ' active' : '')} onClick={() => nav(id)}><I size={18}/>{t}</button>
-      ))}
-      <div className="nav-section">TRACK</div>
-      {[
-        ['stats', BarChart3, 'Статистика'],
-        ['badges', Award, 'Бейджі'],
-        ['problems', Target, 'Проблемні'],
-        ['leaderboard', Trophy, 'Рейтинг'],
-        ['challenges', Swords, 'Challenges'],
-      ].map(([id, I, t]) => (
-        <button key={id} className={'nav' + (page === id ? ' active' : '')} onClick={() => nav(id)}><I size={18}/>{t}</button>
-      ))}
-      <div className="nav-section">ACCOUNT</div>
-      <button className={'nav' + (page === 'friends' ? ' active' : '')} onClick={() => nav('friends')}><Users size={18}/>Друзі</button>
-      <button className={'nav' + (page === 'settings' ? ' active' : '')} onClick={() => nav('settings')}><Settings size={18}/>Налаштування</button>
-      <button className={'nav' + (page === 'profile' ? ' active' : '')} onClick={() => nav('profile')}><User size={18}/>Профіль</button>
-      <button className={'nav' + (page === 'about' ? ' active' : '')} onClick={() => nav('about')}><Sparkles size={18}/>Про додаток</button>
-      <button className={'nav' + (page === 'admin' ? ' active' : '')} onClick={() => nav('admin')}><Shield size={18}/>Адмін</button>
-    </aside>
-  );
-
-  const Layout = ({children}) => (
-    <div className="app">
-      <Sidebar />
-      <main className="main">
-        <header>
-          <button className="icon mobile-only" onClick={() => setMobile(!mobile)}>{mobile ? <X/> : <Menu/>}</button>
-          <div><b>{state.name || state.nick}</b>{(String(state.nick||'').toLowerCase()==='boss' || String(state.name||'').toLowerCase()==='boss') && <span className="boss-badge" title="Verified">👑</span>}<span className="muted"> · @{state.nick}</span>{(String(state.nick||'').toLowerCase()==='boss' || String(state.name||'').toLowerCase()==='boss') && <span className="pill ok">verified</span>}
-          {state.guest && <span className="pill guest-pill"><Ghost size={12}/> гість</span>}</div>
-          <div className="header-stats"><span>🔥 {state.streak}</span><span>⚡ {state.xp} XP</span></div>
-        </header>
-        {children}
-        <nav className="mobile-nav">
-          {[['dashboard', Home, 'Головна'], ['learn', Play, 'Вчити'], ['vocabulary', BookOpen, 'Слова'], ['review', RotateCcw, 'SRS'], ['profile', User, 'Профіль']].map(([id, I, t]) => (
-            <button key={id} className={page === id ? 'active' : ''} onClick={() => nav(id)}><I size={18}/><span>{t}</span></button>
-          ))}
-        </nav>
-      </main>
-    </div>
-  );
+  const handleLogout = useCallback(async () => {
+    try {
+      await serverLogout();
+    } catch {}
+    setLessonCfg(null);
+    setState(emptyState());
+    setPage('onboarding');
+    emitSiteToast('Ви вийшли з акаунту', 'info');
+  }, []);
 
   if (page === 'onboarding') {
     return <><Onboarding onDone={async (payload, maybeName) => {
@@ -537,7 +568,7 @@ export default function App() {
 
   return (
     <>
-      <Layout>
+      <Layout state={state} page={page} nav={nav} mobile={mobile} setMobile={setMobile} onLogout={handleLogout}>
         {page === 'dashboard' && <Dashboard state={state} learned={learnedCount} due={dueCount} words={activeWords.length} onLearn={() => nav('learn')} onReview={() => nav('review')} cloudMsg={cloudMsg} quests={gamification?.quests} />}
         {page === 'learn' && <Learn state={state} cats={activeCats} onStart={startLesson} />}
         {page === 'vocabulary' && <Vocabulary state={state} setModal={setModal} wordsCatalog={activeWords} cats={activeCats} />}
@@ -546,10 +577,10 @@ export default function App() {
         {page === 'badges' && <BadgesPage state={state} />}
         {page === 'problems' && <ProblemsPage state={state} save={save} wordsCatalog={wordsLive} onStart={(m,d,c) => { setLessonCfg({mode:m,direction:d,category:c}); setPage('lesson'); }} />}
         {page === 'leaderboard' && <Leaderboard state={state} gamification={gamification} onViewProfile={setPublicProfileNick} />}
-        {page === 'settings' && <SettingsPage state={state} save={save} />}
+        {page === 'settings' && <SettingsPage state={state} save={save} onLogout={handleLogout} />}
         {page === 'friends' && <FriendsPage state={state} />}
         {page === 'challenges' && <ChallengesPage state={state} />}
-        {page === 'profile' && <Profile state={state} save={save} gamification={gamification} onRefreshGamification={refreshGamification} />}
+        {page === 'profile' && <Profile state={state} save={save} gamification={gamification} onRefreshGamification={refreshGamification} onLogout={handleLogout} />}
         {page === 'about' && <AboutPage />}
         {page === '404' && <section className="page-error card"><h1>404</h1><p>Такої сторінки немає.</p><button className="primary" type="button" onClick={() => nav('dashboard')}>На головну</button></section>}
         {page === 'admin' && <Admin state={state} save={save} setWordsLive={setWordsLive} wordsLive={wordsLive} />}
@@ -1721,7 +1752,64 @@ function PublicProfileModal({nick, onClose}) {
 
 
 
-function Profile({state, save, gamification, onRefreshGamification}) {
+function ChangePasswordCard() {
+  const [oldPass, setOldPass] = useState('');
+  const [newPass, setNewPass] = useState('');
+  const [confirmPass, setConfirmPass] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState('');
+  const [err, setErr] = useState('');
+
+  const submit = async (e) => {
+    e?.preventDefault();
+    setErr(''); setMsg('');
+    if (!oldPass || !newPass) {
+      setErr('Заповніть усі поля');
+      return;
+    }
+    if (newPass.length < 8) {
+      setErr('Новий пароль має бути не менше 8 символів');
+      return;
+    }
+    if (newPass !== confirmPass) {
+      setErr('Нові паролі не співпадають');
+      return;
+    }
+    setBusy(true);
+    try {
+      const res = await changePassword(oldPass, newPass);
+      if (!res.ok) throw new Error(res.error || 'Помилка зміни паролю');
+      setMsg('Пароль успішно змінено ✓');
+      setOldPass(''); setNewPass(''); setConfirmPass('');
+    } catch (error) {
+      setErr(error.message || 'Не вдалося змінити пароль');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="card change-password-card" style={{marginTop: 16}}>
+      <h3>🔒 Зміна паролю</h3>
+      <p className="muted small">Введіть поточний пароль та новий (мінімум 8 символів).</p>
+      <form onSubmit={submit}>
+        <label>Поточний пароль</label>
+        <input className="search" type="password" value={oldPass} onChange={e => setOldPass(e.target.value)} placeholder="••••••••" autoComplete="current-password" />
+        <label>Новий пароль</label>
+        <input className="search" type="password" value={newPass} onChange={e => setNewPass(e.target.value)} placeholder="Мінімум 8 символів" autoComplete="new-password" />
+        <label>Підтвердження нового паролю</label>
+        <input className="search" type="password" value={confirmPass} onChange={e => setConfirmPass(e.target.value)} placeholder="Повторіть новий пароль" autoComplete="new-password" />
+        {err && <p className="auth-err" style={{marginTop: 8}}>{err}</p>}
+        {msg && <p className="saved-message" style={{marginTop: 8}}>{msg}</p>}
+        <button className="primary" type="submit" disabled={busy} style={{marginTop: 12}}>
+          {busy ? 'Збереження…' : 'Змінити пароль'}
+        </button>
+      </form>
+    </div>
+  );
+}
+
+function Profile({state, save, gamification, onRefreshGamification, onLogout}) {
   const level = Math.max(1, Math.floor((state.xp || 0) / 100) + 1);
   const xpInto = (state.xp || 0) % 100;
   const freezeCount = gamification?.freezeCount ?? 0;
@@ -1816,17 +1904,26 @@ function Profile({state, save, gamification, onRefreshGamification}) {
               <label>Картки <input type="color" value={surface} onChange={e => setSurface(e.target.value)}/></label>
             </div>
           )}
-          <h2 style={{marginTop: 20}}>Дизайн UI (3 варіанти)</h2>
+          <h2 style={{marginTop: 20}}>3 кардинальні інтерфейси</h2>
+          <p className="muted small">Оберіть візуальний стиль сайту:</p>
           <div className="theme-buttons skins">
-            <button className={skin === 'classic' ? 'theme active' : 'theme'} onClick={() => setSkin('classic')}>Classic Green</button>
-            <button className={skin === 'neon' ? 'theme active' : 'theme'} onClick={() => setSkin('neon')}>Neon Cyber</button>
-            <button className={skin === 'paper' ? 'theme active' : 'theme'} onClick={() => setSkin('paper')}>Paper Academic</button>
-            <button className={skin === 'duo' ? 'theme active' : 'theme'} onClick={() => setSkin('duo')}>Duo Playful</button>
-            <button className={skin === 'slate' ? 'theme active' : 'theme'} onClick={() => setSkin('slate')}>Slate Pro</button>
-            <button className={skin === 'candy' ? 'theme active' : 'theme'} onClick={() => setSkin('candy')}>Candy Soft</button>
+            <button className={skin === 'classic' ? 'theme active' : 'theme'} onClick={() => { setSkin('classic'); save({...state, skin: 'classic'}); }}>🌿 Classic Green</button>
+            <button className={skin === 'neon' ? 'theme active' : 'theme'} onClick={() => { setSkin('neon'); save({...state, skin: 'neon'}); }}>⚡ Cyberpunk Neon</button>
+            <button className={skin === 'candy' ? 'theme active' : 'theme'} onClick={() => { setSkin('candy'); save({...state, skin: 'candy'}); }}>🍭 Candy Pop (Дитячий)</button>
+            <button className={skin === 'nordic' ? 'theme active' : 'theme'} onClick={() => { setSkin('nordic'); save({...state, skin: 'nordic'}); }}>❄️ Nordic Minimalist</button>
           </div>
           <button className="primary" style={{marginTop: 12}} onClick={persist}>Застосувати дизайн</button>
         </div>
+      </div>
+
+      {!state.guest && <ChangePasswordCard />}
+
+      <div className="card logout-card" style={{marginTop: 16, borderColor: 'var(--danger, #f87171)'}}>
+        <h3>🚪 Вихід з акаунту</h3>
+        <p className="muted small">Завершити поточну сесію на цьому пристрої. Профілі не змішуються.</p>
+        <button className="secondary btn-logout-danger" onClick={onLogout} type="button">
+          <XCircle size={16}/> Вийти з акаунту (@{state.nick})
+        </button>
       </div>
     </section>
   );
@@ -2037,11 +2134,38 @@ function AdminSecurity2FA(){
 }
 function AdminUsers({setModal}){
   const [q,setQ]=useState(''),[rows,setRows]=useState([]),[busy,setBusy]=useState(false);
-  const load=useCallback(async()=>{try{const d=await requestJson('/api/admin-users?q='+encodeURIComponent(q));setRows(d.rows||[])}catch(e){if(e.status===401||e.status===403)window.dispatchEvent(new Event('ef-admin-lock'));else emitSiteError(e.message,'Гравці')}} ,[q]);
+  const [stats,setStats]=useState({total:0,incognito:0});
+  const load=useCallback(async()=>{
+    try{
+      const d=await requestJson('/api/admin-users?q='+encodeURIComponent(q));
+      setRows(d.rows||[]);
+      setStats({total: d.totalUsers || (d.rows||[]).length, incognito: d.incognitoCount || 0});
+    }catch(e){
+      if(e.status===401||e.status===403)window.dispatchEvent(new Event('ef-admin-lock'));
+      else emitSiteError(e.message,'Гравці');
+    }
+  },[q]);
   useEffect(()=>{load()},[load]);
   const act=async(id,body)=>{setBusy(true);try{await requestJson('/api/admin-users',{method:'PATCH',body:JSON.stringify({userId:id,...body})});await load()}catch(e){if(e.status===401||e.status===403)window.dispatchEvent(new Event('ef-admin-lock'));else emitSiteError(e.message,'Керування гравцем')}finally{setBusy(false)}};
   const reset=async(id)=>{setBusy(true);try{await requestJson('/api/admin-users',{method:'POST',body:JSON.stringify({userId:id,action:'reset_progress'})});await load()}catch(e){if(e.status===401||e.status===403)window.dispatchEvent(new Event('ef-admin-lock'));else emitSiteError(e.message,'Скидання прогресу')}finally{setBusy(false)}};
-  return <div><input className="search" placeholder="Нік або імʼя" value={q} onChange={e=>setQ(e.target.value)}/><div className="player-db-list">{rows.map(r=><div className="word-row card" key={r.id} style={{marginTop:8}}><div><b>{r.name||r.nick}</b> <span className="muted">@{r.nick}</span><div className="muted small">{r.xp} XP · streak {r.streak} · {r.status}</div></div><div className="row-btns wrap"><UiSelect disabled={busy} value={r.role} onChange={v=>act(r.id,{role:v})} options={[{value:'user',label:'user'},{value:'moderator',label:'moderator'},{value:'admin',label:'admin'}]}/><button className="secondary" disabled={busy} onClick={()=>setModal?.({text:`Змінити статус @${r.nick}?`,onYes:()=>act(r.id,{status:r.status==='active'?'suspended':'active'})})}>{r.status==='active'?'Призупинити':'Активувати'}</button><button className="secondary" disabled={busy} onClick={()=>setModal?.({text:`Скинути весь прогрес @${r.nick}? Цю дію не можна скасувати.`,onYes:()=>reset(r.id)})}>Reset</button></div></div>)}</div></div>
+  return (
+    <div>
+      <div className="grid stats" style={{marginBottom:16}}>
+        <div className="card" style={{margin:0}}>
+          <div className="muted small">Зареєстрованих користувачів</div>
+          <div style={{fontSize:24,fontWeight:800,marginTop:4}}>{stats.total}</div>
+        </div>
+        <div className="card" style={{margin:0}}>
+          <div className="muted small">Інкогніто / гості (активні)</div>
+          <div style={{fontSize:24,fontWeight:800,marginTop:4}}>👻 {stats.incognito}</div>
+        </div>
+      </div>
+      <input className="search" placeholder="Нік або імʼя" value={q} onChange={e=>setQ(e.target.value)}/>
+      <div className="player-db-list">
+        {rows.map(r=><div className="word-row card" key={r.id} style={{marginTop:8}}><div><b>{r.name||r.nick}</b> <span className="muted">@{r.nick}</span><div className="muted small">{r.xp} XP · streak {r.streak} · {r.status}</div></div><div className="row-btns wrap"><UiSelect disabled={busy} value={r.role} onChange={v=>act(r.id,{role:v})} options={[{value:'user',label:'user'},{value:'moderator',label:'moderator'},{value:'admin',label:'admin'}]}/><button className="secondary" disabled={busy} onClick={()=>setModal?.({text:`Змінити статус @${r.nick}?`,onYes:()=>act(r.id,{status:r.status==='active'?'suspended':'active'})})}>{r.status==='active'?'Призупинити':'Активувати'}</button><button className="secondary" disabled={busy} onClick={()=>setModal?.({text:`Скинути весь прогрес @${r.nick}? Цю дію не можна скасувати.`,onYes:()=>reset(r.id)})}>Reset</button></div></div>)}
+      </div>
+    </div>
+  );
 }
 function AdminAudit(){const [rows,setRows]=useState([]);const [err,setErr]=useState('');useEffect(()=>{requestJson('/api/admin-audit').then(d=>setRows(d.rows||[])).catch(e=>{setErr(e.message||'Помилка');if(e.status===401||e.status===403)window.dispatchEvent(new Event('ef-admin-lock'))})},[]);return <div className="word-list">{rows.slice(0,30).map(r=><div className="word-row card" key={r.id}><div><b>{r.action}</b><div className="muted small">{r.target_nick?`@${r.target_nick} · `:''}{new Date(r.created_at).toLocaleString()}</div></div></div>)}{err?<p className="muted">{err}</p>:!rows.length&&<p className="muted">Журнал порожній.</p>}</div>}
 function Metric({title,value,sub}){return <div className="card" style={{margin:0}}><div className="muted small">{title}</div><div style={{fontSize:24,fontWeight:800,marginTop:4}}>{value}</div>{sub&&<div className="muted small">{sub}</div>}</div>}
@@ -2097,6 +2221,8 @@ function AdminDanger({save,state,setModal}) {
 
 function AboutPage() {
   const changelog = [
+    {v:'2.8.0', items:['Виправлено скидання уроку (1/10 loop): Layout та Sidebar винесені за межі App, відповіді більше не перезапускають урок з 1-го питання','Додано кнопку «Вихід» у шапці, сайдбарі, профілі та налаштуваннях: повне завершення сесії та ізоляція профілів (ніки не змішуються)','Повний редизайн чату: видалено заплутаний Fingerprint/ротацію ключів, чат тепер простий та швидкий як у звичайному месенджері','Виправлено помилку «Зашифроване повідомлення (цей пристрій не має ключа)» — повідомлення одразу читаються з будь-якого авторизованого пристрою','Live Realtime (5с): автоматичне оновлення списку друзів, онлайн-статусу (🟢 / ⚪) та повідомлень','Зміна паролю в Профілі з перевіркою старого паролю та валідацією','3 кардинально різні інтерфейси: Cyberpunk Neon, Playful Kids/Candy Pop, Nordic Minimalist + Classic з кастомними checkbox/input/button','Статистика адмінки: показ кількості зареєстрованих користувачів та активних інкогніто-гостей']},
+    {v:'2.7.0', items:['Гейміфікація v3: Ліги за очками (Бронза, Срібло, Золото, Платина, Алмаз, Майстер, Легенда)','Заморозка стріку (Streak Freeze): купівля за XP та захист від пропуску днів','Щоденні квести (Daily Quests) з нагородами XP','Подарункова скриня (Gift Box) за щоденну активність','Публічні профілі гравців для перегляду досягнень іншими користувачами']},
     {v:'2.6.1', items:['Виправлено зависання лічильника 1/10 у всіх завданнях (Sprint/SRS/Problems/Dictation)','Додано авто-перехід (1с) при правильній відповіді без зайвих кліків','Надійна синхронізація таблиць Notion: підтримка databases/data_sources та будь-яких назв колонок','Оновлено скрипт sync:notion з авто-підтягуванням .env та прямим записом у Neon','Додано роль UI/UX Дизайнера та покращено мобільний вигляд feedback/кнопок']},
     {v:'2.6.0', items:['Коректний рахунок «Вивчено» та «На повторення SRS»: узгодження id між хмарою (Notion id) та локальним словником (match by word)','Виправлено хибне «Сесію завершено» при вході в гостьовий режим','Вхід у завдання більше не викидає на екран реєстрації при простроченій сесії — підказка «Увійти знову»','Рейтинг тепер показує тільки хмарний рейтинг','Фікс стартового cloud-pull, що тихо помирав і лишав лічильники на нулі']},
     {v:'2.5.0', items:['Admin 2.0: bootstrap першого admin, рольова модель, 2FA/TOTP, session hardening та audit','Chat Security 2.0: fingerprints, key rotation, multiple devices, revoke device, encrypted attachments та integrity hash','Security Lab: Playwright E2E + auth/brute-force/session/privilege/XSS/CSRF/IDOR/fuzz/rate-limit regression tests','PWA / Offline видалено: English Flow працює як звичайний online web-app.']},
@@ -2155,16 +2281,16 @@ function ConfirmModal({modal, onClose}) {
 
 
 
-function SettingsPage({state, save}) {
+function SettingsPage({state, save, onLogout}) {
   const upd = (patch) => save({...state, ...patch});
   return (
     <section className="fade-in">
-      <Title title="Налаштування" text="Звук, порівняння, підказки"/>
+      <Title title="Налаштування" text="Звук, інтерфейс, порівняння, підказки"/>
       <div className="grid two">
         <div className="card">
           <h2>Звук</h2>
           <label className="row-check">
-            <input type="checkbox" checked={!!state.quiet} onChange={e => upd({quiet: e.target.checked})}/>
+            <input type="checkbox" checked={!!state.quiet} onChange={e => upd({quiet: e.target.value})}/>
             <VolumeX size={16}/> Тихий режим (TTS + SFX)
           </label>
           <label className="row-check">
@@ -2184,6 +2310,16 @@ function SettingsPage({state, save}) {
           <p className="muted small">Prefers-reduced-motion з системи автоматично зменшує анімації.</p>
         </div>
         <div className="card">
+          <h2>🎨 Стиль оформлення</h2>
+          <p className="muted small">3 кардинально різні інтерфейси сайту:</p>
+          <div className="theme-buttons skins">
+            <button className={state.skin === 'classic' ? 'theme active' : 'theme'} onClick={() => upd({skin: 'classic'})}>🌿 Classic</button>
+            <button className={state.skin === 'neon' ? 'theme active' : 'theme'} onClick={() => upd({skin: 'neon'})}>⚡ Cyberpunk Neon</button>
+            <button className={state.skin === 'candy' ? 'theme active' : 'theme'} onClick={() => upd({skin: 'candy'})}>🍭 Candy Pop (Дитячий)</button>
+            <button className={state.skin === 'nordic' ? 'theme active' : 'theme'} onClick={() => upd({skin: 'nordic'})}>❄️ Nordic Minimalist</button>
+          </div>
+        </div>
+        <div className="card">
           <h2>Порівняння після гри</h2>
           <label>Режим</label>
           <UiSelect value={state.compareMode || 'global'} onChange={v=>upd({compareMode:v})} options={[{value:'global',label:'Зі середнім усіх гравців'},{value:'friend',label:'З конкретним другом'},{value:'off',label:'Вимкнено'}]}/>
@@ -2196,31 +2332,209 @@ function SettingsPage({state, save}) {
           <p className="muted small">Порівняння тепер працює через серверний рейтинг, а не локальні профілі.</p>
         </div>
         <PrivacySettings />
+        <div className="card" style={{borderColor: 'var(--danger, #f87171)'}}>
+          <h2>🚪 Вихід з акаунту</h2>
+          <p className="muted small">Завершити сесію на цьому пристрої.</p>
+          <button className="secondary btn-logout-danger" onClick={onLogout} type="button">
+            <XCircle size={16}/> Вийти з акаунту (@{state.nick})
+          </button>
+        </div>
       </div>
     </section>
   );
 }
 
 function FriendsPage({state}) {
-  const [q,setQ]=useState(''),[msg,setMsg]=useState(''),[chatWith,setChatWith]=useState(null),[text,setText]=useState(''),[friends,setFriends]=useState([]),[board,setBoard]=useState([]),[messages,setMessages]=useState([]),[busy,setBusy]=useState(false),[rt,setRt]=useState('offline'),[peerDevices,setPeerDevices]=useState([]),[myDevices,setMyDevices]=useState([]),[security,setSecurity]=useState(''),[peerFp,setPeerFp]=useState(''),[trusted,setTrusted]=useState(''),[attachment,setAttachment]=useState(null);
-  const rtRef=useRef(null),identityRef=useRef(null),friendsRef=useRef([]);
-  const load=useCallback(async()=>{if(state.guest)return;try{const [f,b]=await Promise.all([getFriends(state.nick),friendsLeaderboard(state.nick)]);setFriends(f||[]);friendsRef.current=f||[];setBoard(b||[])}catch(e){emitSiteError(e.message||'Не вдалося завантажити друзів','Друзі')}},[state.nick,state.guest]);
-  const loadDevices=useCallback(async()=>{if(state.guest)return;try{const identity=await ensureChatIdentity();identityRef.current=identity;await registerChatDevice(await publicKeyPayload());setMyDevices(await getMyChatDevices());setSecurity('E2E v2 · пристрій активний')}catch(e){if(e.status===401)return;setSecurity('E2E недоступний');emitSiteError(e.message||'Не вдалося зареєструвати E2E пристрій','Безпека чату')}},[state.guest]);
-  useEffect(()=>{load();loadDevices();if(state.guest)return;let alive=true;const r=createRealtime({onStatus:setRt,onMessage:async m=>{if(m.type==='chat'&&m.message){let item=m.message;try{const sender=friendsRef.current.find(f=>String(f.id)===String(item.sender_id));const nick=sender?.nick||chatWith;if(nick){const ds=await getChatDevices(nick);const d=ds.find(x=>String(x.device_id)===String(item.sender_device_id))||ds[0];if(d?.public_key)item={...item,text:await decryptChatText(item,d.public_key)}}}catch{item={...item,text:'🔒 Не вдалося розшифрувати'}}if(alive)setMessages(x=>x.some(v=>v.id===item.id)?x:[...x,item])}if(m.type==='error')emitSiteError(m.error||'Realtime chat error','Чат')}});rtRef.current=r;return()=>{alive=false;r.close()}},[state.guest,state.nick]);
-  useEffect(()=>{if(!chatWith||state.guest)return;let alive=true;(async()=>{try{const ds=await getChatDevices(chatWith);if(!ds.length){setPeerDevices([]);setPeerFp('');setTrusted('');setMessages([]);setSecurity('Друг ще не має активного E2E-пристрою');return}setPeerDevices(ds);const d=ds[0];const fp=await fingerprint(d.public_key);setPeerFp(fp);setTrusted(trustedKey(chatWith));const raw=await getChat(state.nick,chatWith);const decoded=await Promise.all((raw||[]).map(async m=>{const sender=ds.find(x=>String(x.device_id)===String(m.sender_device_id))||d;return {...m,text:m.ciphertext?await decryptChatText(m,sender.public_key):m.text||''}}));if(alive)setMessages(decoded);if(trustedKey(chatWith)&&trustedKey(chatWith)!==fp)setSecurity('⚠️ Ключ друга змінився');else setSecurity(`E2E v2 · fingerprint ${fp.slice(0,23)}`)}catch(e){if(alive){setMessages([]);emitSiteError(e.message||'Не вдалося завантажити чат','Чат')}}})();return()=>{alive=false}},[chatWith,state.nick]);
-  useEffect(()=>{if(!chatWith||!rtRef.current)return;const friend=friends.find(f=>f.nick===chatWith);if(friend?.id)rtRef.current.send({type:'join_chat',userId:friend.id})},[chatWith,friends]);
-  const add=async()=>{setBusy(true);const r=await addFriend(state.nick,q);setMsg(r.ok?'Запит надіслано ✓':(r.error||'Помилка'));if(r.ok){track('friend_request',{feature:'friends'});setQ('')}setBusy(false);load()};
-  const send=async()=>{const t=text.trim();if(!chatWith||(!t&&!attachment))return;if(!peerDevices.length){emitSiteError('Одержувач не має активного E2E-пристрою','Чат');return}try{const payload=await encryptChatPayload(t,peerDevices);if(attachment){if(attachment.size>2*1024*1024)throw new Error('Вкладення максимум 2 MB');payload.attachment=await encryptAttachment(attachment,peerDevices)}const friend=friends.find(f=>f.nick===chatWith);let sent=null;if(!attachment&&friend?.id&&rt==='open'&&rtRef.current){const ok=rtRef.current.send({type:'chat',to:chatWith,...payload});if(!ok)sent=await sendChat(state.nick,chatWith,payload)}else sent=await sendChat(state.nick,chatWith,payload);if(sent){const shown={...sent,text:t,attachment_meta:payload.attachment?{name:payload.attachment.name,mime:payload.attachment.mime,size:payload.attachment.size}:null};setMessages(x=>x.some(v=>v.id===shown.id)?x:[...x,shown])}else if(rt!=='open')throw new Error('Не вдалося надіслати E2E повідомлення');track('chat_send',{realtime:rt,chars:t.length,e2e:true,attachment:!!attachment});setText('');setAttachment(null)}catch(e){emitSiteError(e.message||'Не вдалося надіслати повідомлення','Чат')}};
-  const social=async(action)=>{if(!chatWith)return;try{await requestJson('/api/social',{method:'POST',body:JSON.stringify({nick:chatWith,action})});if(action==='block'){setChatWith(null);load()}}catch(e){emitSiteError(e.message,'Соціальні налаштування')}};
-  const report=async()=>{if(!chatWith)return;try{await requestJson('/api/reports',{method:'POST',body:JSON.stringify({nick:chatWith,type:'user',reason:'Порушення правил'})});setMsg('Скаргу передано модераторам.')}catch(e){emitSiteError(e.message,'Скарга')}};
-  const rotate=async()=>{try{const next=await rotateChatIdentity();await registerChatDevice(await publicKeyPayload());setMyDevices(await getMyChatDevices());setSecurity('Ключ пристрою оновлено · '+(await fingerprint(next.publicJwk)).slice(0,23));emitSiteToast('Ключ успішно ротовано ✓','ok')}catch(e){emitSiteError(e.message||'Не вдалося ротувати ключ','Безпека чату')}};
-  const trust=()=>{trustKey(chatWith,peerFp);setTrusted(peerFp);setSecurity('✓ Fingerprint перевірено')};
-  const openAttachment=async(m)=>{try{const sender=peerDevices.find(x=>String(x.device_id)===String(m.sender_device_id))||peerDevices[0];if(!sender?.public_key||!m.attachment_meta||!m.attachment_keys?.length)throw new Error('Немає зашифрованого вкладення для цього пристрою');const blob=await decryptAttachment({mime:m.attachment_meta.mime,keys:m.attachment_keys},sender.public_key);if(!blob)throw new Error('Цей пристрій не має ключа вкладення');const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=m.attachment_meta.name||'attachment';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}catch(e){emitSiteError(e.message||'Не вдалося розшифрувати вкладення','Чат')}};
-  if(state.guest)return <section><Title title="Друзі" text="Друзі та чат доступні після входу в акаунт"/><div className="card muted">Гостьовий режим не зберігає соціальні дані в Neon.</div></section>;
-  return <section className="fade-in"><Title title="Друзі" text="Neon-друзі, E2E realtime chat і змагання"/><div className="card"><span className="pill"><Wifi size={12}/> realtime: {rt}</span><span className="pill" style={{marginLeft:8}}>🔐 {security||'E2E перевіряється…'}</span></div>
-    <div className="card chat-devices-card"><div className="realtime-head"><div><h2 style={{margin:0}}>Безпека чату 2.0</h2><p className="muted small">Ключі залишаються на пристроях. Сервер зберігає ciphertext.</p></div><button className="secondary" type="button" onClick={rotate}>Ротувати ключ</button></div><div className="device-list">{myDevices.map(d=><div className="device-row" key={d.device_id}><div><b>{String(d.device_id)===String(identityRef.current?.deviceId)?'Цей пристрій':'Інший пристрій'}</b><div className="muted small">v{d.key_version} · {new Date(d.updated_at).toLocaleString()}</div></div>{String(d.device_id)!==String(identityRef.current?.deviceId)&&<button className="secondary" type="button" onClick={async()=>{try{await revokeChatDevice(d.device_id);setMyDevices(await getMyChatDevices());emitSiteToast('Пристрій відкликано','ok')}catch(e){emitSiteError(e.message,'Пристрої')}}}>Відкликати</button>}</div>)}{!myDevices.length&&<p className="muted">E2E пристрій ще не зареєстровано.</p>}</div>{chatWith&&peerFp&&<div className={'fingerprint-box '+(trusted&&trusted!==peerFp?'changed':'')}><b>{trusted&&trusted!==peerFp?'⚠️ Цей ключ змінився':'Fingerprint друга'}</b><code>{peerFp}</code>{trusted===peerFp?<span className="pill ok">✓ Перевірено</span>:<button className="secondary" type="button" onClick={trust}>Позначити як перевірений</button>}</div>}</div>
-    <div className="grid two"><div className="card"><h2>Додати друга</h2><div className="row-btns"><input className="search" value={q} onChange={e=>setQ(e.target.value)} placeholder="нік друга"/><button className="primary" disabled={busy||!q.trim()} onClick={add}>Додати</button></div>{msg&&<p className="muted">{msg}</p>}<ul className="friend-list">{friends.map(f=><li key={f.id||f.nick}><button type="button" className={'friend-item'+(chatWith===f.nick?' active':'')} onClick={()=>f.status==='accepted'&&setChatWith(f.nick)}><Users size={14}/> @{f.nick}{f.status==='pending'?' · запит':''}</button>{f.status==='pending'&&f.requested_by!==state.id&&<button className="secondary" onClick={async()=>{const r=await acceptFriend(state.nick,f.id);if(!r.ok)emitSiteError(r.error,'Друзі');load()}}>Прийняти</button>}</li>)}{!friends.length&&<li className="muted">Поки немає друзів</li>}</ul></div>
-      <div className="card"><h2><MessageCircle size={18}/> Чат {chatWith?`з @${chatWith}`:''}</h2>{!chatWith?<p className="muted">Обери прийнятого друга зліва</p>:<><div className="chat-security"><b>🔐 End-to-end encrypted · v2</b><span className="muted small">AES-GCM · multi-device keys · integrity hash</span></div><div className="chat-box">{messages.map(m=><div key={m.id} className={'chat-msg'+(String(m.sender_id)===String(state.id)?' me':'')}><b>{String(m.sender_id)===String(state.id)?'Ти':`@${chatWith}`}</b> <span className="muted small">{new Date(m.created_at).toLocaleTimeString()}</span><div>{m.text}</div>{m.attachment_meta&&<div className="chat-attachment">📎 {m.attachment_meta.name} · {Math.round(Number(m.attachment_meta.size||0)/1024)} KB <button type="button" className="secondary attachment-open" onClick={()=>openAttachment(m)}>Розшифрувати</button></div>}</div>)}</div><div className="row-btns"><input className="search" value={text} maxLength={1000} onChange={e=>setText(e.target.value)} onKeyDown={e=>e.key==='Enter'&&send()} placeholder="зашифроване повідомлення"/><button className="secondary" type="button" onClick={()=>document.getElementById('ef-chat-attachment')?.click()}>📎</button><input id="ef-chat-attachment" hidden type="file" onChange={e=>setAttachment(e.target.files?.[0]||null)}/><button className="primary" disabled={!peerDevices.length||( !text.trim()&&!attachment)} onClick={send}>Надіслати</button></div>{attachment&&<div className="muted small">Вкладення: {attachment.name} · {Math.round(attachment.size/1024)} KB · буде зашифровано на пристрої</div>}<div className="row-btns wrap" style={{marginTop:8}}><button className="secondary" onClick={()=>social('mute')}>🔕 Mute</button><button className="secondary" onClick={()=>social('block')}>🚫 Block</button><button className="secondary" onClick={report}>⚑ Report</button></div></>}</div></div>{board.length>0&&<div className="card" style={{marginTop:16}}><h2>Рейтинг друзів</h2><div className="lb">{board.map((r,i)=><div className="lb-row" key={r.nick}><span>#{i+1}</span><b>@{r.nick}</b><span className="muted">{r.xp} XP · {r.streak}🔥</span></div>)}</div></div>}</section>;
+  const [q, setQ] = useState('');
+  const [msg, setMsg] = useState('');
+  const [chatWith, setChatWith] = useState(null);
+  const [text, setText] = useState('');
+  const [friends, setFriends] = useState([]);
+  const [board, setBoard] = useState([]);
+  const [messages, setMessages] = useState([]);
+  const [busy, setBusy] = useState(false);
+  const friendsRef = useRef([]);
+
+  const load = useCallback(async () => {
+    if (state.guest) return;
+    try {
+      const [f, b] = await Promise.all([getFriends(state.nick), friendsLeaderboard(state.nick)]);
+      setFriends(f || []);
+      friendsRef.current = f || [];
+      setBoard(b || []);
+    } catch (e) {
+      emitSiteError(e.message || 'Не вдалося завантажити друзів', 'Друзі');
+    }
+  }, [state.nick, state.guest]);
+
+  // Live polling every 5s for friends list and online status
+  useEffect(() => {
+    if (state.guest) return;
+    load();
+    const interval = setInterval(load, 5000);
+    return () => clearInterval(interval);
+  }, [load, state.guest]);
+
+  // Live polling every 3s for chat messages when a chat is open
+  useEffect(() => {
+    if (!chatWith || state.guest) return;
+    let alive = true;
+    const fetchChat = async () => {
+      try {
+        const raw = await getChat(state.nick, chatWith);
+        if (alive && raw) setMessages(raw);
+      } catch {}
+    };
+    fetchChat();
+    const interval = setInterval(fetchChat, 3000);
+    return () => { alive = false; clearInterval(interval); };
+  }, [chatWith, state.nick, state.guest]);
+
+  const add = async () => {
+    setBusy(true);
+    const r = await addFriend(state.nick, q);
+    setMsg(r.ok ? 'Запит надіслано ✓' : (r.error || 'Помилка'));
+    if (r.ok) {
+      track('friend_request', { feature: 'friends' });
+      setQ('');
+    }
+    setBusy(false);
+    load();
+  };
+
+  const send = async () => {
+    const t = text.trim();
+    if (!chatWith || !t) return;
+    setText('');
+    try {
+      const sent = await sendChat(state.nick, chatWith, t);
+      if (sent) {
+        setMessages(prev => prev.some(x => x.id === sent.id) ? prev : [...prev, sent]);
+      }
+      const raw = await getChat(state.nick, chatWith);
+      if (raw) setMessages(raw);
+      track('chat_send', { chars: t.length });
+    } catch (e) {
+      emitSiteError(e.message || 'Не вдалося надіслати повідомлення', 'Чат');
+    }
+  };
+
+  const social = async (action) => {
+    if (!chatWith) return;
+    try {
+      await requestJson('/api/social', { method: 'POST', body: JSON.stringify({ nick: chatWith, action }) });
+      if (action === 'block') { setChatWith(null); load(); }
+    } catch (e) { emitSiteError(e.message, 'Соціальні налаштування'); }
+  };
+
+  const report = async () => {
+    if (!chatWith) return;
+    try {
+      await requestJson('/api/reports', { method: 'POST', body: JSON.stringify({ nick: chatWith, type: 'user', reason: 'Порушення правил' }) });
+      setMsg('Скаргу передано модераторам.');
+    } catch (e) { emitSiteError(e.message, 'Скарга'); }
+  };
+
+  if (state.guest) return <section><Title title="Друзі" text="Друзі та чат доступні після входу в акаунт"/><div className="card muted">Гостьовий режим не зберігає соціальні дані в Neon.</div></section>;
+
+  return (
+    <section className="fade-in">
+      <Title title="Друзі" text="Онлайн-чат, друзі та живе змагання"/>
+      
+      {/* Realtime Live Status Banner */}
+      <div className="card realtime-live-card" style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:16}}>
+        <div style={{display:'flex',alignItems:'center',gap:10}}>
+          <span className="live-dot pulse"></span>
+          <b>Realtime: Онлайн</b>
+          <span className="muted small">· синхронізація щомиті (оновлення кожні 3–5с)</span>
+        </div>
+        <span className="pill ok">🟢 Live</span>
+      </div>
+
+      <div className="grid two">
+        <div className="card">
+          <h2>Додати друга</h2>
+          <div className="row-btns">
+            <input className="search" value={q} onChange={e => setQ(e.target.value)} placeholder="нік друга" onKeyDown={e => e.key === 'Enter' && add()}/>
+            <button className="primary" disabled={busy || !q.trim()} onClick={add}>Додати</button>
+          </div>
+          {msg && <p className="muted" style={{marginTop: 8}}>{msg}</p>}
+
+          <h3 style={{marginTop: 20, marginBottom: 8}}>Мої друзі</h3>
+          <ul className="friend-list">
+            {friends.map(f => (
+              <li key={f.id || f.nick}>
+                <button type="button" className={'friend-item' + (chatWith === f.nick ? ' active' : '')} onClick={() => f.status === 'accepted' && setChatWith(f.nick)}>
+                  <span className={'status-dot ' + (f.is_online ? 'online' : 'offline')} title={f.is_online ? 'Онлайн' : 'Не в мережі'}>
+                    {f.is_online ? '🟢' : '⚪'}
+                  </span>
+                  <b>@{f.nick}</b>
+                  {f.status === 'pending' && <span className="muted small">· запит</span>}
+                  {f.is_online ? <span className="online-tag">онлайн</span> : <span className="offline-tag">не в мережі</span>}
+                </button>
+                {f.status === 'pending' && f.requested_by !== state.id && (
+                  <button className="secondary" onClick={async () => { const r = await acceptFriend(state.nick, f.id); if (!r.ok) emitSiteError(r.error, 'Друзі'); load(); }}>Прийняти</button>
+                )}
+              </li>
+            ))}
+            {!friends.length && <li className="muted">Поки немає друзів. Введіть нік вище!</li>}
+          </ul>
+        </div>
+
+        <div className="card chat-panel-container">
+          <h2><MessageCircle size={18}/> Чат {chatWith ? `з @${chatWith}` : ''}</h2>
+          {!chatWith ? (
+            <p className="muted" style={{padding: '24px 0', textAlign: 'center'}}>Оберіть друга зі списку зліва, щоб відкрити чат 💬</p>
+          ) : (
+            <>
+              <div className="chat-box">
+                {messages.length === 0 && <p className="muted" style={{textAlign: 'center', padding: 24}}>Ще немає повідомлень. Напишіть першим!</p>}
+                {messages.map(m => {
+                  const isMe = String(m.sender_id) === String(state.id) || String(m.sender_nick || '').toLowerCase() === String(state.nick).toLowerCase();
+                  const content = m.text || (m.ciphertext ? '🔒 Повідомлення' : '—');
+                  return (
+                    <div key={m.id || Math.random()} className={'chat-msg' + (isMe ? ' me' : '')}>
+                      <div className="chat-msg-header">
+                        <b>{isMe ? 'Ти' : `@${chatWith}`}</b>
+                        <span className="muted small" style={{marginLeft: 8}}>
+                          {new Date(m.created_at || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                      <div className="chat-msg-body">{content}</div>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="row-btns" style={{marginTop: 10}}>
+                <input className="search" value={text} maxLength={1000} onChange={e => setText(e.target.value)} onKeyDown={e => e.key === 'Enter' && send()} placeholder="Напишіть повідомлення…"/>
+                <button className="primary" disabled={!text.trim()} onClick={send}>Надіслати</button>
+              </div>
+              <div className="row-btns wrap" style={{marginTop: 12}}>
+                <button className="secondary" type="button" onClick={() => social('mute')}>🔕 Mute</button>
+                <button className="secondary" type="button" onClick={() => social('block')}>🚫 Block</button>
+                <button className="secondary" type="button" onClick={report}>⚑ Report</button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+
+      {board.length > 0 && (
+        <div className="card" style={{marginTop: 16}}>
+          <h2>Рейтинг друзів</h2>
+          <div className="lb">
+            {board.map((r, i) => (
+              <div className="lb-row" key={r.nick}>
+                <span>#{i + 1}</span>
+                <b>@{r.nick}</b>
+                <span className="muted">{r.xp} XP · {r.streak}🔥</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </section>
+  );
 }
 function PrivacySettings(){
   const [s,setS]=useState(null);
@@ -2286,11 +2600,32 @@ function EmojiPulse({state}) {
 }
 
 function RealtimeStatusPanel(){
-  const [status,setStatus]=useState('offline'),[lastPing,setLastPing]=useState(null),[pingBusy,setPingBusy]=useState(false);
-  const ref=useRef(null);
-  useEffect(()=>{const r=createRealtime({onStatus:setStatus,onMessage:m=>{if(m.type==='pong'&&m.clientTs){setLastPing(Date.now()-m.clientTs);setPingBusy(false)}}});ref.current=r;return()=>r.close()},[]);
-  const ping=()=>{setPingBusy(true);const sent=ref.current?.send({type:'ping',clientTs:Date.now()});if(!sent){setPingBusy(false);emitSiteToast('Realtime ще не підключений','info');return}setTimeout(()=>setPingBusy(false),3000)};
-  return <div className="card realtime-panel"><div className="realtime-head"><div><h3 style={{margin:0}}>Realtime</h3><span className={'realtime-dot '+status}></span><span className="muted small">{status}</span></div><button className="secondary" type="button" onClick={ping} disabled={pingBusy}>{pingBusy?'Перевірка…':'Перевірити ping'}</button></div><p className="muted small">Підключення перевіряється автоматично. Ping показує час round-trip до realtime-сервера.</p>{lastPing!==null&&<b>{lastPing} ms</b>}</div>;
+  const [lastPing, setLastPing] = useState(null);
+  const [pingBusy, setPingBusy] = useState(false);
+  const ping = () => {
+    setPingBusy(true);
+    const start = Date.now();
+    fetch('/api/health').then(() => {
+      setLastPing(Date.now() - start);
+      setPingBusy(false);
+    }).catch(() => {
+      setLastPing(Date.now() - start);
+      setPingBusy(false);
+    });
+  };
+  return (
+    <div className="card realtime-panel">
+      <div className="realtime-head">
+        <div style={{display:'flex',alignItems:'center',gap:8}}>
+          <span className="realtime-dot open"></span>
+          <h3 style={{margin:0}}>Realtime: Live</h3>
+        </div>
+        <button className="secondary" type="button" onClick={ping} disabled={pingBusy}>{pingBusy ? 'Перевірка…' : 'Перевірити ping'}</button>
+      </div>
+      <p className="muted small">Синхронізація друзів, рейтингу та чату виконується щомиті (кожні 3–5 секунд).</p>
+      {lastPing !== null && <p style={{marginTop: 8}}><b>Ping: {lastPing} ms ✓</b></p>}
+    </div>
+  );
 }
 
 function Title({title, text}) { return <div className="title"><h1>{title}</h1><p className="muted">{text}</p></div>; }

@@ -25,7 +25,7 @@ export async function getMyChatDevices(){return (await api('/api/chat?action=dev
 export async function revokeChatDevice(deviceId){return api('/api/chat',{method:'DELETE',body:JSON.stringify({deviceId})})}
 export async function getChatDevice(withNick){return (await getChatDevices(withNick))[0]||null}
 export async function getChat(_,withNick){return (await api('/api/chat?with='+encodeURIComponent(withNick))).rows||[]}
-export async function sendChat(_,to,payload){return (await api('/api/chat',{method:'POST',body:JSON.stringify({to,...payload})})).message||null}
+export async function sendChat(_,to,payload){const b=typeof payload==='string'?{to,text:payload}:{to,...payload};return (await api('/api/chat',{method:'POST',body:JSON.stringify(b)})).message||null}
 export function ensureDailyAverage(){const today=new Date().toISOString().slice(0,10);try{const prev=JSON.parse(localStorage.getItem(GLOBAL_AVG)||'{}');if(prev.date===today)return prev}catch{}const data={date:today,avgXp:0,avgStreak:0,players:0,at:new Date().toISOString()};localStorage.setItem(GLOBAL_AVG,JSON.stringify(data));return data}
 export function getDailyAverage(){return ensureDailyAverage()}
 let wordIndex={}; // {lowercased word -> notion_id} — bridges id-scheme mismatches
@@ -51,4 +51,6 @@ export async function cloudFinishLesson(lessonId){return api('/api/lessons',{met
 export async function getGamification(){try{return await api('/api/gamification')}catch{return null}}
 export async function postGamification(action,payload={}){return api('/api/gamification',{method:'POST',body:JSON.stringify({action,...payload})})}
 export async function getPublicProfile(nick){try{return await api('/api/profile?nick='+encodeURIComponent(nick))}catch{return null}}
+export async function serverLogout(){try{await serverAuth('logout')}catch{}localStorage.removeItem(ACTIVE_KEY);localStorage.removeItem(GUEST_KEY)}
+export async function changePassword(oldPassword,newPassword){return serverAuth('change_password',{oldPassword,newPassword})}
 export {hashPassword}

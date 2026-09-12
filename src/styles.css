@@ -893,3 +893,333 @@ html[data-stagger="0"] .stagger .word-row{animation:none !important}
 [data-theme=dark] .podium-1{background:linear-gradient(135deg,#451a03,#78350f)}
 [data-theme=dark] .podium-2{background:linear-gradient(135deg,#1f2937,#374151)}
 [data-theme=dark] .podium-3{background:linear-gradient(135deg,#451a03,#6b3a0e)}
+
+/* ===== v2.8.0 Custom Form Controls & Multi-Theme System ===== */
+
+/* 1. Universal Custom Checkbox — 100% styled, no native checkbox controls */
+input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  cursor: pointer;
+  display: inline-grid;
+  place-content: center;
+  position: relative;
+  vertical-align: middle;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+  margin: 0;
+}
+input[type="checkbox"]::after {
+  content: "";
+  width: 10px;
+  height: 6px;
+  border-left: 2.5px solid #fff;
+  border-bottom: 2.5px solid #fff;
+  transform: rotate(-45deg) translate(1px, -1px) scale(0);
+  transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: center;
+}
+input[type="checkbox"]:checked {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+input[type="checkbox"]:checked::after {
+  transform: rotate(-45deg) translate(1px, -1px) scale(1);
+}
+input[type="checkbox"]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.row-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+  font-weight: 500;
+  padding: 4px 0;
+}
+
+/* 2. Three Distinct Interfaces */
+
+/* THEME A: Cyberpunk Neon Pulse [data-skin="neon"] */
+[data-skin="neon"] {
+  --bg: #090a10;
+  --surface: #111322;
+  --surface-hover: #171a2e;
+  --text: #f0f6fc;
+  --muted: #8b9bb4;
+  --border: #232742;
+  --accent: #00f0ff;
+  --accent-text: #050b14;
+}
+[data-skin="neon"] .app {
+  background: radial-gradient(circle at 10% 20%, rgba(189, 0, 255, 0.08) 0%, transparent 40%),
+              radial-gradient(circle at 90% 80%, rgba(0, 240, 255, 0.08) 0%, transparent 40%),
+              #090a10;
+}
+[data-skin="neon"] .card {
+  background: #111322;
+  border: 1px solid #232742;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+  border-radius: 12px;
+}
+[data-skin="neon"] .card:hover {
+  border-color: #3b426f;
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.12);
+}
+[data-skin="neon"] .primary {
+  background: linear-gradient(135deg, #00f0ff, #bd00ff);
+  color: #050b14;
+  font-weight: 700;
+  border: none;
+  box-shadow: 0 0 16px rgba(0, 240, 255, 0.35);
+  transition: all 0.2s;
+}
+[data-skin="neon"] .primary:hover {
+  box-shadow: 0 0 24px rgba(0, 240, 255, 0.6);
+  transform: translateY(-1px);
+}
+[data-skin="neon"] input[type="checkbox"] {
+  border-color: #00f0ff;
+  background: #111322;
+  box-shadow: 0 0 6px rgba(0, 240, 255, 0.25);
+}
+[data-skin="neon"] input[type="checkbox"]:checked {
+  background: linear-gradient(135deg, #00f0ff, #bd00ff);
+  border-color: #00f0ff;
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.7);
+}
+
+/* THEME B: Candy Pop Kids [data-skin="candy"] (Friendly & Playful) */
+[data-skin="candy"] {
+  --bg: #fdfbf7;
+  --surface: #ffffff;
+  --surface-hover: #f7f5ef;
+  --text: #1e293b;
+  --muted: #64748b;
+  --border: #e2e8f0;
+  --accent: #22c55e;
+  --accent-text: #ffffff;
+}
+[data-skin="candy"][data-theme="dark"] {
+  --bg: #131722;
+  --surface: #1e2433;
+  --surface-hover: #262e40;
+  --text: #f8fafc;
+  --muted: #94a3b8;
+  --border: #2d3748;
+  --accent: #22c55e;
+}
+[data-skin="candy"] .card {
+  border-radius: 20px;
+  border: 2px solid var(--border);
+  border-bottom: 5px solid var(--border);
+  box-shadow: 0 6px 0 rgba(0,0,0,0.03);
+}
+[data-skin="candy"] .primary {
+  border-radius: 16px;
+  border: none;
+  border-bottom: 4px solid #15803d;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  background: #22c55e;
+  color: #fff;
+  transition: transform 0.1s, border-bottom-width 0.1s;
+}
+[data-skin="candy"] .primary:active {
+  transform: translateY(3px);
+  border-bottom-width: 1px;
+}
+[data-skin="candy"] .secondary {
+  border-radius: 16px;
+  border: 2px solid var(--border);
+  border-bottom: 4px solid var(--border);
+  font-weight: 700;
+}
+[data-skin="candy"] .secondary:active {
+  transform: translateY(2px);
+  border-bottom-width: 2px;
+}
+[data-skin="candy"] input[type="checkbox"] {
+  border-radius: 8px;
+  border: 2.5px solid #cbd5e1;
+  border-bottom: 3.5px solid #94a3b8;
+  background: #ffffff;
+}
+[data-skin="candy"] input[type="checkbox"]:checked {
+  background: #22c55e;
+  border-color: #16a34a;
+  border-bottom: 3.5px solid #15803d;
+}
+
+/* THEME C: Nordic Minimalist [data-skin="nordic"] (Clean Glass & Refined Line) */
+[data-skin="nordic"] {
+  --bg: #f8fafc;
+  --surface: rgba(255, 255, 255, 0.85);
+  --surface-hover: rgba(255, 255, 255, 0.95);
+  --text: #0f172a;
+  --muted: #64748b;
+  --border: rgba(148, 163, 184, 0.25);
+  --accent: #3b82f6;
+  --accent-text: #ffffff;
+}
+[data-skin="nordic"][data-theme="dark"] {
+  --bg: #0b0f19;
+  --surface: rgba(18, 24, 38, 0.85);
+  --surface-hover: rgba(26, 34, 52, 0.95);
+  --text: #f1f5f9;
+  --muted: #94a3b8;
+  --border: rgba(255, 255, 255, 0.08);
+  --accent: #60a5fa;
+}
+[data-skin="nordic"] .card {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+[data-skin="nordic"] .primary {
+  border-radius: 8px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  background: var(--accent);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
+}
+[data-skin="nordic"] input[type="checkbox"] {
+  border-radius: 4px;
+  border: 1.5px solid #94a3b8;
+  background: var(--surface);
+}
+[data-skin="nordic"] input[type="checkbox"]:checked {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+/* 3. Theme Picker in Settings & Profile */
+.skin-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-top: 10px;
+}
+.skin-card {
+  border: 2px solid var(--border);
+  border-radius: 14px;
+  padding: 14px;
+  cursor: pointer;
+  background: var(--surface);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: left;
+}
+.skin-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent);
+}
+.skin-card.active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+.skin-preview-bar {
+  height: 8px;
+  border-radius: 4px;
+  width: 100%;
+}
+
+/* 4. Live Realtime Status & Friends Online */
+.live-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  display: inline-block;
+  background: #22c55e;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2);
+  animation: livePulse 2s infinite;
+}
+@keyframes livePulse {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.5); }
+  70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+}
+.status-pill.online {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(34, 197, 94, 0.12);
+  color: #22c55e;
+  border-radius: 20px;
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.friend-online-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #22c55e;
+  display: inline-block;
+  margin-right: 6px;
+  box-shadow: 0 0 6px rgba(34, 197, 94, 0.6);
+}
+.friend-offline-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--muted);
+  display: inline-block;
+  margin-right: 6px;
+  opacity: 0.5;
+}
+
+/* 5. Logout & Account Exit Button */
+.btn-logout {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 10px;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-logout:hover {
+  background: #ef4444;
+  color: #fff;
+  border-color: #ef4444;
+}
+.header-logout-btn {
+  margin-left: 8px;
+  padding: 4px 10px;
+  font-size: 12px;
+}
+.guest-exit-banner {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: 12px;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+/* 6. Password Change Section */
+.password-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+}
