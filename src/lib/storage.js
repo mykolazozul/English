@@ -53,4 +53,8 @@ export async function postGamification(action,payload={}){return api('/api/gamif
 export async function getPublicProfile(nick){try{return await api('/api/profile?nick='+encodeURIComponent(nick))}catch{return null}}
 export async function serverLogout(){try{await serverAuth('logout')}catch{}localStorage.removeItem(ACTIVE_KEY);localStorage.removeItem(GUEST_KEY)}
 export async function changePassword(oldPassword,newPassword){return serverAuth('change_password',{oldPassword,newPassword})}
+export async function getRecoveryQuestion(nick){return serverAuth('get_recovery_question',{nick})}
+export async function resetPasswordWithRecovery(nick,answerOrCode,newPassword){return serverAuth('reset_password',{nick,answerOrCode,newPassword})}
+export async function setRecoveryQuestion(question,answer){return serverAuth('set_recovery',{question,answer})}
 export {hashPassword}
+

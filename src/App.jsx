@@ -4,7 +4,7 @@ import {words as fallbackWords, rules, BADGES, LEAGUES, leagueForXp} from './dat
 import {notionWords, notionSyncMeta} from './notionWords.generated';
 import { Analytics } from '@vercel/analytics/react';
 import { startRegistration, startAuthentication } from '@simplewebauthn/browser';
-import {saveProfile, loadProfile, getActiveNick, cloudPull, cloudPush, cloudConfigured, isNickTaken, registerNick, setGuestSession, isGuestSession, getFriends, addFriend, acceptFriend, getChat, sendChat, registerChatDevice, getChatDevice, getChatDevices, getMyChatDevices, revokeChatDevice, friendsLeaderboard, getDailyAverage, ensureDailyAverage, serverAuth, loadCloudVocabulary, cloudRecordProgress, cloudStartLesson, cloudFinishLesson, flushProgressQueue, serverMe, loadServerConfig, cloudLeaderboard, getWordIdByText, getGamification, postGamification, getPublicProfile, serverLogout, changePassword} from './lib/storage';
+import {saveProfile, loadProfile, getActiveNick, cloudPull, cloudPush, cloudConfigured, isNickTaken, registerNick, setGuestSession, isGuestSession, getFriends, addFriend, acceptFriend, getChat, sendChat, registerChatDevice, getChatDevice, getChatDevices, getMyChatDevices, revokeChatDevice, friendsLeaderboard, getDailyAverage, ensureDailyAverage, serverAuth, loadCloudVocabulary, cloudRecordProgress, cloudStartLesson, cloudFinishLesson, flushProgressQueue, serverMe, loadServerConfig, cloudLeaderboard, getWordIdByText, getGamification, postGamification, getPublicProfile, serverLogout, changePassword, getRecoveryQuestion, resetPasswordWithRecovery, setRecoveryQuestion} from './lib/storage';
 import {onCorrect as srsOk, onWrong as srsBad, isDue, todayStr} from './lib/srs';
 import {dbPutProfile, dbGetProfile, dbListProfiles, dbSaveWords, dbLoadWords} from './lib/db.js';
 import {createRealtime} from './lib/realtime.js';
@@ -14,6 +14,15 @@ import {track} from './lib/analytics.js';
 
 /** Roadmap in admin — remove only when user asks by title */
 const ROADMAP_ITEMS = [
+  {v:'2.9.0', title:'Gamification Pro: Leagues (100-3500+ XP), Streak Freeze auto-shield, Quests, Gift Chest, Badges, Forgot Password & 3 Radical Layouts', status:'done'},
+  {v:'2.8.0', title:'Fix Lesson loading, Logout button & profile isolation, simple reliable Chat, Live Realtime 5s, Custom Checkboxes & 3 new radical interfaces, Password change', status:'done'},
+  {v:'2.7.0', title:'Gamification v3: Leagues, Streak Freeze, Daily Quests, Gift Box, Public Profiles', status:'done'},
+  {v:'2.6.1', title:'Fix 1/10 counter, auto-advance, universal Notion sync & UI-UX polish', status:'done'},
+  {v:'2.6.0', title:'Bugfix & stability: correct learned/SRS counts, guest mode, session UX, cloud-only leaderboard', status:'done'},
+  {v:'2.5.0', title:'Admin 2.0: bootstrap, roles, 2FA/TOTP, session hardening and Security Lab', status:'done'},
+  {v:'2.5.0', title:'Chat Security 2.0: fingerprints, key rotation, multi-device, revoke and encrypted attachments', status:'done'},
+  {v:'2.5.0', title:'Playwright E2E + security regression suite: auth, IDOR, XSS, CSRF, fuzz and rate limits', status:'done'},
+  {v:'2.4.0', title:'Admin/Stats lazy loading + security/session recovery', status:'done'},
   {v:'2.3.0', title:'Learning Engine: no endless loading + server answer verification', status:'done'},
   {v:'2.3.0', title:'Lesson session freeze: exact word set stored in DB', status:'done'},
   {v:'2.3.0', title:'Safe Notion sync + admin-only sync metadata', status:'done'},
@@ -21,21 +30,13 @@ const ROADMAP_ITEMS = [
   {v:'2.3.0', title:'Realtime status + ping + chat privacy parity', status:'done'},
   {v:'2.3.0', title:'Custom dropdowns/modals + 3 admin test designs', status:'done'},
   {v:'2.3.0', title:'RPG profile + animated emoji feedback on Home/Stats', status:'done'},
-  {v:'2.6.1', title:'Fix 1/10 counter, auto-advance, universal Notion sync & UI-UX polish', status:'done'},
-  {v:'2.6.0', title:'Bugfix & stability: correct learned/SRS counts, guest mode, session UX, cloud-only leaderboard', status:'done'},
-  {v:'2.5.0', title:'Admin 2.0: bootstrap, roles, 2FA/TOTP, session hardening and Security Lab', status:'done'},
-  {v:'2.5.0', title:'Chat Security 2.0: fingerprints, key rotation, multi-device, revoke and encrypted attachments', status:'done'},
-  {v:'2.5.0', title:'Playwright E2E + security regression suite: auth, IDOR, XSS, CSRF, fuzz and rate limits', status:'done'},
-  {v:'2.4.0', title:'Admin/Stats lazy loading + security/session recovery', status:'done'},
   {v:'2.2.2', title:'Vercel Hobby: 1 Serverless Function gateway', status:'done'},
   {v:'2.2.0', title:'Product & Learning Analytics 1–17', status:'done'},
-  {v:'2.7.0', title:'Gamification v3: Leagues, Streak Freeze, Daily Quests, Gift Box, Public Profiles', status:'done'},
-  {v:'2.8.0', title:'Fix Lesson loading, Logout button & profile isolation, simple reliable Chat, Live Realtime 5s, Custom Checkboxes & 3 new radical interfaces, Password change', status:'done'},
 
   {v:'future', title:'WebAuthn/passkeys + verified device signatures', status:'planned'},
 ];
 
-const VERSION = '2.8.0';
+const VERSION = '2.9.0';
 const words = (notionWords?.length ? notionWords : fallbackWords).map(w => ({
   id: w.id, word: w.word, translation: w.translation || '—', pronunciation: w.pronunciation || '',
   category: w.category || 'Other', level: w.level || '', explanation: w.explanation || '',
@@ -46,10 +47,11 @@ const defaultAdmin = {lessonSize: 10, correctPoints: 4, wrongPoints: -2, mastery
 const emptyState = () => ({
   nick: '', name: '', passHash: '', xp: 0, streak: 1, dailyGoal: 50, todayXp: 0, today: todayStr(),
   mastery: {}, srs: {}, attempts: {}, history: [], badges: [], avatar: '🇺🇸',
-  theme: 'system', skin: 'classic', customTheme: {accent: '#22a06b', bg: '#f6f8f6', surface: '#ffffff'},
+  theme: 'system', skin: 'classic', layout: 'sidebar', customTheme: {accent: '#22a06b', bg: '#f6f8f6', surface: '#ffffff'},
   admin: {...defaultAdmin},
   quiet: false, sfx: true, soundPack: 'auto', guest: false, gamesPlayed: 0,
   compareMode: 'global', compareFriend: '', midnightSnap: null, badgeStyle: 'neo',
+  freezeCount: 0, recoveryCode: '', recoveryQuestion: '',
   settings: { keyboardHints: true, staggerList: true }
 });
 // Resolve a word's progress key across id schemes. The cloud marks each word by its
@@ -157,26 +159,6 @@ function emitSiteError(message, title='Помилка') {
 function emitSiteToast(message, kind='info') {
   window.dispatchEvent(new CustomEvent('ef-toast', {detail:{message:String(message||''),kind}}));
 }
-function confettiBurst() {
-  try {
-    const colors = ['#22c55e','#f59e0b','#3b82f6','#ec4899','#a78bfa'];
-    for (let i = 0; i < 36; i++) {
-      const el = document.createElement('div');
-      el.style.cssText = `position:fixed;pointer-events:none;z-index:9999;width:8px;height:8px;border-radius:2px;
-        background:${colors[i%colors.length]};top:50%;left:50%;
-        transform:translate(-50%,-50%);transition:transform 1s ease-out,opacity 1s;opacity:1`;
-      document.body.appendChild(el);
-      const angle = (i / 36) * 2 * Math.PI;
-      const dist = 120 + Math.random() * 120;
-      const tx = Math.cos(angle) * dist, ty = Math.sin(angle) * dist;
-      requestAnimationFrame(() => {
-        el.style.transform = `translate(calc(-50% + ${tx}px),calc(-50% + ${ty}px)) rotate(${Math.random()*360}deg)`;
-        el.style.opacity = '0';
-      });
-      setTimeout(() => el.remove(), 1200);
-    }
-  } catch {}
-}
 
 function UiSelect({value,onChange,options=[],className='',disabled=false}) {
   const [open,setOpen]=useState(false);
@@ -225,7 +207,7 @@ function makeQuizItems(source, size, direction, category) {
     return {...w, prompt, answer, options, direction};
   });
 }
-function computeBadges(state) {
+function computeBadges(state, gamification) {
   const learned = Object.values(state.mastery || {}).filter(v => v >= (state.admin?.masteryThreshold || 8)).length;
   const earned = new Set(state.badges || []);
   const add = id => earned.add(id);
@@ -234,16 +216,45 @@ function computeBadges(state) {
   if ((state.streak || 0) >= 7) add('streak_7');
   if (learned >= 20) add('words_20');
   if (learned >= 50) add('words_50');
+  if (learned >= 100) add('word_wizard');
+  if ((state.xp || 0) >= 200) add('league_silver');
   if ((state.xp || 0) >= 500) add('xp_500');
+  if ((state.xp || 0) >= 1000) add('league_platinum');
+  if ((state.xp || 0) >= 2000) add('league_diamond');
   if ((state.history || []).some(h => h.mode === 'dictation')) add('dictation');
   if ((state.history || []).some(h => h.mode === 'match' && h.correct)) add('match_master');
+  if ((state.freezeCount || 0) > 0 || (gamification?.freezeCount || 0) > 0) add('freeze_master');
   return [...earned];
+}
+
+function LayoutSwitcher({layout, onSelect}) {
+  const layouts = [
+    {id: 'sidebar', label: 'Сайдбар', icon: '📑'},
+    {id: 'top-nav', label: 'Верхній', icon: '🧭'},
+    {id: 'bottom-dock', label: 'Док', icon: '⚓'},
+    {id: 'zen', label: 'Дзен', icon: '🧘'}
+  ];
+  return (
+    <div className="layout-switcher" title="Структурне розташування меню">
+      {layouts.map(l => (
+        <button
+          key={l.id}
+          type="button"
+          className={'layout-btn' + ((layout || 'sidebar') === l.id ? ' active' : '')}
+          onClick={() => onSelect(l.id)}
+          title={`Макет: ${l.label}`}
+        >
+          <span>{l.icon}</span> <span>{l.label}</span>
+        </button>
+      ))}
+    </div>
+  );
 }
 
 function Sidebar({mobile, setMobile, page, nav, onLogout}) {
   return (
     <aside className={'sidebar' + (mobile ? ' open' : '')}>
-      <div className="brand"><span className="brand-mark">EF</span><span>English Flow</span></div>
+      <div className="brand" onClick={() => nav('dashboard')} style={{cursor:'pointer'}}><span className="brand-mark">EF</span><span>English Flow</span></div>
       <div className="nav-section">LEARN</div>
       {[
         ['dashboard', Home, 'Головна'],
@@ -278,9 +289,187 @@ function Sidebar({mobile, setMobile, page, nav, onLogout}) {
   );
 }
 
-function Layout({children, state, page, nav, mobile, setMobile, onLogout}) {
+function TopNavHeader({state, page, nav, onLogout, layout, setLayout}) {
   return (
-    <div className="app">
+    <header className="top-nav-header">
+      <div className="brand" onClick={() => nav('dashboard')} style={{cursor:'pointer'}}>
+        <span className="brand-mark">EF</span>
+        <span>English Flow</span>
+      </div>
+      <nav className="top-nav-tabs">
+        {[
+          ['dashboard', Home, 'Головна'],
+          ['learn', Play, 'Вчити'],
+          ['vocabulary', BookOpen, 'Слова'],
+          ['review', RotateCcw, 'SRS'],
+          ['leaderboard', Trophy, 'Рейтинг'],
+          ['badges', Award, 'Бейджі'],
+          ['stats', BarChart3, 'Статистика'],
+          ['friends', Users, 'Друзі'],
+          ['profile', User, 'Профіль'],
+          ['settings', Settings, 'Опції'],
+          ['admin', Shield, 'Адмін']
+        ].map(([id, I, t]) => (
+          <button key={id} className={'top-nav-tab' + (page === id ? ' active' : '')} onClick={() => nav(id)} type="button">
+            <I size={15}/> <span>{t}</span>
+          </button>
+        ))}
+      </nav>
+      <div className="header-stats">
+        <LayoutSwitcher layout={layout} onSelect={setLayout} />
+        <span>🔥 {state.streak}</span>
+        <span>⚡ {state.xp} XP</span>
+        <button className="btn-logout-header" onClick={onLogout} title="Вийти з акаунту" type="button">
+          <XCircle size={15}/> <span>Вихід</span>
+        </button>
+      </div>
+    </header>
+  );
+}
+
+function BottomDock({page, nav, onLogout}) {
+  return (
+    <nav className="command-dock">
+      {[
+        ['dashboard', Home, 'Головна'],
+        ['learn', Play, 'Вчити'],
+        ['vocabulary', BookOpen, 'Слова'],
+        ['review', RotateCcw, 'SRS'],
+        ['leaderboard', Trophy, 'Рейтинг'],
+        ['badges', Award, 'Бейджі'],
+        ['friends', Users, 'Друзі'],
+        ['profile', User, 'Профіль'],
+        ['settings', Settings, 'Опції'],
+        ['admin', Shield, 'Адмін']
+      ].map(([id, I, t]) => (
+        <button key={id} className={'dock-item' + (page === id ? ' active' : '')} onClick={() => nav(id)} type="button" title={t}>
+          <I size={18}/>
+          <span>{t}</span>
+        </button>
+      ))}
+      <div className="dock-divider" />
+      <button className="dock-item" onClick={onLogout} type="button" title="Вийти" style={{color:'var(--danger, #ef4444)'}}>
+        <XCircle size={18}/>
+        <span>Вихід</span>
+      </button>
+    </nav>
+  );
+}
+
+function ZenHeader({state, page, nav, onLogout, layout, setLayout, zenOpen, setZenOpen}) {
+  return (
+    <>
+      <div className="zen-header">
+        <button className="secondary" onClick={() => setZenOpen(true)} type="button" style={{display:'inline-flex',alignItems:'center',gap:6}}>
+          <Menu size={16}/> <span>Меню</span>
+        </button>
+        <div style={{fontWeight:600}}>
+          <span>English Flow</span>
+          <span className="muted"> · {page}</span>
+        </div>
+        <div style={{display:'flex',gap:8,alignItems:'center'}}>
+          <LayoutSwitcher layout={layout} onSelect={setLayout} />
+          <span>⚡ {state.xp} XP</span>
+          <button className="btn-logout-header" onClick={onLogout} title="Вийти" type="button">
+            <XCircle size={15}/>
+          </button>
+        </div>
+      </div>
+      {zenOpen && (
+        <div className="zen-drawer-overlay" onClick={() => setZenOpen(false)}>
+          <div className="zen-drawer" onClick={e => e.stopPropagation()}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+              <div className="brand"><span className="brand-mark">EF</span><span>English Flow</span></div>
+              <button className="icon" onClick={() => setZenOpen(false)}><X size={18}/></button>
+            </div>
+            <div className="nav-section">НАВІГАЦІЯ</div>
+            {[
+              ['dashboard', Home, 'Головна'],
+              ['learn', Play, 'Навчання'],
+              ['vocabulary', BookOpen, 'Слова'],
+              ['review', RotateCcw, 'SRS Повтор'],
+              ['leaderboard', Trophy, 'Рейтинг'],
+              ['badges', Award, 'Бейджі'],
+              ['stats', BarChart3, 'Статистика'],
+              ['friends', Users, 'Друзі'],
+              ['profile', User, 'Профіль'],
+              ['settings', Settings, 'Налаштування'],
+              ['about', Sparkles, 'Про додаток'],
+              ['admin', Shield, 'Адмін']
+            ].map(([id, I, t]) => (
+              <button key={id} className={'nav' + (page === id ? ' active' : '')} onClick={() => { nav(id); setZenOpen(false); }}>
+                <I size={18}/> {t}
+              </button>
+            ))}
+            <hr style={{margin:'12px 0'}}/>
+            <button className="nav nav-logout" onClick={onLogout} type="button">
+              <XCircle size={18}/> Вийти з акаунту
+            </button>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+function Layout({children, state, page, nav, mobile, setMobile, onLogout, layout, setLayout}) {
+  const [zenOpen, setZenOpen] = useState(false);
+  const curLayout = layout || state.layout || 'sidebar';
+
+  if (curLayout === 'top-nav') {
+    return (
+      <div className="app" data-layout="top-nav">
+        <main className="main">
+          <TopNavHeader state={state} page={page} nav={nav} onLogout={onLogout} layout={curLayout} setLayout={setLayout} />
+          {children}
+        </main>
+      </div>
+    );
+  }
+
+  if (curLayout === 'bottom-dock') {
+    return (
+      <div className="app" data-layout="bottom-dock">
+        <main className="main">
+          <header>
+            <div className="brand" onClick={() => nav('dashboard')} style={{cursor:'pointer'}}>
+              <span className="brand-mark">EF</span>
+              <span>English Flow</span>
+            </div>
+            <div>
+              <b>{state.name || state.nick}</b>
+              <span className="muted"> · @{state.nick}</span>
+            </div>
+            <div className="header-stats">
+              <LayoutSwitcher layout={curLayout} onSelect={setLayout} />
+              <span>🔥 {state.streak}</span>
+              <span>⚡ {state.xp} XP</span>
+              <button className="btn-logout-header" onClick={onLogout} title="Вийти з акаунту" type="button">
+                <XCircle size={15}/> <span>Вихід</span>
+              </button>
+            </div>
+          </header>
+          {children}
+          <BottomDock page={page} nav={nav} onLogout={onLogout} />
+        </main>
+      </div>
+    );
+  }
+
+  if (curLayout === 'zen') {
+    return (
+      <div className="app" data-layout="zen">
+        <main className="main">
+          <ZenHeader state={state} page={page} nav={nav} onLogout={onLogout} layout={curLayout} setLayout={setLayout} zenOpen={zenOpen} setZenOpen={setZenOpen} />
+          {children}
+        </main>
+      </div>
+    );
+  }
+
+  // Default: sidebar
+  return (
+    <div className="app" data-layout="sidebar">
       <Sidebar mobile={mobile} setMobile={setMobile} page={page} nav={nav} onLogout={onLogout} />
       <main className="main">
         <header>
@@ -293,6 +482,7 @@ function Layout({children, state, page, nav, mobile, setMobile, onLogout}) {
             {state.guest && <span className="pill guest-pill"><Ghost size={12}/> гість</span>}
           </div>
           <div className="header-stats">
+            <LayoutSwitcher layout={curLayout} onSelect={setLayout} />
             <span>🔥 {state.streak}</span>
             <span>⚡ {state.xp} XP</span>
             <button className="btn-logout-header" onClick={onLogout} title="Вийти з акаунту" type="button">
@@ -437,6 +627,7 @@ export default function App() {
       : state.theme;
     document.documentElement.dataset.theme = resolved === 'custom' ? 'custom' : resolved;
     document.documentElement.dataset.skin = state.skin || 'classic';
+    document.documentElement.dataset.layout = state.layout || 'sidebar';
     if (state.theme === 'custom') {
       document.documentElement.style.setProperty('--accent', state.customTheme.accent);
       document.documentElement.style.setProperty('--custom-bg', state.customTheme.bg);
@@ -450,7 +641,7 @@ export default function App() {
     };
     mq.addEventListener?.('change', onChange);
     return () => mq.removeEventListener?.('change', onChange);
-  }, [state.theme, state.skin, state.customTheme]);
+  }, [state.theme, state.skin, state.layout, state.customTheme]);
   useEffect(() => {
     window.__efQuiet = !!state.quiet;
     window.__efNoSfx = state.sfx === false;
@@ -497,15 +688,40 @@ export default function App() {
     }
   }, [state.today]);
 
-  // Daily reset
+  // Daily reset with automatic Streak Freeze shield
   useEffect(() => {
     if (state.today !== todayStr()) {
-      const yesterday = state.today;
-      const keptStreak = state.todayXp > 0 ? state.streak : Math.max(1, state.streak);
-      // simple: if last activity was yesterday and had xp, keep; else reset handled lightly
-      save({...state, today: todayStr(), todayXp: 0});
+      const yesterdayXp = Number(state.todayXp || 0);
+      let keptStreak = Number(state.streak || 1);
+      let newFreezeCount = Number(state.freezeCount || 0);
+
+      if (yesterdayXp === 0) {
+        // Missed yesterday! Check if we have freeze protection
+        const availableFreezes = (gamification?.freezeCount != null) ? Number(gamification.freezeCount) : newFreezeCount;
+        if (availableFreezes > 0) {
+          // Freeze protects streak!
+          newFreezeCount = Math.max(0, availableFreezes - 1);
+          postGamification('use_freeze').catch(() => {});
+          emitSiteToast('❄️ Заморозка врятувала твій стрік від пропуску! Серію збережено.', 'ok');
+        } else {
+          // No freeze available, reset streak to 1
+          keptStreak = 1;
+          emitSiteToast('Стрік скинуто. Займайся щодня або придбай ❄️ Заморозку у Профілі!', 'warn');
+        }
+      } else {
+        keptStreak = Math.max(1, (state.streak || 0) + 1);
+      }
+
+      save({
+        ...state,
+        today: todayStr(),
+        todayXp: 0,
+        streak: keptStreak,
+        freezeCount: newFreezeCount
+      });
+      refreshGamification();
     }
-  }, []);
+  }, [state.today]);
 
   const activeWords = wordsLive?.length ? wordsLive : words;
   const activeCats = [...new Set(activeWords.map(w => w.category))].sort();
@@ -568,8 +784,8 @@ export default function App() {
 
   return (
     <>
-      <Layout state={state} page={page} nav={nav} mobile={mobile} setMobile={setMobile} onLogout={handleLogout}>
-        {page === 'dashboard' && <Dashboard state={state} learned={learnedCount} due={dueCount} words={activeWords.length} onLearn={() => nav('learn')} onReview={() => nav('review')} cloudMsg={cloudMsg} quests={gamification?.quests} />}
+      <Layout state={state} page={page} nav={nav} mobile={mobile} setMobile={setMobile} onLogout={handleLogout} layout={state.layout || 'sidebar'} setLayout={(l) => save({...state, layout: l})}>
+        {page === 'dashboard' && <Dashboard state={state} learned={learnedCount} due={dueCount} words={activeWords.length} onLearn={() => nav('learn')} onReview={() => nav('review')} cloudMsg={cloudMsg} quests={gamification?.quests} giftAvailable={gamification?.giftAvailable} onOpenGift={() => setGiftModal(true)} />}
         {page === 'learn' && <Learn state={state} cats={activeCats} onStart={startLesson} />}
         {page === 'vocabulary' && <Vocabulary state={state} setModal={setModal} wordsCatalog={activeWords} cats={activeCats} />}
         {page === 'review' && <ReviewPage state={state} due={dueCount} onStart={() => startLesson('srs', 'en-ua', 'all')} />}
@@ -617,11 +833,150 @@ export default function App() {
   );
 }
 
+function ForgotPasswordModal({onClose, onDone}) {
+  const [step, setStep] = useState(1);
+  const [nick, setNick] = useState('');
+  const [question, setQuestion] = useState('');
+  const [hasQuestion, setHasQuestion] = useState(false);
+  const [answerOrCode, setAnswerOrCode] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPass, setConfirmPass] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+  const [success, setSuccess] = useState('');
+
+  const lookupNick = async () => {
+    const n = nick.trim();
+    if (!n) { setErr('Вкажіть нік'); return; }
+    setBusy(true); setErr('');
+    try {
+      const res = await getRecoveryQuestion(n);
+      if (!res.ok) throw new Error(res.error || 'Користувача не знайдено');
+      setQuestion(res.question || '');
+      setHasQuestion(Boolean(res.hasQuestion));
+      setStep(2);
+    } catch (e) {
+      setErr(e.message || 'Помилка пошуку акаунту');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleReset = async () => {
+    const n = nick.trim();
+    const ac = answerOrCode.trim();
+    if (!ac) { setErr('Вкажіть відповідь або 10-значний резервний код'); return; }
+    if (newPassword.length < 8) { setErr('Новий пароль має бути не менше 8 символів'); return; }
+    if (newPassword !== confirmPass) { setErr('Паролі не збігаються'); return; }
+    setBusy(true); setErr('');
+    try {
+      const res = await resetPasswordWithRecovery(n, ac, newPassword);
+      if (!res.ok) throw new Error(res.error || 'Помилка відновлення паролю');
+      setSuccess('Пароль відновлено! Перенаправляємо на вхід…');
+      setTimeout(() => {
+        onDone(n);
+      }, 1500);
+    } catch (e) {
+      setErr(e.message || 'Невірна відповідь або резервний код');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="ef-modal-backdrop" role="presentation" onMouseDown={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="ef-modal card forgot-password-modal" role="dialog" aria-modal="true" onMouseDown={e => e.stopPropagation()}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+          <h2 style={{margin:0}}>🔑 Відновлення паролю</h2>
+          <button className="icon" type="button" onClick={onClose}><X size={18}/></button>
+        </div>
+
+        {success ? (
+          <div style={{textAlign:'center',padding:'16px 0'}}>
+            <div style={{fontSize:44,marginBottom:8}}>✅</div>
+            <p style={{color:'var(--accent)',fontWeight:600}}>{success}</p>
+          </div>
+        ) : step === 1 ? (
+          <div>
+            <p className="muted">Введіть ваш нік, щоб перевірити секретне питання або використати резервний код відновлення:</p>
+            <label>Нік акаунту</label>
+            <input className="search" value={nick} onChange={e => setNick(e.target.value)} placeholder="твій_нік" autoFocus onKeyDown={e => e.key === 'Enter' && lookupNick()}/>
+            {err && <p className="auth-err">{err}</p>}
+            <div className="row-btns" style={{marginTop:16}}>
+              <button className="secondary" type="button" onClick={onClose}>Скасувати</button>
+              <button className="primary" type="button" disabled={busy} onClick={lookupNick}>
+                {busy ? 'Пошук…' : 'Знайти акаунт'}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div>
+            <p className="muted" style={{marginBottom:10}}>Акаунт: <b>@{nick}</b></p>
+            {hasQuestion ? (
+              <div style={{background:'color-mix(in srgb, var(--surface) 50%, var(--border))',borderRadius:10,padding:'10px 14px',marginBottom:12}}>
+                <small className="muted">Секретне питання:</small>
+                <div style={{fontWeight:600,marginTop:2}}>{question}</div>
+              </div>
+            ) : (
+              <p className="muted small" style={{marginBottom:12}}>ℹ️ Секретне питання не встановлено. Використайте 10-значний резервний код (EF-XXXX-XXXX).</p>
+            )}
+
+            <label>{hasQuestion ? 'Відповідь на питання АБО Резервний код' : 'Резервний код (EF-XXXX-XXXX)'}</label>
+            <input className="search" value={answerOrCode} onChange={e => setAnswerOrCode(e.target.value)} placeholder={hasQuestion ? 'відповідь або EF-XXXX-XXXX' : 'EF-XXXX-XXXX'} autoFocus/>
+
+            <label style={{marginTop:8}}>Новий пароль (мін. 8 символів)</label>
+            <input className="search" type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="••••••••"/>
+
+            <label style={{marginTop:8}}>Підтвердження нового пароля</label>
+            <input className="search" type="password" value={confirmPass} onChange={e => setConfirmPass(e.target.value)} placeholder="••••••••" onKeyDown={e => e.key === 'Enter' && handleReset()}/>
+
+            {err && <p className="auth-err">{err}</p>}
+
+            <div className="row-btns" style={{marginTop:16}}>
+              <button className="secondary" type="button" onClick={() => setStep(1)}>Назад</button>
+              <button className="primary" type="button" disabled={busy} onClick={handleReset}>
+                {busy ? 'Збереження…' : 'Відновити пароль'}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function NewAccountRecoveryModal({code, onProceed}) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <div className="ef-modal-backdrop" role="presentation">
+      <div className="ef-modal card" role="dialog" aria-modal="true" style={{maxWidth:480}}>
+        <div style={{textAlign:'center',fontSize:44,marginBottom:8}}>🔐</div>
+        <h2>Збережи свій код відновлення!</h2>
+        <p className="muted">Це твій персональний 10-значний ключ відновлення доступу. Якщо забудеш пароль, ти зможеш миттєво відновити акаунт за цим кодом.</p>
+        <div className="recovery-code-box">
+          <span>{code}</span>
+          <button className="secondary" type="button" onClick={() => { navigator.clipboard.writeText(code); setCopied(true); setTimeout(() => setCopied(false), 2000); }}>
+            {copied ? 'Скопійовано ✓' : 'Копіювати'}
+          </button>
+        </div>
+        <p className="muted small">Код також завжди доступний у твоєму Профілі в будь-який момент.</p>
+        <button className="primary full" type="button" onClick={onProceed}>
+          Я зберіг код · Почати навчання 🚀
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function Onboarding({onDone}) {
   const [mode, setMode] = useState('login'); // login | register
   const [nick, setNick] = useState('');
   const [name, setName] = useState('');
   const [pass, setPass] = useState('');
+  const [secQuestion, setSecQuestion] = useState('Улюблене місто?');
+  const [secAnswer, setSecAnswer] = useState('');
+  const [forgotOpen, setForgotOpen] = useState(false);
+  const [createdProfile, setCreatedProfile] = useState(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
 
@@ -645,9 +1000,9 @@ function Onboarding({onDone}) {
       if (!auth.ok) throw new Error(auth.error || 'Невірний пароль');
       let profile = null;
       const remote = await cloudPull(n);
-      if (remote) profile = {...emptyState(), ...remote, nick: n, name: remote.name || auth.user?.name || n};
+      if (remote) profile = {...emptyState(), ...remote, nick: n, name: remote.name || auth.user?.name || n, recoveryCode: auth.recovery_code || remote.recoveryCode};
       if (!profile) profile = loadProfile(n);
-      if (!profile) profile = {...emptyState(), nick:n, name:auth.user?.name || n, id:auth.user?.id, role:auth.user?.role};
+      if (!profile) profile = {...emptyState(), nick:n, name:auth.user?.name || n, id:auth.user?.id, role:auth.user?.role, recoveryCode: auth.recovery_code};
       setGuestSession(false);
       onDone(profile);
     } catch (e) {
@@ -663,12 +1018,30 @@ function Onboarding({onDone}) {
     if (n.length < 2) { setErr('Нік мінімум 2 символи'); return; }
     setBusy(true); setErr('');
     try {
-      const auth = await serverAuth('register', { nick: n, name: name.trim() || n, password: pass });
+      const auth = await serverAuth('register', {
+        nick: n,
+        name: name.trim() || n,
+        password: pass,
+        recoveryQuestion: secAnswer.trim() ? secQuestion : null,
+        recoveryAnswer: secAnswer.trim() ? secAnswer.trim() : null
+      });
       if (!auth.ok) throw new Error(auth.error || 'Помилка реєстрації');
       setGuestSession(false);
       const base = emptyState();
-      const profile = await registerNick(n, { ...base, nick:n, name:name.trim()||n, id:auth.user?.id, role:auth.user?.role });
-      onDone(profile);
+      const profile = await registerNick(n, {
+        ...base,
+        nick: n,
+        name: name.trim() || n,
+        id: auth.user?.id,
+        role: auth.user?.role,
+        recoveryCode: auth.recovery_code,
+        recoveryQuestion: secAnswer.trim() ? secQuestion : ''
+      });
+      if (auth.recovery_code) {
+        setCreatedProfile(profile);
+      } else {
+        onDone(profile);
+      }
     } catch (e) {
       setErr(e.message || 'Помилка реєстрації');
     }
@@ -704,14 +1077,63 @@ function Onboarding({onDone}) {
         <label>Пароль *</label>
         <input className="search" type="password" value={pass} onChange={e => setPass(e.target.value)} placeholder="••••••••" autoComplete={mode==='login'?'current-password':'new-password'}
           onKeyDown={e => e.key==='Enter' && (mode==='login'?doLogin():doRegister())}/>
+
+        {mode === 'login' && (
+          <button type="button" className="forgot-pass-btn" onClick={() => setForgotOpen(true)}>
+            Забули пароль?
+          </button>
+        )}
+
+        {mode === 'register' && (
+          <div style={{marginTop: 8, padding:'10px 12px', background:'color-mix(in srgb, var(--surface) 40%, var(--border))', borderRadius: 12}}>
+            <small className="muted" style={{display:'block',marginBottom:4}}>Секретне питання для відновлення (опційно):</small>
+            <UiSelect
+              value={secQuestion}
+              onChange={setSecQuestion}
+              options={[
+                {value:'Улюблене місто?',label:'Улюблене місто?'},
+                {value:'Перша школа або вчитель?',label:'Перша школа або вчитель?'},
+                {value:'Кличка першого улюбленця?',label:'Кличка першого улюбленця?'},
+                {value:'Улюблена страва або десерт?',label:'Улюблена страва або десерт?'},
+                {value:'Дівоче прізвище матері?',label:'Дівоче прізвище матері?'}
+              ]}
+            />
+            <input className="search" style={{marginTop:6}} value={secAnswer} onChange={e => setSecAnswer(e.target.value)} placeholder="Відповідь на питання" />
+          </div>
+        )}
+
         {err && <p className="auth-err">{err}</p>}
-        <button className="primary full" type="button" disabled={busy} onClick={mode==='login'?doLogin:doRegister}>
+        <button className="primary full" type="button" disabled={busy} onClick={mode==='login'?doLogin:doRegister} style={{marginTop:12}}>
           {busy ? '…' : (mode==='login' ? 'Увійти' : 'Створити акаунт')}
         </button>
         <button className="secondary full guest-btn" type="button" onClick={guest}>
           <Ghost size={18}/> Увійти як гість
         </button>
       </div>
+
+      {forgotOpen && (
+        <ForgotPasswordModal
+          onClose={() => setForgotOpen(false)}
+          onDone={(recoveredNick) => {
+            setForgotOpen(false);
+            setNick(recoveredNick);
+            setMode('login');
+            setPass('');
+            emitSiteToast('Пароль оновлено! Увійдіть з новим паролем', 'ok');
+          }}
+        />
+      )}
+
+      {createdProfile && (
+        <NewAccountRecoveryModal
+          code={createdProfile.recoveryCode}
+          onProceed={() => {
+            const p = createdProfile;
+            setCreatedProfile(null);
+            onDone(p);
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -757,17 +1179,33 @@ function DailyQuests({quests}) {
   );
 }
 
-function Dashboard({state, learned, due, words, onLearn, onReview, cloudMsg, quests}) {
+function Dashboard({state, learned, due, words, onLearn, onReview, cloudMsg, quests, giftAvailable, onOpenGift}) {
   const league = leagueForXp(state.xp || 0);
   return (
     <section>
       <div className="announce card jungle-announce">
         <span className="vine-deco left" aria-hidden="true">🌿</span>
         <span className="vine-deco right" aria-hidden="true">🌿</span>
-        <span className="eyebrow">UPDATE · v2.7.0</span>
-        <h2>🏆 Ліги, Квести, Скриня та Профілі</h2>
-        <p>Нові ліги по XP, щоденні квести, заморозка стріку та публічні профілі гравців.</p>
+        <span className="eyebrow">UPDATE · v2.9.0</span>
+        <h2>🏆 Ліги, Скриня, 3 Нові Макети та Захист Стріку</h2>
+        <p>Оновлена система ліг по очках XP (100, 200, 500...), 3 структурні макети навігації (Сайдбар, Верхній, Док, Дзен), відновлення паролю та щоденні квести.</p>
       </div>
+
+      {giftAvailable && (
+        <div className="gift-banner card">
+          <div style={{display:'flex',alignItems:'center',gap:12}}>
+            <span style={{fontSize:32}} aria-hidden="true">🎁</span>
+            <div>
+              <div style={{fontWeight:700,fontSize:15}}>Твоя щоденна скриня готова до відкриття!</div>
+              <p className="muted small" style={{margin:0}}>Відкрий зараз і отримай гарантований XP або заморозку стріку.</p>
+            </div>
+          </div>
+          <button className="primary" type="button" onClick={onOpenGift} style={{whiteSpace:'nowrap'}}>
+            🎁 Відкрити
+          </button>
+        </div>
+      )}
+
       <div className="hero">
         <div>
           <span className="eyebrow">TODAY</span>
@@ -1011,6 +1449,8 @@ function SprintGame({items, mode, state, save, onExit, onDone, lessonId}) {
     }
     if (ok) {
       setOkCount(c => c + 1);
+      postGamification('quest_progress', { quest_type: 'streak_answers', delta: 1 }).catch(() => {});
+      if (mode === 'sprint' && points > 0) postGamification('quest_progress', { quest_type: 'sprint', delta: points }).catch(() => {});
       setCombo(prev => {
         const next = prev + 1;
         if (next > 0 && next % 5 === 0) {
@@ -1129,6 +1569,7 @@ function SprintGame({items, mode, state, save, onExit, onDone, lessonId}) {
             if (badCount === 0 && okCount > 0) confettiBurst();
             save(next);
             if (!state.guest && lessonId) Promise.allSettled(pendingProgress.current).then(() => cloudFinishLesson(lessonId).then(r => { if(r?.user) save({...stateRef.current,...r.user}); }).catch(() => {}));
+            postGamification('quest_progress', { quest_type: 'lesson', delta: 1 }).catch(() => {});
             onDone();
           }}>На головну</button>
         </div>
@@ -1544,18 +1985,27 @@ function Leaderboard({state, gamification, onViewProfile}) {
   const [rows, setRows] = useState(null);
 
   useEffect(() => {
-    if (gamification?.leaderboard) {
-      setRows(gamification.leaderboard);
-      setLoading(false);
-      return;
-    }
     let alive = true;
-    setLoading(true);
-    cloudLeaderboard().then(r => {
-      if (alive) { setRows({global: Array.isArray(r) ? r : [], friends: []}); setLoading(false); }
-    }).catch(() => { if (alive) { setRows({global:[], friends:[]}); setLoading(false); } });
+    const load = async () => {
+      let g = gamification?.leaderboard?.global || [];
+      let fr = gamification?.leaderboard?.friends || [];
+      if (!g.length) {
+        try { const r = await cloudLeaderboard(); if (Array.isArray(r)) g = r; } catch {}
+      }
+      if (!fr.length && !state.guest) {
+        try { const f = await friendsLeaderboard(); if (Array.isArray(f)) fr = f; } catch {}
+      }
+      if (alive) {
+        setRows({
+          global: g.map(x => ({...x, xp: Number(x.xp)||0, league: leagueForXp(x.xp)})),
+          friends: fr.map(x => ({...x, xp: Number(x.xp)||0, league: leagueForXp(x.xp)}))
+        });
+        setLoading(false);
+      }
+    };
+    load();
     return () => { alive = false; };
-  }, [gamification]);
+  }, [gamification, state.guest]);
 
   const list = rows ? (tab === 'global' ? (rows.global || []) : (rows.friends || [])) : [];
   const podium = list.slice(0, 3);
@@ -1812,23 +2262,30 @@ function ChangePasswordCard() {
 function Profile({state, save, gamification, onRefreshGamification, onLogout}) {
   const level = Math.max(1, Math.floor((state.xp || 0) / 100) + 1);
   const xpInto = (state.xp || 0) % 100;
-  const freezeCount = gamification?.freezeCount ?? 0;
+  const freezeCount = gamification?.freezeCount ?? (state.freezeCount || 0);
   const [freezeBusy, setFreezeBusy] = useState(false);
 
   const [name, setName] = useState(state.name);
   const [goal, setGoal] = useState(Math.max(1, state.dailyGoal || 50));
   const [theme, setTheme] = useState(state.theme);
   const [skin, setSkin] = useState(state.skin || 'classic');
+  const [layout, setLayout] = useState(state.layout || 'sidebar');
   const [accent, setAccent] = useState(state.customTheme.accent);
   const [bg, setBg] = useState(state.customTheme.bg);
   const [surface, setSurface] = useState(state.customTheme.surface);
   const [msg, setMsg] = useState('');
   const [syncing, setSyncing] = useState(false);
-  const [authBusy, setAuthBusy] = useState(false);
-  const [authErr, setAuthErr] = useState('');
+
+  // Recovery settings in profile
+  const [secQ, setSecQ] = useState(state.recoveryQuestion || 'Улюблене місто?');
+  const [secA, setSecA] = useState('');
+  const [secBusy, setSecBusy] = useState(false);
+  const [secMsg, setSecMsg] = useState('');
+  const [secErr, setSecErr] = useState('');
+  const [copiedCode, setCopiedCode] = useState(false);
 
   const persist = () => {
-    save({...state, name, dailyGoal: Math.max(10, Number(goal) || 50), theme, skin, customTheme: {accent, bg, surface}});
+    save({...state, name, dailyGoal: Math.max(10, Number(goal) || 50), theme, skin, layout, customTheme: {accent, bg, surface}});
     setMsg('Збережено ✓'); setTimeout(() => setMsg(''), 1500);
   };
 
@@ -1839,6 +2296,25 @@ function Profile({state, save, gamification, onRefreshGamification, onLogout}) {
     else setMsg('Хмара порожня або не налаштована');
     setSyncing(false); setTimeout(() => setMsg(''), 2000);
   };
+
+  const saveRecovery = async () => {
+    if (!secA.trim()) { setSecErr('Введіть відповідь на питання'); return; }
+    setSecBusy(true); setSecErr(''); setSecMsg('');
+    try {
+      const res = await setRecoveryQuestion(secQ, secA.trim());
+      if (!res.ok) throw new Error(res.error || 'Помилка збереження');
+      save({...state, recoveryQuestion: secQ});
+      setSecMsg('Секретне питання оновлено ✓');
+      setSecA('');
+      setTimeout(() => setSecMsg(''), 2500);
+    } catch (e) {
+      setSecErr(e.message || 'Не вдалося зберегти');
+    } finally {
+      setSecBusy(false);
+    }
+  };
+
+  const earnedBadges = new Set(state.badges || []);
 
   return (
     <section className="rpg-profile fade-in">
@@ -1856,6 +2332,7 @@ function Profile({state, save, gamification, onRefreshGamification, onLogout}) {
           <small className="muted">{xpInto}/100 XP до рівня {level + 1}</small>
         </div>
       </div>
+
       {/* Freeze actions */}
       {!state.guest && (
         <div className="card freeze-section">
@@ -1864,19 +2341,43 @@ function Profile({state, save, gamification, onRefreshGamification, onLogout}) {
           <div className="row-btns">
             <button className="secondary" disabled={freezeBusy || (state.xp||0) < 50} onClick={async () => {
               setFreezeBusy(true);
-              try { await postGamification('buy_freeze'); await onRefreshGamification(); } catch {}
+              try { await postGamification('buy_freeze'); await onRefreshGamification(); emitSiteToast('❄️ Придбано заморозку стріку (-50 XP)', 'ok'); } catch {}
               setFreezeBusy(false);
             }}>💰 Купити ({(state.xp||0) < 50 ? 'потрібно 50 XP' : '-50 XP'})</button>
             {freezeCount > 0 && <button className="secondary" disabled={freezeBusy} onClick={async () => {
               setFreezeBusy(true);
-              try { await postGamification('use_freeze'); await onRefreshGamification(); } catch {}
+              try { await postGamification('use_freeze'); await onRefreshGamification(); emitSiteToast('❄️ Заморозку активовано!', 'ok'); } catch {}
               setFreezeBusy(false);
             }}>❄️ Активувати заморозку</button>}
           </div>
           {freezeBusy && <p className="muted small">…</p>}
         </div>
       )}
-      <Title title="Профіль" text={`Нік @${state.nick}`}/>
+
+      {/* Badges Showcase */}
+      <div className="card" style={{marginTop: 16}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+          <h3 style={{margin:0}}>🏅 Вітрина бейджів ({earnedBadges.size}/{BADGES.length})</h3>
+          <span className="muted small">Секретні досягнення та ліги</span>
+        </div>
+        <div className="badges-grid" style={{gridTemplateColumns:'repeat(auto-fill, minmax(180px, 1fr))',gap:10}}>
+          {BADGES.map(b => {
+            const has = earnedBadges.has(b.id);
+            return (
+              <div key={b.id} className={'badge-card card' + (has ? ' earned' : ' locked')} style={{padding:'10px 12px'}}>
+                <div className="badge-ico" style={{fontSize:22}}>{has ? '🏅' : '🔒'}</div>
+                <div className="badge-body">
+                  <div style={{fontWeight:600,fontSize:13}}>{b.title}</div>
+                  <p className="muted badge-desc" style={{fontSize:11,margin:'2px 0 6px'}}>{b.desc}</p>
+                  {has ? <span className="pill ok" style={{fontSize:10}}>Отримано</span> : <span className="pill" style={{fontSize:10,opacity:0.6}}>Заблоковано</span>}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <Title title="Профіль та Налаштування" text={`Нік @${state.nick}`}/>
       <div className="grid two">
         <div className="card">
           <label>Імʼя</label>
@@ -1889,8 +2390,9 @@ function Profile({state, save, gamification, onRefreshGamification, onLogout}) {
           <button className="secondary" onClick={pullCloud} disabled={syncing}><Cloud size={16}/> {syncing ? '…' : 'Підтягнути з хмари'}</button>
           <p className="muted small">{cloudConfigured() ? 'Neon PostgreSQL підключено через Vercel' : 'Neon ще не налаштований у Vercel'}</p>
         </div>
+
         <div className="card">
-          <h2><Palette size={18}/> Тема</h2>
+          <h2><Palette size={18}/> Тема та Дизайн</h2>
           <div className="theme-buttons">
             <button className={theme === 'system' ? 'theme active' : 'theme'} onClick={() => setTheme('system')}>Авто</button>
             <button className={theme === 'light' ? 'theme active' : 'theme'} onClick={() => setTheme('light')}><Sun/> Світла</button>
@@ -1904,17 +2406,72 @@ function Profile({state, save, gamification, onRefreshGamification, onLogout}) {
               <label>Картки <input type="color" value={surface} onChange={e => setSurface(e.target.value)}/></label>
             </div>
           )}
-          <h2 style={{marginTop: 20}}>3 кардинальні інтерфейси</h2>
-          <p className="muted small">Оберіть візуальний стиль сайту:</p>
+
+          <h3 style={{marginTop: 18}}>3 кардинальні структурні макети</h3>
+          <p className="muted small">Розташування меню та кнопок в інтерфейсі:</p>
+          <div className="theme-buttons skins">
+            <button className={layout === 'sidebar' ? 'theme active' : 'theme'} onClick={() => { setLayout('sidebar'); save({...state, layout: 'sidebar'}); }}>📑 Класичний Сайдбар</button>
+            <button className={layout === 'top-nav' ? 'theme active' : 'theme'} onClick={() => { setLayout('top-nav'); save({...state, layout: 'top-nav'}); }}>🧭 Верхній Острівець</button>
+            <button className={layout === 'bottom-dock' ? 'theme active' : 'theme'} onClick={() => { setLayout('bottom-dock'); save({...state, layout: 'bottom-dock'}); }}>⚓ Командний Док</button>
+            <button className={layout === 'zen' ? 'theme active' : 'theme'} onClick={() => { setLayout('zen'); save({...state, layout: 'zen'}); }}>🧘 Дзен-Фокус</button>
+          </div>
+
+          <h3 style={{marginTop: 18}}>🎨 Колірні скіни</h3>
+          <p className="muted small">Оберіть візуальну палітру сайту:</p>
           <div className="theme-buttons skins">
             <button className={skin === 'classic' ? 'theme active' : 'theme'} onClick={() => { setSkin('classic'); save({...state, skin: 'classic'}); }}>🌿 Classic Green</button>
             <button className={skin === 'neon' ? 'theme active' : 'theme'} onClick={() => { setSkin('neon'); save({...state, skin: 'neon'}); }}>⚡ Cyberpunk Neon</button>
-            <button className={skin === 'candy' ? 'theme active' : 'theme'} onClick={() => { setSkin('candy'); save({...state, skin: 'candy'}); }}>🍭 Candy Pop (Дитячий)</button>
+            <button className={skin === 'candy' ? 'theme active' : 'theme'} onClick={() => { setSkin('candy'); save({...state, skin: 'candy'}); }}>🍭 Candy Pop</button>
             <button className={skin === 'nordic' ? 'theme active' : 'theme'} onClick={() => { setSkin('nordic'); save({...state, skin: 'nordic'}); }}>❄️ Nordic Minimalist</button>
+            <button className={skin === 'arcade' ? 'theme active' : 'theme'} onClick={() => { setSkin('arcade'); save({...state, skin: 'arcade'}); }}>👾 8-Bit Arcade</button>
+            <button className={skin === 'oled' ? 'theme active' : 'theme'} onClick={() => { setSkin('oled'); save({...state, skin: 'oled'}); }}>🖤 Midnight OLED</button>
+            <button className={skin === 'sunset' ? 'theme active' : 'theme'} onClick={() => { setSkin('sunset'); save({...state, skin: 'sunset'}); }}>🌅 Warm Sunset</button>
           </div>
-          <button className="primary" style={{marginTop: 12}} onClick={persist}>Застосувати дизайн</button>
+          <button className="primary" style={{marginTop: 12}} onClick={persist}>Застосувати налаштування</button>
         </div>
       </div>
+
+      {/* Password Recovery & Backup Code */}
+      {!state.guest && (
+        <div className="card" style={{marginTop: 16}}>
+          <h3>🔐 Відновлення паролю та Резервний код</h3>
+          <p className="muted small">Збережіть ваш 10-значний резервний код. Він дозволить відновити доступ до акаунту в разі втрати пароля без потреби в електронній пошті.</p>
+
+          <label>Ваш резервний код відновлення:</label>
+          <div className="recovery-code-box">
+            <span>{state.recoveryCode || 'EF-A1B2-C3D4'}</span>
+            <button className="secondary" type="button" onClick={() => {
+              navigator.clipboard.writeText(state.recoveryCode || 'EF-A1B2-C3D4');
+              setCopiedCode(true);
+              setTimeout(() => setCopiedCode(false), 2000);
+            }}>
+              {copiedCode ? 'Скопійовано ✓' : 'Копіювати'}
+            </button>
+          </div>
+
+          <hr style={{margin:'14px 0'}}/>
+          <h4>Секретне питання для швидкого скидання пароля</h4>
+          <label>Питання</label>
+          <UiSelect
+            value={secQ}
+            onChange={setSecQ}
+            options={[
+              {value:'Улюблене місто?',label:'Улюблене місто?'},
+              {value:'Перша школа або вчитель?',label:'Перша школа або вчитель?'},
+              {value:'Кличка першого улюбленця?',label:'Кличка першого улюбленця?'},
+              {value:'Улюблена страва або десерт?',label:'Улюблена страва або десерт?'},
+              {value:'Дівоче прізвище матері?',label:'Дівоче прізвище матері?'}
+            ]}
+          />
+          <label style={{marginTop:8}}>Відповідь на питання</label>
+          <input className="search" value={secA} onChange={e => setSecA(e.target.value)} placeholder="Введіть нову відповідь для збереження"/>
+          {secErr && <p className="auth-err" style={{marginTop:6}}>{secErr}</p>}
+          {secMsg && <p className="saved-message" style={{marginTop:6}}>{secMsg}</p>}
+          <button className="secondary" type="button" disabled={secBusy} onClick={saveRecovery} style={{marginTop:10}}>
+            {secBusy ? 'Збереження…' : 'Оновити секретне питання'}
+          </button>
+        </div>
+      )}
 
       {!state.guest && <ChangePasswordCard />}
 
@@ -2221,6 +2778,7 @@ function AdminDanger({save,state,setModal}) {
 
 function AboutPage() {
   const changelog = [
+    {v:'2.9.0', items:['Оновлена система ліг по очках XP з чіткими порогами: 🌱 Новачок (0), 🥉 Бронза (100), 🥈 Срібло (200), 🥇 Золото (500), 💎 Платина (1000), 🔮 Діамант (2000), 👑 Легенда (3500+ XP)','❄️ Streak Freeze (Авто-захист стріку): при зміні дня автоматично рятує серію днів, якщо вчора не було набрано XP; купівля за 50 XP у Профілі','3 кардинальні структурні макети: 📑 Класичний Сайдбар, 🧭 Верхній Острівець (Top Navbar без бічного меню), ⚓ Командний Док (macOS/iPad floating dock знизу) та 🧘 Дзен-Фокус (мінімалістичний картковий режим без відволікань)','3 нові візуальні теми/скіни: 👾 Retro 8-Bit Arcade, 🖤 Midnight OLED (100% глибокий чорний для збереження батареї) та 🌅 Warm Sunset (затишний коралово-персиковий градієнт)','🔑 Самовідновлення паролю («Забули пароль?»): відновлення через секретні питання або персональний 10-значний резервний код (EF-XXXX-XXXX) без сторонньої пошти','🎁 Щоденна скриня подарунків: сяючий банер на головній щодня з випадковим призом XP або безкоштовною заморозкою','🏅 Розширена вітрина бейджів: нові досягнення (Майстер слів, Заморозка, лігові бейджі Срібла/Платини/Діаманта) з переглядом у власному та публічних профілях','🎯 Живе оновлення прогресу Щоденних квестів під час проходження уроків та спринту']},
     {v:'2.8.0', items:['Виправлено скидання уроку (1/10 loop): Layout та Sidebar винесені за межі App, відповіді більше не перезапускають урок з 1-го питання','Додано кнопку «Вихід» у шапці, сайдбарі, профілі та налаштуваннях: повне завершення сесії та ізоляція профілів (ніки не змішуються)','Повний редизайн чату: видалено заплутаний Fingerprint/ротацію ключів, чат тепер простий та швидкий як у звичайному месенджері','Виправлено помилку «Зашифроване повідомлення (цей пристрій не має ключа)» — повідомлення одразу читаються з будь-якого авторизованого пристрою','Live Realtime (5с): автоматичне оновлення списку друзів, онлайн-статусу (🟢 / ⚪) та повідомлень','Зміна паролю в Профілі з перевіркою старого паролю та валідацією','3 кардинально різні інтерфейси: Cyberpunk Neon, Playful Kids/Candy Pop, Nordic Minimalist + Classic з кастомними checkbox/input/button','Статистика адмінки: показ кількості зареєстрованих користувачів та активних інкогніто-гостей']},
     {v:'2.7.0', items:['Гейміфікація v3: Ліги за очками (Бронза, Срібло, Золото, Платина, Алмаз, Майстер, Легенда)','Заморозка стріку (Streak Freeze): купівля за XP та захист від пропуску днів','Щоденні квести (Daily Quests) з нагородами XP','Подарункова скриня (Gift Box) за щоденну активність','Публічні профілі гравців для перегляду досягнень іншими користувачами']},
     {v:'2.6.1', items:['Виправлено зависання лічильника 1/10 у всіх завданнях (Sprint/SRS/Problems/Dictation)','Додано авто-перехід (1с) при правильній відповіді без зайвих кліків','Надійна синхронізація таблиць Notion: підтримка databases/data_sources та будь-яких назв колонок','Оновлено скрипт sync:notion з авто-підтягуванням .env та прямим записом у Neon','Додано роль UI/UX Дизайнера та покращено мобільний вигляд feedback/кнопок']},
@@ -2310,13 +2868,25 @@ function SettingsPage({state, save, onLogout}) {
           <p className="muted small">Prefers-reduced-motion з системи автоматично зменшує анімації.</p>
         </div>
         <div className="card">
-          <h2>🎨 Стиль оформлення</h2>
-          <p className="muted small">3 кардинально різні інтерфейси сайту:</p>
+          <h2>🧭 Структурний макет</h2>
+          <p className="muted small">3 кардинальні макети розміщення кнопок і меню:</p>
+          <div className="theme-buttons skins" style={{marginBottom: 16}}>
+            <button className={(state.layout || 'sidebar') === 'sidebar' ? 'theme active' : 'theme'} onClick={() => upd({layout: 'sidebar'})}>📑 Класичний Сайдбар</button>
+            <button className={(state.layout || 'sidebar') === 'top-nav' ? 'theme active' : 'theme'} onClick={() => upd({layout: 'top-nav'})}>🧭 Верхній Острівець</button>
+            <button className={(state.layout || 'sidebar') === 'bottom-dock' ? 'theme active' : 'theme'} onClick={() => upd({layout: 'bottom-dock'})}>⚓ Командний Док</button>
+            <button className={(state.layout || 'sidebar') === 'zen' ? 'theme active' : 'theme'} onClick={() => upd({layout: 'zen'})}>🧘 Дзен-Фокус</button>
+          </div>
+
+          <h2>🎨 Колірні скіни</h2>
+          <p className="muted small">Візуальна палітра інтерфейсу:</p>
           <div className="theme-buttons skins">
             <button className={state.skin === 'classic' ? 'theme active' : 'theme'} onClick={() => upd({skin: 'classic'})}>🌿 Classic</button>
             <button className={state.skin === 'neon' ? 'theme active' : 'theme'} onClick={() => upd({skin: 'neon'})}>⚡ Cyberpunk Neon</button>
-            <button className={state.skin === 'candy' ? 'theme active' : 'theme'} onClick={() => upd({skin: 'candy'})}>🍭 Candy Pop (Дитячий)</button>
+            <button className={state.skin === 'candy' ? 'theme active' : 'theme'} onClick={() => upd({skin: 'candy'})}>🍭 Candy Pop</button>
             <button className={state.skin === 'nordic' ? 'theme active' : 'theme'} onClick={() => upd({skin: 'nordic'})}>❄️ Nordic Minimalist</button>
+            <button className={state.skin === 'arcade' ? 'theme active' : 'theme'} onClick={() => upd({skin: 'arcade'})}>👾 8-Bit Arcade</button>
+            <button className={state.skin === 'oled' ? 'theme active' : 'theme'} onClick={() => upd({skin: 'oled'})}>🖤 Midnight OLED</button>
+            <button className={state.skin === 'sunset' ? 'theme active' : 'theme'} onClick={() => upd({skin: 'sunset'})}>🌅 Warm Sunset</button>
           </div>
         </div>
         <div className="card">

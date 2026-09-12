@@ -1223,3 +1223,346 @@ input[type="checkbox"]:focus-visible {
   gap: 10px;
   margin-top: 14px;
 }
+
+/* ===== 3 RADICAL STRUCTURAL LAYOUTS ===== */
+
+/* 1. Top Navbar Layout (No sidebar, wide centered container, horizontal header tabs) */
+[data-layout="top-nav"] .sidebar {
+  display: none !important;
+}
+[data-layout="top-nav"] .main {
+  margin-left: 0 !important;
+  width: 100% !important;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 16px 40px;
+}
+[data-layout="top-nav"] header {
+  position: sticky;
+  top: 12px;
+  z-index: 50;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  margin: 12px 0 20px 0;
+  padding: 10px 18px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  justify-content: space-between;
+}
+.top-nav-tabs {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  overflow-x: auto;
+  padding: 4px 0;
+  max-width: 100%;
+}
+.top-nav-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+.top-nav-tab:hover {
+  background: color-mix(in srgb, var(--surface) 50%, var(--border));
+  color: var(--text);
+}
+.top-nav-tab.active {
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 30%, transparent);
+  font-weight: 600;
+}
+
+/* 2. Bottom Command Deck Layout (Floating macOS/iPad-style dock at bottom center) */
+[data-layout="bottom-dock"] .sidebar {
+  display: none !important;
+}
+[data-layout="bottom-dock"] .main {
+  margin-left: 0 !important;
+  width: 100% !important;
+  max-width: 1140px;
+  margin: 0 auto;
+  padding: 0 16px 100px;
+}
+.command-dock {
+  position: fixed;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: color-mix(in srgb, var(--surface) 86%, transparent);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border);
+  box-shadow: 0 16px 40px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.06);
+  border-radius: 24px;
+  padding: 8px 12px;
+  max-width: calc(100vw - 32px);
+  overflow-x: auto;
+}
+.dock-item {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 8px 14px;
+  border-radius: 16px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  min-width: 54px;
+}
+.dock-item:hover {
+  transform: translateY(-4px) scale(1.08);
+  color: var(--text);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+.dock-item.active {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 35%, transparent);
+  font-weight: 700;
+}
+.dock-divider {
+  width: 1px;
+  height: 24px;
+  background: var(--border);
+  margin: 0 4px;
+}
+
+/* 3. Zen Focus Layout (Distraction-free, minimal drawer, 100% learning focus) */
+[data-layout="zen"] .sidebar {
+  display: none !important;
+}
+[data-layout="zen"] .main {
+  margin-left: 0 !important;
+  width: 100% !important;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 24px 16px 60px;
+}
+.zen-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 18px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+  backdrop-filter: blur(12px);
+  margin-bottom: 24px;
+}
+.zen-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(6px);
+  z-index: 80;
+  display: flex;
+  justify-content: flex-start;
+}
+.zen-drawer {
+  width: 320px;
+  max-width: 85vw;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  height: 100%;
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 10px 0 40px rgba(0,0,0,0.3);
+  overflow-y: auto;
+}
+
+/* ===== 3 NEW VISUAL SKINS / THEMES ===== */
+
+/* 1. Retro 8-Bit Arcade */
+[data-skin="arcade"] {
+  --accent: #10b981;
+  --bg: #090a15;
+  --surface: #121326;
+  --text: #e2e8f0;
+  --muted: #8b9bb4;
+  --border: #3b2d71;
+  --danger: #f43f5e;
+  --radius: 4px;
+  font-family: 'Courier New', Courier, monospace;
+}
+[data-skin="arcade"] .card {
+  border: 2px solid #3b2d71;
+  box-shadow: 4px 4px 0 #1e1338;
+}
+[data-skin="arcade"] .primary {
+  background: #10b981;
+  color: #051a10;
+  border: 2px solid #34d399;
+  box-shadow: 3px 3px 0 #064e3b;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+[data-skin="arcade"] .brand-mark {
+  background: #facc15;
+  color: #000;
+  border-radius: 2px;
+  font-weight: 900;
+}
+[data-skin="arcade"] .pill {
+  border-radius: 2px;
+  border: 1px solid #10b981;
+  background: rgba(16,185,129,0.15);
+  color: #10b981;
+}
+
+/* 2. Midnight OLED (100% Pitch Black) */
+[data-skin="oled"] {
+  --accent: #38bdf8;
+  --bg: #000000;
+  --surface: #0a0a0a;
+  --text: #f8fafc;
+  --muted: #71717a;
+  --border: #222222;
+  --danger: #ef4444;
+  --radius: 12px;
+}
+[data-skin="oled"] .main, [data-skin="oled"] .sidebar {
+  background: #000000 !important;
+}
+[data-skin="oled"] .card {
+  background: #080808;
+  border: 1px solid #222222;
+}
+[data-skin="oled"] .primary {
+  background: #38bdf8;
+  color: #000000;
+  font-weight: 600;
+}
+
+/* 3. Warm Sunset */
+[data-skin="sunset"] {
+  --accent: #f97316;
+  --bg: #181014;
+  --surface: #24161f;
+  --text: #fff1f2;
+  --muted: #fda4af;
+  --border: #4a2536;
+  --danger: #e11d48;
+  --radius: 16px;
+}
+[data-skin="sunset"][data-theme="light"] {
+  --accent: #ea580c;
+  --bg: #fff7ed;
+  --surface: #ffffff;
+  --text: #431407;
+  --muted: #9a3412;
+  --border: #fed7aa;
+}
+[data-skin="sunset"] .hero {
+  background: linear-gradient(135deg, #381a28, #2a1520);
+  border-color: #5b283f;
+}
+[data-skin="sunset"] .primary {
+  background: linear-gradient(90deg, #f97316, #e11d48);
+  color: #ffffff;
+}
+
+/* ===== FORGOT PASSWORD & RECOVERY STYLES ===== */
+.forgot-pass-btn {
+  background: transparent;
+  border: 0;
+  color: var(--accent);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 4px 0;
+  text-decoration: underline;
+  align-self: flex-start;
+  margin-top: 4px;
+}
+.forgot-pass-btn:hover {
+  opacity: 0.8;
+}
+.recovery-code-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: color-mix(in srgb, var(--surface) 40%, var(--border));
+  border: 1px dashed var(--accent);
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin: 10px 0;
+  font-family: ui-monospace, monospace;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--accent);
+}
+.recovery-code-box button {
+  padding: 4px 10px;
+  font-size: 12px;
+}
+.gift-banner {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(234, 88, 12, 0.12));
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  border-radius: 16px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+  animation: pulse-glow 3s infinite ease-in-out;
+}
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.2); }
+  50% { box-shadow: 0 0 16px 4px rgba(245, 158, 11, 0.25); }
+}
+.layout-switcher {
+  display: inline-flex;
+  background: color-mix(in srgb, var(--surface) 60%, var(--border));
+  border-radius: 12px;
+  padding: 3px;
+  gap: 2px;
+}
+.layout-btn {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  border-radius: 9px;
+  padding: 5px 9px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s;
+}
+.layout-btn.active {
+  background: var(--surface);
+  color: var(--accent);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  font-weight: 600;
+}
+
