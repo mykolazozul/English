@@ -79,11 +79,42 @@ const progKey = (w, mastery, srs) => {
 /* ==========================================================================
    ADVANCED AUDIO SYSTEM WITH MARIO 8-BIT PACK + DISTINCT SOUND EVENTS
    ========================================================================== */
+let _audioCtx = null;
+function getAudioCtx() {
+  try {
+    const C = window.AudioContext || window.webkitAudioContext;
+    if (!C) return null;
+    if (!_audioCtx) {
+      _audioCtx = new C();
+    }
+    if (_audioCtx.state === 'suspended') {
+      _audioCtx.resume().catch(() => {});
+    }
+    return _audioCtx;
+  } catch {
+    return null;
+  }
+}
+
+if (typeof window !== 'undefined') {
+  const unlockAudio = () => {
+    try {
+      const c = getAudioCtx();
+      if (c && c.state === 'suspended') {
+        c.resume().catch(() => {});
+      }
+    } catch {}
+  };
+  ['touchstart', 'touchend', 'click', 'keydown'].forEach(evt => {
+    window.addEventListener(evt, unlockAudio, { passive: true, capture: true });
+  });
+}
+
 function playMarioCoin() {
   try {
     if (window.__efQuiet || window.__efNoSfx) return;
-    const C = window.AudioContext || window.webkitAudioContext; if (!C) return;
-    const c = new C();
+    const c = getAudioCtx(); if (!c) return;
+    if (c.state === 'suspended') c.resume().catch(() => {});
     // Authentic Mario Coin: Square wave B5 (987.77Hz) for 80ms, then E6 (1318.51Hz) for 320ms
     const o = c.createOscillator(), g = c.createGain();
     o.type = 'square';
@@ -101,8 +132,8 @@ function playMarioCoin() {
 function playMarioJump() {
   try {
     if (window.__efQuiet || window.__efNoSfx) return;
-    const C = window.AudioContext || window.webkitAudioContext; if (!C) return;
-    const c = new C();
+    const c = getAudioCtx(); if (!c) return;
+    if (c.state === 'suspended') c.resume().catch(() => {});
     const o = c.createOscillator(), g = c.createGain();
     o.type = 'square';
     o.frequency.setValueAtTime(174.61, c.currentTime);
@@ -118,8 +149,8 @@ function playMarioJump() {
 function playMarioPowerUp() {
   try {
     if (window.__efQuiet || window.__efNoSfx) return;
-    const C = window.AudioContext || window.webkitAudioContext; if (!C) return;
-    const c = new C();
+    const c = getAudioCtx(); if (!c) return;
+    if (c.state === 'suspended') c.resume().catch(() => {});
     const freqs = [392, 493.88, 587.33, 783.99, 987.77];
     freqs.forEach((f, i) => {
       const o = c.createOscillator(), g = c.createGain();
@@ -138,8 +169,8 @@ function playMarioPowerUp() {
 function playMario1Up() {
   try {
     if (window.__efQuiet || window.__efNoSfx) return;
-    const C = window.AudioContext || window.webkitAudioContext; if (!C) return;
-    const c = new C();
+    const c = getAudioCtx(); if (!c) return;
+    if (c.state === 'suspended') c.resume().catch(() => {});
     const notes = [659.25, 783.99, 1318.51, 1046.50, 1174.66, 1567.98];
     notes.forEach((f, i) => {
       const o = c.createOscillator(), g = c.createGain();
@@ -158,8 +189,8 @@ function playMario1Up() {
 function playMarioGameOver() {
   try {
     if (window.__efQuiet || window.__efNoSfx) return;
-    const C = window.AudioContext || window.webkitAudioContext; if (!C) return;
-    const c = new C();
+    const c = getAudioCtx(); if (!c) return;
+    if (c.state === 'suspended') c.resume().catch(() => {});
     const notes = [261.63, 196.00, 164.81, 220.00, 246.94, 220.00, 207.65, 233.08, 196.00];
     notes.forEach((f, i) => {
       const o = c.createOscillator(), g = c.createGain();
@@ -186,8 +217,9 @@ function playTone(ok, pack) {
       return;
     }
 
-    const C = window.AudioContext || window.webkitAudioContext; if (!C) return;
-    const c = new C(), o = c.createOscillator(), g = c.createGain();
+    const c = getAudioCtx(); if (!c) return;
+    if (c.state === 'suspended') c.resume().catch(() => {});
+    const o = c.createOscillator(), g = c.createGain();
     
     if (p === 'duo') {
       if (ok) {
@@ -260,8 +292,8 @@ function playCoinSound() {
   }
   try {
     if (window.__efQuiet || window.__efNoSfx) return;
-    const C = window.AudioContext || window.webkitAudioContext; if (!C) return;
-    const c = new C();
+    const c = getAudioCtx(); if (!c) return;
+    if (c.state === 'suspended') c.resume().catch(() => {});
     [987.77, 1318.51].forEach((f, i) => {
       const o = c.createOscillator(), g = c.createGain();
       o.type = 'sine';
@@ -284,8 +316,8 @@ function playFanfareTone(pack) {
   }
   try {
     if (window.__efQuiet || window.__efNoSfx) return;
-    const C = window.AudioContext || window.webkitAudioContext; if (!C) return;
-    const c = new C();
+    const c = getAudioCtx(); if (!c) return;
+    if (c.state === 'suspended') c.resume().catch(() => {});
     const freqs = [523.25, 659.25, 783.99, 1046.50];
     freqs.forEach((freq, i) => {
       const o = c.createOscillator(), g = c.createGain();
@@ -309,8 +341,8 @@ function playChestTone(pack) {
   }
   try {
     if (window.__efQuiet || window.__efNoSfx) return;
-    const C = window.AudioContext || window.webkitAudioContext; if (!C) return;
-    const c = new C();
+    const c = getAudioCtx(); if (!c) return;
+    if (c.state === 'suspended') c.resume().catch(() => {});
     const freqs = [392, 523.25, 659.25, 783.99];
     freqs.forEach((f, i) => {
       const o = c.createOscillator(), g = c.createGain();
@@ -329,8 +361,8 @@ function playChestTone(pack) {
 function playBossHitSound() {
   try {
     if (window.__efQuiet || window.__efNoSfx) return;
-    const C = window.AudioContext || window.webkitAudioContext; if (!C) return;
-    const c = new C();
+    const c = getAudioCtx(); if (!c) return;
+    if (c.state === 'suspended') c.resume().catch(() => {});
     const o = c.createOscillator(), g = c.createGain();
     o.type = 'sawtooth';
     o.frequency.setValueAtTime(180, c.currentTime);
@@ -345,8 +377,8 @@ function playBossHitSound() {
 function playCaseTickSound() {
   try {
     if (window.__efQuiet || window.__efNoSfx) return;
-    const C = window.AudioContext || window.webkitAudioContext; if (!C) return;
-    const c = new C();
+    const c = getAudioCtx(); if (!c) return;
+    if (c.state === 'suspended') c.resume().catch(() => {});
     const o = c.createOscillator(), g = c.createGain();
     o.type = 'triangle';
     o.frequency.setValueAtTime(640, c.currentTime);
@@ -740,7 +772,8 @@ async function requestJson(path, options={}) {
   const data = await res.json().catch(()=>({}));
   if (!res.ok) {
     const e=new Error(data.error || `HTTP ${res.status}`); e.status=res.status; e.data=data;
-    if (res.status===401 && !String(path).startsWith('/api/auth') && !String(path).startsWith('/api/admin')) {
+    const isExcluded = String(path).startsWith('/api/auth') || String(path).startsWith('/api/admin') || String(path).startsWith('/api/reports') || String(path).startsWith('/api/notion-sync') || String(path).startsWith('/api/analytics') || String(path).startsWith('/api/gamification');
+    if (res.status===401 && !isExcluded) {
       window.dispatchEvent(new CustomEvent('ef-auth-expired',{detail:{path,message:e.message}}));
     }
     throw e;
@@ -856,14 +889,16 @@ function Sidebar({mobile, setMobile, page, nav}) {
       <button className={'nav' + (page === 'profile' ? ' active' : '')} onClick={() => { nav('profile'); setMobile?.(false); }}><User size={18}/>Профіль</button>
       <button className={'nav' + (page === 'settings' ? ' active' : '')} onClick={() => { nav('settings'); setMobile?.(false); }}><Settings size={18}/>Налаштування</button>
       <button className={'nav' + (page === 'about' ? ' active' : '')} onClick={() => { nav('about'); setMobile?.(false); }}><Sparkles size={18}/>Про додаток</button>
-      <button className={'nav' + (page === 'admin' ? ' active' : '')} onClick={() => { nav('admin'); setMobile?.(false); }}><Shield size={18}/>Адмін</button>
+      <button className={'nav nav-admin' + (page === 'admin' ? ' active' : '')} onClick={() => { nav('admin'); setMobile?.(false); }}><Shield size={18}/>Адмін</button>
     </aside>
   );
 }
 
 function Layout({children, state, page, nav, mobile, setMobile}) {
+  const isAdmin = state?.role === 'admin' || String(state?.nick).toLowerCase() === 'boss' || String(state?.name).toLowerCase() === 'boss';
   return (
     <div className="app">
+      {mobile && <div className="sidebar-backdrop" onClick={() => setMobile(false)} aria-hidden="true" />}
       <Sidebar mobile={mobile} setMobile={setMobile} page={page} nav={nav} />
       <main className="main">
         <header>
@@ -882,6 +917,27 @@ function Layout({children, state, page, nav, mobile, setMobile}) {
               <span className="muted header-user-nick"> · @{state.nick}</span>
               {state.guest && <span className="pill guest-pill"><Ghost size={12}/> гість</span>}
             </div>
+            {isAdmin && (
+              <button
+                type="button"
+                className="admin-header-btn mobile-only"
+                onClick={() => nav('admin')}
+                title="Адмін-панель"
+                style={{
+                  display: 'none',
+                  alignItems: 'center',
+                  gap: 4,
+                  padding: '4px 8px',
+                  borderRadius: 10,
+                  fontSize: 11,
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                <Shield size={13} />
+                <span>Адмін</span>
+              </button>
+            )}
           </div>
           <div className="header-stats">
             <span title="Серія днів" className="stat-chip streak-chip">🔥 {state.streak}</span>
@@ -1146,18 +1202,18 @@ export default function App() {
   }, [state.guest]);
   useEffect(() => {
     const onExpired = e => {
-      if (state.guest) return;
+      if (state.guest || page === 'admin') return;
       const path = String((e && e.detail && e.detail.path) || '');
       // The lesson flow already surfaces a stale session inline with a retry.
       // Admin endpoints handle auth/mock internally without kicking the admin out.
-      if (path.startsWith('/api/lessons') || path.startsWith('/api/admin')) return;
+      if (path.startsWith('/api/lessons') || path.startsWith('/api/admin') || path.startsWith('/api/reports') || path.startsWith('/api/notion-sync') || path.startsWith('/api/analytics')) return;
       // For other resources keep the current page and offer a re-login button
       // instead of silently dumping the user onto the auth screen.
       setModal({type:'error',title:'Сесію завершено',text:'Сервер більше не приймає цю сесію. Увійди ще раз — локальний профіль залишиться на пристрої.',yes:'Увійти знову',onYes:()=>{setLessonCfg(null);setPage('onboarding')}});
     };
     window.addEventListener('ef-auth-expired', onExpired);
     return () => window.removeEventListener('ef-auth-expired', onExpired);
-  }, [state.guest]);
+  }, [state.guest, page]);
   useEffect(() => {
     if (!navigator.onLine) return;
     loadServerConfig().then(cfg => { if (Object.keys(cfg).length) setState(prev => ({...prev,admin:{...prev.admin,...cfg}})); }).catch(() => {});
@@ -1891,10 +1947,11 @@ function ShopPage({state, save, onRefreshGamification, allUsers}) {
     { id: 'cosmetic_frame_emerald', css: 'frame-emerald', name: '🍀 Смарагдова рамка', rarity: 'COMMON', cost: 25 },
   ];
   const ANIMATED_AVATARS = [
-    { id: 'cosmetic_ava_cyber', css: 'cyber-flame', emoji: '🤖', name: '🔷 Кіберполум\'я', rarity: 'EPIC', cost: 70 },
-    { id: 'cosmetic_ava_dragon', css: 'neon-dragon', emoji: '🐉', name: '🐉 Неон-Дракон', rarity: 'LEGENDARY', cost: 100 },
-    { id: 'cosmetic_ava_phoenix', css: 'royal-phoenix', emoji: '🦅', name: '🦅 Королівський Фенікс', rarity: 'LEGENDARY', cost: 110 },
-    { id: 'cosmetic_ava_star', css: 'celestial-star', emoji: '⭐', name: '⭐ Небесна Зірка', rarity: 'EPIC', cost: 75 },
+    { id: 'cosmetic_ava_samurai', css: 'cyber-samurai', emoji: '🥷', name: '⚡ Кібер-Самурай', rarity: 'LEGENDARY', cost: 110 },
+    { id: 'cosmetic_ava_sorcerer', css: 'astral-sorcerer', emoji: '🧙‍♂️', name: '🔮 Астральний Чаклун', rarity: 'EPIC', cost: 85 },
+    { id: 'cosmetic_ava_phoenix', css: 'phoenix-sovereign', emoji: '🦅', name: '🔥 Повелитель Фенікс', rarity: 'LEGENDARY', cost: 120 },
+    { id: 'cosmetic_ava_pharaoh', css: 'solar-pharaoh', emoji: '👑', name: '☀️ Сонячний Фараон', rarity: 'EPIC', cost: 90 },
+    { id: 'cosmetic_ava_frost', css: 'frost-titan', emoji: '❄️', name: '🧊 Крижаний Титан', rarity: 'EPIC', cost: 80 },
   ];
   // Gift catalog - items you can send to friends (not keep for yourself)
   const GIFTABLE = [
@@ -2688,6 +2745,34 @@ function DailyQuests({quests}) {
   );
 }
 
+function isMetricIncreased(type, state, learned) {
+  const snap = state?.midnightSnap;
+  if (type === 'streak') {
+    if (snap && typeof snap.streak === 'number') {
+      return (state.streak || 0) > snap.streak;
+    }
+    return (state.todayXp || 0) > 0 && (state.streak || 0) > 0;
+  }
+  if (type === 'xp') {
+    if (snap && typeof snap.xp === 'number') {
+      return (state.xp || 0) > snap.xp;
+    }
+    return (state.todayXp || 0) > 0;
+  }
+  if (type === 'target') {
+    const goal = state?.dailyGoal || 30;
+    const progress = state?.todayXp || 0;
+    return progress > 0 && (progress >= goal || (snap ? progress > (snap.todayXp || 0) : true));
+  }
+  if (type === 'learned') {
+    if (snap && typeof snap.learned === 'number') {
+      return (learned || 0) > snap.learned;
+    }
+    return false;
+  }
+  return false;
+}
+
 function Dashboard({state, learned, due, words, onLearn, onReview, cloudMsg, quests, giftAvailable, onOpenGift}) {
   const league = leagueForXp(state.xp || 0);
   return (
@@ -2721,7 +2806,11 @@ function Dashboard({state, learned, due, words, onLearn, onReview, cloudMsg, que
           <h1>Привіт, {state.name || state.nick} 👋</h1>
           <div className="hero-league-row">
             <LeagueBadge xp={state.xp || 0} />
-            {state.streak > 0 && <span className="freeze-chip"><span className="emoji-animated-streak">🔥</span> {state.streak} днів</span>}
+            {state.streak > 0 && (
+              <span className="freeze-chip">
+                <span className={isMetricIncreased('streak', state, learned) ? "emoji-animated-streak" : ""}>🔥</span> {state.streak} днів
+              </span>
+            )}
           </div>
           <p>Слів у базі: <b>{words}</b> · Вивчено: <b>{learned}</b> · На повторення SRS: <b>{due}</b></p>
           {cloudMsg && <p className="saved-message">{cloudMsg}</p>}
@@ -2734,10 +2823,30 @@ function Dashboard({state, learned, due, words, onLearn, onReview, cloudMsg, que
       </div>
       <EmojiPulse state={state}/>
       <div className="grid stats">
-        <Card icon={<span className="emoji-animated-streak">🔥</span>} title="Streak" value={state.streak} sub="днів" />
-        <Card icon={<span className="emoji-animated-xp">⚡</span>} title="XP" value={state.xp} sub={`сьогодні ${state.todayXp}`} />
-        <Card icon={<span className="emoji-animated-target">🎯</span>} title="Ціль" value={`${Math.min(100, Math.round((state.todayXp / state.dailyGoal) * 100))}%`} sub={`${state.todayXp}/${state.dailyGoal}`} />
-        <Card icon={<span className="emoji-animated-learned">🧠</span>} title="Вивчено" value={learned} sub={`з ${words}`} />
+        <Card
+          icon={<span className={isMetricIncreased('streak', state, learned) ? "emoji-animated-streak" : ""}>🔥</span>}
+          title="Streak"
+          value={state.streak}
+          sub="днів"
+        />
+        <Card
+          icon={<span className={isMetricIncreased('xp', state, learned) ? "emoji-animated-xp" : ""}>⚡</span>}
+          title="XP"
+          value={state.xp}
+          sub={`сьогодні ${state.todayXp}`}
+        />
+        <Card
+          icon={<span className={isMetricIncreased('target', state, learned) ? "emoji-animated-target" : ""}>🎯</span>}
+          title="Ціль"
+          value={`${Math.min(100, Math.round((state.todayXp / state.dailyGoal) * 100))}%`}
+          sub={`${state.todayXp}/${state.dailyGoal}`}
+        />
+        <Card
+          icon={<span className={isMetricIncreased('learned', state, learned) ? "emoji-animated-learned" : ""}>🧠</span>}
+          title="Вивчено"
+          value={learned}
+          sub={`з ${words}`}
+        />
       </div>
       <DailyQuests quests={quests} />
     </section>
@@ -3654,26 +3763,27 @@ function Stats({state, learned}) {
       {statDesign === 'cefr' && (
         <div className="card cefr-diploma-container fade-in">
           {/* Top Diploma Header with Official Crest */}
-          <div className="cefr-diploma-header" style={{position:'relative'}}>
-            <button
-              type="button"
-              className="cert-print-icon-btn"
-              onClick={() => window.print()}
-              title="Роздрукувати офіційний сертифікат або зберегти як PDF"
-              style={{position:'absolute',top:14,right:14}}
-            >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-              <span>Друк / PDF</span>
-            </button>
+          <div className="cefr-diploma-header">
             <div className="cefr-crest-emblem">
               <div className="cefr-crest-icon">🏛️</div>
             </div>
             <span style={{fontSize:11,fontWeight:800,textTransform:'uppercase',letterSpacing:'0.15em',color:'var(--accent,#10b981)'}}>
               COUNCIL OF EUROPE · OFFICIAL FRAMEWORK OF REFERENCE
             </span>
-            <h2 style={{margin:'6px 0 2px',fontSize:24,letterSpacing:'-0.02em'}}>
-              Академічний Диплом Володіння Мовою (CEFR)
-            </h2>
+            <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:12,flexWrap:'wrap',margin:'6px 0 4px'}}>
+              <h2 style={{margin:0,fontSize:24,letterSpacing:'-0.02em'}}>
+                Академічний Диплом Володіння Мовою (CEFR)
+              </h2>
+              <button
+                type="button"
+                className="cert-print-icon-btn"
+                onClick={() => window.print()}
+                title="Роздрукувати офіційний сертифікат або зберегти як PDF"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                <span>Друк / PDF</span>
+              </button>
+            </div>
             <p className="muted small" style={{maxWidth:560,margin:'0 auto'}}>
               Цей міжнародний сертифікат засвідчує рівень мовної компетентності та практичний словниковий запас користувача платформи English Flow.
             </p>
@@ -3729,7 +3839,7 @@ function Stats({state, learned}) {
             })}
           </div>
 
-          {/* Certificate Footer with Gold Stamp & Print Button */}
+          {/* Certificate Footer with Gold Stamp */}
           <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:16,marginTop:24,paddingTop:18,borderTop:'1px dashed var(--border)'}}>
             <div style={{display:'flex',alignItems:'center',gap:14}}>
               <div className="cefr-gold-stamp">
@@ -3743,16 +3853,6 @@ function Stats({state, learned}) {
                 <div>Глобальний стандарт: CEFR Council of Europe standard</div>
               </div>
             </div>
-
-            <button
-              type="button"
-              className="cert-print-icon-btn"
-              onClick={() => window.print()}
-              style={{padding:'9px 16px',fontSize:13}}
-            >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-              <span>🖨️ Друк сертифіката / PDF</span>
-            </button>
           </div>
         </div>
       )}
@@ -4444,17 +4544,42 @@ function Profile({state, save, gamification, onRefreshGamification}) {
 function Admin({state, save, setWordsLive, wordsLive, setModal}) {
   const [pin, setPin] = useState('');
   const [otp, setOtp] = useState('');
-  const [ok, setOk] = useState(false);
-  const [adminInfo, setAdminInfo] = useState(null);
+  const [ok, setOk] = useState(() => {
+    try { return sessionStorage.getItem('ef_admin_unlocked') === '1'; } catch { return false; }
+  });
+  const [adminInfo, setAdminInfo] = useState(() => {
+    try { return JSON.parse(sessionStorage.getItem('ef_admin_info') || 'null'); } catch { return null; }
+  });
   const [adminDesign, setAdminDesign] = useState(()=>localStorage.getItem('ef-admin-design')||'apple');
   const [adminTab, setAdminTab] = useState('overview'); // 'overview' | 'vocabulary' | 'users' | 'analytics' | 'security' | 'settings'
   const [localModal, setLocalModal] = useState(null);
 
   const activeModalHandler = setModal || setLocalModal;
 
-  useEffect(() => { fetch('/api/admin-auth',{credentials:'include'}).then(r=>r.ok?r.json():null).then(d=>{setOk(!!d?.ok);setAdminInfo(d?.admin||null)}).catch(()=>{setOk(false);setAdminInfo(null)}); }, []);
   useEffect(() => {
-    const lock = () => setOk(false);
+    fetch('/api/admin-auth', {credentials:'include'})
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        if (d?.ok) {
+          setOk(true);
+          setAdminInfo(d.admin || null);
+          try {
+            sessionStorage.setItem('ef_admin_unlocked', '1');
+            sessionStorage.setItem('ef_admin_info', JSON.stringify(d.admin || null));
+          } catch {}
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    const lock = () => {
+      setOk(false);
+      try {
+        sessionStorage.removeItem('ef_admin_unlocked');
+        sessionStorage.removeItem('ef_admin_info');
+      } catch {}
+    };
     window.addEventListener('ef-admin-lock', lock);
     return () => window.removeEventListener('ef-admin-lock', lock);
   }, []);
@@ -4467,7 +4592,17 @@ function Admin({state, save, setWordsLive, wordsLive, setModal}) {
   const [syncProg, setSyncProg] = useState({cur:0, total:0, label:''});
   const [syncMeta, setSyncMeta] = useState(notionSyncMeta);
 
-  const unlock = (info=null) => { setOk(true); setAdminInfo(info||adminInfo); setPin(''); setAuthErr(''); };
+  const unlock = (info=null) => {
+    setOk(true);
+    const resolved = info || adminInfo || {nick: 'admin', role: 'admin'};
+    setAdminInfo(resolved);
+    try {
+      sessionStorage.setItem('ef_admin_unlocked', '1');
+      sessionStorage.setItem('ef_admin_info', JSON.stringify(resolved));
+    } catch {}
+    setPin('');
+    setAuthErr('');
+  };
   const changeAdminDesign = v => { setAdminDesign(v); localStorage.setItem('ef-admin-design',v); };
   useEffect(() => { setA({...state.admin}); }, [state.admin]);
 
@@ -4833,7 +4968,7 @@ function Admin({state, save, setWordsLive, wordsLive, setModal}) {
 }
 function AdminSecurity2FA(){
   const [status,setStatus]=useState(null),[secret,setSecret]=useState(''),[uri,setUri]=useState(''),[code,setCode]=useState(''),[busy,setBusy]=useState(false),[err,setErr]=useState(''),[passkeys,setPasskeys]=useState(null);
-  const load=useCallback(()=>requestJson('/api/admin-auth').then(d=>setStatus(!!d.admin?.two_factor)).catch(()=>setStatus(null)),[]);
+  const load=useCallback(()=>requestJson('/api/admin-auth').then(d=>setStatus(!!d.admin?.two_factor)).catch(()=>setStatus(false)),[]);
   const loadPasskeys=useCallback(()=>requestJson('/api/admin-auth',{method:'POST',body:JSON.stringify({action:'passkey-auth-options'})}).then(()=>setPasskeys(true)).catch(()=>setPasskeys(false)),[]);
   useEffect(()=>{load();loadPasskeys()},[load,loadPasskeys]);
   const setup=async()=>{setBusy(true);setErr('');try{const d=await requestJson('/api/admin-auth',{method:'POST',body:JSON.stringify({action:'2fa-setup'})});setSecret(d.secret||'');setUri(d.uri||'');setStatus(false)}catch(e){setErr(e.message)}finally{setBusy(false)}};
