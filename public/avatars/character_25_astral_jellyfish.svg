@@ -1,14 +1,4 @@
-import fs from 'fs';
-import path from 'path';
-
-const AVATARS_DIR = 'public/avatars';
-if (!fs.existsSync(AVATARS_DIR)) {
-  fs.mkdirSync(AVATARS_DIR, { recursive: true });
-}
-
-// Shared Futuristic Metallic Circular Frame Template (Dark Steel, Beveled Circular UI Border, Cyan Edge Glow, Gold Clamps)
-function generateFrameSvg(innerElements, customDefs = '', filterId = '') {
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
   <defs>
     <!-- Master Metallic UI Gradients -->
     <linearGradient id="frameBevelGrad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -43,7 +33,16 @@ function generateFrameSvg(innerElements, customDefs = '', filterId = '') {
       <circle cx="256" cy="256" r="212" />
     </clipPath>
 
-    ${customDefs}
+    
+      <radialGradient id="jellyGlow" cx="50%" cy="30%" r="70%">
+        <stop offset="0%" stop-color="#c084fc" /><stop offset="60%" stop-color="#6366f1" /><stop offset="100%" stop-color="#1e1b4b" />
+      </radialGradient>
+    <style>
+      @keyframes domePulse { 0%, 100% { transform: scale(1, 1); } 50% { transform: scale(1.08, 0.92); } }
+      @keyframes floatTentacles { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(12px); } }
+      .jelly-dome { transform-origin: 256px 200px; animation: domePulse 2.6s ease-in-out infinite; }
+      .jelly-legs { animation: floatTentacles 2.6s ease-in-out infinite; }
+    </style>
   </defs>
 
   <style>
@@ -67,7 +66,25 @@ function generateFrameSvg(innerElements, customDefs = '', filterId = '') {
 
   <!-- BACKGROUND & CHARACTER CONTENT (CLIPPED TO CIRCLE) -->
   <g clip-path="url(#avatarScreenClip)">
-    ${innerElements}
+    
+  <g id="character-bg"><rect x="0" y="0" width="512" height="512" fill="#030712" />
+         <circle cx="256" cy="256" r="175" fill="#1e1b4b" /></g>
+  <g id="character-body">
+      <!-- Translucent Glowing Dome -->
+      <g class="jelly-dome">
+        <path d="M 160 230 C 160 130 352 130 352 230 C 352 255 160 255 160 230 Z" fill="url(#jellyGlow)" opacity="0.85" stroke="#a855f7" stroke-width="3" />
+        <circle cx="216" cy="200" r="10" fill="#fbcfe8" opacity="0.6" />
+        <circle cx="296" cy="200" r="10" fill="#fbcfe8" opacity="0.6" />
+      </g>
+      <!-- Flowing Bioluminescent Tentacles -->
+      <g class="jelly-legs" stroke="#c084fc" stroke-width="3.5" stroke-linecap="round" fill="none">
+        <path d="M 190 255 Q 170 330 200 410" />
+        <path d="M 230 255 Q 260 340 230 420" stroke="#38bdf8" />
+        <path d="M 282 255 Q 250 340 282 420" stroke="#38bdf8" />
+        <path d="M 322 255 Q 342 330 312 410" />
+      </g>
+    </g>
+  
   </g>
 
   <!-- ================= MASTER FUTURISTIC METALLIC ROUND FRAME ================= -->
@@ -117,7 +134,4 @@ function generateFrameSvg(innerElements, customDefs = '', filterId = '') {
       <path d="M 256 12 A 244 244 0 0 1 400 60" fill="none" stroke="url(#lightSweepGrad)" stroke-width="6" stroke-linecap="round" />
     </g>
   </g>
-</svg>`;
-}
-
-export { generateFrameSvg, AVATARS_DIR };
+</svg>

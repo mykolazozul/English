@@ -1,14 +1,4 @@
-import fs from 'fs';
-import path from 'path';
-
-const AVATARS_DIR = 'public/avatars';
-if (!fs.existsSync(AVATARS_DIR)) {
-  fs.mkdirSync(AVATARS_DIR, { recursive: true });
-}
-
-// Shared Futuristic Metallic Circular Frame Template (Dark Steel, Beveled Circular UI Border, Cyan Edge Glow, Gold Clamps)
-function generateFrameSvg(innerElements, customDefs = '', filterId = '') {
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
   <defs>
     <!-- Master Metallic UI Gradients -->
     <linearGradient id="frameBevelGrad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -43,7 +33,17 @@ function generateFrameSvg(innerElements, customDefs = '', filterId = '') {
       <circle cx="256" cy="256" r="212" />
     </clipPath>
 
-    ${customDefs}
+    
+    <radialGradient id="shopGlow_shop_avatar_07" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#ec4899" stop-opacity="0.9" />
+      <stop offset="100%" stop-color="#020617" stop-opacity="0.95" />
+    </radialGradient>
+  <style>
+    @keyframes shopHeroBob { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-10px) scale(1.05); } }
+    @keyframes shopAuraPulse { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
+    .shop-hero-core { transform-origin: 256px 256px; animation: shopHeroBob 3s ease-in-out infinite; }
+    .shop-aura-ring { animation: shopAuraPulse 2s ease-in-out infinite; }
+  </style>
   </defs>
 
   <style>
@@ -67,7 +67,23 @@ function generateFrameSvg(innerElements, customDefs = '', filterId = '') {
 
   <!-- BACKGROUND & CHARACTER CONTENT (CLIPPED TO CIRCLE) -->
   <g clip-path="url(#avatarScreenClip)">
-    ${innerElements}
+    
+    <g id="character-bg">
+      <rect x="0" y="0" width="512" height="512" fill="#030712" />
+      <circle cx="256" cy="256" r="175" fill="url(#shopGlow_shop_avatar_07)" />
+      <circle cx="256" cy="256" r="140" fill="none" stroke="#ec4899" stroke-width="2" stroke-dasharray="8 6" class="shop-aura-ring" />
+    </g>
+    <g id="character-body" class="shop-hero-core">
+      <!-- Monumental Crest -->
+      <circle cx="256" cy="256" r="85" fill="#0f172a" stroke="#ec4899" stroke-width="6" />
+      <text x="256" y="280" font-size="78" text-anchor="middle" font-family="'Apple Color Emoji','Segoe UI Emoji',sans-serif">🐱</text>
+      <!-- Decorative Cyber Flares -->
+      <polygon points="256,120 266,150 256,140 246,150" fill="#ec4899" />
+      <polygon points="256,392 266,362 256,372 246,362" fill="#ec4899" />
+      <polygon points="120,256 150,266 140,256 150,246" fill="#ec4899" />
+      <polygon points="392,256 362,266 372,256 362,246" fill="#ec4899" />
+    </g>
+  
   </g>
 
   <!-- ================= MASTER FUTURISTIC METALLIC ROUND FRAME ================= -->
@@ -117,7 +133,4 @@ function generateFrameSvg(innerElements, customDefs = '', filterId = '') {
       <path d="M 256 12 A 244 244 0 0 1 400 60" fill="none" stroke="url(#lightSweepGrad)" stroke-width="6" stroke-linecap="round" />
     </g>
   </g>
-</svg>`;
-}
-
-export { generateFrameSvg, AVATARS_DIR };
+</svg>

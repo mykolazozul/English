@@ -1,14 +1,4 @@
-import fs from 'fs';
-import path from 'path';
-
-const AVATARS_DIR = 'public/avatars';
-if (!fs.existsSync(AVATARS_DIR)) {
-  fs.mkdirSync(AVATARS_DIR, { recursive: true });
-}
-
-// Shared Futuristic Metallic Circular Frame Template (Dark Steel, Beveled Circular UI Border, Cyan Edge Glow, Gold Clamps)
-function generateFrameSvg(innerElements, customDefs = '', filterId = '') {
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
   <defs>
     <!-- Master Metallic UI Gradients -->
     <linearGradient id="frameBevelGrad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -43,7 +33,12 @@ function generateFrameSvg(innerElements, customDefs = '', filterId = '') {
       <circle cx="256" cy="256" r="212" />
     </clipPath>
 
-    ${customDefs}
+    <style>
+      @keyframes potionBubble { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.18); } }
+      @keyframes maskWiggle { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(3deg); } }
+      .potion-flask { transform-origin: 320px 340px; animation: potionBubble 1.4s ease-in-out infinite; }
+      .raccoon-head { animation: maskWiggle 2s ease-in-out infinite; }
+    </style>
   </defs>
 
   <style>
@@ -67,7 +62,32 @@ function generateFrameSvg(innerElements, customDefs = '', filterId = '') {
 
   <!-- BACKGROUND & CHARACTER CONTENT (CLIPPED TO CIRCLE) -->
   <g clip-path="url(#avatarScreenClip)">
-    ${innerElements}
+    
+  <g id="character-bg"><rect x="0" y="0" width="512" height="512" fill="#14532d" />
+         <circle cx="256" cy="256" r="175" fill="#166534" /></g>
+  <g id="character-body">
+      <g class="raccoon-head" transform-origin="256px 240px">
+        <!-- Fur Body -->
+        <ellipse cx="256" cy="340" rx="70" ry="80" fill="#475569" stroke="#1e293b" stroke-width="3.5" />
+        <!-- Head -->
+        <polygon points="180,180 332,180 256,280" fill="#64748b" stroke="#1e293b" stroke-width="3" />
+        <!-- Bandit Eye Mask -->
+        <polygon points="190,195 322,195 256,245" fill="#0f172a" />
+        <!-- Eyes -->
+        <circle cx="228" cy="210" r="8" fill="#facc15" /><circle cx="230" cy="208" r="3" fill="#fff" />
+        <circle cx="284" cy="210" r="8" fill="#facc15" /><circle cx="286" cy="208" r="3" fill="#fff" />
+        <!-- Cute White Cheeks -->
+        <polygon points="180,240 216,210 216,260" fill="#f1f5f9" />
+        <polygon points="332,240 296,210 296,260" fill="#f1f5f9" />
+      </g>
+      <!-- Boiling Erlenmeyer Flask -->
+      <g class="potion-flask">
+        <polygon points="305,310 335,310 355,370 285,370" fill="#22c55e" stroke="#15803d" stroke-width="3" />
+        <circle cx="320" cy="340" r="6" fill="#86efac" />
+        <circle cx="310" cy="355" r="4" fill="#86efac" />
+      </g>
+    </g>
+  
   </g>
 
   <!-- ================= MASTER FUTURISTIC METALLIC ROUND FRAME ================= -->
@@ -117,7 +137,4 @@ function generateFrameSvg(innerElements, customDefs = '', filterId = '') {
       <path d="M 256 12 A 244 244 0 0 1 400 60" fill="none" stroke="url(#lightSweepGrad)" stroke-width="6" stroke-linecap="round" />
     </g>
   </g>
-</svg>`;
-}
-
-export { generateFrameSvg, AVATARS_DIR };
+</svg>

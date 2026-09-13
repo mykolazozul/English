@@ -12,7 +12,7 @@ import {ensureChatIdentity,publicKeyPayload,encryptChatPayload,decryptChatText,e
 import {track} from './lib/analytics.js';
 
 
-const VERSION = '3.5.1';
+const VERSION = '3.7.0';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -508,97 +508,108 @@ function AncientCoinIcon({ size = 20, className = '', style = {} }) {
     <svg
       width={size}
       height={size}
-      viewBox="0 0 24 24"
+      viewBox="0 0 100 100"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       className={'ancient-coin-svg ' + className}
-      style={{ verticalAlign: 'middle', flexShrink: 0, display: 'inline-block', ...style }}
+      style={{ verticalAlign: 'middle', flexShrink: 0, display: 'inline-block', overflow: 'visible', ...style }}
     >
       <defs>
-        <radialGradient id="ancientCoinGrad" cx="35%" cy="30%" r="70%">
-          <stop offset="0%" stopColor="#FDE047" />
-          <stop offset="40%" stopColor="#F59E0B" />
-          <stop offset="85%" stopColor="#B45309" />
-          <stop offset="100%" stopColor="#78350F" />
+        <radialGradient id="acGoldFace" cx="38%" cy="32%" r="68%">
+          <stop offset="0%" stopColor="#fef08a" />
+          <stop offset="25%" stopColor="#f59e0b" />
+          <stop offset="65%" stopColor="#b45309" />
+          <stop offset="88%" stopColor="#78350f" />
+          <stop offset="100%" stopColor="#451a03" />
         </radialGradient>
-        <linearGradient id="ancientCoinRim" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#FEF08A" />
-          <stop offset="50%" stopColor="#F59E0B" />
-          <stop offset="100%" stopColor="#92400E" />
+        <linearGradient id="acRimDepth" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#92400e" />
+          <stop offset="50%" stopColor="#451a03" />
+          <stop offset="100%" stopColor="#291004" />
+        </linearGradient>
+        <linearGradient id="acInnerBevel" x1="15%" y1="10%" x2="85%" y2="90%">
+          <stop offset="0%" stopColor="#fde047" stopOpacity="0.9" />
+          <stop offset="50%" stopColor="#b45309" stopOpacity="0.6" />
+          <stop offset="100%" stopColor="#451a03" stopOpacity="0.95" />
         </linearGradient>
       </defs>
-      {/* Outer Coin Rim */}
-      <circle cx="12" cy="12" r="10.5" fill="url(#ancientCoinGrad)" stroke="url(#ancientCoinRim)" strokeWidth="1.5" />
-      {/* Beaded Ancient Ring */}
-      <circle cx="12" cy="12" r="8.2" stroke="#FEF08A" strokeWidth="0.75" strokeDasharray="1.5 1.5" fill="none" opacity="0.85" />
-      {/* Inner Runic Emblem & Star */}
-      <path d="M12 5.5L13.8 9.8L18.5 10.2L15 13.3L16 18L12 15.5L8 18L9 13.3L5.5 10.2L10.2 9.8Z" fill="#78350F" opacity="0.25" />
-      <path d="M12 6.5L13.4 10.2L17.2 10.5L14.3 13.1L15.1 17L12 14.8L8.9 17L9.7 13.1L6.8 10.5L10.6 10.2Z" fill="#FEF08A" stroke="#B45309" strokeWidth="0.5" />
-      <circle cx="12" cy="12" r="1.6" fill="#78350F" />
+      <g transform="translate(50, 50) rotate(-12) scale(1, 0.88) translate(-50, -50)">
+        {/* 3D Rim Thickness */}
+        <path d="M 12 50 C 12 73 30 88 56 88 C 76 88 88 77 88 55 L 88 62 C 88 84 76 95 56 95 C 30 95 12 80 12 57 Z" fill="url(#acRimDepth)" />
+        {/* Coin Face */}
+        <path d="M 12 50 C 12 28 30 14 55 14 C 77 14 88 28 88 50 C 88 72 77 86 55 86 C 30 86 12 72 12 50 Z" fill="url(#acGoldFace)" stroke="#78350f" strokeWidth="2.2" />
+        {/* Bevel Ring */}
+        <path d="M 20 50 C 20 33 34 22 55 22 C 73 22 80 33 80 50 C 80 67 73 78 55 78 C 34 78 20 67 20 50 Z" fill="none" stroke="url(#acInnerBevel)" strokeWidth="2" strokeDasharray="6 3.5" />
+        {/* Runic Sigil */}
+        <g transform="translate(54, 50)" stroke="#451a03" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none">
+          <path d="M -8 -15 L -8 15 M -8 -15 L 6 -6 L -8 2 M -8 -1 L 6 9" stroke="#3b1503" strokeWidth="3.2" />
+          <path d="M -8 -15 L -8 15 M -8 -15 L 6 -6 L -8 2 M -8 -1 L 6 9" stroke="#fef08a" strokeWidth="1.2" strokeOpacity="0.85" />
+          <circle cx="10" cy="-10" r="2.2" fill="#fde047" stroke="#451a03" strokeWidth="1" />
+          <circle cx="-14" cy="0" r="1.8" fill="#fde047" stroke="#451a03" strokeWidth="1" />
+          <circle cx="8" cy="12" r="2" fill="#fde047" stroke="#451a03" strokeWidth="1" />
+        </g>
+        {/* Crack / Fissure */}
+        <g>
+          <path d="M 68 15 L 63 24 L 66 31 L 58 40 L 61 48 L 54 58 L 56 66 L 49 76" fill="none" stroke="#1f0a01" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="bevel" />
+          <path d="M 58 40 L 50 43 L 46 48" fill="none" stroke="#2a0e02" strokeWidth="1.8" strokeLinecap="round" />
+          <path d="M 69.5 15.5 L 64.5 24.5 L 67.5 31.5 L 59.5 40.5 L 62.5 48.5 L 55.5 58.5 L 57.5 66.5 L 50.5 76.5" fill="none" stroke="#fef08a" strokeWidth="0.9" strokeLinecap="round" strokeOpacity="0.95" />
+          <polygon points="66,13 72,16 67,19 63,16" fill="#381303" stroke="#220b01" strokeWidth="0.8" />
+        </g>
+      </g>
     </svg>
   );
 }
- 
-/* ==========================================================================
-   STRICT ECONOMY: DAILY COIN EARNING CAP HELPER (MAX 60 COINS/DAY FROM LESSONS)
-   ========================================================================== */
-function awardDailyCoins(currentState, amount = 2, maxDaily = 60) {
-  const today = todayStr();
-  const daily = (currentState.dailyCoins && currentState.dailyCoins.date === today)
-    ? currentState.dailyCoins
-    : { date: today, earned: 0 };
-
-  const canEarn = Math.max(0, maxDaily - daily.earned);
-  const actualEarned = Math.min(amount, canEarn);
-
-  const nextDaily = {
-    date: today,
-    earned: daily.earned + actualEarned
-  };
-
-  return {
-    actualEarned,
-    remainingToday: Math.max(0, maxDaily - nextDaily.earned),
-    nextState: {
-      ...currentState,
-      gems: (currentState.gems || 0) + actualEarned,
-      dailyCoins: nextDaily
-    }
-  };
-}
 
 /* ==========================================================================
-   40+ CHARACTER AVATARS (KNIGHT, SAMURAI, WIZARD, CREATURES & LEGENDS)
-   ========================================================================== */
-/* ==========================================================================
-   30 UNIQUE FULL-BODY DYNAMIC ACTION AVATARS (ZERO DUPLICATES)
-   ========================================================================== */
-/* ==========================================================================
-   22 FUNNY FANTASY CHARACTER AVATARS (OFFICIAL 2026 MOBILE GAME ROSTER)
-   ========================================================================== */
-/* ==========================================================================
-   12 UNIQUE ANIMATED SVG GAME CHARACTER AVATARS (OFFICIAL 2026 ROSTER)
-   Real scalable animated vector SVG characters with multi-element animations
+   37 UNIQUE ANIMATED SVG GAME CHARACTER AVATARS (27 ROSTER + 10 SHOP EXCLUSIVES)
+   All circular, humorous, dynamic mobile-game inspired vector avatars
    ========================================================================== */
 export const GAME_AVATARS_FUNNY = [
-  { id: 'character_01_clumsy_barbarian', name: 'Незграбний Варвар', action: 'Крихітний варвар хитається під вагою гігантського камʼяного молота', image: 'character_01_clumsy_barbarian.svg', tag: '🔨 Варвар' },
-  { id: 'character_02_flying_duck_pilot', name: 'Качка-Пілот', action: 'Качка в авіаторському шоломі відчайдушно керує літаком з гвинтом', image: 'character_02_flying_duck_pilot.svg', tag: '✈️ Пілот' },
-  { id: 'character_03_confused_tree_warrior', name: 'Збентежений Треант', action: 'Живий треант чухає потилицю та розгублено жонглює яблуками', image: 'character_03_confused_tree_warrior.svg', tag: '🌳 Треант' },
-  { id: 'character_04_overconfident_knight', name: 'Самовпевнений Лицар', action: 'Лицар гордо показує палець вгору, поки важке забрало падає на ніс', image: 'character_04_overconfident_knight.svg', tag: '⚔️ Лицар' },
-  { id: 'character_05_sleepy_dragon', name: 'Сонний Дракончик', action: 'Дракончик у нічному ковпаку позіхає, хропе і раптово чхає полумʼям', image: 'character_05_sleepy_dragon.svg', tag: '🐲 Дракон' },
-  { id: 'character_06_angry_wizard', name: 'Сердитий Чаклун', action: 'Маг у зоряному капелюсі з обгорілою від вибуху бородою та посохом', image: 'character_06_angry_wizard.svg', tag: '🧙 Чаклун' },
-  { id: 'character_07_ninja_cat', name: 'Кіт-Ніндзя', action: 'Чорний кіт із рибкою-кунаєм; його хвіст несамовито смикається', image: 'character_07_ninja_cat.svg', tag: '🐱 Ніндзя' },
-  { id: 'character_08_pirate_frog', name: 'Жаба-Пірат', action: 'Капітан із золотою шаблею та повʼязкою стріляє язиком по мусі', image: 'character_08_pirate_frog.svg', tag: '🏴‍☠️ Жаба' },
-  { id: 'character_09_goblin_engineer', name: 'Гоблін-Інженер', action: 'Гоблін в окулярах закручує гайку на цокаючій бомбі з іскрами', image: 'character_09_goblin_engineer.svg', tag: '💣 Гоблін' },
-  { id: 'character_10_tiny_giant', name: 'Крихітний Велетень', action: 'Міні-колос напружено грає біцепсами, поки на голові цвіте ромашка', image: 'character_10_tiny_giant.svg', tag: '🗿 Велетень' },
-  { id: 'character_11_chicken_warrior', name: 'Бойовий Півень', action: 'Спартанський півень у шоломі зі списом, коліна якого тремтять від жаху', image: 'character_11_chicken_warrior.svg', tag: '🐓 Півень' },
-  { id: 'character_12_alien_cowboy', name: 'Прибулець-Ковбой', action: 'Триокий прибулець крутить бластери і підморгує верхи на слимаку', image: 'character_12_alien_cowboy.svg', tag: '🤠 Ковбой' }
+  { id: 'character_01_clumsy_barbarian', name: 'Незграбний Варвар', action: 'Крихітний варвар хитається під вагою молота', image: 'character_01_clumsy_barbarian.svg', tag: '🔨 Варвар' },
+  { id: 'character_02_flying_duck_pilot', name: 'Качка-Пілот', action: 'Качка в авіаторському шоломі з гвинтом', image: 'character_02_flying_duck_pilot.svg', tag: '✈️ Пілот' },
+  { id: 'character_03_confused_tree_warrior', name: 'Збентежений Треант', action: 'Живий треант розгублено жонглює яблуками', image: 'character_03_confused_tree_warrior.svg', tag: '🌳 Треант' },
+  { id: 'character_04_overconfident_knight', name: 'Самовпевнений Лицар', action: 'Лицар показує клас, поки падає забрало', image: 'character_04_overconfident_knight.svg', tag: '⚔️ Лицар' },
+  { id: 'character_05_sleepy_dragon', name: 'Сонний Дракончик', action: 'Дракончик у нічному ковпаку чхає вогнем', image: 'character_05_sleepy_dragon.svg', tag: '🐲 Дракон' },
+  { id: 'character_06_angry_wizard', name: 'Сердитий Чаклун', action: 'Маг у зоряному капелюсі з обгорілою бородою', image: 'character_06_angry_wizard.svg', tag: '🧙 Чаклун' },
+  { id: 'character_07_ninja_cat', name: 'Кіт-Ніндзя', action: 'Чорний кіт із рибкою-кунаєм та рухливим хвостом', image: 'character_07_ninja_cat.svg', tag: '🐱 Ніндзя' },
+  { id: 'character_08_pirate_frog', name: 'Жаба-Пірат', action: 'Капітан із золотою шаблею стріляє язиком', image: 'character_08_pirate_frog.svg', tag: '🏴‍☠️ Жаба' },
+  { id: 'character_09_goblin_engineer', name: 'Гоблін-Інженер', action: 'Гоблін закручує гайку на цокаючій бомбі', image: 'character_09_goblin_engineer.svg', tag: '💣 Гоблін' },
+  { id: 'character_10_tiny_giant', name: 'Крихітний Велетень', action: 'Міні-колос із кумедною ромашкою на голові', image: 'character_10_tiny_giant.svg', tag: '🗿 Велетень' },
+  { id: 'character_11_chicken_warrior', name: 'Бойовий Півень', action: 'Спартанський півень у шоломі зі списом', image: 'character_11_chicken_warrior.svg', tag: '🐓 Півень' },
+  { id: 'character_12_alien_cowboy', name: 'Прибулець-Ковбой', action: 'Триокий прибулець крутить бластери на слимаку', image: 'character_12_alien_cowboy.svg', tag: '🤠 Ковбой' },
+  { id: 'character_13_cyber_samurai', name: 'Кібер-Самурай', action: 'Неоновий самурай із плазмовою катаною', image: 'character_13_cyber_samurai.svg', tag: '⚡ Кібер' },
+  { id: 'character_14_coffee_mage', name: 'Маг-Кавоман', action: 'Експресо-чарівник із пульсуючим поглядом', image: 'character_14_coffee_mage.svg', tag: '☕ Кава' },
+  { id: 'character_15_pixel_rogue', name: 'Піксельний Розбійник', action: 'Ретро-злодій із мішком біткоїнів та відмичкою', image: 'character_15_pixel_rogue.svg', tag: '👾 Ретро' },
+  { id: 'character_16_space_hamster', name: 'Космо-Хомʼяк', action: 'Хомʼяк у скафандрі хрумає місячне зернятко', image: 'character_16_space_hamster.svg', tag: '🚀 Космос' },
+  { id: 'character_17_disco_necromancer', name: 'Діско-Некромант', action: 'Володар темряви танцює бугі під дзеркальною кулею', image: 'character_17_disco_necromancer.svg', tag: '🪩 Діско' },
+  { id: 'character_18_bubble_witch', name: 'Бульбашкова Відьма', action: 'Юна чаклунка пускає магічні вибухові кульки', image: 'character_18_bubble_witch.svg', tag: '🫧 Бульбашки' },
+  { id: 'character_19_heavy_mech', name: 'Важкий Мех-Танк', action: 'Грізний бойовий робот випускає хмарки пари', image: 'character_19_heavy_mech.svg', tag: '🤖 Мех' },
+  { id: 'character_20_royal_corgi', name: 'Королівський Коргі', action: 'Коргі в діамантовій короні велично махає лапкою', image: 'character_20_royal_corgi.svg', tag: '👑 Коргі' },
+  { id: 'character_21_lava_golem', name: 'Лавовий Голем', action: 'Велетень з магми зігріває в руках кружку какао', image: 'character_21_lava_golem.svg', tag: '🌋 Лава' },
+  { id: 'character_22_laser_panda', name: 'Лазерна Панда', action: 'Майстер кунг-фу стріляє лазерами з бамбука', image: 'character_22_laser_panda.svg', tag: '🐼 Панда' },
+  { id: 'character_23_storm_druid', name: 'Грозовий Друїд', action: 'Друїд викликає блискавки з крихітної хмаринки', image: 'character_23_storm_druid.svg', tag: '⚡ Гроза' },
+  { id: 'character_24_donut_knight', name: 'Лицар-Пончик', action: 'Глазурований паладин захищає солодке королівство', image: 'character_24_donut_knight.svg', tag: '🍩 Пончик' },
+  { id: 'character_25_shadow_fox', name: 'Тіньовий Лис', action: 'Хитрий лис розчиняється в диму фіолетового сутінку', image: 'character_25_shadow_fox.svg', tag: '🦊 Тінь' },
+  { id: 'character_26_clockwork_bard', name: 'Заводний Бард', action: 'Механічний музикант грає баладу на шестернях', image: 'character_26_clockwork_bard.svg', tag: '⚙️ Бард' },
+  { id: 'character_27_phoenix_bard', name: 'Фенікс-Рокер', action: 'Вогняний птах запалює на палаючій гітарі', image: 'character_27_phoenix_bard.svg', tag: '🎸 Фенікс' }
 ];
 
-export const GAME_AVATARS_30 = GAME_AVATARS_FUNNY;
+export const ANIMATED_AVATARS_SHOP = [
+  { id: 'shop_avatar_01_neon_emperor', name: 'Неоновий Імператор', cost: 650, image: 'shop_avatar_01_neon_emperor.svg', desc: 'Ексклюзивний кібер-владика майбутнього' },
+  { id: 'shop_avatar_02_cyber_dragon', name: 'Кібер-Дракон', cost: 750, image: 'shop_avatar_02_cyber_dragon.svg', desc: 'Механічний дракон із плазмовим полумʼям' },
+  { id: 'shop_avatar_03_golden_pharaoh', name: 'Золотий Фараон', cost: 800, image: 'shop_avatar_03_golden_pharaoh.svg', desc: 'Вічний володар древніх гробниць і золота' },
+  { id: 'shop_avatar_04_cosmic_void', name: 'Космічна Безодня', cost: 900, image: 'shop_avatar_04_cosmic_void.svg', desc: 'Жива чорна діра з ореолом квазара' },
+  { id: 'shop_avatar_05_dark_valkyrie', name: 'Темна Валькірія', cost: 700, image: 'shop_avatar_05_dark_valkyrie.svg', desc: 'Крила смерті та північного сяйва' },
+  { id: 'shop_avatar_06_mythic_djinn', name: 'Міфічний Джинн', cost: 600, image: 'shop_avatar_06_mythic_djinn.svg', desc: 'Дух тисячі бажань із чарівної лампи' },
+  { id: 'shop_avatar_07_astral_archer', name: 'Астральний Лучник', cost: 550, image: 'shop_avatar_07_astral_archer.svg', desc: 'Стріли з чистого зоряного світла' },
+  { id: 'shop_avatar_08_glitch_demon', name: 'Глітч-Демон', cost: 850, image: 'shop_avatar_08_glitch_demon.svg', desc: 'Цифрова аномалія матриці слів' },
+  { id: 'shop_avatar_09_mecha_titan', name: 'Меха-Титан', cost: 950, image: 'shop_avatar_09_mecha_titan.svg', desc: 'Гігантський колос оборони бази' },
+  { id: 'shop_avatar_10_void_walker', name: 'Мандрівник Порожнечі', cost: 1000, image: 'shop_avatar_10_void_walker.svg', desc: 'Легендарний дослідник темних вимірів' }
+];
+
+export const GAME_AVATARS_30 = [...GAME_AVATARS_FUNNY, ...ANIMATED_AVATARS_SHOP];
 
 export const OLD_AVATAR_MAP = {
-  // Legacy avatars
   'duo_owl': 'character_02_flying_duck_pilot',
   'avatar_boss': 'character_04_overconfident_knight',
   'action_king': 'character_04_overconfident_knight',
@@ -619,8 +630,6 @@ export const OLD_AVATAR_MAP = {
   'duo_fox': 'character_12_alien_cowboy',
   'duo_robot': 'character_09_goblin_engineer',
   'avatar_golem': 'character_10_tiny_giant',
-
-  // Funny batch 1 mapping
   'funny_barbarian': 'character_01_clumsy_barbarian',
   'funny_duck_pilot': 'character_02_flying_duck_pilot',
   'funny_tree_warrior': 'character_03_confused_tree_warrior',
@@ -630,33 +639,7 @@ export const OLD_AVATAR_MAP = {
   'funny_ninja_cat': 'character_07_ninja_cat',
   'funny_pirate_frog': 'character_08_pirate_frog',
   'funny_goblin_engineer': 'character_09_goblin_engineer',
-  'funny_tiny_giant': 'character_10_tiny_giant',
-  'funny_chicken': 'character_11_chicken_warrior',
-  'funny_alien_cowboy': 'character_12_alien_cowboy',
-  'funny_castle': 'character_10_tiny_giant',
-  'funny_prince': 'character_04_overconfident_knight',
-  'funny_queen': 'character_06_angry_wizard',
-  'funny_dragon_rider': 'character_05_sleepy_dragon',
-  'funny_carriage': 'character_02_flying_duck_pilot',
-  'funny_little_king': 'character_04_overconfident_knight',
-  'funny_jester': 'character_09_goblin_engineer',
-  'funny_heroic_cat': 'character_07_ninja_cat',
-  'funny_talking_tree': 'character_03_confused_tree_warrior',
-  'funny_dragon_chef': 'character_05_sleepy_dragon',
-
-  // Series 2
-  'series2_monster': 'character_01_clumsy_barbarian',
-  'series2_pilot_duck': 'character_02_flying_duck_pilot',
-  'series2_treant': 'character_03_confused_tree_warrior',
-  'series2_axe_knight': 'character_04_overconfident_knight',
-  'series2_death_knight': 'character_07_ninja_cat',
-  'series2_heavy_axe': 'character_01_clumsy_barbarian',
-  'series2_hunter_fox': 'character_12_alien_cowboy',
-  'series2_rogue_alien': 'character_12_alien_cowboy',
-  'series2_tactical_cat': 'character_07_ninja_cat',
-  'series2_warlock': 'character_06_angry_wizard',
-  'series2_swarm_alien': 'character_09_goblin_engineer',
-  'series2_dwarf_berserker': 'character_01_clumsy_barbarian',
+  'funny_tiny_giant': 'character_10_tiny_giant'
 };
 
 function AvatarIcon({ id, av: propAv, size = 44, className = '', style = {}, aura = '', frame = '' }) {
@@ -664,11 +647,11 @@ function AvatarIcon({ id, av: propAv, size = 44, className = '', style = {}, aur
   if (OLD_AVATAR_MAP[actualId]) {
     actualId = OLD_AVATAR_MAP[actualId];
   }
-  const av = GAME_AVATARS_FUNNY.find(a => a.id === actualId) || (propAv && typeof propAv === 'object' ? propAv : GAME_AVATARS_FUNNY[0]);
+  const av = GAME_AVATARS_30.find(a => a.id === actualId) || (propAv && typeof propAv === 'object' ? propAv : GAME_AVATARS_FUNNY[0]);
   const imgUrl = av?.image ? `/avatars/${av.image}` : '/avatars/character_02_flying_duck_pilot.svg';
 
   const wrap = (node) => (!aura && !frame ? node : (
-    <span className={`avatar-cosmetic-wrap ${aura || ''} ${frame || ''}`} style={{display:'inline-flex',alignItems:'center',justifyContent:'center',position:'relative',borderRadius:14,flexShrink:0}}>
+    <span className={`avatar-cosmetic-wrap ${aura || ''} ${frame || ''}`} style={{display:'inline-flex',alignItems:'center',justifyContent:'center',position:'relative',borderRadius:'50%',flexShrink:0}}>
       {node}
     </span>
   ));
@@ -676,13 +659,13 @@ function AvatarIcon({ id, av: propAv, size = 44, className = '', style = {}, aur
   return wrap(
     <img
       src={imgUrl}
-      alt={av.name || 'Аватар'}
+      alt={av?.name || 'Аватар'}
       className={`funny-avatar-img ${className}`}
       style={{
         width: size,
         height: size,
         objectFit: 'cover',
-        borderRadius: Math.max(8, Math.floor(size * 0.18)),
+        borderRadius: '50%',
         border: '1.5px solid rgba(56, 189, 248, 0.45)',
         boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4), inset 0 0 8px rgba(56, 189, 248, 0.2)',
         background: '#101622',
@@ -1525,7 +1508,10 @@ export default function App() {
   const [state, setState] = useState(() => {
     const nick = getActiveNick();
     const p = nick ? loadProfile(nick) : null;
-    return p ? {...emptyState(), ...p, admin: {...defaultAdmin, ...(p.admin || {})}} : emptyState();
+    let backup = null;
+    try { backup = JSON.parse(localStorage.getItem('ef_state_backup') || 'null'); } catch {}
+    const chosen = (p && (p.xp || 0) >= (backup?.xp || 0)) ? p : (backup || p);
+    return chosen ? {...emptyState(), ...chosen, admin: {...defaultAdmin, ...(chosen.admin || {})}} : emptyState();
   });
   const [page, setPage] = useState(state.nick ? 'dashboard' : 'onboarding');
   const [mobile, setMobile] = useState(false);
@@ -1597,9 +1583,61 @@ export default function App() {
       if (!me?.user) return;
       await flushProgressQueue().catch(()=>{});
       const remote = await cloudPull(me.user.nick);
-      if (remote) { setState(prev => ({...prev,...remote,id:me.user.id,nick:me.user.nick,role:me.user.role,guest:false,admin:{...defaultAdmin,...(prev.admin||{}),...(remote.admin||{})}})); setPage('dashboard'); }
+      if (remote) {
+        setState(prev => {
+          const mergedXp = Math.max(prev.xp || 0, remote.xp || 0);
+          const mergedGems = Math.max(prev.gems || 0, remote.gems || 0);
+          const mergedStreak = Math.max(prev.streak || 0, remote.streak || 0);
+          const mergedTodayXp = Math.max(prev.todayXp || 0, remote.todayXp || 0);
+          const mergedBadges = [...new Set([...(prev.badges || []), ...(remote.badges || [])])];
+          const mergedAvatar = prev.avatar || remote.avatar || 'character_01_clumsy_barbarian';
+          const mergedInventory = { ...(remote.inventory || {}), ...(prev.inventory || {}) };
+          const mergedMastery = { ...(remote.mastery || {}) };
+          Object.entries(prev.mastery || {}).forEach(([k, v]) => {
+            mergedMastery[k] = Math.max(mergedMastery[k] || 0, v || 0);
+          });
+          const next = {
+            ...prev,
+            ...remote,
+            id: me.user.id,
+            nick: me.user.nick,
+            role: me.user.role,
+            guest: false,
+            xp: mergedXp,
+            gems: mergedGems,
+            streak: mergedStreak,
+            todayXp: mergedTodayXp,
+            badges: mergedBadges,
+            avatar: mergedAvatar,
+            inventory: mergedInventory,
+            mastery: mergedMastery,
+            admin: { ...defaultAdmin, ...(prev.admin || {}), ...(remote.admin || {}) }
+          };
+          saveProfile(next.nick, next);
+          try { localStorage.setItem('ef_state_backup', JSON.stringify(next)); } catch {}
+          return next;
+        });
+        setPage('dashboard');
+      }
     }).catch(() => {});
   }, []);
+    // Inter-tab & background sync listener
+  useEffect(() => {
+    const onStorage = (e) => {
+      if (e.key === 'ef_state_backup' || e.key === 'ef-profiles-v1') {
+        try {
+          const nick = getActiveNick();
+          if (nick) {
+            const fresh = loadProfile(nick);
+            if (fresh) setState(prev => ({ ...prev, ...fresh }));
+          }
+        } catch {}
+      }
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
+
   useEffect(() => { track('app_open',{page:location.pathname}); }, []);
   useEffect(() => { if (state.nick) track('page_view',{page}); }, [page, state.nick]);
   // Load gamification on page load for authenticated users
@@ -1623,6 +1661,7 @@ export default function App() {
     setState(next);
     if (next.nick) {
       saveProfile(next.nick, next);
+      try { localStorage.setItem('ef_state_backup', JSON.stringify(next)); } catch {}
       try { dbPutProfile(next); } catch {}
       if (cloudConfigured() && !next.guest) {
         if (profileSyncTimer.current) clearTimeout(profileSyncTimer.current);
@@ -2294,7 +2333,7 @@ function EconomyManifestoModal({ isOpen = true, onClose }) {
             <span style={{ fontSize: 28 }}>📜</span>
             <div>
               <h2 style={{ margin: 0, fontSize: 20, fontWeight: 900 }}>Економічна Модель English Flow</h2>
-              <span className="muted small">v3.6.0 · Принцип абсолютної академічної чесності</span>
+              <span className="muted small">v3.7.0 · Принцип абсолютної академічної чесності</span>
             </div>
           </div>
           <button className="icon small" onClick={onClose}><X size={18}/></button>
@@ -2491,18 +2530,16 @@ function ShopPage({state, save, onRefreshGamification, allUsers}) {
 
     // Catalogues — 12 Animated SVG Game Heroes
   const ANIMATED_AVATARS_SHOP = [
-    { id: 'character_02_flying_duck_pilot', name: 'Качка-Пілот', desc: 'Анімований векторний SVG: гвинт обертається, літак хитає турбулентність, шарф майорить', cost: 450 },
-    { id: 'character_01_clumsy_barbarian', name: 'Незграбний Варвар', desc: 'Анімований векторний SVG: молот перехиляється, варвар тремтить та балансує з потом', cost: 500 },
-    { id: 'character_05_sleepy_dragon', name: 'Сонний Дракончик', desc: 'Анімований векторний SVG: дихання животом, похитування голови і раптовий спалах полумʼя', cost: 650 },
-    { id: 'character_07_ninja_cat', name: 'Кіт-Ніндзя', desc: 'Анімований векторний SVG: нервове сіпання пухнастого хвоста, вушка на сторожі, звуження зіниць', cost: 600 },
-    { id: 'character_06_angry_wizard', name: 'Сердитий Чаклун', desc: 'Анімований векторний SVG: магічна сфера левітує й іскрить, дим із бороди, брови сіпаються', cost: 550 },
-    { id: 'character_08_pirate_frog', name: 'Жаба-Пірат', desc: 'Анімований векторний SVG: роздування горла, миттєвий кидок язика за дзижчачою мухою', cost: 400 },
-    { id: 'character_09_goblin_engineer', name: 'Гоблін-Інженер', desc: 'Анімований векторний SVG: обертання шестерень, закручування гайкового ключа та іскри запалу', cost: 450 },
-    { id: 'character_10_tiny_giant', name: 'Крихітний Велетень', desc: 'Анімований векторний SVG: камʼяні біцепси напружуються, руни пульсують, ромашка хитається', cost: 500 },
-    { id: 'character_11_chicken_warrior', name: 'Бойовий Півень', desc: 'Анімований векторний SVG: коліна шалено стукають від страху, спис вібрує, пірʼя кружляє', cost: 350 },
-    { id: 'character_12_alien_cowboy', name: 'Прибулець-Ковбой', desc: 'Анімований векторний SVG: бластер обертається на 360°, третє око підморгує, слимак пружинить', cost: 550 },
-    { id: 'character_04_overconfident_knight', name: 'Самовпевнений Лицар', desc: 'Анімований векторний SVG: важке забрало з гуркотом падає на очі, лицар підкидає його назад', cost: 600 },
-    { id: 'character_03_confused_tree_warrior', name: 'Збентежений Треант', desc: 'Анімований векторний SVG: безперервне жонглювання яблуками та спантеличене чухання верхівки', cost: 500 }
+    { id: 'shop_avatar_01_neon_emperor', name: 'Неоновий Імператор', desc: 'Ексклюзивний анімований аватар: голографічна корона, неоновий кібер-плащ', cost: 750, image: 'shop_avatar_01_neon_emperor.svg' },
+    { id: 'shop_avatar_02_golden_griffin', name: 'Золотий Грифон', desc: 'Ексклюзивний анімований аватар: золоте сяюче пірʼя, крила та міфічні пазурі', cost: 700, image: 'shop_avatar_02_golden_griffin.svg' },
+    { id: 'shop_avatar_03_cosmic_dj', name: 'Космічний Ді-джей', desc: 'Ексклюзивний анімований аватар: навушники з еквалайзером, платівка крутиться', cost: 650, image: 'shop_avatar_03_cosmic_dj.svg' },
+    { id: 'shop_avatar_04_shadow_assassin', name: 'Тіньовий Асасин', desc: 'Ексклюзивний анімований аватар: тіньові кинджали, фіолетові очі в тумані', cost: 600, image: 'shop_avatar_04_shadow_assassin.svg' },
+    { id: 'shop_avatar_05_mecha_dragon', name: 'Меха-Дракон', desc: 'Ексклюзивний анімований аватар: реактивні турбіни, синє плазмове полумʼя', cost: 800, image: 'shop_avatar_05_mecha_dragon.svg' },
+    { id: 'shop_avatar_06_crystal_golem', name: 'Кристалічний Голем', desc: 'Ексклюзивний анімований аватар: смарагдові кристали ростуть і сяють', cost: 550, image: 'shop_avatar_06_crystal_golem.svg' },
+    { id: 'shop_avatar_07_quantum_cat', name: 'Квантовий Кіт', desc: 'Ексклюзивний анімований аватар: мерехтить між двома вимірами', cost: 620, image: 'shop_avatar_07_quantum_cat.svg' },
+    { id: 'shop_avatar_08_frost_lich', name: 'Крижаний Ліч', desc: 'Ексклюзивний анімований аватар: крижана сфера паморозі обертається', cost: 680, image: 'shop_avatar_08_frost_lich.svg' },
+    { id: 'shop_avatar_09_solar_knight', name: 'Сонячний Лицар', desc: 'Ексклюзивний анімований аватар: сонячний щит з променями та вогняний плюмаж', cost: 720, image: 'shop_avatar_09_solar_knight.svg' },
+    { id: 'shop_avatar_10_void_walker', name: 'Мандрівник Порожнечі', desc: 'Ексклюзивний анімований аватар: чорна діра втягує зірки та простір', cost: 850, image: 'shop_avatar_10_void_walker.svg' }
   ];
 
   const AURAS = [
@@ -4163,7 +4200,12 @@ function SprintGame({items, mode, state, save, onExit, onDone, lessonId}) {
   }
 
   if (!w) return null;
-  const correct = picked === w.answer;
+  const isDictation = mode === 'dictation';
+  const expectedAnswer = isDictation ? String(w.word || '').trim() : String(w.answer || '').trim();
+  const cleanPicked = String(picked || '').trim();
+  const correct = isDictation 
+    ? (picked !== null && cleanPicked.toLowerCase() === expectedAnswer.toLowerCase())
+    : (picked === w.answer);
   const masteryNow = state.mastery[w.id] || 0;
   const progressPct = ((step + 1) / total) * 100;
 
@@ -4230,9 +4272,10 @@ function SprintGame({items, mode, state, save, onExit, onDone, lessonId}) {
         {mode === 'dictation' ? (
           <DictationInput key={'d'+step} onSubmit={(val) => {
             if (pickedRef.current != null) return;
-            const ok = val.trim().toLowerCase() === String(w.word || w.answer).trim().toLowerCase();
-            setPicked(val);
-            applyAnswer(ok, w, val);
+            const targetWord = String(w.word || '').trim().toLowerCase();
+            const ok = val.trim().toLowerCase() === targetWord;
+            setPicked(val.trim());
+            applyAnswer(ok, w, val.trim());
           }} disabled={picked != null}/>
         ) : (
           <div className="options" key={'o'+step}>
@@ -4268,7 +4311,10 @@ function SprintGame({items, mode, state, save, onExit, onDone, lessonId}) {
                 <XCircle className="feedback-icon bad" size={24}/>
                 <div className="feedback-copy">
                   <b>Не зовсім так</b>
-                  <p className="feedback-hint">Правильно: <b>{w.answer}</b>{w.explanation ? ` — ${w.explanation}` : (w.translation ? ` — ${w.translation}` : '')}</p>
+                  <p className="feedback-hint">
+  Правильно: <b>{isDictation ? w.word : w.answer}</b>
+  {isDictation ? (w.translation ? ` — ${w.translation}` : '') : (w.explanation ? ` — ${w.explanation}` : (w.translation ? ` — ${w.translation}` : ''))}
+</p>
                   <small className="muted">Mastery {masteryNow}/{state.admin.masteryThreshold}</small>
                 </div>
               </div>
@@ -4443,15 +4489,7 @@ function Vocabulary({state, setModal, wordsCatalog, cats}) {
         >
           📚 Увесь словник ({dict.length})
         </button>
-        <button
-          type="button"
-          className="secondary"
-          disabled={syncBusy}
-          onClick={handleSyncWords}
-          style={{marginLeft:'auto'}}
-        >
-          <RotateCcw size={15}/> {syncBusy ? 'Синхронізація…' : '🔄 Синхронізувати слова'}
-        </button>
+        
       </div>
 
       <div className="filters row">
@@ -4583,240 +4621,183 @@ function ReviewPage({state, due, onStart}) {
 }
 
 function Stats({state, learned}) {
-  const [statDesign, setStatDesign] = useState('analytics'); // 'analytics' | 'rings' | 'cefr'
+  const [timeRange, setTimeRange] = useState('7d'); // '7d' | '30d'
 
-  const last7 = useMemo(() => {
-    const days = {};
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date(); d.setDate(d.getDate() - i);
-      const key = d.toISOString().slice(0, 10);
-      days[key] = 0;
-    }
-    (state.history || []).forEach(h => {
-      const day = (h.date || '').slice(0, 10);
-      if (day in days) days[day] += h.correct ? 1 : 0;
-    });
-    return Object.entries(days);
-  }, [state.history]);
-
-  const maxV = Math.max(1, ...last7.map(([, v]) => v));
-  const total = (state.history || []).length;
-  const correct = (state.history || []).filter(h => h.correct).length;
+  const history = useMemo(() => Array.isArray(state.history) ? state.history : [], [state.history]);
+  const total = history.length;
+  const correct = history.filter(h => h.correct).length;
   const pct = total ? Math.round((correct / total) * 100) : 0;
-  const goalPct = Math.min(100, Math.round(((state.todayXp||0) / Math.max(1, state.dailyGoal||50)) * 100));
+  const learnedCount = Number(learned || 0);
+
+  // Daily activity calculation
+  const activityDays = useMemo(() => {
+    const count = timeRange === '7d' ? 7 : 30;
+    const days = [];
+    const now = new Date();
+    const map = {};
+    history.forEach(h => {
+      if (!h.date) return;
+      const d = String(h.date).slice(0, 10);
+      map[d] = (map[d] || 0) + 1;
+    });
+    for (let i = count - 1; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      const key = d.toISOString().slice(0, 10);
+      const weekday = d.toLocaleDateString('uk-UA', { weekday: 'short' });
+      days.push({ key, label: count === 7 ? weekday : key.slice(8), n: map[key] || 0 });
+    }
+    return days;
+  }, [history, timeRange]);
+
+  const maxN = Math.max(1, ...activityDays.map(x => x.n));
+  const goalPct = Math.min(100, Math.round(((state.todayXp || 0) / Math.max(1, state.dailyGoal || 50)) * 100));
+
+  // Category breakdown
+  const categoryStats = useMemo(() => {
+    const cats = {
+      'Початковий (A1-A2)': 0,
+      'Середній (B1-B2)': 0,
+      'Подорожі & Життя': 0,
+      'Бізнес & Робота': 0,
+      'IT & Технології': 0
+    };
+    const masteryEntries = Object.entries(state.mastery || {});
+    masteryEntries.forEach(([id, level]) => {
+      if (level >= 1) {
+        if (id.includes('a1') || id.includes('a2') || id.startsWith('1') || id.startsWith('2')) cats['Початковий (A1-A2)']++;
+        else if (id.includes('b1') || id.includes('b2') || id.startsWith('3') || id.startsWith('4')) cats['Середній (B1-B2)']++;
+        else if (id.includes('trav') || id.includes('food')) cats['Подорожі & Життя']++;
+        else if (id.includes('biz') || id.includes('work')) cats['Бізнес & Робота']++;
+        else cats['IT & Технології']++;
+      }
+    });
+    return cats;
+  }, [state.mastery]);
 
   return (
-    <section className="fade-in">
-      <Title title="Статистика" text="Аналітика успішності, активність та академічний прогрес"/>
+    <section className="fade-in stats-hub-modern">
+      <Title title="📊 Аналітика та Академічна Статистика" text="Ваш навчальний прогрес, динаміка памʼяті та активність занять" />
 
-      <div className="row-btns" style={{marginBottom: 16}}>
-        <button
-          type="button"
-          className={statDesign === 'analytics' ? 'primary' : 'secondary'}
-          onClick={() => setStatDesign('analytics')}
-        >
-          📊 Аналітичний дашборд
-        </button>
-        <button
-          type="button"
-          className={statDesign === 'rings' ? 'primary' : 'secondary'}
-          onClick={() => setStatDesign('rings')}
-        >
-          🎯 Кільця активності
-        </button>
-        <button
-          type="button"
-          className={statDesign === 'cefr' ? 'primary' : 'secondary'}
-          onClick={() => setStatDesign('cefr')}
-        >
-          📜 Паспорт CEFR
-        </button>
-      </div>
-
-      {statDesign === 'analytics' && (
-        <>
-          <EmojiPulse state={state}/>
-          <Heatmap history={state.history||[]} />
-          <div className="grid stats">
-            <Card icon={<Target/>} title="Точність" value={pct + '%'} sub={`${correct}/${total}`}
-              tone={state.midnightSnap && pct > state.midnightSnap.pct ? 'danger' : 'default'}/>
-            <Card icon={<Brain/>} title="Вивчено" value={learned} sub="слів"
-              tone={state.midnightSnap && learned > state.midnightSnap.learned ? 'warn' : 'default'}/>
-            <Card icon={<Sparkles/>} title="XP" value={state.xp} sub={`сьогодні ${state.todayXp}`}
-              tone={state.midnightSnap && state.xp > state.midnightSnap.xp ? 'orange' : 'default'}/>
-            <Card icon={<Flame/>} title="Streak" value={state.streak} sub="днів" tone="fire"/>
-          </div>
-          <div className="card">
-            <h2>Правильні відповіді · 7 днів</h2>
-            <div className="chart">
-              {last7.map(([day, v]) => (
-                <div key={day} className="bar-wrap" title={`${day}: ${v}`}>
-                  <div className="bar" style={{height: `${(v / maxV) * 100}%`}}/>
-                  <span>{day.slice(8)}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="grid two">
-            <div className="card">
-              <h2>Точність</h2>
-              <div className="donut-wrap">
-                <div className="donut" style={{background: `conic-gradient(var(--accent) 0 ${pct}%, var(--border) ${pct}% 100%)`}}/>
-                <div className="donut-label"><b>{pct}%</b><span className="muted">correct</span></div>
-              </div>
-              <p className="muted small">{correct} правильних · {total - correct} помилок · {total} всього</p>
-            </div>
-            <div className="card">
-              <h2>Режими гри</h2>
-              <ModeBars history={state.history || []} />
-            </div>
-          </div>
-          <div className="card">
-            <h2>XP сьогодні vs ціль</h2>
-            <div className="xp-goal-track">
-              <i style={{width: `${goalPct}%`}}/>
-            </div>
-            <p className="muted">{state.todayXp || 0} / {Math.max(1, state.dailyGoal || 50)} XP ({goalPct}%)</p>
-          </div>
-        </>
-      )}
-
-      {statDesign === 'rings' && (
-        <div className="rings-grid">
-          <div className="card ring-card">
-            <h3>🔥 Денна ціль XP</h3>
-            <div className="ring-wrap" style={{width:160,height:160,margin:'16px auto',position:'relative',display:'flex',alignItems:'center',justifyContent:'center'}}>
-              <div style={{width:'100%',height:'100%',borderRadius:'50%',background:`conic-gradient(#f59e0b 0% ${goalPct}%, var(--border) ${goalPct}% 100%)`}}/>
-              <div style={{position:'absolute',width:'76%',height:'76%',borderRadius:'50%',background:'var(--surface,#fff)',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center'}}>
-                <b style={{fontSize:24}}>{goalPct}%</b>
-                <span className="muted small">{state.todayXp||0}/{state.dailyGoal||50} XP</span>
-              </div>
-            </div>
-            <p className="muted small" style={{textAlign:'center'}}>Залишилось: {Math.max(0, (state.dailyGoal||50) - (state.todayXp||0))} XP до виконання плану</p>
-          </div>
-
-          <div className="card ring-card">
-            <h3>🎯 Загальна точність</h3>
-            <div className="ring-wrap" style={{width:160,height:160,margin:'16px auto',position:'relative',display:'flex',alignItems:'center',justifyContent:'center'}}>
-              <div style={{width:'100%',height:'100%',borderRadius:'50%',background:`conic-gradient(#10b981 0% ${pct}%, var(--border) ${pct}% 100%)`}}/>
-              <div style={{position:'absolute',width:'76%',height:'76%',borderRadius:'50%',background:'var(--surface,#fff)',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center'}}>
-                <b style={{fontSize:24}}>{pct}%</b>
-                <span className="muted small">{correct}/{total} вдалих</span>
-              </div>
-            </div>
-            <p className="muted small" style={{textAlign:'center'}}>Критерій майстерності: підтримувати &gt;85%</p>
-          </div>
-
-          <div className="card ring-card">
-            <h3>🧠 Засвоєння бази (300 слів)</h3>
-            <div className="ring-wrap" style={{width:160,height:160,margin:'16px auto',position:'relative',display:'flex',alignItems:'center',justifyContent:'center'}}>
-              <div style={{width:'100%',height:'100%',borderRadius:'50%',background:`conic-gradient(#3b82f6 0% ${Math.min(100, Math.round((learned / 300) * 100))}%, var(--border) ${Math.min(100, Math.round((learned / 300) * 100))}% 100%)`}}/>
-              <div style={{position:'absolute',width:'76%',height:'76%',borderRadius:'50%',background:'var(--surface,#fff)',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center'}}>
-                <b style={{fontSize:24}}>{Math.min(100, Math.round((learned / 300) * 100))}%</b>
-                <span className="muted small">{learned}/300 слів</span>
-              </div>
-            </div>
-            <p className="muted small" style={{textAlign:'center'}}>Базовий активний лексикон для вільного спілкування</p>
+      {/* Top Metric Cards */}
+      <div className="grid stats" style={{marginBottom:16}}>
+        <div className="card metric-card" style={{display:'flex',alignItems:'center',gap:12,padding:'16px'}}>
+          <div style={{fontSize:28,padding:10,borderRadius:12,background:'rgba(56,189,248,0.15)',color:'#38bdf8'}}>⚡</div>
+          <div>
+            <span className="muted small">Загальний XP</span>
+            <div style={{fontSize:22,fontWeight:800,color:'#fff'}}>{state.xp || 0}</div>
+            <span className="small" style={{color:'#38bdf8'}}>+{state.todayXp || 0} сьогодні</span>
           </div>
         </div>
-      )}
 
-      {statDesign === 'cefr' && (
-        <div className="card cefr-diploma-container fade-in">
-          {/* Top Diploma Header with Official Crest */}
-          <div className="cefr-diploma-header">
-            <div className="cefr-crest-emblem">
-              <div className="cefr-crest-icon">🏛️</div>
-            </div>
-            <span style={{fontSize:11,fontWeight:800,textTransform:'uppercase',letterSpacing:'0.15em',color:'var(--accent,#10b981)'}}>
-              COUNCIL OF EUROPE · OFFICIAL FRAMEWORK OF REFERENCE
-            </span>
-            <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:12,flexWrap:'wrap',margin:'6px 0 4px'}}>
-              <h2 style={{margin:0,fontSize:24,letterSpacing:'-0.02em'}}>
-                Академічний Диплом Володіння Мовою (CEFR)
-              </h2>
-              <button
-                type="button"
-                className="cert-print-icon-btn"
-                onClick={() => window.print()}
-                title="Роздрукувати офіційний сертифікат або зберегти як PDF"
-              >
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-                <span>Друк / PDF</span>
-              </button>
-            </div>
-            <p className="muted small" style={{maxWidth:560,margin:'0 auto'}}>
-              Цей міжнародний сертифікат засвідчує рівень мовної компетентності та практичний словниковий запас користувача платформи English Flow.
-            </p>
+        <div className="card metric-card" style={{display:'flex',alignItems:'center',gap:12,padding:'16px'}}>
+          <div style={{fontSize:28,padding:10,borderRadius:12,background:'rgba(34,197,94,0.15)',color:'#22c55e'}}>🧠</div>
+          <div>
+            <span className="muted small">Засвоєно слів</span>
+            <div style={{fontSize:22,fontWeight:800,color:'#fff'}}>{learnedCount}</div>
+            <span className="small" style={{color:'#22c55e'}}>з 333 в базі</span>
           </div>
+        </div>
 
-          {/* Student Profile Ribbon */}
-          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:12,padding:'14px 18px',margin:'18px 0',borderRadius:14,background:'var(--surface-sunken, rgba(0,0,0,0.03))',border:'1px solid var(--border)'}}>
-            <div style={{display:'flex',alignItems:'center',gap:12}}>
-              <AvatarIcon id={state.avatar || 'duo_owl'} size={44} />
-              <div>
-                <b style={{fontSize:16}}>{state.name || state.nick}</b>
-                <div className="muted small">@{state.nick} · Серійний ID: EF-{String(state.nick).slice(0,4).toUpperCase()}-2026</div>
-              </div>
-            </div>
-            <div style={{textAlign:'right'}}>
-              <div className="muted small">Поточний підтверджений рівень:</div>
-              <span className="pill ok" style={{fontSize:14,fontWeight:800,padding:'4px 12px'}}>
-                {learned >= 400 ? 'B2 Upper-Intermediate' : learned >= 250 ? 'B1 Intermediate' : learned >= 120 ? 'A2 Elementary' : 'A1 Beginner'}
-              </span>
-            </div>
+        <div className="card metric-card" style={{display:'flex',alignItems:'center',gap:12,padding:'16px'}}>
+          <div style={{fontSize:28,padding:10,borderRadius:12,background:'rgba(245,158,11,0.15)',color:'#f59e0b'}}>🎯</div>
+          <div>
+            <span className="muted small">Точність</span>
+            <div style={{fontSize:22,fontWeight:800,color:'#fff'}}>{pct}%</div>
+            <span className="small" style={{color:'#f59e0b'}}>{correct}/{total} вдалих</span>
           </div>
+        </div>
 
-          {/* Competency Skills Matrix */}
-          <h3 style={{margin:'20px 0 10px',fontSize:16,display:'flex',alignItems:'center',gap:8}}>
-            <span>📊</span> Матриця Мовних Компетенцій:
-          </h3>
-          <div className="cefr-matrix-grid">
-            {[
-              {code:'A1', title:'Beginner', target:50, desc:'Розуміння простих побутових конструкцій та базових слів.'},
-              {code:'A2', title:'Elementary', target:120, desc:'Спілкування у типових ситуаціях та розповідь про себе.'},
-              {code:'B1', title:'Intermediate', target:250, desc:'Вільне розуміння тем подорожей, навчання та роботи.'},
-              {code:'B2', title:'Upper-Inter.', target:400, desc:'Спонтанна розмова з носіями мови без бар\'єрів.'},
-              {code:'C1', title:'Advanced', target:600, desc:'Академічна та ділова англійська високого рівня.'}
-            ].map(lvl => {
-              const curPct = Math.min(100, Math.round((learned / lvl.target) * 100));
-              const isAchieved = learned >= lvl.target;
+        <div className="card metric-card" style={{display:'flex',alignItems:'center',gap:12,padding:'16px'}}>
+          <div style={{fontSize:28,padding:10,borderRadius:12,background:'rgba(239,68,68,0.15)',color:'#ef4444'}}>🔥</div>
+          <div>
+            <span className="muted small">Ударний Стрік</span>
+            <div style={{fontSize:22,fontWeight:800,color:'#fff'}}>{state.streak || 0}</div>
+            <span className="small" style={{color:'#ef4444'}}>днів поспіль</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Daily XP Progress Track */}
+      <div className="card" style={{marginBottom:16}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+          <b>🎯 Денна навчальна мета</b>
+          <span style={{fontSize:13,color:'#38bdf8',fontWeight:700}}>{state.todayXp || 0} / {Math.max(1, state.dailyGoal || 50)} XP ({goalPct}%)</span>
+        </div>
+        <div className="xp-goal-track" style={{height:10,borderRadius:5,background:'rgba(255,255,255,0.08)',overflow:'hidden'}}>
+          <i style={{width: `${goalPct}%`, height:'100%', background:'linear-gradient(90deg, #38bdf8, #22c55e)', display:'block', borderRadius:5}} />
+        </div>
+      </div>
+
+      {/* Activity Chart with Range Toggle */}
+      <div className="card" style={{marginBottom:16}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14,flexWrap:'wrap',gap:8}}>
+          <div>
+            <h2 style={{margin:0,fontSize:18}}>📅 Динаміка занять та активність</h2>
+            <p className="muted small" style={{margin:'2px 0 0'}}>Кількість розвʼязаних тестових карток за днями</p>
+          </div>
+          <div className="row-btns" style={{gap:4}}>
+            <button type="button" className={timeRange === '7d' ? 'primary small' : 'secondary small'} onClick={() => setTimeRange('7d')}>
+              7 днів
+            </button>
+            <button type="button" className={timeRange === '30d' ? 'primary small' : 'secondary small'} onClick={() => setTimeRange('30d')}>
+              30 днів
+            </button>
+          </div>
+        </div>
+
+        <div className="chart" style={{display:'flex',alignItems:'flex-end',gap:6,height:140,padding:'10px 0'}}>
+          {activityDays.map(d => (
+            <div key={d.key} className="bar-wrap" style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:4}} title={`${d.key}: ${d.n} відповідей`}>
+              <div
+                className="bar"
+                style={{
+                  width:'100%',
+                  minHeight: d.n ? 8 : 2,
+                  height: `${(d.n / maxN) * 100}%`,
+                  borderRadius:4,
+                  background: d.n ? 'linear-gradient(180deg, #38bdf8, #0284c7)' : 'rgba(255,255,255,0.06)'
+                }}
+              />
+              <span style={{fontSize:10,color:'var(--muted)'}}>{d.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Category Mastery Progress */}
+      <div className="grid two">
+        <div className="card">
+          <h2 style={{fontSize:18,marginBottom:12}}>📚 Освоєння категорій</h2>
+          <div style={{display:'flex',flexDirection:'column',gap:12}}>
+            {Object.entries(categoryStats).map(([catName, catCount]) => {
+              const catCap = 40;
+              const catPct = Math.min(100, Math.round((catCount / catCap) * 100));
               return (
-                <div key={lvl.code} className={'cefr-matrix-card ' + (isAchieved ? 'certified' : '')}>
-                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:4}}>
-                    <span style={{fontSize:16,fontWeight:800,color:isAchieved ? '#10b981' : 'var(--text)'}}>{lvl.code}</span>
-                    <span style={{fontSize:11,fontWeight:700,color:isAchieved ? '#10b981' : 'var(--muted)'}}>
-                      {isAchieved ? '✓ Зараховано' : `${curPct}%`}
-                    </span>
+                <div key={catName}>
+                  <div style={{display:'flex',justifyContent:'space-between',fontSize:12,marginBottom:4}}>
+                    <span>{catName}</span>
+                    <b style={{color:'#38bdf8'}}>{catCount} слів ({catPct}%)</b>
                   </div>
-                  <b style={{fontSize:13,display:'block'}}>{lvl.title}</b>
-                  <p className="muted small" style={{margin:'4px 0 8px',fontSize:11,lineHeight:1.3}}>{lvl.desc}</p>
-                  <div className="progress" style={{height:4}}><i style={{width: `${curPct}%`}}/></div>
-                  <span className="muted small" style={{fontSize:10,marginTop:4,display:'inline-block'}}>
-                    {Math.min(learned, lvl.target)} / {lvl.target} слів
-                  </span>
+                  <div style={{height:6,borderRadius:3,background:'rgba(255,255,255,0.06)',overflow:'hidden'}}>
+                    <div style={{width:`${catPct}%`,height:'100%',background:'#38bdf8',borderRadius:3}} />
+                  </div>
                 </div>
               );
             })}
           </div>
+        </div>
 
-          {/* Certificate Footer with Gold Stamp */}
-          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:16,marginTop:24,paddingTop:18,borderTop:'1px dashed var(--border)'}}>
-            <div style={{display:'flex',alignItems:'center',gap:14}}>
-              <div className="cefr-gold-stamp">
-                <div style={{fontSize:9,textTransform:'uppercase',letterSpacing:'0.05em',lineHeight:1.1}}>ENGLISH FLOW</div>
-                <div style={{fontSize:15,fontWeight:800,margin:'2px 0'}}>SEAL</div>
-                <div style={{fontSize:8,opacity:0.85}}>VERIFIED</div>
-              </div>
-              <div style={{fontSize:12,lineHeight:1.4}} className="muted">
-                <div><b>Офіційний статус сертифіката:</b> Активовано</div>
-                <div><b>Дата останньої верифікації знань:</b> 13.09.2026 о 16:21:03 EEST (UTC+3, Східноєвропейський літній час, м. Київ)</div>
-                <div>Глобальний стандарт: CEFR Council of Europe standard</div>
-              </div>
-            </div>
+        <div className="card">
+          <h2 style={{fontSize:18,marginBottom:12}}>🔄 Режими навчання</h2>
+          <ModeBars history={history} />
+          <div style={{marginTop:16,padding:'12px',borderRadius:10,background:'rgba(0,0,0,0.2)'}}>
+            <p className="muted small" style={{margin:0}}>
+              💡 <b>Порада:</b> Регулярне повторення в режимі SRS закріплює слова в довготривалій памʼяті на 90% швидше!
+            </p>
           </div>
         </div>
-      )}
+      </div>
     </section>
   );
 }
@@ -5472,7 +5453,7 @@ function PublicProfileModal({nick, onClose}) {
               style={{padding:'7px 14px',fontSize:12,fontWeight:600}}
               title="Підбадьорити друга (ліміт: 1 раз на добу)"
             >
-              {boostedToday ? '✓ Підбадьорено (1 раз на день)' : '⚡ Підбадьорити (+5 XP)'}
+              {boostedToday ? '✓ Підбадьорено' : '⚡ Підбадьорити (+5 XP)'}
             </button>
           </div>
 
@@ -5639,22 +5620,9 @@ function Profile({state, save, gamification, onRefreshGamification}) {
 
       {/* Hero Header */}
       <div className="hero-rpg card">
-        {profileViewMode === '3d' ? (
-          <div className="hologram-stage" onMouseMove={handleTiltMove} onMouseLeave={handleTiltLeave} style={{margin:'8px 0',flexShrink:0}}>
-            <div className="hologram-tilt-card" style={{ transform: `perspective(700px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)` }}>
-              <div className="hologram-scanline" />
-              <AvatarIcon id={selectedAvatar || 'duo_owl'} size={100} className={state.inventory?.vipFrame ? 'vip-avatar-glow' : ''} />
-            </div>
-            <div className="hologram-pedestal" />
-            <div style={{fontSize:10,color:'#38bdf8',fontWeight:700,marginTop:6,textAlign:'center'}}>
-              🔮 3D Голограма Ефіру
-            </div>
-          </div>
-        ) : (
-          <div className="rpg-avatar">
-            <AvatarIcon id={selectedAvatar || 'duo_owl'} size={72} className={state.inventory?.vipFrame ? 'vip-avatar-glow' : ''} />
-          </div>
-        )}
+        <div className="rpg-avatar" style={{borderRadius:'50%',overflow:'hidden',width:76,height:76,boxShadow:'0 0 20px rgba(56,189,248,0.4)',border:'2px solid #38bdf8'}}>
+          <AvatarIcon id={selectedAvatar || 'character_01_clumsy_barbarian'} size={76} className={state.inventory?.vipFrame ? 'vip-avatar-glow' : ''} />
+        </div>
         <div style={{flex:1,minWidth:200}}>
           <div className="rpg-level">Рівень {level}</div>
           <h2 style={{margin:'4px 0'}}>
@@ -5663,18 +5631,9 @@ function Profile({state, save, gamification, onRefreshGamification}) {
           <div className="muted">@{state.nick} · {state.xp || 0} XP · 🔥 {state.streak || 0} днів</div>
           <div style={{marginTop:8,display:'flex',gap:8,flexWrap:'wrap',alignItems:'center'}}>
             <LeagueBadge xp={state.xp||0} />
-            <span className="currency-pill-coins">🪙 {state.gems || 0} Золотих Монет</span>
+            <span className="currency-pill-coins" style={{display:'inline-flex',alignItems:'center',gap:6}}><AncientCoinIcon size={18}/> {state.gems || 0} Золотих Монет</span>
             {freezeCount > 0 && <span className="freeze-chip">❄️ ×{freezeCount} заморозки</span>}
             {state.inventory?.vipFrame && <span className="pill ok">👑 VIP Гравець</span>}
-          </div>
-          <div style={{display:'flex',alignItems:'center',gap:8,marginTop:10}}>
-            <span className="muted small">Режим героя:</span>
-            <button type="button" className={profileViewMode === '2d' ? 'primary small' : 'secondary small'} style={{fontSize:11,padding:'3px 10px'}} onClick={() => setProfileViewMode('2d')}>
-              2D RPG
-            </button>
-            <button type="button" className={profileViewMode === '3d' ? 'primary small' : 'secondary small'} style={{fontSize:11,padding:'3px 10px'}} onClick={() => setProfileViewMode('3d')}>
-              🔮 3D Голограма
-            </button>
           </div>
           <div className="xp-bar" title="До наступного рівня" style={{marginTop:10}}><i style={{width: xpInto + '%'}}/></div>
           <small className="muted">{xpInto}/100 XP до рівня {level + 1}</small>
@@ -5741,7 +5700,7 @@ function Profile({state, save, gamification, onRefreshGamification}) {
                   key={av.id}
                   type="button"
                   className={'avatar-card-item' + (isSelected ? ' active' : '')}
-                  onClick={() => setSelectedAvatar(av.id)}
+                  onClick={() => { setSelectedAvatar(av.id); save({ ...state, avatar: av.id }); emitSiteToast(`Аватар встановлено: «${av.name}»`, 'ok'); }}
                   title={`${av.name} — ${av.action}`}
                   style={{
                     display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',
@@ -6582,38 +6541,7 @@ function AboutPage() {
             </ul>
           </div>
 
-            {/* Офіційний Документ Верифікації CEFR */}
-            <div className="card cefr-official-certificate" style={{marginTop:20,padding:24,borderRadius:16,background:'linear-gradient(135deg, rgba(245,158,11,0.08), rgba(16,185,129,0.08))',border:'2px solid rgba(245,158,11,0.4)',boxShadow:'0 8px 32px rgba(0,0,0,0.15)'}}>
-              <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',flexWrap:'wrap',gap:12,borderBottom:'1px solid rgba(245,158,11,0.3)',paddingBottom:16,marginBottom:16}}>
-                <div style={{display:'flex',alignItems:'center',gap:12}}>
-                  <div style={{fontSize:36}}>🏛️</div>
-                  <div>
-                    <span className="eyebrow" style={{color:'#d97706',fontWeight:900,letterSpacing:'0.1em'}}>EUROPEAN FRAMEWORK OF REFERENCE (CEFR)</span>
-                    <h3 style={{margin:0,fontSize:18,fontWeight:900,color:'#ffffff'}}>ОФІЦІЙНИЙ СЕРТИФІКАТ ВЕРИФІКАЦІЇ ЗНАНЬ ТА ПЕДАГОГІЧНОЇ ВІДПОВІДНОСТІ</h3>
-                    <span className="muted small">Серійний номер бланка: <b>CEFR-UA-2026-0913-77X</b> · Статус: <b>VERIFIED & DIGITALLY SEALED</b></span>
-                  </div>
-                </div>
-                <div style={{textAlign:'right'}}>
-                  <span className="pill ok" style={{fontSize:12,fontWeight:800}}>VALIDATED ✓</span>
-                </div>
-              </div>
-
-              <div style={{lineHeight:1.7,fontSize:14}}>
-                <p style={{margin:'0 0 10px'}}>
-                  Цим документом підтверджується, що навчальний курс, лексична база та алгоритми тестування платформи <b>English Flow</b> пройшли повну експертну верифікацію на відповідність Загальноєвропейським рекомендаціям з мовної освіти (CEFR) для рівнів від <b>A1 (Breakthrough)</b> до <b>C2 (Mastery)</b>.
-                </p>
-                <div style={{padding:'10px 14px',borderRadius:10,background:'rgba(0,0,0,0.25)',border:'1px solid rgba(255,255,255,0.1)',marginBottom:12}}>
-                  <b style={{color:'#facc15'}}>🕒 Офіційний часовий штамп верифікації:</b><br/>
-                  <span style={{fontSize:15,fontWeight:800,color:'#ffffff'}}>
-                    13.09.2026 о 16:21:03 EEST (UTC+3, Східноєвропейський літній час, м. Київ)
-                  </span>
-                </div>
-                <p style={{margin:0,fontSize:13,color:'var(--muted)'}}>
-                  Орган верифікації: <b>Department of Pedagogical Verification & Automated CEFR Audit</b>. Цифровий відбиток цілісності контенту підписано асиметричним ключем системи.
-                </p>
-              </div>
             </div>
-        </div>
       )}
 
       {/* TAB 2: Конфіденційність та Правила */}
@@ -6799,6 +6727,133 @@ const ICON_STYLES_10 = [
   {id: 'retro_pixel', name: '9. Retro 8-bit', icon: '👾', desc: 'Піксельна аркадна естетика', preview: ['👾', '🕹️', '👾', '👑', '🏰', '⚔️']},
   {id: 'golden_luxury', name: '10. Gold Luxury', icon: '👑', desc: 'Золоті витончені королівські контури', preview: ['📙', '⭐', '⚜️', '👑', '🏯', '🛡️']}
 ];
+
+
+function IconStylePreviewTray({ styleId }) {
+  const packs = {
+    lucide_minimal: [
+      { label: 'Словник', icon: '📖', color: '#94a3b8' },
+      { label: 'Енергія', icon: '⚡', color: '#94a3b8' },
+      { label: 'Ціль', icon: '🎯', color: '#94a3b8' },
+      { label: 'Кубок', icon: '🏆', color: '#94a3b8' },
+      { label: 'Замок', icon: '🏰', color: '#94a3b8' },
+      { label: 'Щит', icon: '🛡️', color: '#94a3b8' },
+      { label: 'Опції', icon: '⚙️', color: '#94a3b8' },
+      { label: 'Чат', icon: '💬', color: '#94a3b8' }
+    ],
+    duotone_emerald: [
+      { label: 'Словник', icon: '📗', color: '#10b981' },
+      { label: 'Енергія', icon: '🔋', color: '#34d399' },
+      { label: 'Ціль', icon: '❇️', color: '#10b981' },
+      { label: 'Кубок', icon: '🥇', color: '#34d399' },
+      { label: 'Замок', icon: '🌿', color: '#10b981' },
+      { label: 'Щит', icon: '🔰', color: '#34d399' },
+      { label: 'Опції', icon: '⚙️', color: '#10b981' },
+      { label: 'Чат', icon: '🟢', color: '#34d399' }
+    ],
+    cyber_neon: [
+      { label: 'Словник', icon: '🔮', color: '#06b6d4' },
+      { label: 'Енергія', icon: '⚡', color: '#ec4899' },
+      { label: 'Ціль', icon: '💠', color: '#06b6d4' },
+      { label: 'Кубок', icon: '🏆', color: '#facc15' },
+      { label: 'Замок', icon: '🏙️', color: '#06b6d4' },
+      { label: 'Щит', icon: '🛡️', color: '#ec4899' },
+      { label: 'Опції', icon: '⚙️', color: '#06b6d4' },
+      { label: 'Чат', icon: '💬', color: '#ec4899' }
+    ],
+    isometric_3d: [
+      { label: 'Словник', icon: '📦', color: '#6366f1' },
+      { label: 'Енергія', icon: '💥', color: '#f59e0b' },
+      { label: 'Ціль', icon: '🎲', color: '#6366f1' },
+      { label: 'Кубок', icon: '🏅', color: '#f59e0b' },
+      { label: 'Замок', icon: '🏰', color: '#6366f1' },
+      { label: 'Щит', icon: '🛡️', color: '#f59e0b' },
+      { label: 'Опції', icon: '⚙️', color: '#6366f1' },
+      { label: 'Чат', icon: '📫', color: '#f59e0b' }
+    ],
+    flat_vibrant: [
+      { label: 'Словник', icon: '📚', color: '#ef4444' },
+      { label: 'Енергія', icon: '⚡', color: '#f59e0b' },
+      { label: 'Ціль', icon: '🎯', color: '#10b981' },
+      { label: 'Кубок', icon: '🏆', color: '#facc15' },
+      { label: 'Замок', icon: '🎪', color: '#8b5cf6' },
+      { label: 'Щит', icon: '🛡️', color: '#3b82f6' },
+      { label: 'Опції', icon: '⚙️', color: '#64748b' },
+      { label: 'Чат', icon: '💌', color: '#ec4899' }
+    ],
+    material_sharp: [
+      { label: 'Словник', icon: '📄', color: '#e2e8f0' },
+      { label: 'Енергія', icon: '⚡', color: '#38bdf8' },
+      { label: 'Ціль', icon: '🎯', color: '#e2e8f0' },
+      { label: 'Кубок', icon: '🏆', color: '#38bdf8' },
+      { label: 'Замок', icon: '🏢', color: '#e2e8f0' },
+      { label: 'Щит', icon: '🛡️', color: '#38bdf8' },
+      { label: 'Опції', icon: '⚙️', color: '#e2e8f0' },
+      { label: 'Чат', icon: '💬', color: '#38bdf8' }
+    ],
+    hand_drawn: [
+      { label: 'Словник', icon: '📜', color: '#fb923c' },
+      { label: 'Енергія', icon: '⚡', color: '#fde047' },
+      { label: 'Ціль', icon: '🏹', color: '#fb923c' },
+      { label: 'Кубок', icon: '🎗️', color: '#fde047' },
+      { label: 'Замок', icon: '🛖', color: '#fb923c' },
+      { label: 'Щит', icon: '🛡️', color: '#fde047' },
+      { label: 'Опції', icon: '✏️', color: '#fb923c' },
+      { label: 'Чат', icon: '🕊️', color: '#fde047' }
+    ],
+    glass_pro: [
+      { label: 'Словник', icon: '💎', color: '#67e8f9' },
+      { label: 'Енергія', icon: '💡', color: '#fde047' },
+      { label: 'Ціль', icon: '🫧', color: '#67e8f9' },
+      { label: 'Кубок', icon: '✨', color: '#fde047' },
+      { label: 'Замок', icon: '🏛️', color: '#67e8f9' },
+      { label: 'Щит', icon: '🛡️', color: '#fde047' },
+      { label: 'Опції', icon: '🔮', color: '#67e8f9' },
+      { label: 'Чат', icon: '💭', color: '#fde047' }
+    ],
+    retro_pixel: [
+      { label: 'Словник', icon: '👾', color: '#22c55e' },
+      { label: 'Енергія', icon: '🕹️', color: '#eab308' },
+      { label: 'Ціль', icon: '🎯', color: '#22c55e' },
+      { label: 'Кубок', icon: '👑', color: '#eab308' },
+      { label: 'Замок', icon: '🏰', color: '#22c55e' },
+      { label: 'Щит', icon: '⚔️', color: '#eab308' },
+      { label: 'Опції', icon: '⚙️', color: '#22c55e' },
+      { label: 'Чат', icon: '💾', color: '#eab308' }
+    ],
+    golden_luxury: [
+      { label: 'Словник', icon: '📙', color: '#f59e0b' },
+      { label: 'Енергія', icon: '⭐', color: '#fde047' },
+      { label: 'Ціль', icon: '⚜️', color: '#f59e0b' },
+      { label: 'Кубок', icon: '👑', color: '#fde047' },
+      { label: 'Замок', icon: '🏯', color: '#f59e0b' },
+      { label: 'Щит', icon: '🛡️', color: '#fde047' },
+      { label: 'Опції', icon: '⚙️', color: '#f59e0b' },
+      { label: 'Чат', icon: '📜', color: '#fde047' }
+    ]
+  };
+
+  const list = packs[styleId] || packs.lucide_minimal;
+  return (
+    <div className="icon-style-preview-tray" style={{display:'flex',alignItems:'center',gap:12,padding:'6px 12px',background:'rgba(0,0,0,0.28)',borderRadius:10,marginTop:6}}>
+      {list.map((item, idx) => (
+        <span
+          key={idx}
+          title={item.label}
+          style={{
+            fontSize: 16,
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            filter: `drop-shadow(0 0 3px ${item.color}80)`
+          }}
+        >
+          {item.icon}
+        </span>
+      ))}
+    </div>
+  );
+}
 
 function SettingsPage({state, save, onLogout}) {
   const upd = (patch) => save({...state, ...patch});
@@ -7019,24 +7074,14 @@ function SettingsPage({state, save, onLogout}) {
                 >
                   <div style={{display:'flex',flexDirection:'column',gap:6,flex:1}}>
                     <div style={{display:'flex',alignItems:'center',gap:14}}>
-                      <div style={{fontSize:28,width:40,textAlign:'center',flexShrink:0}}>{s.icon}</div>
+                      <div style={{fontSize:24,width:44,height:44,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(56,189,248,0.12)',border:'1.5px solid rgba(56,189,248,0.3)',flexShrink:0}}>{s.icon}</div>
                       <div>
                         <b style={{fontSize:14,display:'block',marginBottom:2}}>{s.name}</b>
                         <span className="muted small" style={{fontSize:12}}>{s.desc}</span>
                       </div>
                     </div>
-                    {/* Expandable Icon Pack Tray */}
-                    <div className="icon-style-preview-tray" style={{display:'flex',alignItems:'center',gap:10,padding:'6px 10px',background:'rgba(0,0,0,0.18)',borderRadius:8,marginTop:4}}>
-                      <span title="Словник">📖</span>
-                      <span title="Досвід">⚡</span>
-                      <span title="Ціль">🎯</span>
-                      <span title="Рейтинг">🏆</span>
-                      <span title="Крамниця">🏰</span>
-                      <span title="Профіль">🛡️</span>
-                      <span title="Налаштування">⚙️</span>
-                      <span title="Чат">💬</span>
-                      <span className="muted small" style={{fontSize:10,marginLeft:'auto'}}>Повний набір</span>
-                    </div>
+                    {/* Distinct Styled Icon Pack Tray */}
+                    <IconStylePreviewTray styleId={s.id} />
                   </div>
                   <div>
                     {isActive ? (
@@ -7157,7 +7202,28 @@ function FriendsPage({state, save, onViewProfile}) {
     }
   });
 
-  const load = useCallback(async () => {
+  
+  // Check for incoming cheers/boosts when entering or when coming online
+  useEffect(() => {
+    if (!state.nick || state.guest) return;
+    try {
+      const notifKey = `ef_cheered_notifs_${state.nick.toLowerCase()}`;
+      const stored = JSON.parse(localStorage.getItem(notifKey) || '[]');
+      const unread = stored.filter(n => !n.seen);
+      if (unread.length > 0) {
+        unread.forEach(n => {
+          setTimeout(() => {
+            confettiBurst();
+            emitSiteToast(`🎉 ${n.from_name || ('@' + n.from_nick)} надіслав(ла) вам підбадьорення! (${n.date || 'сьогодні'} о ${n.time})`, 'ok');
+          }, 600);
+        });
+        const marked = stored.map(n => ({ ...n, seen: true }));
+        localStorage.setItem(notifKey, JSON.stringify(marked));
+      }
+    } catch {}
+  }, [state.nick, state.guest]);
+
+const load = useCallback(async () => {
     if (state.guest) return;
     try {
       const [f, b] = await Promise.all([getFriends(state.nick), friendsLeaderboard(state.nick)]);
@@ -7191,12 +7257,31 @@ function FriendsPage({state, save, onViewProfile}) {
   }, [chatWith, state.nick, state.guest]);
 
   const add = async () => {
+    const trimmed = q.trim();
+    if (!trimmed) return;
+    if (trimmed.toLowerCase() === String(state.nick || '').toLowerCase()) {
+      emitSiteToast('Ви не можете додати себе в друзі!', 'info');
+      return;
+    }
+    // Check local duplicate
+    const existing = friends.find(f => f.nick.toLowerCase() === trimmed.toLowerCase());
+    if (existing) {
+      if (existing.status === 'accepted') {
+        emitSiteToast(`Користувач @${trimmed} вже є у вашій команді!`, 'info');
+      } else {
+        emitSiteToast(`Запит для @${trimmed} вже надіслано та очікує підтвердження!`, 'info');
+      }
+      return;
+    }
     setBusy(true);
-    const r = await addFriend(state.nick, q);
+    const r = await addFriend(state.nick, trimmed);
     setMsg(r.ok ? 'Запит надіслано ✓' : (r.error || 'Помилка'));
     if (r.ok) {
       track('friend_request', { feature: 'friends' });
       setQ('');
+      emitSiteToast(`Запит надіслано для @${trimmed} ✓`, 'ok');
+    } else {
+      emitSiteError(r.error || 'Не вдалося додати друга', 'Друзі');
     }
     setBusy(false);
     load();
@@ -7219,10 +7304,10 @@ function FriendsPage({state, save, onViewProfile}) {
     }
   };
 
-  const cheerFriend = (nick) => {
+  const cheerFriend = (nick, friendObj) => {
     if (!nick) return;
     if (cheeredSet[nick]) {
-      emitSiteToast(`Ви вже надіслали буст для @${nick}! Буст спрацьовує тільки один раз для друга.`, 'info');
+      emitSiteToast(`Ви вже підбадьорили цього друга! Підбадьорення спрацьовує тільки один раз.`, 'info');
       return;
     }
     playTone(true);
@@ -7235,7 +7320,25 @@ function FriendsPage({state, save, onViewProfile}) {
     if (save) {
       save({ ...state, cheeredFriends: updated });
     }
-    emitSiteToast(`🔥 Ви надіслали буст для @${nick}! (використано 1 з 1)`, 'ok');
+    // Store notification for friend to receive when they log in or come online
+    try {
+      const notifKey = `ef_cheered_notifs_${nick.toLowerCase()}`;
+      const prevNotifs = JSON.parse(localStorage.getItem(notifKey) || '[]');
+      const notifItem = {
+        id: 'cheer_' + Date.now(),
+        from_nick: state.nick,
+        from_name: state.name || state.nick,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        date: new Date().toLocaleDateString('uk-UA'),
+        seen: false
+      };
+      prevNotifs.push(notifItem);
+      localStorage.setItem(notifKey, JSON.stringify(prevNotifs));
+    } catch {}
+
+    const targetFriend = friendObj || friends.find(f => f.nick === nick);
+    const displayName = targetFriend?.name || ('@' + nick);
+    emitSiteToast(`🔥 Ви надіслали підбадьорення для ${displayName}!`, 'ok');
   };
 
   const social = async (action) => {
@@ -7303,32 +7406,81 @@ function FriendsPage({state, save, onViewProfile}) {
             ➕ Додати в команду
           </button>
         </div>
-        <div style={{display:'flex',alignItems:'center',gap:8,marginTop:8,flexWrap:'wrap'}}>
-          <span className="muted small">💡 Швидкий вибір:</span>
-          <button type="button" className="secondary small" style={{fontSize:11,padding:'2px 8px'}} onClick={() => { setQ('tester'); }}>
-            🛡️ @tester (тестовий акаунт)
-          </button>
-          <button type="button" className="secondary small" style={{fontSize:11,padding:'2px 8px'}} onClick={() => { setQ('boss'); }}>
-            👑 @boss (розробник)
-          </button>
-        </div>
+        
         {msg && <p className="muted small" style={{marginTop:8,marginBottom:0}}>{msg}</p>}
       </div>
 
       {/* MODE 1: GAMER CARDS */}
       {friendsView === 'cards' && (
         <div>
+          {/* Outgoing Requests (Запит надіслано - показує кому) */}
+          {(() => {
+            const outgoing = friends.filter(f => f.status === 'pending' && f.requested_by === state.id);
+            if (!outgoing.length) return null;
+            return (
+              <div className="card" style={{marginBottom:16,border:'1.5px dashed rgba(56,189,248,0.4)',background:'rgba(56,189,248,0.05)'}}>
+                <h3 style={{margin:'0 0 10px',fontSize:14,color:'#38bdf8',display:'flex',alignItems:'center',gap:8}}>
+                  📨 Вихідні запити дружби (Очікують підтвердження: {outgoing.length})
+                </h3>
+                <div style={{display:'flex',flexDirection:'column',gap:8}}>
+                  {outgoing.map(f => (
+                    <div key={f.id || f.nick} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'8px 12px',borderRadius:8,background:'rgba(0,0,0,0.2)'}}>
+                      <div style={{display:'flex',alignItems:'center',gap:10}}>
+                        <AvatarIcon id={f.avatar || 'character_01_clumsy_barbarian'} size={32} />
+                        <div>
+                          <b>@{f.nick}</b> {f.name && <span className="muted small">({f.name})</span>}
+                        </div>
+                      </div>
+                      <span className="pill warn" style={{fontSize:11}}>⏳ Запит надіслано</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* Incoming Requests */}
+          {(() => {
+            const incoming = friends.filter(f => f.status === 'pending' && f.requested_by !== state.id);
+            if (!incoming.length) return null;
+            return (
+              <div className="card" style={{marginBottom:16,border:'1.5px solid rgba(34,197,94,0.4)',background:'rgba(34,197,94,0.05)'}}>
+                <h3 style={{margin:'0 0 10px',fontSize:14,color:'#22c55e',display:'flex',alignItems:'center',gap:8}}>
+                  📬 Вхідні запити в команду ({incoming.length})
+                </h3>
+                <div style={{display:'flex',flexDirection:'column',gap:8}}>
+                  {incoming.map(f => (
+                    <div key={f.id || f.nick} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'8px 12px',borderRadius:8,background:'rgba(0,0,0,0.2)'}}>
+                      <div style={{display:'flex',alignItems:'center',gap:10}}>
+                        <AvatarIcon id={f.avatar || 'character_01_clumsy_barbarian'} size={32} />
+                        <div>
+                          <b>@{f.nick}</b> {f.name && <span className="muted small">({f.name})</span>}
+                        </div>
+                      </div>
+                      <button className="primary small" onClick={async () => { const r = await acceptFriend(state.nick, f.id); if (!r.ok) emitSiteError(r.error, 'Друзі'); load(); }}>
+                        ✓ Прийняти
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* Mutual Confirmed Friends Grid (Тільки прийняті взаємно) */}
           <div className="friends-gamer-grid">
-            {friends.map((f, idx) => {
+            {friends.filter(f => f.status === 'accepted').map((f, idx) => {
               const league = leagueForXp(f.xp || 0);
+              const hasBoosted = Boolean(cheeredSet[f.nick]);
               return (
                 <div className="friend-gamer-card" key={f.id || f.nick}>
                   <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:12}}>
-                    <AvatarIcon id={f.avatar || 'duo_owl'} size={46} style={{borderRadius:12}} />
+                    <AvatarIcon id={f.avatar || 'character_01_clumsy_barbarian'} size={46} />
                     <div>
-                      <b style={{fontSize:16}}>@{f.nick}</b>
+                      <b style={{fontSize:16}}>{f.name || f.nick}</b>
+                      <div className="muted small">@{f.nick}</div>
                       <div className="friend-activity-chip" style={{marginTop:2}}>
-                        {f.is_online ? <span className="online">🟢 Зараз на зв'язку</span> : <span className="offline">⚪ {formatActivityTime(f.last_seen || f.updated_at, idx)}</span>}
+                        {f.is_online ? <span className="online">🟢 Зараз онлайн</span> : <span className="offline">⚪ {formatActivityTime(f.last_seen || f.updated_at, idx)}</span>}
                       </div>
                     </div>
                   </div>
@@ -7340,7 +7492,7 @@ function FriendsPage({state, save, onViewProfile}) {
                     </div>
                     <div style={{display:'flex',justifyContent:'space-between',fontSize:12,color:'var(--muted)',marginTop:4}}>
                       <span>🔥 Стрік: {f.streak || 0} днів</span>
-                      <span>{f.status === 'pending' ? '⏳ Очікує' : '✓ В команді'}</span>
+                      <span style={{color:'#22c55e'}}>✓ В команді</span>
                     </div>
                   </div>
 
@@ -7348,41 +7500,28 @@ function FriendsPage({state, save, onViewProfile}) {
                     <button className="secondary small" title="Переглянути профіль" onClick={() => onViewProfile?.(f.nick)}>
                       👤 Профіль
                     </button>
-                    {f.status === 'accepted' && (
-                      <>
-                        <button className="primary small" style={{flex:1}} onClick={() => { setChatWith(f.nick); setFriendsView('chat'); }}>
-                          💬 Чат
-                        </button>
-                        {(() => {
-                          const hasBoosted = Boolean(cheeredSet[f.nick]);
-                          return (
-                            <button
-                              className="secondary small"
-                              title={hasBoosted ? "Буст уже надіслано цьому другу (дозволено лише 1 раз)" : "Надіслати підбадьорення (1 раз)"}
-                              disabled={hasBoosted}
-                              onClick={() => cheerFriend(f.nick)}
-                              style={hasBoosted ? { opacity: 0.65, cursor: 'not-allowed', background: 'rgba(255,255,255,0.06)' } : {}}
-                            >
-                              {hasBoosted ? '✓ Буст' : '🔥 Буст'}
-                            </button>
-                          );
-                        })()}
-                      </>
-                    )}
-                    {f.status === 'pending' && f.requested_by !== state.id && (
-                      <button className="primary small" style={{flex:1}} onClick={async () => { const r = await acceptFriend(state.nick, f.id); if (!r.ok) emitSiteError(r.error, 'Друзі'); load(); }}>
-                        Прийняти
-                      </button>
-                    )}
+                    <button className="primary small" style={{flex:1}} onClick={() => { setChatWith(f.nick); setFriendsView('chat'); }}>
+                      💬 Чат
+                    </button>
+                    <button
+                      className="secondary small"
+                      title={hasBoosted ? "Ви вже підбадьорили цього друга" : "Підбадьорити друга"}
+                      disabled={hasBoosted}
+                      onClick={() => cheerFriend(f.nick, f)}
+                      style={hasBoosted ? { opacity: 0.65, cursor: 'not-allowed', background: 'rgba(255,255,255,0.06)' } : {}}
+                    >
+                      {hasBoosted ? '✓ Підбадьорено' : '⚡ Підбадьорити'}
+                    </button>
                   </div>
                 </div>
               );
             })}
           </div>
-          {!friends.length && (
+
+          {!friends.filter(f => f.status === 'accepted').length && (
             <div className="card" style={{textAlign:'center',padding:'36px 16px',color:'var(--muted)'}}>
-              <p style={{fontSize:16,fontWeight:600}}>Поки немає друзів у команді</p>
-              <p className="small">Введіть нікнейм вище, щоб відправити запит і змагатися разом!</p>
+              <p style={{fontSize:16,fontWeight:600}}>Поки немає взаємних друзів у команді</p>
+              <p className="small">Коли друг прийме ваш запит, він зʼявиться тут для спільних дуелей та спілкування!</p>
             </div>
           )}
         </div>
@@ -7506,24 +7645,6 @@ function FriendsPage({state, save, onViewProfile}) {
         </div>
       )}
 
-      {/* FRIENDS LEADERBOARD STRIP */}
-      {board.length > 0 && (
-        <div className="card" style={{marginTop: 16}}>
-          <h2>🏆 Залікова таблиця друзів</h2>
-          <div className="lb">
-            {board.map((r, i) => (
-              <div className="lb-row" key={r.nick}>
-                <span style={{fontWeight:800}}>#{i + 1}</span>
-                <div style={{display:'flex',alignItems:'center',gap:8}}>
-                  <AvatarIcon id={r.avatar || 'duo_owl'} size={24} />
-                  <b>@{r.nick}</b>
-                </div>
-                <span className="muted">{r.xp} XP · {r.streak}🔥</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </section>
   );
 }

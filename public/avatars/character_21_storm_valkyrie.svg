@@ -1,14 +1,4 @@
-import fs from 'fs';
-import path from 'path';
-
-const AVATARS_DIR = 'public/avatars';
-if (!fs.existsSync(AVATARS_DIR)) {
-  fs.mkdirSync(AVATARS_DIR, { recursive: true });
-}
-
-// Shared Futuristic Metallic Circular Frame Template (Dark Steel, Beveled Circular UI Border, Cyan Edge Glow, Gold Clamps)
-function generateFrameSvg(innerElements, customDefs = '', filterId = '') {
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
   <defs>
     <!-- Master Metallic UI Gradients -->
     <linearGradient id="frameBevelGrad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -43,7 +33,12 @@ function generateFrameSvg(innerElements, customDefs = '', filterId = '') {
       <circle cx="256" cy="256" r="212" />
     </clipPath>
 
-    ${customDefs}
+    <style>
+      @keyframes wingWave { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08) translateY(-6px); } }
+      @keyframes lightningFlicker { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+      .valk-wings { transform-origin: 256px 240px; animation: wingWave 2.2s ease-in-out infinite; }
+      .lightning-bolt { animation: lightningFlicker 0.6s infinite; }
+    </style>
   </defs>
 
   <style>
@@ -67,7 +62,30 @@ function generateFrameSvg(innerElements, customDefs = '', filterId = '') {
 
   <!-- BACKGROUND & CHARACTER CONTENT (CLIPPED TO CIRCLE) -->
   <g clip-path="url(#avatarScreenClip)">
-    ${innerElements}
+    
+  <g id="character-bg"><rect x="0" y="0" width="512" height="512" fill="#0c4a6e" />
+         <circle cx="256" cy="256" r="175" fill="#0284c7" opacity="0.6" /></g>
+  <g id="character-body">
+      <!-- Feather Wings -->
+      <g class="valk-wings">
+        <path d="M 210 230 C 130 180 90 260 140 340 C 180 320 200 280 210 230 Z" fill="#f8fafc" stroke="#cbd5e1" stroke-width="3" />
+        <path d="M 302 230 C 382 180 422 260 372 340 C 332 320 312 280 302 230 Z" fill="#f8fafc" stroke="#cbd5e1" stroke-width="3" />
+      </g>
+      <!-- Armor -->
+      <path d="M 216 310 L 296 310 L 280 410 L 232 410 Z" fill="#e2e8f0" stroke="#64748b" stroke-width="3" />
+      <!-- Head -->
+      <circle cx="256" cy="230" r="44" fill="#fde047" stroke="#ca8a04" stroke-width="3" />
+      <!-- Winged Helmet -->
+      <path d="M 216 230 C 216 170 296 170 296 230 Z" fill="#94a3b8" stroke="#475569" stroke-width="3" />
+      <polygon points="206,200 170,160 210,185" fill="#ffffff" stroke="#94a3b8" stroke-width="2" />
+      <polygon points="306,200 342,160 302,185" fill="#ffffff" stroke="#94a3b8" stroke-width="2" />
+      <!-- Eyes -->
+      <circle cx="242" cy="228" r="4" fill="#0284c7" />
+      <circle cx="270" cy="228" r="4" fill="#0284c7" />
+      <!-- Lightning Spear -->
+      <polygon points="320,110 328,140 316,140 326,190 304,150 316,150" fill="#fef08a" stroke="#eab308" stroke-width="2" class="lightning-bolt" />
+    </g>
+  
   </g>
 
   <!-- ================= MASTER FUTURISTIC METALLIC ROUND FRAME ================= -->
@@ -117,7 +135,4 @@ function generateFrameSvg(innerElements, customDefs = '', filterId = '') {
       <path d="M 256 12 A 244 244 0 0 1 400 60" fill="none" stroke="url(#lightSweepGrad)" stroke-width="6" stroke-linecap="round" />
     </g>
   </g>
-</svg>`;
-}
-
-export { generateFrameSvg, AVATARS_DIR };
+</svg>

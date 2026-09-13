@@ -1,14 +1,4 @@
-import fs from 'fs';
-import path from 'path';
-
-const AVATARS_DIR = 'public/avatars';
-if (!fs.existsSync(AVATARS_DIR)) {
-  fs.mkdirSync(AVATARS_DIR, { recursive: true });
-}
-
-// Shared Futuristic Metallic Circular Frame Template (Dark Steel, Beveled Circular UI Border, Cyan Edge Glow, Gold Clamps)
-function generateFrameSvg(innerElements, customDefs = '', filterId = '') {
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
   <defs>
     <!-- Master Metallic UI Gradients -->
     <linearGradient id="frameBevelGrad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -43,7 +33,12 @@ function generateFrameSvg(innerElements, customDefs = '', filterId = '') {
       <circle cx="256" cy="256" r="212" />
     </clipPath>
 
-    ${customDefs}
+    <style>
+      @keyframes tentacleWave { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(12deg); } }
+      @keyframes hatBounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+      .tentacle-left { transform-origin: 190px 300px; animation: tentacleWave 1.8s ease-in-out infinite; }
+      .chef-hat { animation: hatBounce 1.4s ease-in-out infinite; }
+    </style>
   </defs>
 
   <style>
@@ -67,7 +62,33 @@ function generateFrameSvg(innerElements, customDefs = '', filterId = '') {
 
   <!-- BACKGROUND & CHARACTER CONTENT (CLIPPED TO CIRCLE) -->
   <g clip-path="url(#avatarScreenClip)">
-    ${innerElements}
+    
+  <g id="character-bg"><rect x="0" y="0" width="512" height="512" fill="#831843" />
+         <circle cx="256" cy="256" r="175" fill="#9d174d" /></g>
+  <g id="character-body">
+      <!-- Bulbous Head -->
+      <circle cx="256" cy="250" r="72" fill="#f43f5e" stroke="#9f1239" stroke-width="4" />
+      <!-- Tentacles Around -->
+      <g class="tentacle-left">
+        <path d="M 200 290 Q 140 310 130 360 Q 160 380 190 330 Z" fill="#e11d48" stroke="#881337" stroke-width="3" />
+        <circle cx="150" cy="345" r="5" fill="#ffe4e6" />
+      </g>
+      <path d="M 312 290 Q 372 310 382 360 Q 352 380 322 330 Z" fill="#e11d48" stroke="#881337" stroke-width="3" />
+      <!-- Chef Toque Hat -->
+      <g class="chef-hat">
+        <path d="M 206 185 L 306 185 L 316 120 C 316 80 196 80 196 120 Z" fill="#ffffff" stroke="#cbd5e1" stroke-width="3" />
+        <line x1="206" y1="180" x2="306" y2="180" stroke="#f43f5e" stroke-width="4" />
+      </g>
+      <!-- Big Cute Eyes -->
+      <circle cx="232" cy="245" r="16" fill="#ffffff" />
+      <circle cx="234" cy="245" r="8" fill="#0f172a" /><circle cx="236" cy="242" r="3" fill="#ffffff" />
+      <circle cx="280" cy="245" r="16" fill="#ffffff" />
+      <circle cx="278" cy="245" r="8" fill="#0f172a" /><circle cx="280" cy="242" r="3" fill="#ffffff" />
+      <!-- Tiny Cooking Pan in Hand -->
+      <circle cx="125" cy="380" r="20" fill="#334155" stroke="#0f172a" stroke-width="2" />
+      <line x1="140" y1="375" x2="165" y2="360" stroke="#334155" stroke-width="5" stroke-linecap="round" />
+    </g>
+  
   </g>
 
   <!-- ================= MASTER FUTURISTIC METALLIC ROUND FRAME ================= -->
@@ -117,7 +138,4 @@ function generateFrameSvg(innerElements, customDefs = '', filterId = '') {
       <path d="M 256 12 A 244 244 0 0 1 400 60" fill="none" stroke="url(#lightSweepGrad)" stroke-width="6" stroke-linecap="round" />
     </g>
   </g>
-</svg>`;
-}
-
-export { generateFrameSvg, AVATARS_DIR };
+</svg>

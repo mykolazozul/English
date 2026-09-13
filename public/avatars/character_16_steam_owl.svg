@@ -1,14 +1,4 @@
-import fs from 'fs';
-import path from 'path';
-
-const AVATARS_DIR = 'public/avatars';
-if (!fs.existsSync(AVATARS_DIR)) {
-  fs.mkdirSync(AVATARS_DIR, { recursive: true });
-}
-
-// Shared Futuristic Metallic Circular Frame Template (Dark Steel, Beveled Circular UI Border, Cyan Edge Glow, Gold Clamps)
-function generateFrameSvg(innerElements, customDefs = '', filterId = '') {
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
   <defs>
     <!-- Master Metallic UI Gradients -->
     <linearGradient id="frameBevelGrad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -43,7 +33,18 @@ function generateFrameSvg(innerElements, customDefs = '', filterId = '') {
       <circle cx="256" cy="256" r="212" />
     </clipPath>
 
-    ${customDefs}
+    
+      <radialGradient id="brassGrad" cx="40%" cy="40%" r="60%">
+        <stop offset="0%" stop-color="#fde047" /><stop offset="60%" stop-color="#d97706" /><stop offset="100%" stop-color="#78350f" />
+      </radialGradient>
+    <style>
+      @keyframes gearSpin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+      @keyframes wingFlap { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(14deg); } }
+      @keyframes monacleShine { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+      .steam-gear { transform-origin: 320px 220px; animation: gearSpin 4s linear infinite; }
+      .steam-wing { transform-origin: 170px 320px; animation: wingFlap 2s ease-in-out infinite; }
+      .steam-lens { animation: monacleShine 2.5s ease-in-out infinite; }
+    </style>
   </defs>
 
   <style>
@@ -67,7 +68,36 @@ function generateFrameSvg(innerElements, customDefs = '', filterId = '') {
 
   <!-- BACKGROUND & CHARACTER CONTENT (CLIPPED TO CIRCLE) -->
   <g clip-path="url(#avatarScreenClip)">
-    ${innerElements}
+    
+  <g id="character-bg"><rect x="0" y="0" width="512" height="512" fill="#18181b" />
+         <circle cx="256" cy="256" r="180" fill="#27272a" /></g>
+  <g id="character-body">
+      <!-- Brass Body -->
+      <ellipse cx="256" cy="310" rx="80" ry="95" fill="url(#brassGrad)" stroke="#451a03" stroke-width="4" />
+      <!-- Steampunk Gear Wing -->
+      <g class="steam-wing">
+        <path d="M 175 280 Q 110 330 140 390 Q 190 370 185 310 Z" fill="#92400e" stroke="#f59e0b" stroke-width="3" />
+      </g>
+      <!-- Head -->
+      <circle cx="256" cy="220" r="68" fill="url(#brassGrad)" stroke="#451a03" stroke-width="4" />
+      <!-- Feather Horns -->
+      <polygon points="200,165 225,120 230,170" fill="#b45309" />
+      <polygon points="312,165 287,120 282,170" fill="#b45309" />
+      <!-- Big Round Eyes -->
+      <circle cx="225" cy="220" r="24" fill="#0f172a" stroke="#d97706" stroke-width="3" />
+      <circle cx="225" cy="220" r="10" fill="#facc15" />
+      <!-- Monocle with Gear Teeth -->
+      <circle cx="287" cy="220" r="28" fill="#06b6d4" stroke="#d97706" stroke-width="5" class="steam-lens" />
+      <circle cx="287" cy="220" r="10" fill="#ffffff" />
+      <!-- Beak -->
+      <polygon points="256,236 264,256 248,256" fill="#f59e0b" stroke="#78350f" stroke-width="2" />
+      <!-- Spinning Cog on Ear -->
+      <g class="steam-gear">
+        <circle cx="320" cy="220" r="16" fill="#d97706" stroke="#451a03" stroke-width="2" />
+        <path d="M 320 200 L 320 240 M 300 220 L 340 220" stroke="#78350f" stroke-width="3" />
+      </g>
+    </g>
+  
   </g>
 
   <!-- ================= MASTER FUTURISTIC METALLIC ROUND FRAME ================= -->
@@ -117,7 +147,4 @@ function generateFrameSvg(innerElements, customDefs = '', filterId = '') {
       <path d="M 256 12 A 244 244 0 0 1 400 60" fill="none" stroke="url(#lightSweepGrad)" stroke-width="6" stroke-linecap="round" />
     </g>
   </g>
-</svg>`;
-}
-
-export { generateFrameSvg, AVATARS_DIR };
+</svg>

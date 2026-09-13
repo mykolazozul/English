@@ -1,14 +1,4 @@
-import fs from 'fs';
-import path from 'path';
-
-const AVATARS_DIR = 'public/avatars';
-if (!fs.existsSync(AVATARS_DIR)) {
-  fs.mkdirSync(AVATARS_DIR, { recursive: true });
-}
-
-// Shared Futuristic Metallic Circular Frame Template (Dark Steel, Beveled Circular UI Border, Cyan Edge Glow, Gold Clamps)
-function generateFrameSvg(innerElements, customDefs = '', filterId = '') {
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
   <defs>
     <!-- Master Metallic UI Gradients -->
     <linearGradient id="frameBevelGrad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -43,7 +33,12 @@ function generateFrameSvg(innerElements, customDefs = '', filterId = '') {
       <circle cx="256" cy="256" r="212" />
     </clipPath>
 
-    ${customDefs}
+    <style>
+      @keyframes bellyBreathe { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(1.08); } }
+      @keyframes leafSway { 0%, 100% { transform: rotate(-8deg); } 50% { transform: rotate(12deg); } }
+      .panda-belly { transform-origin: 256px 360px; animation: bellyBreathe 3s ease-in-out infinite; }
+      .bamboo-leaf { transform-origin: 290px 250px; animation: leafSway 2.5s ease-in-out infinite; }
+    </style>
   </defs>
 
   <style>
@@ -67,7 +62,35 @@ function generateFrameSvg(innerElements, customDefs = '', filterId = '') {
 
   <!-- BACKGROUND & CHARACTER CONTENT (CLIPPED TO CIRCLE) -->
   <g clip-path="url(#avatarScreenClip)">
-    ${innerElements}
+    
+  <g id="character-bg"><rect x="0" y="0" width="512" height="512" fill="#064e3b" />
+         <circle cx="256" cy="256" r="175" fill="#047857" opacity="0.6" /></g>
+  <g id="character-body">
+      <!-- Meditation Body -->
+      <g class="panda-belly">
+        <ellipse cx="256" cy="350" rx="95" ry="85" fill="#09090b" />
+        <ellipse cx="256" cy="355" rx="72" ry="68" fill="#fafafa" stroke="#e4e4e7" stroke-width="3" />
+      </g>
+      <!-- Head -->
+      <circle cx="256" cy="220" r="72" fill="#fafafa" stroke="#18181b" stroke-width="4" />
+      <!-- Black Ears -->
+      <circle cx="188" cy="160" r="24" fill="#18181b" />
+      <circle cx="324" cy="160" r="24" fill="#18181b" />
+      <!-- Eye Patches & Sleeping Eyes -->
+      <ellipse cx="218" cy="216" rx="20" ry="16" fill="#18181b" transform="rotate(-15 218 216)" />
+      <path d="M 208 218 Q 218 226 228 218" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" />
+      <ellipse cx="294" cy="216" rx="20" ry="16" fill="#18181b" transform="rotate(15 294 216)" />
+      <path d="M 284 218 Q 294 226 304 218" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" />
+      <!-- Nose & Smile -->
+      <ellipse cx="256" cy="242" rx="10" ry="6" fill="#18181b" />
+      <path d="M 248 252 Q 256 260 264 252" fill="none" stroke="#18181b" stroke-width="2.5" />
+      <!-- Bamboo Shoot in Mouth -->
+      <g class="bamboo-leaf">
+        <path d="M 264 252 Q 310 240 330 220" fill="none" stroke="#22c55e" stroke-width="4" stroke-linecap="round" />
+        <ellipse cx="326" cy="222" rx="14" ry="6" fill="#4ade80" transform="rotate(-25 326 222)" />
+      </g>
+    </g>
+  
   </g>
 
   <!-- ================= MASTER FUTURISTIC METALLIC ROUND FRAME ================= -->
@@ -117,7 +140,4 @@ function generateFrameSvg(innerElements, customDefs = '', filterId = '') {
       <path d="M 256 12 A 244 244 0 0 1 400 60" fill="none" stroke="url(#lightSweepGrad)" stroke-width="6" stroke-linecap="round" />
     </g>
   </g>
-</svg>`;
-}
-
-export { generateFrameSvg, AVATARS_DIR };
+</svg>

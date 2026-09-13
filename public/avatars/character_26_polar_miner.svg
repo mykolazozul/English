@@ -1,14 +1,4 @@
-import fs from 'fs';
-import path from 'path';
-
-const AVATARS_DIR = 'public/avatars';
-if (!fs.existsSync(AVATARS_DIR)) {
-  fs.mkdirSync(AVATARS_DIR, { recursive: true });
-}
-
-// Shared Futuristic Metallic Circular Frame Template (Dark Steel, Beveled Circular UI Border, Cyan Edge Glow, Gold Clamps)
-function generateFrameSvg(innerElements, customDefs = '', filterId = '') {
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
   <defs>
     <!-- Master Metallic UI Gradients -->
     <linearGradient id="frameBevelGrad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -43,7 +33,10 @@ function generateFrameSvg(innerElements, customDefs = '', filterId = '') {
       <circle cx="256" cy="256" r="212" />
     </clipPath>
 
-    ${customDefs}
+    <style>
+      @keyframes pickaxeStrike { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(-25deg); } }
+      .miner-tool { transform-origin: 340px 330px; animation: pickaxeStrike 1.2s ease-in-out infinite; }
+    </style>
   </defs>
 
   <style>
@@ -67,7 +60,25 @@ function generateFrameSvg(innerElements, customDefs = '', filterId = '') {
 
   <!-- BACKGROUND & CHARACTER CONTENT (CLIPPED TO CIRCLE) -->
   <g clip-path="url(#avatarScreenClip)">
-    ${innerElements}
+    
+  <g id="character-bg"><rect x="0" y="0" width="512" height="512" fill="#082f49" />
+         <circle cx="256" cy="256" r="175" fill="#0e7490" opacity="0.6" /></g>
+  <g id="character-body">
+      <!-- Parka Body -->
+      <ellipse cx="256" cy="350" rx="80" ry="85" fill="#0284c7" stroke="#0369a1" stroke-width="4" />
+      <circle cx="256" cy="230" r="60" fill="#fde047" />
+      <!-- Frosty White Beard -->
+      <path d="M 200 240 Q 256 340 312 240 Z" fill="#f8fafc" stroke="#cbd5e1" stroke-width="3" />
+      <!-- Mining Hardhat with Flashlight -->
+      <path d="M 196 210 C 196 150 316 150 316 210 Z" fill="#eab308" stroke="#ca8a04" stroke-width="3" />
+      <circle cx="256" cy="180" r="12" fill="#ffffff" stroke="#78350f" stroke-width="2" />
+      <!-- Pickaxe -->
+      <g class="miner-tool">
+        <line x1="330" y1="360" x2="350" y2="230" stroke="#78350f" stroke-width="6" stroke-linecap="round" />
+        <path d="M 320 220 Q 350 235 380 220" fill="none" stroke="#94a3b8" stroke-width="8" stroke-linecap="round" />
+      </g>
+    </g>
+  
   </g>
 
   <!-- ================= MASTER FUTURISTIC METALLIC ROUND FRAME ================= -->
@@ -117,7 +128,4 @@ function generateFrameSvg(innerElements, customDefs = '', filterId = '') {
       <path d="M 256 12 A 244 244 0 0 1 400 60" fill="none" stroke="url(#lightSweepGrad)" stroke-width="6" stroke-linecap="round" />
     </g>
   </g>
-</svg>`;
-}
-
-export { generateFrameSvg, AVATARS_DIR };
+</svg>

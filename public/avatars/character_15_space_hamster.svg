@@ -1,14 +1,4 @@
-import fs from 'fs';
-import path from 'path';
-
-const AVATARS_DIR = 'public/avatars';
-if (!fs.existsSync(AVATARS_DIR)) {
-  fs.mkdirSync(AVATARS_DIR, { recursive: true });
-}
-
-// Shared Futuristic Metallic Circular Frame Template (Dark Steel, Beveled Circular UI Border, Cyan Edge Glow, Gold Clamps)
-function generateFrameSvg(innerElements, customDefs = '', filterId = '') {
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
   <defs>
     <!-- Master Metallic UI Gradients -->
     <linearGradient id="frameBevelGrad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -43,7 +33,18 @@ function generateFrameSvg(innerElements, customDefs = '', filterId = '') {
       <circle cx="256" cy="256" r="212" />
     </clipPath>
 
-    ${customDefs}
+    
+      <linearGradient id="glassHelmet" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#ffffff" stop-opacity="0.6" /><stop offset="60%" stop-color="#38bdf8" stop-opacity="0.2" /><stop offset="100%" stop-color="#0284c7" stop-opacity="0.5" />
+      </linearGradient>
+    <style>
+      @keyframes floatHamster { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-14px); } }
+      @keyframes chewPuffs { 0%, 100% { transform: scaleX(1); } 50% { transform: scaleX(1.15); } }
+      @keyframes seedOrbit { 0% { transform: rotate(0deg) translateX(90px) rotate(0deg); } 100% { transform: rotate(360deg) translateX(90px) rotate(-360deg); } }
+      .hamster-unit { animation: floatHamster 3s ease-in-out infinite; }
+      .hamster-cheeks { transform-origin: 256px 250px; animation: chewPuffs 0.8s ease-in-out infinite; }
+      .orbit-seed { transform-origin: 256px 240px; animation: seedOrbit 5s linear infinite; }
+    </style>
   </defs>
 
   <style>
@@ -67,7 +68,41 @@ function generateFrameSvg(innerElements, customDefs = '', filterId = '') {
 
   <!-- BACKGROUND & CHARACTER CONTENT (CLIPPED TO CIRCLE) -->
   <g clip-path="url(#avatarScreenClip)">
-    ${innerElements}
+    
+  <g id="character-bg"><rect x="0" y="0" width="512" height="512" fill="#030712" />
+         <circle cx="120" cy="140" r="2" fill="#fff" /><circle cx="390" cy="180" r="1.5" fill="#fff" /><circle cx="340" cy="380" r="2" fill="#38bdf8" />
+         <circle cx="256" cy="256" r="175" fill="#1e1b4b" opacity="0.6" /></g>
+  <g id="character-body">
+      <g class="hamster-unit">
+        <!-- Spacesuit -->
+        <rect x="200" y="300" width="112" height="110" rx="30" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="4" />
+        <circle cx="256" cy="340" r="14" fill="#38bdf8" />
+        <!-- Cute Hamster Ears -->
+        <circle cx="190" cy="170" r="22" fill="#f59e0b" stroke="#78350f" stroke-width="3" />
+        <circle cx="190" cy="170" r="12" fill="#fbcfe8" />
+        <circle cx="322" cy="170" r="22" fill="#f59e0b" stroke="#78350f" stroke-width="3" />
+        <circle cx="322" cy="170" r="12" fill="#fbcfe8" />
+        <!-- Head & Cheeks -->
+        <g class="hamster-cheeks">
+          <ellipse cx="256" cy="245" rx="60" ry="54" fill="#d97706" stroke="#78350f" stroke-width="3.5" />
+          <ellipse cx="220" cy="260" rx="22" ry="18" fill="#fbbf24" />
+          <ellipse cx="292" cy="260" rx="22" ry="18" fill="#fbbf24" />
+          <!-- Eyes -->
+          <circle cx="230" cy="230" r="8" fill="#000" /><circle cx="233" cy="227" r="3" fill="#fff" />
+          <circle cx="282" cy="230" r="8" fill="#000" /><circle cx="285" cy="227" r="3" fill="#fff" />
+          <!-- Nose & Buck Teeth -->
+          <polygon points="252,246 260,246 256,252" fill="#ec4899" />
+          <rect x="252" y="254" width="8" height="9" rx="2" fill="#ffffff" stroke="#78350f" stroke-width="1.5" />
+        </g>
+        <!-- Glass Bubble Helmet -->
+        <circle cx="256" cy="235" r="95" fill="url(#glassHelmet)" stroke="#38bdf8" stroke-width="3" />
+        <!-- Floating Sunflower Seed -->
+        <g class="orbit-seed">
+          <ellipse cx="256" cy="240" rx="14" ry="8" fill="#78350f" stroke="#f59e0b" stroke-width="2" />
+        </g>
+      </g>
+    </g>
+  
   </g>
 
   <!-- ================= MASTER FUTURISTIC METALLIC ROUND FRAME ================= -->
@@ -117,7 +152,4 @@ function generateFrameSvg(innerElements, customDefs = '', filterId = '') {
       <path d="M 256 12 A 244 244 0 0 1 400 60" fill="none" stroke="url(#lightSweepGrad)" stroke-width="6" stroke-linecap="round" />
     </g>
   </g>
-</svg>`;
-}
-
-export { generateFrameSvg, AVATARS_DIR };
+</svg>

@@ -1,14 +1,4 @@
-import fs from 'fs';
-import path from 'path';
-
-const AVATARS_DIR = 'public/avatars';
-if (!fs.existsSync(AVATARS_DIR)) {
-  fs.mkdirSync(AVATARS_DIR, { recursive: true });
-}
-
-// Shared Futuristic Metallic Circular Frame Template (Dark Steel, Beveled Circular UI Border, Cyan Edge Glow, Gold Clamps)
-function generateFrameSvg(innerElements, customDefs = '', filterId = '') {
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
   <defs>
     <!-- Master Metallic UI Gradients -->
     <linearGradient id="frameBevelGrad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -43,7 +33,16 @@ function generateFrameSvg(innerElements, customDefs = '', filterId = '') {
       <circle cx="256" cy="256" r="212" />
     </clipPath>
 
-    ${customDefs}
+    
+      <linearGradient id="foxNeon" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#f97316" /><stop offset="60%" stop-color="#ef4444" /><stop offset="100%" stop-color="#ec4899" />
+      </linearGradient>
+    <style>
+      @keyframes tailWiggle { 0%, 100% { transform: rotate(-8deg); } 50% { transform: rotate(14deg); } }
+      @keyframes glitchShift { 0%, 90%, 100% { transform: translate(0, 0); } 92% { transform: translate(-4px, 2px); } 96% { transform: translate(4px, -2px); } }
+      .fox-tails { transform-origin: 300px 360px; animation: tailWiggle 2.8s ease-in-out infinite; }
+      .glitch-face { animation: glitchShift 2s infinite; }
+    </style>
   </defs>
 
   <style>
@@ -67,7 +66,33 @@ function generateFrameSvg(innerElements, customDefs = '', filterId = '') {
 
   <!-- BACKGROUND & CHARACTER CONTENT (CLIPPED TO CIRCLE) -->
   <g clip-path="url(#avatarScreenClip)">
-    ${innerElements}
+    
+  <g id="character-bg"><rect x="0" y="0" width="512" height="512" fill="#0f172a" />
+         <circle cx="256" cy="256" r="175" fill="#1e1b4b" /></g>
+  <g id="character-body">
+      <!-- Multiple Kitsune Tails -->
+      <g class="fox-tails">
+        <path d="M 300 360 C 420 340 430 240 370 200 C 340 250 320 310 300 360 Z" fill="url(#foxNeon)" opacity="0.8" />
+        <path d="M 300 360 C 440 380 460 290 400 240 C 360 280 330 330 300 360 Z" fill="#f97316" />
+      </g>
+      <!-- Body -->
+      <ellipse cx="256" cy="340" rx="60" ry="75" fill="url(#foxNeon)" stroke="#c2410c" stroke-width="3" />
+      <g class="glitch-face">
+        <!-- Head -->
+        <polygon points="190,210 322,210 256,300" fill="#ea580c" stroke="#9a3412" stroke-width="3" />
+        <polygon points="216,210 296,210 256,270" fill="#fed7aa" />
+        <!-- Giant Ears -->
+        <polygon points="180,210 160,110 220,170" fill="#ea580c" stroke="#9a3412" stroke-width="2.5" />
+        <polygon points="175,190 170,130 205,170" fill="#fbcfe8" />
+        <polygon points="332,210 352,110 292,170" fill="#ea580c" stroke="#9a3412" stroke-width="2.5" />
+        <polygon points="337,190 342,130 307,170" fill="#fbcfe8" />
+        <!-- Digital Glitch Eyes -->
+        <rect x="220" y="216" width="18" height="6" fill="#06b6d4" />
+        <rect x="274" y="216" width="18" height="6" fill="#06b6d4" />
+        <circle cx="256" cy="290" r="5" fill="#0f172a" />
+      </g>
+    </g>
+  
   </g>
 
   <!-- ================= MASTER FUTURISTIC METALLIC ROUND FRAME ================= -->
@@ -117,7 +142,4 @@ function generateFrameSvg(innerElements, customDefs = '', filterId = '') {
       <path d="M 256 12 A 244 244 0 0 1 400 60" fill="none" stroke="url(#lightSweepGrad)" stroke-width="6" stroke-linecap="round" />
     </g>
   </g>
-</svg>`;
-}
-
-export { generateFrameSvg, AVATARS_DIR };
+</svg>

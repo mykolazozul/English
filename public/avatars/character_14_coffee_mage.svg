@@ -1,14 +1,4 @@
-import fs from 'fs';
-import path from 'path';
-
-const AVATARS_DIR = 'public/avatars';
-if (!fs.existsSync(AVATARS_DIR)) {
-  fs.mkdirSync(AVATARS_DIR, { recursive: true });
-}
-
-// Shared Futuristic Metallic Circular Frame Template (Dark Steel, Beveled Circular UI Border, Cyan Edge Glow, Gold Clamps)
-function generateFrameSvg(innerElements, customDefs = '', filterId = '') {
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
   <defs>
     <!-- Master Metallic UI Gradients -->
     <linearGradient id="frameBevelGrad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -43,7 +33,18 @@ function generateFrameSvg(innerElements, customDefs = '', filterId = '') {
       <circle cx="256" cy="256" r="212" />
     </clipPath>
 
-    ${customDefs}
+    
+      <radialGradient id="coffeeAura" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="#78350f" stop-opacity="0.8" /><stop offset="100%" stop-color="#451a03" stop-opacity="0" />
+      </radialGradient>
+    <style>
+      @keyframes jitterHead { 0%, 100% { transform: translate(0, 0); } 25% { transform: translate(2px, -2px); } 50% { transform: translate(-2px, 1px); } 75% { transform: translate(1px, 2px); } }
+      @keyframes steamRise { 0% { opacity: 0; transform: translateY(0) scale(0.8); } 50% { opacity: 0.8; } 100% { opacity: 0; transform: translateY(-35px) scale(1.3); } }
+      @keyframes eyeTwitch { 0%, 90%, 100% { transform: scale(1); } 95% { transform: scale(1.35); } }
+      .mage-head { animation: jitterHead 0.18s infinite; }
+      .coffee-steam { animation: steamRise 2s ease-out infinite; }
+      .twitch-eye { animation: eyeTwitch 1.5s infinite; }
+    </style>
   </defs>
 
   <style>
@@ -67,7 +68,36 @@ function generateFrameSvg(innerElements, customDefs = '', filterId = '') {
 
   <!-- BACKGROUND & CHARACTER CONTENT (CLIPPED TO CIRCLE) -->
   <g clip-path="url(#avatarScreenClip)">
-    ${innerElements}
+    
+  <g id="character-bg"><rect x="0" y="0" width="512" height="512" fill="#1c1917" />
+         <circle cx="256" cy="256" r="170" fill="url(#coffeeAura)" /></g>
+  <g id="character-body">
+      <g class="mage-head" transform-origin="256px 260px">
+        <!-- Robe -->
+        <path d="M 180 430 Q 256 320 332 430 Z" fill="#451a03" stroke="#b45309" stroke-width="4" />
+        <!-- Head -->
+        <circle cx="256" cy="250" r="62" fill="#fed7aa" stroke="#78350f" stroke-width="3.5" />
+        <!-- Wizard Hat (Coffee Filter Shape) -->
+        <polygon points="190,220 322,220 256,90" fill="#78350f" stroke="#f59e0b" stroke-width="4" />
+        <ellipse cx="256" cy="220" rx="72" ry="14" fill="#b45309" />
+        <!-- Wide Manic Eyes -->
+        <g class="twitch-eye" transform-origin="236px 245px">
+          <circle cx="236" cy="245" r="16" fill="#ffffff" stroke="#451a03" stroke-width="2" />
+          <circle cx="236" cy="245" r="5" fill="#451a03" />
+        </g>
+        <g class="twitch-eye" transform-origin="276px 245px">
+          <circle cx="276" cy="245" r="16" fill="#ffffff" stroke="#451a03" stroke-width="2" />
+          <circle cx="276" cy="245" r="5" fill="#451a03" />
+        </g>
+        <!-- Coffee Mug in Hands -->
+        <rect x="236" y="320" width="40" height="42" rx="6" fill="#f8fafc" stroke="#334155" stroke-width="3" />
+        <path d="M 276 330 C 292 330 292 352 276 352" fill="none" stroke="#334155" stroke-width="3" />
+        <!-- Rising Steam -->
+        <path d="M 248 310 Q 252 295 246 280" fill="none" stroke="#fde047" stroke-width="3" stroke-linecap="round" class="coffee-steam" />
+        <path d="M 264 310 Q 260 295 266 280" fill="none" stroke="#fde047" stroke-width="3" stroke-linecap="round" class="coffee-steam" style="animation-delay:0.8s" />
+      </g>
+    </g>
+  
   </g>
 
   <!-- ================= MASTER FUTURISTIC METALLIC ROUND FRAME ================= -->
@@ -117,7 +147,4 @@ function generateFrameSvg(innerElements, customDefs = '', filterId = '') {
       <path d="M 256 12 A 244 244 0 0 1 400 60" fill="none" stroke="url(#lightSweepGrad)" stroke-width="6" stroke-linecap="round" />
     </g>
   </g>
-</svg>`;
-}
-
-export { generateFrameSvg, AVATARS_DIR };
+</svg>

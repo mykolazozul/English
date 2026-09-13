@@ -1,14 +1,4 @@
-import fs from 'fs';
-import path from 'path';
-
-const AVATARS_DIR = 'public/avatars';
-if (!fs.existsSync(AVATARS_DIR)) {
-  fs.mkdirSync(AVATARS_DIR, { recursive: true });
-}
-
-// Shared Futuristic Metallic Circular Frame Template (Dark Steel, Beveled Circular UI Border, Cyan Edge Glow, Gold Clamps)
-function generateFrameSvg(innerElements, customDefs = '', filterId = '') {
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
   <defs>
     <!-- Master Metallic UI Gradients -->
     <linearGradient id="frameBevelGrad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -43,7 +33,12 @@ function generateFrameSvg(innerElements, customDefs = '', filterId = '') {
       <circle cx="256" cy="256" r="212" />
     </clipPath>
 
-    ${customDefs}
+    <style>
+      @keyframes capeFlutter { 0%, 100% { transform: scaleX(1); } 50% { transform: scaleX(1.06); } }
+      @keyframes batFlutter { 0% { transform: translate(0, 0); } 50% { transform: translate(16px, -18px); } 100% { transform: translate(0, 0); } }
+      .vamp-cape { transform-origin: 256px 330px; animation: capeFlutter 1.6s ease-in-out infinite; }
+      .mini-bat { animation: batFlutter 2s ease-in-out infinite; }
+    </style>
   </defs>
 
   <style>
@@ -67,7 +62,33 @@ function generateFrameSvg(innerElements, customDefs = '', filterId = '') {
 
   <!-- BACKGROUND & CHARACTER CONTENT (CLIPPED TO CIRCLE) -->
   <g clip-path="url(#avatarScreenClip)">
-    ${innerElements}
+    
+  <g id="character-bg"><rect x="0" y="0" width="512" height="512" fill="#2e1065" />
+         <circle cx="256" cy="256" r="175" fill="#3b0764" /></g>
+  <g id="character-body">
+      <!-- High Collar Cape -->
+      <g class="vamp-cape">
+        <path d="M 160 260 L 190 420 L 322 420 L 352 260 L 300 290 L 256 310 L 212 290 Z" fill="#7f1d1d" stroke="#b91c1c" stroke-width="4" />
+      </g>
+      <!-- Pale Face -->
+      <rect x="206" y="170" width="100" height="95" rx="20" fill="#e0e7ff" stroke="#4338ca" stroke-width="3" />
+      <!-- Widow's Peak Hair -->
+      <path d="M 200 190 L 200 160 Q 256 140 312 160 L 312 190 L 280 180 L 256 200 L 232 180 Z" fill="#0f172a" />
+      <!-- Glowing Red Eyes -->
+      <rect x="224" y="205" width="16" height="12" fill="#ef4444" />
+      <rect x="272" y="205" width="16" height="12" fill="#ef4444" />
+      <!-- Fangs -->
+      <polygon points="236,242 242,242 239,254" fill="#ffffff" />
+      <polygon points="270,242 276,242 273,254" fill="#ffffff" />
+      <!-- Mini Pet Bat -->
+      <g class="mini-bat" transform="translate(130, 110)">
+        <ellipse cx="30" cy="30" rx="10" ry="14" fill="#18181b" />
+        <path d="M 10 26 Q 20 18 30 26 Q 40 18 50 26 Q 40 38 30 32 Q 20 38 10 26 Z" fill="#18181b" />
+        <circle cx="27" cy="26" r="1.5" fill="#ef4444" />
+        <circle cx="33" cy="26" r="1.5" fill="#ef4444" />
+      </g>
+    </g>
+  
   </g>
 
   <!-- ================= MASTER FUTURISTIC METALLIC ROUND FRAME ================= -->
@@ -117,7 +138,4 @@ function generateFrameSvg(innerElements, customDefs = '', filterId = '') {
       <path d="M 256 12 A 244 244 0 0 1 400 60" fill="none" stroke="url(#lightSweepGrad)" stroke-width="6" stroke-linecap="round" />
     </g>
   </g>
-</svg>`;
-}
-
-export { generateFrameSvg, AVATARS_DIR };
+</svg>
