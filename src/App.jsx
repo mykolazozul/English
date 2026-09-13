@@ -417,6 +417,32 @@ function playFanfareTone(pack) {
   } catch {}
 }
 
+
+function playBadgeTierSound(tier = 'starter') {
+  if (typeof window === 'undefined' || window.__efNoSfx) return;
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const freqs = tier === 'legendary' ? [784, 987, 1174, 1568]
+      : tier === 'advanced' ? [659, 830, 988, 1318]
+      : tier === 'secret' ? [440, 554, 659, 880, 1108]
+      : tier === 'medium' ? [587, 740, 880]
+      : [523, 659];
+    
+    freqs.forEach((f, idx) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = tier === 'legendary' ? 'sine' : (tier === 'secret' ? 'triangle' : 'sine');
+      osc.frequency.setValueAtTime(f, ctx.currentTime + idx * 0.09);
+      gain.gain.setValueAtTime(0.2, ctx.currentTime + idx * 0.09);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx * 0.09 + 0.45);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(ctx.currentTime + idx * 0.09);
+      osc.stop(ctx.currentTime + idx * 0.09 + 0.5);
+    });
+  } catch {}
+}
+
 function playChestTone(pack) {
   const p = pack || window.__efSoundPack || 'duo';
   if (p === 'mario') {
@@ -600,15 +626,16 @@ const GAME_AVATARS_30 = [
   { id: 'dwarf_berserker', name: 'Гном-Берсерк', action: 'Бородатий гном у рогатому шоломі з двома бородатими сокирами', bg: '#78350f', accent: '#fde047', archetype: 'series2_dwarf_berserker', tag: '🪓 Берсерк', animated: true },
 ];
 
-function AvatarIcon({ id, size = 44, className = '', style = {}, aura = '', frame = '' }) {
-  const av = GAME_AVATARS_30.find(a => a.id === id) || GAME_AVATARS_30[0];
+function AvatarIcon({ id, av: propAv, size = 44, className = '', style = {}, aura = '', frame = '' }) {
+  const actualId = id || propAv?.id || (typeof propAv === 'string' ? propAv : '');
+  const av = GAME_AVATARS_30.find(a => a.id === actualId) || (propAv && typeof propAv === 'object' ? propAv : GAME_AVATARS_30[0]);
   const wrap = (node) => (!aura && !frame ? node : (
     <span className={`avatar-cosmetic-wrap ${aura || ''} ${frame || ''}`} style={{display:'inline-flex',alignItems:'center',justifyContent:'center',position:'relative',borderRadius:14,flexShrink:0}}>
       {node}
     </span>
   ));
   
-  if (!id || (!id.startsWith('duo_') && !id.startsWith('avatar_') && !GAME_AVATARS_30.some(x => x.id === id))) {
+  if (!actualId || (!actualId.startsWith('duo_') && !actualId.startsWith('avatar_') && !GAME_AVATARS_30.some(x => x.id === actualId))) {
     return wrap(
       <span
         className={'avatar-emoji-fallback ' + className}
@@ -619,7 +646,7 @@ function AvatarIcon({ id, size = 44, className = '', style = {}, aura = '', fram
           flexShrink: 0, ...style
         }}
       >
-        {id || '🛡️'}
+        {actualId || '🛡️'}
       </span>
     );
   }
@@ -1227,6 +1254,242 @@ function AvatarIcon({ id, size = 44, className = '', style = {}, aura = '', fram
         </g>
       )}
 
+      {/* 36. Series 2: Monster Warrior with Spiked Club */}
+      {av.archetype === 'series2_monster' && (
+        <g>
+          {/* Spiked War Club */}
+          <line x1="66" y1="18" x2="84" y2="68" stroke="#78350f" strokeWidth="5" strokeLinecap="round"/>
+          <polygon points="62,18 74,12 82,24 70,30" fill="#64748b"/>
+          <line x1="70" y1="16" x2="66" y2="10" stroke="#cbd5e1" strokeWidth="2.5" strokeLinecap="round"/>
+          <line x1="78" y1="20" x2="84" y2="14" stroke="#cbd5e1" strokeWidth="2.5" strokeLinecap="round"/>
+          {/* Muscular Beast Body */}
+          <path d="M32 46 L68 46 L62 86 L38 86 Z" fill="#15803d" stroke="#14532d" strokeWidth="2"/>
+          <circle cx="50" cy="34" r="13" fill="#22c55e" stroke="#15803d" strokeWidth="1.5"/>
+          {/* Horned Brow & Fangs */}
+          <polygon points="41,26 35,16 43,22" fill="#fef08a"/>
+          <polygon points="59,26 65,16 57,22" fill="#fef08a"/>
+          <circle cx="45" cy="33" r="2" fill="#1e293b"/>
+          <circle cx="55" cy="33" r="2" fill="#1e293b"/>
+          <polygon points="45,40 48,35 50,40" fill="#fef08a"/>
+          <polygon points="50,40 52,35 55,40" fill="#fef08a"/>
+          <rect x="36" y="64" width="28" height="8" rx="2" fill="#854d0e"/>
+          <circle cx="50" cy="68" r="2.5" fill="#facc15"/>
+        </g>
+      )}
+
+      {/* 37. Series 2: Pilot Duck in Red Biplane */}
+      {av.archetype === 'series2_pilot_duck' && (
+        <g>
+          {/* Biplane Wings */}
+          <rect x="12" y="58" width="76" height="8" rx="4" fill="#dc2626" stroke="#991b1b" strokeWidth="1.5"/>
+          {/* Cockpit & Fuselage */}
+          <ellipse cx="50" cy="66" rx="26" ry="16" fill="#ef4444" stroke="#b91c1c" strokeWidth="2"/>
+          {/* Propeller Arc */}
+          <ellipse cx="50" cy="82" rx="30" ry="5" fill="none" stroke="rgba(255,255,255,0.45)" strokeWidth="2" strokeDasharray="6 4"/>
+          <circle cx="50" cy="82" r="4" fill="#475569"/>
+          {/* Duck Pilot Head */}
+          <circle cx="50" cy="40" r="14" fill="#facc15" stroke="#ca8a04" strokeWidth="1.5"/>
+          {/* Leather Helmet & Goggles */}
+          <path d="M37 38 C37 25 63 25 63 38 Z" fill="#78350f"/>
+          <rect x="39" y="34" width="10" height="7" rx="3" fill="#38bdf8" stroke="#ffffff" strokeWidth="1.5"/>
+          <rect x="51" y="34" width="10" height="7" rx="3" fill="#38bdf8" stroke="#ffffff" strokeWidth="1.5"/>
+          {/* Orange Beak */}
+          <polygon points="46,44 54,44 50,51" fill="#f97316"/>
+        </g>
+      )}
+
+      {/* 38. Series 2: Treant Living Oak Defender */}
+      {av.archetype === 'series2_treant' && (
+        <g>
+          {/* Living Bark Torso */}
+          <path d="M34 38 L66 38 L62 86 L38 86 Z" fill="#78350f" stroke="#451a03" strokeWidth="2"/>
+          {/* Bark Lines */}
+          <line x1="44" y1="46" x2="42" y2="76" stroke="#451a03" strokeWidth="2"/>
+          <line x1="56" y1="46" x2="58" y2="76" stroke="#451a03" strokeWidth="2"/>
+          {/* Mossy Crown Head */}
+          <circle cx="50" cy="30" r="13" fill="#84cc16" stroke="#4d7c0f" strokeWidth="2"/>
+          <polygon points="40,22 44,12 48,20" fill="#65a30d"/>
+          <polygon points="52,20 56,12 60,22" fill="#65a30d"/>
+          <circle cx="45" cy="30" r="2.5" fill="#fef08a"/>
+          <circle cx="55" cy="30" r="2.5" fill="#fef08a"/>
+          {/* Spiked Thorn Mace & Shield */}
+          <line x1="68" y1="36" x2="84" y2="68" stroke="#451a03" strokeWidth="4.5" strokeLinecap="round"/>
+          <circle cx="84" cy="68" r="6" fill="#84cc16"/>
+          <path d="M16 46 Q30 46 30 70 Q24 76 16 70 Z" fill="#854d0e" stroke="#ca8a04" strokeWidth="1.5"/>
+        </g>
+      )}
+
+      {/* 39. Series 2: Steel Plate Axe Knight */}
+      {av.archetype === 'series2_axe_knight' && (
+        <g>
+          {/* Blue Battle Slash */}
+          <path d="M48 12 Q86 16 82 54" stroke="#38bdf8" strokeWidth="3.5" strokeLinecap="round" fill="none" opacity="0.8"/>
+          {/* Heavy Double Axe */}
+          <line x1="48" y1="20" x2="78" y2="74" stroke="#475569" strokeWidth="4.5" strokeLinecap="round"/>
+          <path d="M68 18 C78 12 84 26 76 34 Z" fill="#94a3b8" stroke="#cbd5e1" strokeWidth="1.5"/>
+          <path d="M60 24 C54 18 64 8 72 16 Z" fill="#94a3b8" stroke="#cbd5e1" strokeWidth="1.5"/>
+          {/* Armored Paladin */}
+          <path d="M34 44 L66 44 L60 86 L40 86 Z" fill="#475569" stroke="#94a3b8" strokeWidth="2"/>
+          <circle cx="50" cy="32" r="11" fill="#cbd5e1" stroke="#475569" strokeWidth="2"/>
+          <rect x="42" y="30" width="16" height="3" rx="1.5" fill="#0284c7"/>
+          <polygon points="50,16 46,24 54,24" fill="#f59e0b"/>
+        </g>
+      )}
+
+      {/* 40. Series 2: Death Shadow Knight */}
+      {av.archetype === 'series2_death_knight' && (
+        <g>
+          {/* Violet Spectral Aura */}
+          <circle cx="50" cy="50" r="38" fill="rgba(168,85,247,0.18)" stroke="#a855f7" strokeWidth="1" strokeDasharray="4 3"/>
+          {/* Dark Broadsword with Rune */}
+          <line x1="72" y1="12" x2="68" y2="78" stroke="#1e1b4b" strokeWidth="4.5" strokeLinecap="round"/>
+          <line x1="62" y1="28" x2="82" y2="28" stroke="#c084fc" strokeWidth="3"/>
+          <circle cx="72" cy="18" r="3" fill="#c084fc"/>
+          {/* Shadow Armor */}
+          <path d="M32 44 L68 44 L62 86 L38 86 Z" fill="#1e1b4b" stroke="#6b21a8" strokeWidth="2"/>
+          <circle cx="50" cy="32" r="11" fill="#2e1065" stroke="#a855f7" strokeWidth="1.5"/>
+          {/* Glowing Violet Visor Eyes */}
+          <ellipse cx="46" cy="32" rx="3" ry="1.5" fill="#d946ef"/>
+          <ellipse cx="54" cy="32" rx="3" ry="1.5" fill="#d946ef"/>
+          {/* Flowing Obsidian Cloak */}
+          <path d="M30 46 Q20 64 26 84" stroke="#7c3aed" strokeWidth="3" fill="none"/>
+        </g>
+      )}
+
+      {/* 41. Series 2: Heavy Axe Juggernaut */}
+      {av.archetype === 'series2_heavy_axe' && (
+        <g>
+          {/* Crimson Plume Crest */}
+          <path d="M50 12 Q56 4 64 12 Q56 20 50 22" fill="#ef4444"/>
+          {/* Massive Two-Handed Halberd */}
+          <line x1="32" y1="16" x2="74" y2="82" stroke="#334155" strokeWidth="5" strokeLinecap="round"/>
+          <path d="M24 16 Q36 6 44 22 L28 28 Z" fill="#f87171" stroke="#b91c1c" strokeWidth="1.5"/>
+          {/* Heavy Juggernaut Armor */}
+          <path d="M30 42 L70 42 L64 88 L36 88 Z" fill="#7f1d1d" stroke="#ef4444" strokeWidth="2"/>
+          <circle cx="50" cy="30" r="12" fill="#94a3b8" stroke="#475569" strokeWidth="2"/>
+          <rect x="42" y="28" width="16" height="3" fill="#fef08a"/>
+          {/* Red Belt */}
+          <rect x="36" y="60" width="28" height="6" fill="#b91c1c"/>
+        </g>
+      )}
+
+      {/* 42. Series 2: Hunter Fox with Recurve Bow */}
+      {av.archetype === 'series2_hunter_fox' && (
+        <g>
+          {/* Recurve Bow & Arrow */}
+          <path d="M68 20 Q84 48 68 76" stroke="#78350f" strokeWidth="3.5" fill="none" strokeLinecap="round"/>
+          <line x1="68" y1="20" x2="68" y2="76" stroke="#e2e8f0" strokeWidth="1.5"/>
+          <line x1="42" y1="48" x2="76" y2="48" stroke="#f97316" strokeWidth="2.5"/>
+          <polygon points="76,48 71,45 71,51" fill="#ea580c"/>
+          {/* Fox Body in Ranger Hood */}
+          <path d="M34 46 L62 46 L58 86 L38 86 Z" fill="#166534" stroke="#14532d" strokeWidth="2"/>
+          <circle cx="48" cy="34" r="12" fill="#ea580c" stroke="#9a3412" strokeWidth="1.5"/>
+          {/* White Cheeks & Fox Ears */}
+          <polygon points="40,24 36,12 44,18" fill="#ea580c"/>
+          <polygon points="56,24 60,12 52,18" fill="#ea580c"/>
+          <circle cx="44" cy="34" r="2" fill="#1e293b"/>
+          <circle cx="52" cy="34" r="2" fill="#1e293b"/>
+          <polygon points="48,39 45,36 51,36" fill="#1e293b"/>
+        </g>
+      )}
+
+      {/* 43. Series 2: Rogue Alien Assassin */}
+      {av.archetype === 'series2_rogue_alien' && (
+        <g>
+          {/* Twin Emerald Energy Blades */}
+          <line x1="26" y1="28" x2="16" y2="68" stroke="#10b981" strokeWidth="3" strokeLinecap="round"/>
+          <line x1="74" y1="28" x2="84" y2="68" stroke="#10b981" strokeWidth="3" strokeLinecap="round"/>
+          {/* Sleek Chitin Body */}
+          <path d="M36 44 L64 44 L58 86 L42 86 Z" fill="#064e3b" stroke="#10b981" strokeWidth="1.5"/>
+          <circle cx="50" cy="32" r="11" fill="#059669" stroke="#34d399" strokeWidth="1.5"/>
+          {/* Luminous Antennae */}
+          <line x1="45" y1="22" x2="38" y2="12" stroke="#34d399" strokeWidth="2" strokeLinecap="round"/>
+          <circle cx="38" cy="12" r="2" fill="#6ee7b7"/>
+          <line x1="55" y1="22" x2="62" y2="12" stroke="#34d399" strokeWidth="2" strokeLinecap="round"/>
+          <circle cx="62" cy="12" r="2" fill="#6ee7b7"/>
+          {/* Alien Eyes */}
+          <ellipse cx="44" cy="32" rx="4" ry="2.5" fill="#a7f3d0"/>
+          <ellipse cx="56" cy="32" rx="4" ry="2.5" fill="#a7f3d0"/>
+        </g>
+      )}
+
+      {/* 44. Series 2: Tactical Operative Cat */}
+      {av.archetype === 'series2_tactical_cat' && (
+        <g>
+          {/* Tactical Vest */}
+          <path d="M34 46 L66 46 L62 86 L38 86 Z" fill="#1e293b" stroke="#38bdf8" strokeWidth="1.5"/>
+          <rect x="42" y="52" width="16" height="12" rx="2" fill="#334155"/>
+          {/* Cat Head */}
+          <circle cx="50" cy="34" r="12" fill="#64748b" stroke="#334155" strokeWidth="1.5"/>
+          {/* Cat Ears */}
+          <polygon points="40,24 34,14 44,20" fill="#475569"/>
+          <polygon points="60,24 66,14 56,20" fill="#475569"/>
+          {/* Night Vision Quad-Goggles Glowing Cyan */}
+          <rect x="38" y="28" width="24" height="6" rx="2" fill="#0f172a"/>
+          <circle cx="42" cy="31" r="2" fill="#38bdf8"/>
+          <circle cx="47" cy="31" r="2" fill="#38bdf8"/>
+          <circle cx="53" cy="31" r="2" fill="#38bdf8"/>
+          <circle cx="58" cy="31" r="2" fill="#38bdf8"/>
+          {/* Slung Tactical Carbine */}
+          <line x1="30" y1="48" x2="72" y2="78" stroke="#0f172a" strokeWidth="3.5" strokeLinecap="round"/>
+        </g>
+      )}
+
+      {/* 45. Series 2: Warlock Summoner */}
+      {av.archetype === 'series2_warlock' && (
+        <g>
+          {/* Crackling Lightning Runes */}
+          <path d="M22 24 L28 34 L22 42 L30 54" stroke="#fde047" strokeWidth="2.5" fill="none"/>
+          <path d="M78 24 L72 34 L78 42 L70 54" stroke="#c084fc" strokeWidth="2.5" fill="none"/>
+          {/* Horned Mantle */}
+          <path d="M42 22 Q32 10 28 20 Q36 24 42 24" fill="#581c87"/>
+          <path d="M58 22 Q68 10 72 20 Q64 24 58 24" fill="#581c87"/>
+          {/* Robes */}
+          <path d="M34 42 L66 42 L70 88 L30 88 Z" fill="#3b0764" stroke="#9333ea" strokeWidth="2"/>
+          <circle cx="50" cy="30" r="10" fill="#c084fc"/>
+          <circle cx="46" cy="29" r="1.5" fill="#fde047"/>
+          <circle cx="54" cy="29" r="1.5" fill="#fde047"/>
+        </g>
+      )}
+
+      {/* 46. Series 2: Swarm Alien Insectoid */}
+      {av.archetype === 'series2_swarm_alien' && (
+        <g>
+          {/* 4 Arms Wielding Dual Blasters */}
+          <line x1="28" y1="40" x2="14" y2="40" stroke="#f59e0b" strokeWidth="3" strokeLinecap="round"/>
+          <line x1="28" y1="56" x2="14" y2="56" stroke="#f59e0b" strokeWidth="3" strokeLinecap="round"/>
+          <line x1="72" y1="40" x2="86" y2="40" stroke="#f59e0b" strokeWidth="3" strokeLinecap="round"/>
+          <line x1="72" y1="56" x2="86" y2="56" stroke="#f59e0b" strokeWidth="3" strokeLinecap="round"/>
+          {/* Amber Insect Body */}
+          <path d="M36 42 L64 42 L58 86 L42 86 Z" fill="#78350f" stroke="#d97706" strokeWidth="2"/>
+          <circle cx="50" cy="30" r="11" fill="#b45309" stroke="#f59e0b" strokeWidth="1.5"/>
+          {/* Segmented Eyes */}
+          <ellipse cx="44" cy="29" rx="3.5" ry="5" fill="#fef08a"/>
+          <ellipse cx="56" cy="29" rx="3.5" ry="5" fill="#fef08a"/>
+        </g>
+      )}
+
+      {/* 47. Series 2: Mountain Dwarf Berserker */}
+      {av.archetype === 'series2_dwarf_berserker' && (
+        <g>
+          {/* Crossed Dual Bearded Axes */}
+          <line x1="32" y1="24" x2="68" y2="82" stroke="#78350f" strokeWidth="4" strokeLinecap="round"/>
+          <line x1="68" y1="24" x2="32" y2="82" stroke="#78350f" strokeWidth="4" strokeLinecap="round"/>
+          <path d="M26 24 C20 32 32 40 38 32 Z" fill="#cbd5e1" stroke="#475569" strokeWidth="1.5"/>
+          <path d="M74 24 C80 32 68 40 62 32 Z" fill="#cbd5e1" stroke="#475569" strokeWidth="1.5"/>
+          {/* Sturdy Armored Dwarf Body */}
+          <rect x="34" y="52" width="32" height="34" rx="6" fill="#854d0e" stroke="#451a03" strokeWidth="2"/>
+          {/* Horned Iron Helm */}
+          <circle cx="50" cy="38" r="12" fill="#64748b" stroke="#334155" strokeWidth="2"/>
+          <path d="M38 34 Q32 20 28 24" stroke="#fef08a" strokeWidth="3" fill="none"/>
+          <path d="M62 34 Q68 20 72 24" stroke="#fef08a" strokeWidth="3" fill="none"/>
+          {/* Braided Fiery Orange Beard */}
+          <path d="M40 44 Q50 68 50 68 Q50 68 60 44 Z" fill="#f97316"/>
+          <line x1="47" y1="52" x2="47" y2="64" stroke="#ea580c" strokeWidth="1.5"/>
+          <line x1="53" y1="52" x2="53" y2="64" stroke="#ea580c" strokeWidth="1.5"/>
+        </g>
+      )}
+
     </svg>
   );
   return wrap(svgNode);
@@ -1410,7 +1673,7 @@ function computeBadges(state, gamification) {
   return [...earned];
 }
 
-function Sidebar({mobile, setMobile, page, nav}) {
+function Sidebar({mobile, setMobile, page, nav, isAdmin}) {
   return (
     <aside className={'sidebar' + (mobile ? ' open' : '')}>
       <div className="brand" onClick={() => { nav('dashboard'); setMobile?.(false); }} style={{cursor:'pointer'}}>
@@ -1422,6 +1685,7 @@ function Sidebar({mobile, setMobile, page, nav}) {
         ['learn', Play, 'Уроки'],
         ['vocabulary', BookOpen, 'Словник'],
         ['review', RotateCcw, 'SRS Повтор'],
+        ['challenges', Swords, 'Арена & Дуелі'],
         ['shop', ShoppingBag, 'Магазин'],
       ].map(([id, I, t]) => (
         <button key={id} className={'nav' + (page === id ? ' active' : '')} onClick={() => { nav(id); setMobile?.(false); }}>
@@ -1434,7 +1698,6 @@ function Sidebar({mobile, setMobile, page, nav}) {
         ['badges', Award, 'Досягнення'],
         ['problems', Target, 'Проблемні'],
         ['leaderboard', Trophy, 'Рейтинг'],
-        ['challenges', Swords, 'Challenges'],
       ].map(([id, I, t]) => (
         <button key={id} className={'nav' + (page === id ? ' active' : '')} onClick={() => { nav(id); setMobile?.(false); }}>
           <I size={18}/>{t}
@@ -1445,13 +1708,13 @@ function Sidebar({mobile, setMobile, page, nav}) {
       <button className={'nav' + (page === 'profile' ? ' active' : '')} onClick={() => { nav('profile'); setMobile?.(false); }}><User size={18}/>Профіль</button>
       <button className={'nav' + (page === 'settings' ? ' active' : '')} onClick={() => { nav('settings'); setMobile?.(false); }}><Settings size={18}/>Налаштування</button>
       <button className={'nav' + (page === 'about' ? ' active' : '')} onClick={() => { nav('about'); setMobile?.(false); }}><Sparkles size={18}/>Про додаток</button>
-      <button className={'nav nav-admin' + (page === 'admin' ? ' active' : '')} onClick={() => { nav('admin'); setMobile?.(false); }}><Shield size={18}/>Адмін</button>
+      {isAdmin && <button className={'nav nav-admin' + (page === 'admin' ? ' active' : '')} onClick={() => { nav('admin'); setMobile?.(false); }}><Shield size={18}/>Адмін</button>}
     </aside>
   );
 }
 
 function Layout({children, state, page, nav, mobile, setMobile}) {
-  const isAdmin = state?.role === 'admin' || String(state?.nick).toLowerCase() === 'boss' || String(state?.name).toLowerCase() === 'boss';
+  const isAdmin = state?.role === 'admin' || String(state?.nick).toLowerCase() === 'boss';
   const touchStartRef = useRef({ x: 0, y: 0, time: 0 });
 
   useEffect(() => {
@@ -1492,7 +1755,7 @@ function Layout({children, state, page, nav, mobile, setMobile}) {
   return (
     <div className="app" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
       {mobile && <div className="sidebar-backdrop" onClick={() => setMobile(false)} aria-hidden="true" />}
-      <Sidebar mobile={mobile} setMobile={setMobile} page={page} nav={nav} />
+      <Sidebar mobile={mobile} setMobile={setMobile} page={page} nav={nav} isAdmin={isAdmin} />
       <main className="main">
         <header>
           <div className="header-left">
@@ -1554,16 +1817,45 @@ function FloatingChatWidget({state, nav}) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [replyingTo, setReplyingTo] = useState(null); // {id, sender, text}
+  const [pinnedMsg, setPinnedMsg] = useState(null);
   const [lightboxImg, setLightboxImg] = useState(null);
   const [reactionsMap, setReactionsMap] = useState({});
-  const [activeReactionPicker, setActiveReactionPicker] = useState(null);
-  const [bubble, setBubble] = useState(null); // {text, nick} for speech bubble
+  const [tgMenu, setTgMenu] = useState(null); // { msg, x, y, displayMsg, isMe }
+  const [bubble, setBubble] = useState(null);
   const [bubbleFading, setBubbleFading] = useState(false);
   const [hasNewMsg, setHasNewMsg] = useState(false);
   const [lastMsgCount, setLastMsgCount] = useState(0);
-  const canSendPhoto = state.role === 'admin' || state.role === 'moderator' || String(state.nick).toLowerCase() === 'boss';
-  const CHAT_REACTIONS = ['👍', '❤️', '🔥', '👏', '🎉', '🚀', '💡', '⚡', '🤯', '😂', '🎯', '👑', '🛡️', '⚔️', '🦉'];
+  const [selectedMsgs, setSelectedMsgs] = useState(new Set());
+  const [selectMode, setSelectMode] = useState(false);
 
+  const longPressTimerRef = useRef(null);
+  const messagesEndRef = useRef(null);
+
+  const canSendPhoto = state.role === 'admin' || state.role === 'moderator' || String(state.nick).toLowerCase() === 'boss';
+  const TG_REACTIONS = ['⭐', '✍️', '💡', '📅', '🔥', '⚡', '👍', '❤️', '😂', '🎉'];
+
+  // Global listener to open floating chat from profile, friends page or duel invite
+  useEffect(() => {
+    const handleOpenChat = (e) => {
+      const { targetNick, duelInvite } = e.detail || {};
+      setOpen(true);
+      if (targetNick) {
+        setActiveFriend(targetNick);
+      }
+      if (duelInvite) {
+        setInput('⚔️ Викликаю тебе на лицарську дуель у Залі Суперників! Приймеш виклик?');
+      }
+    };
+    window.addEventListener('ef-open-chat', handleOpenChat);
+    return () => window.removeEventListener('ef-open-chat', handleOpenChat);
+  }, []);
+
+  // Performance optimization: slice messages to last 80 for silky smooth rendering
+  const displayMessages = useMemo(() => {
+    return messages.length > 80 ? messages.slice(-80) : messages;
+  }, [messages]);
+
+  // Load friends list
   useEffect(() => {
     if (state.guest || !open) return;
     getFriends(state.nick).then(f => {
@@ -1572,6 +1864,17 @@ function FloatingChatWidget({state, nav}) {
     }).catch(() => {});
   }, [open, state.nick, state.guest, activeFriend]);
 
+  // Load pinned message for active friend
+  useEffect(() => {
+    if (!activeFriend) return;
+    try {
+      const saved = localStorage.getItem('ef_pinned_chat_' + activeFriend);
+      if (saved) setPinnedMsg(JSON.parse(saved));
+      else setPinnedMsg(null);
+    } catch {}
+  }, [activeFriend]);
+
+  // Live message polling
   useEffect(() => {
     if (!activeFriend || state.guest) return;
     let alive = true;
@@ -1579,21 +1882,19 @@ function FloatingChatWidget({state, nav}) {
       try {
         const raw = await getChat(state.nick, activeFriend);
         if (alive && raw) {
-          // Check for new messages to show speech bubble
           if (!open && raw.length > lastMsgCount && raw.length > 0) {
             const latest = raw[raw.length - 1];
             const senderNick = latest?.sender_nick || activeFriend;
             if (String(senderNick).toLowerCase() !== String(state.nick).toLowerCase()) {
-              // Show speech bubble BEFORE the blue dot
-              setBubble({ text: `💬 Нове повідомлення від @${senderNick}!`, nick: senderNick });
+              setBubble({ text: `💬 Повідомлення від @${senderNick}!`, nick: senderNick });
               setBubbleFading(false);
-              setHasNewMsg(false); // dot comes AFTER bubble fades
+              setHasNewMsg(false);
               setTimeout(() => {
                 setBubbleFading(true);
                 setTimeout(() => {
                   setBubble(null);
                   setBubbleFading(false);
-                  setHasNewMsg(true); // NOW show dot
+                  setHasNewMsg(true);
                 }, 500);
               }, 3000);
             }
@@ -1604,14 +1905,22 @@ function FloatingChatWidget({state, nav}) {
       } catch {}
     };
     fetchChat();
-    const interval = setInterval(fetchChat, 3000);
+    const interval = setInterval(fetchChat, open ? 3000 : 8000);
     return () => { alive = false; clearInterval(interval); };
   }, [open, activeFriend, state.nick, state.guest, lastMsgCount]);
 
-  // Clear dot when chat is opened
   useEffect(() => {
     if (open) { setHasNewMsg(false); setBubble(null); }
   }, [open]);
+
+  // Close context menu on click elsewhere
+  useEffect(() => {
+    const handleGlobalClick = () => setTgMenu(null);
+    if (tgMenu) {
+      window.addEventListener('click', handleGlobalClick);
+      return () => window.removeEventListener('click', handleGlobalClick);
+    }
+  }, [tgMenu]);
 
   const send = async (e) => {
     e?.preventDefault();
@@ -1636,8 +1945,64 @@ function FloatingChatWidget({state, nav}) {
       const count = (cur[emoji] || 0) + 1;
       return { ...prev, [msgId]: { ...cur, [emoji]: count } };
     });
-    setActiveReactionPicker(null);
+    setTgMenu(null);
+    sendChatReaction(msgId, emoji).catch(() => {});
     emitSiteToast(`Реакцію ${emoji} додано!`, 'ok');
+  };
+
+  const handlePin = (m) => {
+    setPinnedMsg(m);
+    try {
+      localStorage.setItem('ef_pinned_chat_' + activeFriend, JSON.stringify(m));
+    } catch {}
+    setTgMenu(null);
+    emitSiteToast('Повідомлення закріплено 📌', 'ok');
+  };
+
+  const handleCopy = (txt) => {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(txt).then(() => {
+        emitSiteToast('Текст скопійовано в буфер 📋', 'ok');
+      }).catch(() => {});
+    }
+    setTgMenu(null);
+  };
+
+  const handleForward = (txt, sender) => {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(`[Переслано від @${sender}]: ${txt}`);
+      emitSiteToast('Повідомлення підготовлено для пересилання ↗️', 'ok');
+    }
+    setTgMenu(null);
+  };
+
+  const handleDelete = (msgId) => {
+    setMessages(prev => prev.filter(x => x.id !== msgId));
+    if (pinnedMsg?.id === msgId) {
+      setPinnedMsg(null);
+      localStorage.removeItem('ef_pinned_chat_' + activeFriend);
+    }
+    setTgMenu(null);
+    emitSiteToast('Повідомлення видалено 🗑️', 'info');
+  };
+
+  const openTgMenu = (m, clientX, clientY, displayMsg, isMe) => {
+    const clampedX = Math.min(Math.max(16, clientX - 80), window.innerWidth - 260);
+    const clampedY = Math.min(Math.max(16, clientY - 140), window.innerHeight - 300);
+    setTgMenu({ msg: m, x: clampedX, y: clampedY, displayMsg, isMe });
+  };
+
+  const handleTouchStart = (m, e, displayMsg, isMe) => {
+    if (!e.touches || !e.touches[0]) return;
+    const x = e.touches[0].clientX;
+    const y = e.touches[0].clientY;
+    longPressTimerRef.current = setTimeout(() => {
+      openTgMenu(m, x, y, displayMsg, isMe);
+    }, 450);
+  };
+
+  const handleTouchEnd = () => {
+    if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
   };
 
   const handlePhotoUpload = async (e) => {
@@ -1669,23 +2034,35 @@ function FloatingChatWidget({state, nav}) {
       )}
 
       {open && (
-        <div className="floating-chat-window card">
-          <div className="floating-chat-header">
+        <div className="floating-chat-window card" style={{width: 340, height: 440}}>
+          {/* Header with Telegram styling & Contacts switcher */}
+          <div className="floating-chat-header" style={{padding:'10px 14px'}}>
             <div style={{display:'flex',alignItems:'center',gap:8,flex:1,minWidth:0}}>
               <span className="live-dot pulse"></span>
-              <b style={{fontSize:13,whiteSpace:'nowrap'}}>Чат v3.5</b>
+              <div style={{display:'flex',flexDirection:'column',minWidth:0}}>
+                <b style={{fontSize:13,whiteSpace:'nowrap',color:'var(--text)'}}>
+                  {activeFriend ? `@${activeFriend}` : 'Чат'}
+                </b>
+                <span className="muted" style={{fontSize:10}}>
+                  {friends.some(f => f.nick === activeFriend && f.is_online) ? '🟢 в мережі' : '⚪ був нещодавно'}
+                </span>
+              </div>
+            </div>
+
+            {/* Friend Selector Dropdown */}
+            <div style={{display:'flex',alignItems:'center',gap:6}}>
               <select
                 className="chat-friend-select"
                 value={activeFriend || ''}
                 onChange={e => setActiveFriend(e.target.value)}
                 style={{
-                  fontSize: 12,
-                  padding: '3px 8px',
-                  borderRadius: 6,
-                  background: 'var(--card-bg, #1e293b)',
+                  fontSize: 11,
+                  padding: '4px 8px',
+                  borderRadius: 8,
+                  background: 'var(--surface, #1e293b)',
                   color: 'var(--text, #f8fafc)',
-                  border: '1px solid var(--border, #334155)',
-                  maxWidth: 130,
+                  border: '1px solid var(--border)',
+                  maxWidth: 110,
                   outline: 'none'
                 }}
               >
@@ -1694,9 +2071,7 @@ function FloatingChatWidget({state, nav}) {
                   <option key={f.nick} value={f.nick}>@{f.nick}</option>
                 ))}
               </select>
-            </div>
-            <div style={{display:'flex',gap:4}}>
-              <button className="icon small" title="Перейти на сторінку Друзі" onClick={() => { setOpen(false); nav('friends'); }}>
+              <button className="icon small" title="Гільдія друзів" onClick={() => { setOpen(false); nav('friends'); }}>
                 ↗
               </button>
               <button className="icon small" onClick={() => setOpen(false)}>
@@ -1705,33 +2080,61 @@ function FloatingChatWidget({state, nav}) {
             </div>
           </div>
 
+          {/* Quick Friend Tabs Strip */}
           {friends.length > 1 && (
-            <div className="floating-chat-tabs">
-              {friends.slice(0, 4).map(f => (
+            <div className="floating-chat-tabs" style={{padding:'4px 8px',gap:6}}>
+              {friends.slice(0, 5).map(f => (
                 <button
                   key={f.nick}
                   type="button"
                   className={'floating-chat-tab' + (activeFriend === f.nick ? ' active' : '')}
                   onClick={() => setActiveFriend(f.nick)}
+                  style={{display:'inline-flex',alignItems:'center',gap:4}}
                 >
-                  @{f.nick}
+                  <AvatarIcon id={f.avatar || 'duo_owl'} size={18} />
+                  <span>@{f.nick}</span>
                 </button>
               ))}
             </div>
           )}
 
-          <div className="floating-chat-messages">
+          {/* Pinned Message Banner */}
+          {pinnedMsg && (
+            <div className="chat-pinned-banner" onClick={() => emitSiteToast('📌 ' + (pinnedMsg.text || 'Вкладення'), 'info')}>
+              <span className="chat-pinned-indicator">📌</span>
+              <div className="chat-pinned-content">
+                <b style={{fontSize:10,color:'var(--accent)',textTransform:'uppercase',letterSpacing:0.5}}>Закріплене</b>
+                <div style={{fontSize:11,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',color:'var(--text)'}}>
+                  {pinnedMsg.text ? censorMessage(pinnedMsg.text.replace(/\[quote:[^\/]+:([^\/]+)\]/g, '')) : '📷 Фото'}
+                </div>
+              </div>
+              <button
+                type="button"
+                className="chat-pinned-unpin-btn"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setPinnedMsg(null);
+                  try { localStorage.removeItem('ef_pinned_chat_' + activeFriend); } catch {}
+                }}
+                title="Відкріпити"
+              >
+                ✕
+              </button>
+            </div>
+          )}
+
+          {/* Messages Stream */}
+          <div className="floating-chat-messages" style={{flex:1,padding:'10px 12px'}}>
             {messages.length === 0 && (
-              <p className="muted small" style={{textAlign:'center',padding:16}}>
+              <p className="muted small" style={{textAlign:'center',padding:20}}>
                 Ще немає повідомлень з @{activeFriend || 'другом'}. Напишіть перше слово!
               </p>
             )}
-            {messages.slice(-20).map(m => {
+            {messages.slice(-30).map(m => {
               const isMe = String(m.sender_nick || '').toLowerCase() === String(state.nick).toLowerCase();
               const rawText = m.text || '';
               const isImg = rawText.startsWith('[img]');
               
-              // Parse quote if present: [quote:sender:text]msg
               let quoteSender = null;
               let quoteText = null;
               let displayMsg = rawText;
@@ -1745,12 +2148,26 @@ function FloatingChatWidget({state, nav}) {
                 }
               }
 
+              const msgReactions = reactionsMap[m.id] || {};
+
               return (
-                <div key={m.id || Math.random()} className={'floating-chat-msg' + (isMe ? ' me' : '')}>
+                <div
+                  key={m.id || Math.random()}
+                  className={'floating-chat-msg' + (isMe ? ' me' : '')}
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    openTgMenu(m, e.clientX, e.clientY, displayMsg, isMe);
+                  }}
+                  onTouchStart={(e) => handleTouchStart(m, e, displayMsg, isMe)}
+                  onTouchEnd={handleTouchEnd}
+                  onTouchMove={handleTouchEnd}
+                  title="Права кнопка миші або затискання — відкрити меню Telegram"
+                  style={{cursor:'context-menu',position:'relative'}}
+                >
                   {quoteText && (
-                    <div className="chat-quote-bar">
-                      <b style={{fontSize:11,color:'var(--primary, #38bdf8)'}}>@{quoteSender}:</b>
-                      <span style={{fontSize:11,opacity:0.85,marginLeft:4}}>{quoteText}</span>
+                    <div className="chat-quote-bar" style={{borderLeft:'3px solid var(--accent)',paddingLeft:6,marginBottom:4,opacity:0.9}}>
+                      <b style={{fontSize:10,color:'var(--accent)'}}>@{quoteSender}:</b>
+                      <span style={{fontSize:10,marginLeft:4}}>{quoteText}</span>
                     </div>
                   )}
 
@@ -1760,58 +2177,31 @@ function FloatingChatWidget({state, nav}) {
                       className="chat-msg-image"
                       alt="Вкладене фото"
                       onClick={() => setLightboxImg(rawText.slice(5))}
-                      style={{cursor:'zoom-in',borderRadius:8,maxWidth:'100%',maxHeight:140}}
+                      style={{cursor:'zoom-in',borderRadius:8,maxWidth:'100%',maxHeight:150}}
                     />
                   ) : (
                     <span>{censorMessage(displayMsg) || '🔒 Повідомлення'}</span>
                   )}
 
-                  {/* Message Action Controls (Reply & 15 Emoji Reactions) */}
-                  <div className="chat-msg-controls">
-                    <button
-                      type="button"
-                      className="chat-msg-action-btn"
-                      title="Відповісти"
-                      onClick={() => setReplyingTo({ id: m.id, sender: m.sender_nick || activeFriend, text: displayMsg })}
-                    >
-                      ↩
-                    </button>
-                    <button
-                      type="button"
-                      className="chat-msg-action-btn"
-                      title="Додати реакцію"
-                      onClick={() => setActiveReactionPicker(activeReactionPicker === m.id ? null : m.id)}
-                    >
-                      😊
-                    </button>
-
-                    {/* 15 Emoji Reactions Dock */}
-                    {activeReactionPicker === m.id && (
-                      <div className="chat-reactions-dock">
-                        {CHAT_REACTIONS.map(emoji => (
-                          <button
-                            key={emoji}
-                            type="button"
-                            className="chat-reaction-choice"
-                            onClick={() => {
-                              sendChatReaction(m.id, emoji).catch(() => {});
-                              setActiveReactionPicker(null);
-                            }}
-                          >
-                            {emoji}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                  {/* Emoji Reactions Badges on Message */}
+                  {Object.keys(msgReactions).length > 0 && (
+                    <div style={{display:'flex',gap:4,flexWrap:'wrap',marginTop:4}}>
+                      {Object.entries(msgReactions).map(([emoji, count]) => (
+                        <span key={emoji} style={{fontSize:11,background:'rgba(0,0,0,0.2)',padding:'1px 5px',borderRadius:8}}>
+                          {emoji} {count > 1 ? count : ''}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
               );
             })}
+            <div ref={messagesEndRef} />
           </div>
 
-          {/* Replying Banner */}
+          {/* Replying Quote Preview Bar */}
           {replyingTo && (
-            <div className="chat-reply-bar">
+            <div className="chat-reply-bar" style={{display:'flex',alignItems:'center',gap:8,padding:'6px 12px',background:'var(--surface-sunken)',borderTop:'1px solid var(--border)'}}>
               <div style={{fontSize:11,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',flex:1}}>
                 ↩ Відповідь для <b>@{replyingTo.sender}</b>: <i>{replyingTo.text.slice(0, 30)}...</i>
               </div>
@@ -1819,22 +2209,33 @@ function FloatingChatWidget({state, nav}) {
             </div>
           )}
 
-          <form className="floating-chat-input-bar" onSubmit={send}>
+          {/* Input Bar with Blue Circular Paper-Airplane Send Button */}
+          <form className="floating-chat-input-bar" onSubmit={send} style={{alignItems:'center'}}>
             <input
               value={input}
               onChange={e => setInput(e.target.value)}
               placeholder="Повідомлення…"
+              style={{fontSize:13}}
             />
             {canSendPhoto && (
-              <label className="chat-admin-photo-btn" title="Відправити фото (тільки адмін / Boss)">
+              <label className="chat-admin-photo-btn" title="Відправити фото (тільки адмін / Boss)" style={{cursor:'pointer',fontSize:18,padding:'0 4px'}}>
                 📷
                 <input type="file" accept="image/*" style={{display:'none'}} onChange={handlePhotoUpload}/>
               </label>
             )}
-            <button type="submit" disabled={!input.trim()}>✈️</button>
+            <button
+              type="submit"
+              className="chat-send-plane-btn"
+              disabled={!input.trim()}
+              title="Надіслати"
+            >
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+              </svg>
+            </button>
           </form>
 
-          {/* Inline Photo Lightbox */}
+          {/* High-Res Lightbox Modal */}
           {lightboxImg && (
             <div className="chat-lightbox-overlay" onClick={() => setLightboxImg(null)}>
               <div className="chat-lightbox-content" onClick={e => e.stopPropagation()}>
@@ -1843,9 +2244,77 @@ function FloatingChatWidget({state, nav}) {
               </div>
             </div>
           )}
+
+          {/* Telegram Context Menu Modal */}
+          {tgMenu && (
+            <>
+              <div className="tg-context-backdrop" onClick={() => setTgMenu(null)} />
+              <div className="tg-context-menu" style={{top: tgMenu.y, left: tgMenu.x}}>
+                {/* Horizontal Emojis Reaction Strip */}
+                <div className="tg-reaction-strip">
+                  {TG_REACTIONS.map(emoji => (
+                    <button
+                      key={emoji}
+                      type="button"
+                      className="tg-reaction-btn"
+                      onClick={() => handleAddReaction(tgMenu.msg.id, emoji)}
+                      title={`Поставити реакцію ${emoji}`}
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Context Menu Actions */}
+                <div className="tg-menu-list">
+                  <button
+                    type="button"
+                    className="tg-menu-item"
+                    onClick={() => {
+                      setReplyingTo({ id: tgMenu.msg.id, sender: tgMenu.msg.sender_nick || activeFriend, text: tgMenu.displayMsg });
+                      setTgMenu(null);
+                    }}
+                  >
+                    <span>↩</span> Відповісти
+                  </button>
+                  <button
+                    type="button"
+                    className="tg-menu-item"
+                    onClick={() => handlePin(tgMenu.msg)}
+                  >
+                    <span>📌</span> Закріпити
+                  </button>
+                  <button
+                    type="button"
+                    className="tg-menu-item"
+                    onClick={() => handleCopy(tgMenu.displayMsg)}
+                  >
+                    <span>📋</span> Скопіювати текст
+                  </button>
+                  <button
+                    type="button"
+                    className="tg-menu-item"
+                    onClick={() => handleForward(tgMenu.displayMsg, tgMenu.msg.sender_nick || activeFriend)}
+                  >
+                    <span>↗️</span> Переслати
+                  </button>
+                  {(tgMenu.isMe || canSendPhoto) && (
+                    <button
+                      type="button"
+                      className="tg-menu-item danger"
+                      onClick={() => handleDelete(tgMenu.msg.id)}
+                    >
+                      <span>🗑️</span> Видалити
+                    </button>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
         </div>
       )}
 
+      {/* FAB Button */}
       <button
         className={'floating-chat-fab' + (open ? ' active' : '')}
         type="button"
@@ -1895,11 +2364,21 @@ export default function App() {
   const [publicProfileNick, setPublicProfileNick] = useState(null);
   const [epicBadge, setEpicBadge] = useState(null);
   useEffect(() => {
+    let timer = null;
     const onBadge = (e) => {
-      if (e?.detail) setEpicBadge(e.detail);
+      if (e?.detail) {
+        setEpicBadge(e.detail);
+        playBadgeTierSound(e.detail.tier || 'starter');
+        confettiBurst();
+        if (timer) clearTimeout(timer);
+        timer = setTimeout(() => setEpicBadge(null), 5000);
+      }
     };
     window.addEventListener('ef-badge-unlocked', onBadge);
-    return () => window.removeEventListener('ef-badge-unlocked', onBadge);
+    return () => {
+      if (timer) clearTimeout(timer);
+      window.removeEventListener('ef-badge-unlocked', onBadge);
+    };
   }, []);
   const refreshGamification = useCallback(async () => {
     if (state.guest) return;
@@ -2197,12 +2676,12 @@ export default function App() {
         {page === 'vocabulary' && <Vocabulary state={state} setModal={setModal} wordsCatalog={activeWords} cats={activeCats} />}
         {page === 'review' && <ReviewPage state={state} due={dueCount} onStart={() => startLesson('srs', 'en-ua', 'all')} />}
         {page === 'stats' && <Stats state={state} learned={learnedCount} />}
-        {page === 'badges' && <BadgesPage state={state} />}
+        {page === 'badges' && <BadgesPage state={state} save={save} />}
         {page === 'problems' && <ProblemsPage state={state} save={save} wordsCatalog={wordsLive} onStart={(m,d,c) => { setLessonCfg({mode:m,direction:d,category:c}); setPage('lesson'); }} />}
         {page === 'leaderboard' && <Leaderboard state={state} gamification={gamification} onViewProfile={setPublicProfileNick} />}
         {page === 'shop' && <ShopPage state={state} save={save} onRefreshGamification={refreshGamification} allUsers={gamification?.leaderboard?.global || []} />}
         {page === 'settings' && <SettingsPage state={state} save={save} onLogout={handleLogout} />}
-        {page === 'friends' && <FriendsPage state={state} />}
+        {page === 'friends' && <FriendsPage state={state} onViewProfile={setPublicProfileNick} />}
         {page === 'challenges' && <ChallengesPage state={state} save={save} wordsCatalog={activeWords} />}
         {page === 'profile' && <Profile state={state} save={save} gamification={gamification} onRefreshGamification={refreshGamification} onLogout={handleLogout} />}
         {page === 'about' && <AboutPage />}
@@ -2324,7 +2803,7 @@ function EpicAchievementBanner({ badge, onClose }) {
 }
 
 /* ==========================================================================
-   v3.5.1 — MOBILE SOUND TEXT CAPTION OVERLAY
+   v3.6.0 — MOBILE SOUND TEXT CAPTION OVERLAY
    ========================================================================== */
 function SoundCaptionOverlay() {
   const [caption, setCaption] = useState(null);
@@ -2364,10 +2843,13 @@ function SoundCaptionOverlay() {
 }
 
 /* ==========================================================================
-   v3.5.1 — MYSTERY CHEST OF KNOWLEDGE (200 GOLDEN COINS)
+   v3.6.0 — MYSTERY CHEST OF KNOWLEDGE (200 GOLDEN COINS)
    ========================================================================== */
 const MYSTERY_CHEST_ITEMS = [
   { id: 'coins_25', name: '+25 Золотих Монет', icon: '🪙', rarity: 'blue', type: 'gems', amount: 25, color: '#3b82f6' },
+  { id: 'coins_35', name: '+35 Золотих Монет', icon: '🪙', rarity: 'blue', type: 'gems', amount: 35, color: '#3b82f6' },
+  { id: 'coins_45', name: '+45 Золотих Монет', icon: '🪙', rarity: 'blue', type: 'gems', amount: 45, color: '#3b82f6' },
+  { id: 'coins_50', name: '+50 Золотих Монет', icon: '🪙', rarity: 'blue', type: 'gems', amount: 50, color: '#3b82f6' },
   { id: 'second_chance', name: 'Стирач помилок', icon: '🔄', rarity: 'blue', type: 'second_chance', amount: 1, color: '#3b82f6' },
   { id: 'synonym_compass', name: 'Компас синонімів (24г)', icon: '🧭', rarity: 'blue', type: 'synonym_compass', amount: 1, color: '#3b82f6' },
   { id: 'coins_60', name: '+60 Золотих Монет', icon: '🪙', rarity: 'purple', type: 'gems', amount: 60, color: '#a855f7' },
@@ -2620,7 +3102,7 @@ function EconomyManifestoModal({ isOpen = true, onClose }) {
             <span style={{ fontSize: 28 }}>📜</span>
             <div>
               <h2 style={{ margin: 0, fontSize: 20, fontWeight: 900 }}>Економічна Модель English Flow</h2>
-              <span className="muted small">v3.5.1 · Принцип абсолютної академічної чесності</span>
+              <span className="muted small">v3.6.0 · Принцип абсолютної академічної чесності</span>
             </div>
           </div>
           <button className="icon small" onClick={onClose}><X size={18}/></button>
@@ -2758,6 +3240,29 @@ function ShopPage({state, save, onRefreshGamification, allUsers}) {
         save(nextState);
         emitSiteToast(`👑 Золоту VIP-рамку розблоковано (-${cost} 🪙)!`, 'ok');
         confettiBurst();
+      } else if (itemId === 'amulet_intuition') {
+        const until = Date.now() + 24 * 60 * 60 * 1000;
+        nextState.inventory = {...inventory, amuletIntuitionUntil: until};
+        save(nextState);
+        emitSiteToast(`🧿 Амулет Інтуїції активовано на 24 год (-${cost} 🪙)! Приховує 1 невірний варіант у тестах!`, 'ok');
+        confettiBurst();
+      } else if (itemId === 'scroll_night') {
+        const until = Date.now() + 48 * 60 * 60 * 1000;
+        nextState.inventory = {...inventory, scrollNightUntil: until};
+        save(nextState);
+        emitSiteToast(`🌙 Сувій Нічної Варти активовано на 48 год (-${cost} 🪙)! Захищає стрік під час пізніх занять.`, 'ok');
+        confettiBurst();
+      } else if (itemId === 'memory_elixir') {
+        const until = Date.now() + 72 * 60 * 60 * 1000;
+        nextState.inventory = {...inventory, memoryElixirUntil: until};
+        save(nextState);
+        emitSiteToast(`🧪 Еліксир Глибокої Памʼяті активовано (-${cost} 🪙)! Подвоєна міцність повторення.`, 'ok');
+        confettiBurst();
+      } else if (itemId === 'cosmetic_frame_cosmic') {
+        nextState.inventory = {...inventory, cosmetics: {...cosmetics, frame_cosmic: true}};
+        save(nextState);
+        emitSiteToast(`🌌 Космічну Неонову Рамку розблоковано (-${cost} 🪙)!`, 'ok');
+        confettiBurst();
       } else if (itemId.startsWith('avatar_')) {
         const avId = itemId.replace('avatar_', '');
         nextState.inventory = {...inventory, cosmetics: {...cosmetics, [avId]: true}};
@@ -2821,6 +3326,7 @@ function ShopPage({state, save, onRefreshGamification, allUsers}) {
     { id: 'cosmetic_aura_crimson', css: 'aura-crimson', name: '🔴 Кримсон аура', rarity: 'RARE', cost: 40 },
   ];
   const FRAMES = [
+    { id: 'cosmetic_frame_cosmic', css: 'frame-cosmic', name: '🌌 Космічна VIP Рамка', rarity: 'LEGENDARY', cost: 60 },
     { id: 'cosmetic_frame_gold', css: 'frame-gold', name: '👑 Золота рамка', rarity: 'RARE', cost: 45 },
     { id: 'cosmetic_frame_hex', css: 'frame-hex', name: '⬡ Hex рамка', rarity: 'EPIC', cost: 65 },
     { id: 'cosmetic_frame_runic', css: 'frame-runic', name: '🪨 Рунічна рамка', rarity: 'RARE', cost: 40 },
@@ -2849,7 +3355,7 @@ function ShopPage({state, save, onRefreshGamification, allUsers}) {
             </button>
           </div>
           <p className="tavern-wood-sub">
-            Підсилюйте прогрес та відкривайте анімованих персонажів! Усі товари купуються виключно за <b>🪙 Золоті Монети</b>. Бали <b>⚡ XP</b> є мірилом зусиль і їх неможливо купити!
+            Підсилюйте прогрес та відкривайте ексклюзивні бустери й анімованих персонажів!
           </p>
         </div>
 
@@ -3275,7 +3781,7 @@ function ShopPage({state, save, onRefreshGamification, allUsers}) {
                 return (
                   <div key={item.id} className="tavern-parchment-card" style={{alignItems:'center',textAlign:'center'}}>
                     <div style={{marginBottom:8,position:'relative',width:84,height:84,borderRadius:'50%',background:'rgba(0,0,0,0.35)',display:'grid',placeItems:'center',overflow:'hidden',border:'2px solid var(--accent)'}}>
-                      <AvatarIcon av={avData} size={76} />
+                      <AvatarIcon id={item.id} av={avData} size={76} />
                     </div>
                     <span className="tavern-tier-badge tier-legendary" style={{marginBottom:6}}>✨ АНІМОВАНИЙ</span>
                     <h3 className="tavern-item-title" style={{margin:'2px 0 6px'}}>{item.name}</h3>
@@ -3444,25 +3950,7 @@ function ShopPage({state, save, onRefreshGamification, allUsers}) {
         </div>
       )}
 
-      {/* 🧝‍♀️ Mentor Edara Dialogue Bar at the bottom */}
-      <div className="tavern-keeper-dialogue-bar">
-        <div className="tavern-keeper-avatar-wrap">
-          <span className="tavern-keeper-avatar">🧝‍♀️</span>
-        </div>
-        <div className="tavern-keeper-text-box">
-          <div className="tavern-keeper-name">Наставниця Едара</div>
-          <p className="tavern-keeper-quote">
-            «Ласкаво прошу до нашої Крамниці Знань! Тут зібрано виключно корисні підсилювачі для вивчення англійської: стирачі помилок, захист ударного режиму та ексклюзивні анімовані аватари героїв. Усі розрахунки ведуться виключно у Золотих Монетах!»
-          </p>
-        </div>
-        <button
-          type="button"
-          className="tavern-rules-link-btn"
-          onClick={() => setShowEconomyModal(true)}
-        >
-          📜 Економіка сайту ➔
-        </button>
-      </div>
+
 
       {/* Financial Economy & Rules Modal */}
       {showEconomyModal && (
@@ -3824,7 +4312,9 @@ function Onboarding({onDone}) {
   return (
     <div className="onboarding fade-in">
       <div className="welcome card">
-        <div className="logo">EF</div>
+        <div className="logo" style={{display:'inline-flex',justifyContent:'center',alignItems:'center',marginBottom:8,background:'transparent'}}>
+          <BrandLogo size={52} />
+        </div>
         <span className="eyebrow">ENGLISH FLOW</span>
         <h1>{mode === 'login' ? 'Вхід' : 'Реєстрація'}</h1>
         <p className="muted">Нік може бути як імʼя. Пароль ≠ нік і ≠ імʼя. Імʼя підтягнеться з профілю.</p>
@@ -5163,6 +5653,30 @@ function BadgesPage({state}) {
     <section className="fade-in">
       <Title title="Досягнення" text="Отримуйте нагороди за прогрес, серії днів та ліги"/>
 
+      {/* Badge Visual Style Switcher directly on page */}
+      <div className="card" style={{display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:10,marginBottom:16,padding:'10px 16px'}}>
+        <div style={{display:'flex',alignItems:'center',gap:8}}>
+          <b style={{fontSize:13}}>🎨 Стиль оформлення значків:</b>
+        </div>
+        <div className="row-btns" style={{gap:6}}>
+          {[
+            ['neo', '✨ Neo RPG'],
+            ['enamel', '🛡️ Enamel'],
+            ['crystal', '💎 3D Crystal'],
+            ['gold', '🪙 Gold']
+          ].map(([stId, stLabel]) => (
+            <button
+              key={stId}
+              type="button"
+              className={(state.badgeStyle || 'neo') === stId ? 'primary small' : 'secondary small'}
+              onClick={() => save?.({...state, badgeStyle: stId})}
+            >
+              {stLabel}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className="row-btns" style={{marginBottom: 16}}>
         {tiers.map(t => (
           <button
@@ -5227,6 +5741,74 @@ function Leaderboard({state, gamification, onViewProfile}) {
   const [tab, setTab] = useState('global');
   const [boardView, setBoardView] = useState('table'); // 'table' | 'podium' | 'arena'
   const [loading, setLoading] = useState(false);
+  const [friendsList, setFriendsList] = useState([]);
+  const [pendingRequests, setPendingRequests] = useState(new Set());
+
+  useEffect(() => {
+    let alive = true;
+    if (!state.guest) {
+      getFriends().then(fr => {
+        if (alive && Array.isArray(fr)) setFriendsList(fr);
+      }).catch(() => {});
+    }
+    return () => { alive = false; };
+  }, [state.guest, state.nick]);
+
+  const isUserFriend = (targetNick) => {
+    if (!targetNick) return false;
+    const lower = String(targetNick).toLowerCase();
+    return friendsList.some(f => String(f.nick || f).toLowerCase() === lower && f.status !== 'pending');
+  };
+
+  const isUserPending = (targetNick) => {
+    if (!targetNick) return false;
+    const lower = String(targetNick).toLowerCase();
+    return pendingRequests.has(lower) ||
+      friendsList.some(f => String(f.nick || f).toLowerCase() === lower && f.status === 'pending');
+  };
+
+  const handleSendFriendRequest = async (targetNick, e) => {
+    if (e) e.stopPropagation();
+    const tNick = String(targetNick || '').trim();
+    if (!tNick) return;
+    setPendingRequests(prev => new Set(prev).add(tNick.toLowerCase()));
+    try {
+      await addFriend(state.nick, tNick);
+      emitSiteToast(`Запит на дружбу для @${tNick} надіслано! ✓`, 'ok');
+      const updated = await getFriends();
+      if (Array.isArray(updated)) setFriendsList(updated);
+    } catch {
+      emitSiteToast(`Запит для @${tNick} надіслано! ✓`, 'ok');
+    }
+  };
+
+  const renderFriendAction = (targetNick) => {
+    if (!targetNick || targetNick === state.nick) return null;
+    if (isUserFriend(targetNick)) {
+      return (
+        <span className="pill ok" style={{padding:'2px 8px',fontSize:10,fontWeight:700}} title="Вже у вашому списку друзів">
+          ✓ У друзях
+        </span>
+      );
+    }
+    if (isUserPending(targetNick)) {
+      return (
+        <span className="pill" style={{padding:'2px 8px',fontSize:10,fontWeight:700,background:'rgba(245, 158, 11, 0.15)',color:'#d97706'}}>
+          ⏳ Запит надіслано
+        </span>
+      );
+    }
+    return (
+      <button
+        type="button"
+        className="add-friend-btn primary small"
+        onClick={(e) => handleSendFriendRequest(targetNick, e)}
+        style={{padding:'2px 8px',fontSize:11,fontWeight:700,borderRadius:8,background:'var(--accent)',color:'#fff',border:'none',cursor:'pointer'}}
+      >
+        ➕ Додати в друзі
+      </button>
+    );
+  };
   const [rows, setRows] = useState(() => {
     const bossUser = { nick: 'boss', name: 'neMik', xp: 5420, streak: 45, avatar: 'action_king', status: 'active', verified: true, role: 'owner' };
     const defaultRoster = [
@@ -5345,23 +5927,7 @@ function Leaderboard({state, gamification, onViewProfile}) {
                               {isBoss && <span className="boss-crown" title="Верифікований розробник платформи">👑</span>}
                             </b>
                             
-                            {isBoss && !isMe && (
-                              <button
-                                type="button"
-                                className="add-boss-friend-btn"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  addFriend('Boss').then(() => {
-                                    emitSiteToast('Запит на дружбу надіслано розробнику @Boss! ✓', 'ok');
-                                  }).catch(() => {
-                                    emitSiteToast('Запит надіслано! ✓', 'ok');
-                                  });
-                                }}
-                                style={{padding:'2px 8px',fontSize:11,fontWeight:700,borderRadius:8,background:'var(--accent)',color:'#fff',border:'none',cursor:'pointer'}}
-                              >
-                                + Додати розробника в друзі
-                              </button>
-                            )}
+                            {!isMe && renderFriendAction(nick)}
                           </div>
                           <div className="muted small">@{nick}</div>
                         </div>
@@ -5398,23 +5964,7 @@ function Leaderboard({state, gamification, onViewProfile}) {
                       </>
                     )}
                   </div>
-                  {String(podium[1].nick||'').toLowerCase() === 'boss' && podium[1].nick !== state.nick && (
-                    <button
-                      type="button"
-                      className="add-boss-friend-btn"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        addFriend('Boss').then(() => {
-                          emitSiteToast('Запит на дружбу надіслано розробнику @Boss! ✓', 'ok');
-                        }).catch(() => {
-                          emitSiteToast('Запит надіслано! ✓', 'ok');
-                        });
-                      }}
-                      style={{margin:'4px 0',padding:'2px 8px',fontSize:10,fontWeight:700,borderRadius:6,background:'var(--accent)',color:'#fff',border:'none',cursor:'pointer'}}
-                    >
-                      + Додати розробника в друзі
-                    </button>
-                  )}
+                  {podium[1].nick !== state.nick && renderFriendAction(podium[1].nick)}
                   <LeagueBadge xp={podium[1].xp} style={{fontSize:10, padding:'2px 8px'}} />
                   <div className="podium-xp">{podium[1].xp} XP</div>
                   <div className="podium-bar h-2" />
@@ -5434,23 +5984,7 @@ function Leaderboard({state, gamification, onViewProfile}) {
                       </>
                     )}
                   </div>
-                  {String(podium[0].nick||'').toLowerCase() === 'boss' && podium[0].nick !== state.nick && (
-                    <button
-                      type="button"
-                      className="add-boss-friend-btn"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        addFriend('Boss').then(() => {
-                          emitSiteToast('Запит на дружбу надіслано розробнику @Boss! ✓', 'ok');
-                        }).catch(() => {
-                          emitSiteToast('Запит надіслано! ✓', 'ok');
-                        });
-                      }}
-                      style={{margin:'4px 0',padding:'2px 8px',fontSize:10,fontWeight:700,borderRadius:6,background:'var(--accent)',color:'#fff',border:'none',cursor:'pointer'}}
-                    >
-                      + Додати розробника в друзі
-                    </button>
-                  )}
+                  {podium[0].nick !== state.nick && renderFriendAction(podium[0].nick)}
                   <LeagueBadge xp={podium[0].xp} style={{fontSize:10, padding:'2px 8px'}} />
                   <div className="podium-xp">{podium[0].xp} XP</div>
                   <div className="podium-bar h-1" />
@@ -5470,23 +6004,7 @@ function Leaderboard({state, gamification, onViewProfile}) {
                       </>
                     )}
                   </div>
-                  {String(podium[2].nick||'').toLowerCase() === 'boss' && podium[2].nick !== state.nick && (
-                    <button
-                      type="button"
-                      className="add-boss-friend-btn"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        addFriend('Boss').then(() => {
-                          emitSiteToast('Запит на дружбу надіслано розробнику @Boss! ✓', 'ok');
-                        }).catch(() => {
-                          emitSiteToast('Запит надіслано! ✓', 'ok');
-                        });
-                      }}
-                      style={{margin:'4px 0',padding:'2px 8px',fontSize:10,fontWeight:700,borderRadius:6,background:'var(--accent)',color:'#fff',border:'none',cursor:'pointer'}}
-                    >
-                      + Додати розробника в друзі
-                    </button>
-                  )}
+                  {podium[2].nick !== state.nick && renderFriendAction(podium[2].nick)}
                   <LeagueBadge xp={podium[2].xp} style={{fontSize:10, padding:'2px 8px'}} />
                   <div className="podium-xp">{podium[2].xp} XP</div>
                   <div className="podium-bar h-3" />
@@ -5519,23 +6037,7 @@ function Leaderboard({state, gamification, onViewProfile}) {
                           {isBoss && <span className="boss-crown" title="Верифікований розробник платформи">👑</span>}
                         </b>
                         
-                        {isBoss && !isMe && (
-                          <button
-                            type="button"
-                            className="add-boss-friend-btn"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              addFriend('Boss').then(() => {
-                                emitSiteToast('Запит на дружбу надіслано розробнику @Boss! ✓', 'ok');
-                              }).catch(() => {
-                                emitSiteToast('Запит надіслано! ✓', 'ok');
-                              });
-                            }}
-                            style={{padding:'2px 8px',fontSize:10,fontWeight:700,borderRadius:6,background:'var(--accent)',color:'#fff',border:'none',cursor:'pointer'}}
-                          >
-                            + Додати розробника в друзі
-                          </button>
-                        )}
+                        {!isMe && renderFriendAction(nick)}
                       </div>
                       <div className="muted small">
                         @{nick}
@@ -5570,11 +6072,11 @@ function Leaderboard({state, gamification, onViewProfile}) {
                   <span className="pill">{leagueUsers.length} бійців</span>
                 </div>
                 {leagueUsers.length === 0 ? (
-                  <p className="muted small" style={{margin:'6px 0'}}>У цій лізі ще немає гравців. Навчайтесь, щоб піднятися сюди!</p>
+                  <p className="muted small" style={{margin:'6px 0'}}>У цій лізі ще немає гравців. Навчайтесь, щоб піднятися сюди. Ти можеш стати першим!</p>
                 ) : (
                   <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(200px, 1fr))',gap:8}}>
                     {leagueUsers.map(u => {
-                      const isBoss = String(u.nick||'').toLowerCase() === 'boss' || String(u.name||'').toLowerCase() === 'boss';
+                      const isBoss = String(u.nick||'').toLowerCase() === 'boss';
                       return (
                         <div
                           key={u.nick}
@@ -5675,15 +6177,23 @@ function PublicProfileModal({nick, onClose}) {
         } else {
           const local = loadProfile(nick);
           const isB = String(nick).toLowerCase() === 'boss';
+          const isT = String(nick).toLowerCase() === 'tester';
           setData({
-            profile: local || {
+            profile: local || (isT ? {
+              nick: 'tester',
+              name: 'Тестер EF 🛡️',
+              xp: 1850,
+              streak: 14,
+              avatar: 'action_knight',
+              role: 'tester'
+            } : {
               nick,
-              name: isB ? 'Boss 👑' : nick,
-              xp: isB ? 2840 : 150,
-              streak: isB ? 30 : 1,
-              avatar: isB ? 'avatar_boss' : 'duo_owl',
-            },
-            achievements: local?.badges || (isB ? ['first_steps', 'streak_7', 'word_wizard', 'gold_league'] : ['first_steps'])
+              name: isB ? 'neMik 👑' : nick,
+              xp: isB ? 5420 : 150,
+              streak: isB ? 45 : 1,
+              avatar: isB ? 'action_king' : 'duo_owl',
+            }),
+            achievements: local?.badges || (isT ? ['first_steps', 'streak_7', 'word_wizard', 'gold_league'] : (isB ? ['first_steps', 'streak_7', 'word_wizard', 'gold_league'] : ['first_steps']))
           });
         }
         setLoading(false);
@@ -5758,15 +6268,13 @@ function PublicProfileModal({nick, onClose}) {
           </div>
 
           <div style={{display:'flex',alignItems:'center',gap:8,marginTop:14,flexWrap:'wrap'}}>
-            {String(p?.nick || nick).toLowerCase() === 'tester' ? (
-              <span className="pill" style={{padding:'6px 12px',fontWeight:700,fontSize:12,background:'rgba(148,163,184,0.15)',color:'var(--text)'}}>
-                🛡️ Тестовий акаунт (пошук за @tester)
+            {isFriend ? (
+              <span className="pill ok" style={{padding:'6px 12px',fontWeight:700,fontSize:12}}>
+                ✓ У друзях
               </span>
-            ) : isFriend ? (
-              <span className="pill ok" style={{padding:'6px 12px',fontWeight:700,fontSize:12}}>🤝 Твій друг</span>
             ) : (
               <button className="primary" type="button" onClick={handleAddFriend} style={{padding:'7px 14px',fontSize:12,fontWeight:700}}>
-                {isBoss ? '+ Додати розробника в друзі' : '➕ Додати в друзі'}
+                ➕ Додати в друзі
               </button>
             )}
             <button
@@ -5871,11 +6379,21 @@ function Profile({state, save, gamification, onRefreshGamification}) {
 
   const [name, setName] = useState(state.name || '');
   const [goal, setGoal] = useState(Math.max(10, state.dailyGoal || 50));
-  const [selectedAvatar, setSelectedAvatar] = useState(state.avatar || '🦊');
+  const [selectedAvatar, setSelectedAvatar] = useState(state.avatar || 'duo_owl');
   const [showInLeaderboard, setShowInLeaderboard] = useState(state.showInLeaderboard !== false);
   const [allowFriendsStats, setAllowFriendsStats] = useState(state.allowFriendsStats !== false);
   const [pinnedBadges, setPinnedBadges] = useState(state.pinnedBadges || []);
   const [msg, setMsg] = useState('');
+  const [profileViewMode, setProfileViewMode] = useState('2d'); // '2d' | '3d'
+  const [tilt, setTilt] = useState({ x: 0, y: 0 });
+
+  const handleTiltMove = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left - rect.width / 2;
+    const y = e.clientY - rect.top - rect.height / 2;
+    setTilt({ x: -(y / rect.height) * 20, y: (x / rect.width) * 20 });
+  };
+  const handleTiltLeave = () => setTilt({ x: 0, y: 0 });
 
   const persist = () => {
     const trimmedName = name.trim();
@@ -5914,22 +6432,62 @@ function Profile({state, save, gamification, onRefreshGamification}) {
 
   return (
     <section className="rpg-profile fade-in">
+      {/* Top Action Bar with live checkmark */}
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:12,marginBottom:16}}>
+        <div>
+          <h1 style={{margin:0,fontSize:24}}>Лицарський Профіль Гравця</h1>
+          <p className="muted small" style={{margin:'2px 0 0'}}>Керування персонажем, візуалізацією та досягненнями</p>
+        </div>
+        <div style={{display:'flex',alignItems:'center',gap:10}}>
+          {msg && (
+            <span className="pill ok" style={{padding:'6px 14px',fontWeight:700,display:'inline-flex',alignItems:'center',gap:6,background:'rgba(34,197,94,0.15)',color:'#22c55e',border:'1px solid rgba(34,197,94,0.3)'}}>
+              ✓ Збережено
+            </span>
+          )}
+          <button className="primary" type="button" onClick={persist} style={{padding:'8px 18px',fontWeight:700,display:'inline-flex',alignItems:'center',gap:8}}>
+            💾 Зберегти зміни
+          </button>
+        </div>
+      </div>
+
       {/* Hero Header */}
       <div className="hero-rpg card">
-        <div className="rpg-avatar">
-          <AvatarIcon id={selectedAvatar || 'duo_owl'} size={72} className={state.inventory?.vipFrame ? 'vip-avatar-glow' : ''} />
-        </div>
+        {profileViewMode === '3d' ? (
+          <div className="hologram-stage" onMouseMove={handleTiltMove} onMouseLeave={handleTiltLeave} style={{margin:'8px 0',flexShrink:0}}>
+            <div className="hologram-tilt-card" style={{ transform: `perspective(700px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)` }}>
+              <div className="hologram-scanline" />
+              <AvatarIcon id={selectedAvatar || 'duo_owl'} size={100} className={state.inventory?.vipFrame ? 'vip-avatar-glow' : ''} />
+            </div>
+            <div className="hologram-pedestal" />
+            <div style={{fontSize:10,color:'#38bdf8',fontWeight:700,marginTop:6,textAlign:'center'}}>
+              🔮 3D Голограма Ефіру
+            </div>
+          </div>
+        ) : (
+          <div className="rpg-avatar">
+            <AvatarIcon id={selectedAvatar || 'duo_owl'} size={72} className={state.inventory?.vipFrame ? 'vip-avatar-glow' : ''} />
+          </div>
+        )}
         <div style={{flex:1,minWidth:200}}>
           <div className="rpg-level">Рівень {level}</div>
           <h2 style={{margin:'4px 0'}}>
-            {name || state.nick} {(String(state.nick||'').toLowerCase()==='boss' || String(name||'').toLowerCase()==='boss') && '👑'}
+            {name || state.nick} {String(state.nick||'').toLowerCase()==='boss' && '👑'}
           </h2>
           <div className="muted">@{state.nick} · {state.xp || 0} XP · 🔥 {state.streak || 0} днів</div>
           <div style={{marginTop:8,display:'flex',gap:8,flexWrap:'wrap',alignItems:'center'}}>
             <LeagueBadge xp={state.xp||0} />
-            <span className="currency-pill-gems">💎 {state.gems || 0} Смарагдів</span>
+            <span className="currency-pill-coins">🪙 {state.gems || 0} Золотих Монет</span>
             {freezeCount > 0 && <span className="freeze-chip">❄️ ×{freezeCount} заморозки</span>}
             {state.inventory?.vipFrame && <span className="pill ok">👑 VIP Гравець</span>}
+          </div>
+          <div style={{display:'flex',alignItems:'center',gap:8,marginTop:10}}>
+            <span className="muted small">Режим героя:</span>
+            <button type="button" className={profileViewMode === '2d' ? 'primary small' : 'secondary small'} style={{fontSize:11,padding:'3px 10px'}} onClick={() => setProfileViewMode('2d')}>
+              2D RPG
+            </button>
+            <button type="button" className={profileViewMode === '3d' ? 'primary small' : 'secondary small'} style={{fontSize:11,padding:'3px 10px'}} onClick={() => setProfileViewMode('3d')}>
+              🔮 3D Голограма
+            </button>
           </div>
           <div className="xp-bar" title="До наступного рівня" style={{marginTop:10}}><i style={{width: xpInto + '%'}}/></div>
           <small className="muted">{xpInto}/100 XP до рівня {level + 1}</small>
@@ -7043,16 +7601,16 @@ function ConfirmModal({modal, onClose}) {
 
 
 const ICON_STYLES_10 = [
-  {id: 'lucide_minimal', name: '1. Clean Monoline', icon: '📐', desc: 'Мінімалістичні неоморфічні тонкі лінії'},
-  {id: 'duotone_emerald', name: '2. Emerald Duotone', icon: '💎', desc: 'Смарагдові двохтонові векторні іконки'},
-  {id: 'cyber_neon', name: '3. Cyberpunk Glow', icon: '⚡', desc: 'Неонове футуристичне сяйво'},
-  {id: 'isometric_3d', name: '4. Isometric 3D', icon: '🧊', desc: 'Ізометричні об\'ємні векторні фігури'},
-  {id: 'flat_vibrant', name: '5. Flat Vibrant', icon: '🎨', desc: 'Контрастні соковиті пласкі піктограми'},
-  {id: 'material_sharp', name: '6. Material Sharp', icon: '⏹️', desc: 'Строгі геометричні форми Google'},
-  {id: 'hand_drawn', name: '7. Hand-Crafted', icon: '✏️', desc: 'Живий авторський ескізний штрих'},
-  {id: 'glass_pro', name: '8. Liquid Glass', icon: '🔮', desc: 'Напівпрозоре матове рідке скло'},
-  {id: 'retro_pixel', name: '9. Retro 8-bit', icon: '👾', desc: 'Піксельна аркадна естетика'},
-  {id: 'golden_luxury', name: '10. Gold Luxury', icon: '👑', desc: 'Золоті витончені королівські контури'}
+  {id: 'lucide_minimal', name: '1. Clean Monoline', icon: '📐', desc: 'Мінімалістичні неоморфічні тонкі лінії', preview: ['📐', '⚡', '🎯', '🏆', '🏛️', '🛡️']},
+  {id: 'duotone_emerald', name: '2. Emerald Duotone', icon: '💎', desc: 'Смарагдові двохтонові векторні іконки', preview: ['📗', '🔋', '❇️', '🥇', '🌿', '🔰']},
+  {id: 'cyber_neon', name: '3. Cyberpunk Glow', icon: '⚡', desc: 'Неонове футуристичне сяйво', preview: ['🔮', '⚡', '👁️‍🗨️', '🌌', '🏙️', '💠']},
+  {id: 'isometric_3d', name: '4. Isometric 3D', icon: '🧊', desc: 'Ізометричні об\'ємні векторні фігури', preview: ['📦', '💥', '🎲', '🏅', '🏰', '🛡️']},
+  {id: 'flat_vibrant', name: '5. Flat Vibrant', icon: '🎨', desc: 'Контрастні соковиті пласкі піктограми', preview: ['📚', '⚡', '🎯', '🏆', '🎪', '🛡️']},
+  {id: 'material_sharp', name: '6. Material Sharp', icon: '⏹️', desc: 'Строгі геометричні форми Google', preview: ['📄', '⚡', '🎯', '🏆', '🏢', '🛡️']},
+  {id: 'hand_drawn', name: '7. Hand-Crafted', icon: '✏️', desc: 'Живий авторський ескізний штрих', preview: ['📜', '⚡', '🏹', '🎗️', '🛖', '🛡️']},
+  {id: 'glass_pro', name: '8. Liquid Glass', icon: '🔮', desc: 'Напівпрозоре матове рідке скло', preview: ['💎', '💡', '🫧', '✨', '🏛️', '🛡️']},
+  {id: 'retro_pixel', name: '9. Retro 8-bit', icon: '👾', desc: 'Піксельна аркадна естетика', preview: ['👾', '🕹️', '👾', '👑', '🏰', '⚔️']},
+  {id: 'golden_luxury', name: '10. Gold Luxury', icon: '👑', desc: 'Золоті витончені королівські контури', preview: ['📙', '⭐', '⚜️', '👑', '🏯', '🛡️']}
 ];
 
 function SettingsPage({state, save, onLogout}) {
@@ -7391,7 +7949,7 @@ function SettingsPage({state, save, onLogout}) {
   );
 }
 
-function FriendsPage({state}) {
+function FriendsPage({state, onViewProfile}) {
   const [q, setQ] = useState('');
   const [msg, setMsg] = useState('');
   const [chatWith, setChatWith] = useState(null);
@@ -7529,11 +8087,20 @@ function FriendsPage({state}) {
             style={{flex:1,minWidth:200}}
             value={q}
             onChange={e => setQ(e.target.value)}
-            placeholder="Введіть нікнейм друга для додавання…"
+            placeholder="Введіть нікнейм друга (наприклад tester або boss)…"
             onKeyDown={e => e.key === 'Enter' && add()}
           />
           <button className="primary" disabled={busy || !q.trim()} onClick={add}>
             ➕ Додати в команду
+          </button>
+        </div>
+        <div style={{display:'flex',alignItems:'center',gap:8,marginTop:8,flexWrap:'wrap'}}>
+          <span className="muted small">💡 Швидкий вибір:</span>
+          <button type="button" className="secondary small" style={{fontSize:11,padding:'2px 8px'}} onClick={() => { setQ('tester'); }}>
+            🛡️ @tester (тестовий акаунт)
+          </button>
+          <button type="button" className="secondary small" style={{fontSize:11,padding:'2px 8px'}} onClick={() => { setQ('boss'); }}>
+            👑 @boss (розробник)
           </button>
         </div>
         {msg && <p className="muted small" style={{marginTop:8,marginBottom:0}}>{msg}</p>}
@@ -7569,6 +8136,9 @@ function FriendsPage({state}) {
                   </div>
 
                   <div className="row-btns" style={{gap:6}}>
+                    <button className="secondary small" title="Переглянути профіль" onClick={() => onViewProfile?.(f.nick)}>
+                      👤 Профіль
+                    </button>
                     {f.status === 'accepted' && (
                       <>
                         <button className="primary small" style={{flex:1}} onClick={() => { setChatWith(f.nick); setFriendsView('chat'); }}>
@@ -7628,7 +8198,7 @@ function FriendsPage({state}) {
               <>
                 <div className="chat-box">
                   {messages.length === 0 && <p className="muted" style={{textAlign: 'center', padding: 24}}>Ще немає повідомлень. Напишіть першим!</p>}
-                  {messages.map(m => {
+                  {displayMessages.map(m => {
                     const isMe = String(m.sender_id) === String(state.id) || String(m.sender_nick || '').toLowerCase() === String(state.nick).toLowerCase();
                     const content = m.text || (m.ciphertext ? '🔒 Повідомлення' : '—');
                     return (
@@ -7896,9 +8466,22 @@ function DuelArena({state, save, activeWords}) {
           <div style={{fontSize:72,lineHeight:1}}>⚔️</div>
           <h2 style={{color:'#f5f3ff',marginTop:12}}>Готовий до двобою?</h2>
           <p className="muted" style={{maxWidth:480,margin:'0 auto'}}>У кожного по 100 HP. 10 секунд на відповідь. Переможець отримує <b style={{color:'#f59e0b'}}>+100 XP</b> та <b style={{color:'#f59e0b'}}>+30 🪙 Монет</b>!</p>
-          <button className="duel-start-btn" style={{marginTop:20,maxWidth:280,marginInline:'auto'}} onClick={startDuel}>
-            ⚡ Почати Дуель!
-          </button>
+          <div style={{display:'flex',justifyContent:'center',gap:10,marginTop:16,flexWrap:'wrap'}}>
+            <button className="duel-start-btn" style={{margin:0,minWidth:200}} onClick={startDuel}>
+              ⚡ Почати Дуель!
+            </button>
+            <button
+              type="button"
+              className="secondary"
+              style={{padding:'12px 20px',borderRadius:12,fontWeight:700,display:'inline-flex',alignItems:'center',gap:6}}
+              onClick={() => {
+                window.dispatchEvent(new CustomEvent('ef-open-chat', { detail: { duelInvite: true } }));
+                emitSiteToast('💬 Відкрито чат для виклику друга на дуель! Натисніть на друга для запрошення.', 'ok');
+              }}
+            >
+              ✉️ Запросити друга з чату
+            </button>
+          </div>
         </div>
       )}
 
@@ -8001,7 +8584,60 @@ function DuelArena({state, save, activeWords}) {
 }
 
 function ChallengesPage({state, save, wordsCatalog}){
-  const [activeTab, setActiveTab] = useState('events'); // 'events' | 'duel'
+  const [activeTab, setActiveTab] = useState('events'); // 'events' | 'duel' | 'arena3d'
+  const [arenaCards, setArenaCards] = useState([]);
+  const [arenaSelected, setArenaSelected] = useState(null);
+  const [arenaMatches, setArenaMatches] = useState(new Set());
+  const [arenaScore, setArenaScore] = useState(0);
+
+  const initArena = useCallback(() => {
+    const pool = (wordsCatalog && wordsCatalog.length >= 6) ? wordsCatalog.slice(0, 6) : fallbackWords.slice(0, 6);
+    const cards = [];
+    pool.forEach((w, idx) => {
+      cards.push({ id: `en_${idx}`, pairId: idx, text: w.word || w.en, type: 'en' });
+      cards.push({ id: `ua_${idx}`, pairId: idx, text: w.translation || w.ua, type: 'ua' });
+    });
+    cards.sort(() => 0.5 - Math.random());
+    setArenaCards(cards);
+    setArenaSelected(null);
+    setArenaMatches(new Set());
+    setArenaScore(0);
+  }, [wordsCatalog]);
+
+  useEffect(() => {
+    if (activeTab === 'arena3d' && arenaCards.length === 0) {
+      initArena();
+    }
+  }, [activeTab, arenaCards.length, initArena]);
+
+  const handleArenaCardClick = (card) => {
+    if (arenaMatches.has(card.pairId)) return;
+    if (!arenaSelected) {
+      setArenaSelected(card);
+      return;
+    }
+    if (arenaSelected.id === card.id) {
+      setArenaSelected(null);
+      return;
+    }
+    if (arenaSelected.pairId === card.pairId && arenaSelected.type !== card.type) {
+      playTone(true);
+      setArenaMatches(prev => new Set(prev).add(card.pairId));
+      setArenaScore(s => s + 20);
+      setArenaSelected(null);
+      if (arenaMatches.size + 1 === 6) {
+        confettiBurst();
+        playFanfareTone();
+        if (save) {
+          save({ ...state, xp: (state.xp || 0) + 75, gems: (state.gems || 0) + 15 });
+        }
+        emitSiteToast('🏆 3D Рунічну Арену успішно очищено! +75 XP, +15 🪙!', 'ok');
+      }
+    } else {
+      playTone(false);
+      setArenaSelected(null);
+    }
+  };
 
   // --- Boss Battle State (30s per word) ---
   const [bossHp, setBossHp] = useState(100);
@@ -8083,7 +8719,7 @@ function ChallengesPage({state, save, wordsCatalog}){
         }
         setBossActive(false);
         setBossFinished(true);
-        emitSiteToast('🎉 ТИТАН СЛІВ ПОВАЛЕНИЙ! +15 💎 Смарагдів та +150 XP!', 'ok');
+        emitSiteToast('🎉 ТИТАН СЛІВ ПОВАЛЕНИЙ! +15 🪙 Золотих Монет та +150 XP!', 'ok');
       } else {
         emitSiteToast('⚔️ Влучний удар знаннями! -25 HP босу', 'ok');
         setBossTime(30);
@@ -8188,11 +8824,59 @@ function ChallengesPage({state, save, wordsCatalog}){
         >
           ⚡ Зала Суперників (Дуель)
         </button>
+        <button
+          type="button"
+          className={activeTab === 'arena3d' ? 'primary' : 'secondary'}
+          onClick={() => setActiveTab('arena3d')}
+          style={activeTab === 'arena3d' ? {background:'linear-gradient(135deg,#0284c7,#0369a1)',borderColor:'#0284c7'} : {borderColor:'#0284c7',color:'#38bdf8'}}
+        >
+          🔮 3D Рунічна Арена
+        </button>
       </div>
 
       {/* DUEL — RIVALRY HALL */}
       {activeTab === 'duel' && (
         <DuelArena state={state} save={save} activeWords={activeWords} />
+      )}
+
+      {/* 3D RUNIC WORD ARENA */}
+      {activeTab === 'arena3d' && (
+        <div className="card" style={{borderLeft:'5px solid #38bdf8',padding:'20px'}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:12,marginBottom:16}}>
+            <div>
+              <span className="pill" style={{background:'rgba(56,189,248,0.15)',color:'#38bdf8',fontWeight:700}}>3D РУНІЧНИЙ ПРОСТІР</span>
+              <h2 style={{margin:'8px 0 4px'}}>🔮 3D Рунічна Арена Слів</h2>
+              <p className="muted small">Знаходьте пари між англійськими словами та українськими перекладами на 3D плитах!</p>
+            </div>
+            <div style={{display:'flex',alignItems:'center',gap:12}}>
+              <span style={{fontSize:18,fontWeight:800,color:'#38bdf8'}}>Очки: {arenaScore}</span>
+              <button className="secondary small" type="button" onClick={initArena}>
+                🔄 Перемішати плити
+              </button>
+            </div>
+          </div>
+
+          <div className="arena-3d-grid">
+            {arenaCards.map(card => {
+              const isMatched = arenaMatches.has(card.pairId);
+              const isSelected = arenaSelected && arenaSelected.id === card.id;
+              return (
+                <div
+                  key={card.id}
+                  className={`arena-runic-card ${isMatched ? 'matched' : ''} ${isSelected ? 'selected' : ''}`}
+                  onClick={() => handleArenaCardClick(card)}
+                >
+                  <div style={{fontSize:10,letterSpacing:1,textTransform:'uppercase',color: card.type==='en'?'#38bdf8':'#a78bfa',marginBottom:4}}>
+                    {card.type === 'en' ? '🇬🇧 English' : '🇺🇦 Переклад'}
+                  </div>
+                  <div style={{fontSize:16,fontWeight:700,color: isMatched ? '#22c55e' : '#fff'}}>
+                    {isMatched ? `✓ ${card.text}` : card.text}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       )}
 
       {activeTab === 'events' && (
@@ -8222,7 +8906,7 @@ function ChallengesPage({state, save, wordsCatalog}){
             {/* Battle interactive controls & questions */}
             {!bossActive && !bossFinished && (
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:10,marginTop:12}}>
-                <span className="muted small">🎁 Нагорода: <b>+15 💎 Смарагдів та +150 XP</b> · ⏱️ <b>30с на слово</b></span>
+                <span className="muted small">🎁 Нагорода: <b>+15 🪙 Золотих Монет та +150 XP</b> · ⏱️ <b>30с на слово</b></span>
                 <button className="primary" type="button" onClick={startBossBattle}>
                   ⚔️ {bossHearts < 3 ? 'Спробувати знову' : 'Розпочати битву з Босом'}
                 </button>
@@ -8232,7 +8916,7 @@ function ChallengesPage({state, save, wordsCatalog}){
             {bossFinished && (
               <div style={{textAlign:'center',padding:'16px 0'}}>
                 <h3 style={{color:'#10b981'}}>🏆 ТИТАН СЛІВ ПОВАЛЕНИЙ!</h3>
-                <p className="muted">Ви отримали +15 💎 Смарагдів та +150 XP за видатні знання англійської!</p>
+                <p className="muted">Ви отримали +15 🪙 Золотих Монет та +150 XP за видатні знання англійської!</p>
                 <button className="secondary" style={{marginTop:10}} onClick={startBossBattle}>
                   🔄 Зіграти новий раунд бос-битви
                 </button>
@@ -8291,7 +8975,7 @@ function ChallengesPage({state, save, wordsCatalog}){
 
             {!blitzActive && (
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:10,marginTop:14}}>
-                <span className="muted small">🎁 Нагорода за 10+ слів: <b>+5 💎 Смарагдів та +50 XP</b></span>
+                <span className="muted small">🎁 Нагорода за 10+ слів: <b>+5 🪙 Золотих Монет та +50 XP</b></span>
                 <button className="primary" type="button" onClick={startBlitz}>
                   ⚡ {blitzFinished ? 'Спробувати бліц знову' : 'Старт 60с Бліцу'}
                 </button>

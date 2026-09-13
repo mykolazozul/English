@@ -72,32 +72,71 @@ function propSelectSmart(p, names) {
   return prop.select?.name || prop.name || '';
 }
 
-async function notionQuery(body) {
-  // First try data_sources endpoint
+let activeDataSourceId = DATA_SOURCE_ID;
+let autoDiscovered = false;
+
+async function autoDiscoverDatabaseId() {
+  if (autoDiscovered) return activeDataSourceId;
+  autoDiscovered = true;
   try {
-    const res1 = await fetch(`https://api.notion.com/v1/data_sources/${DATA_SOURCE_ID}/query`, {
+    const sRes = await fetch('https://api.notion.com/v1/search', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${TOKEN}`, 'Notion-Version': '2022-06-28', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ filter: { value: 'database', property: 'object' }, page_size: 10 })
+    });
+    if (sRes.ok) {
+      const sData = await sRes.json();
+      if (sData.results && sData.results.length > 0) {
+        const foundId = sData.results[0].id;
+        const title = sData.results[0].title?.[0]?.plain_text || 'Database';
+        console.log(`🔍 Auto-discovered shared Notion database: "${title}" (ID: ${foundId})`);
+        activeDataSourceId = foundId;
+        return foundId;
+      }
+    }
+  } catch (e) {
+    console.warn('⚠️ Notion search auto-discovery error:', e.message);
+  }
+  return activeDataSourceId;
+}
+
+async function notionQuery(body) {
+  // First try data_sources endpoint with active ID
+  try {
+    const res1 = await fetch(`https://api.notion.com/v1/data_sources/${activeDataSourceId}/query`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${TOKEN}`, 'Notion-Version': API_VERSION, 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
     });
     if (res1.ok) return await res1.json();
-    if (res1.status !== 404 && res1.status !== 400) {
-      const err = await res1.text();
-      throw new Error(`Notion API HTTP ${res1.status}: ${err.slice(0, 300)}`);
+    if (res1.status === 404 && !autoDiscovered) {
+      const newId = await autoDiscoverDatabaseId();
+      if (newId && newId !== DATA_SOURCE_ID) {
+        return await notionQuery(body);
+      }
     }
-  } catch (e) {
-    if (!e.message.includes('404') && !e.message.includes('400')) throw e;
-  }
+  } catch (e) {}
 
   // Fallback to standard databases endpoint
-  const res2 = await fetch(`https://api.notion.com/v1/databases/${DATA_SOURCE_ID}/query`, {
+  let res2 = await fetch(`https://api.notion.com/v1/databases/${activeDataSourceId}/query`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${TOKEN}`, 'Notion-Version': '2022-06-28', 'Content-Type': 'application/json' },
     body: JSON.stringify(body)
   });
+  if (res2.status === 404 && !autoDiscovered) {
+    const newId = await autoDiscoverDatabaseId();
+    if (newId && newId !== DATA_SOURCE_ID) {
+      res2 = await fetch(`https://api.notion.com/v1/databases/${newId}/query`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${TOKEN}`, 'Notion-Version': '2022-06-28', 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+    }
+  }
   if (!res2.ok) {
     const err = await res2.text();
-    throw new Error(`Notion API query error (${res2.status}): ${err.slice(0, 300)}`);
+    console.warn(`⚠️ Notion API query warning (${res2.status}): ${err.slice(0, 200)}. Keeping existing vocabulary.`);
+    return { results: [], has_more: false };
   }
   return await res2.json();
 }
