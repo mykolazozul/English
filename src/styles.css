@@ -5010,3 +5010,96 @@ input[type="checkbox"]:focus-visible {
   background: var(--surface);
   border: 1px solid var(--border);
 }
+
+/* ==========================================================================
+   v3.5.1: MOBILE SOUND TEXT CAPTIONS, GESTURES & VIBRANT GOLDEN COINS
+   ========================================================================== */
+
+/* 1. Mobile Sound Text Overlay (Visual Speech Representation) */
+.sound-caption-overlay {
+  position: fixed;
+  bottom: 84px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  animation: soundCaptionPop 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes soundCaptionPop {
+  from { opacity: 0; transform: translate(-50%, 14px) scale(0.92); }
+  to { opacity: 1; transform: translate(-50%, 0) scale(1); }
+}
+
+.sound-caption-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 18px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.94);
+  border: 1.5px solid rgba(56, 189, 248, 0.5);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 15px rgba(56, 189, 248, 0.25);
+  backdrop-filter: blur(12px);
+  color: #ffffff;
+  font-family: var(--font-main, inherit);
+}
+
+.sound-caption-wave {
+  font-size: 16px;
+  animation: soundWavePulse 0.8s infinite alternate ease-in-out;
+}
+
+@keyframes soundWavePulse {
+  0% { transform: scale(0.95); opacity: 0.75; }
+  100% { transform: scale(1.15); opacity: 1; }
+}
+
+.sound-caption-text {
+  font-size: 14px;
+  font-weight: 700;
+  color: #f8fafc;
+  letter-spacing: 0.02em;
+}
+
+.sound-caption-phonetic {
+  font-size: 12px;
+  font-style: italic;
+  color: #38bdf8;
+  padding-left: 4px;
+  border-left: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* 2. Mobile Gestures & Drawer Transitions */
+@media (max-width: 900px) {
+  .sidebar {
+    transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s ease !important;
+    touch-action: pan-y !important;
+  }
+  .sidebar.open {
+    box-shadow: 6px 0 35px rgba(0, 0, 0, 0.6) !important;
+  }
+  .sidebar-backdrop {
+    transition: opacity 0.25s ease !important;
+    touch-action: none !important;
+  }
+}
+
+/* 3. Vibrant Golden Coin Accents */
+.gold-coin-glow {
+  color: #f59e0b !important;
+  filter: drop-shadow(0 0 10px rgba(245, 158, 11, 0.85)) !important;
+  text-shadow: 0 0 12px rgba(245, 158, 11, 0.8) !important;
+}
+
+.coin-pill-gold {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.22), rgba(217, 119, 6, 0.35)) !important;
+  border: 1.5px solid #f59e0b !important;
+  color: #fbbf24 !important;
+  box-shadow: 0 0 18px rgba(245, 158, 11, 0.35) !important;
+}
+

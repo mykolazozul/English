@@ -12,7 +12,7 @@ import {ensureChatIdentity,publicKeyPayload,encryptChatPayload,decryptChatText,e
 import {track} from './lib/analytics.js';
 
 
-const VERSION = '3.5.0';
+const VERSION = '3.5.1';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -207,7 +207,7 @@ function playMarioGameOver() {
 }
 
 // Medieval Tavern Web Audio Synthesizer Suite
-function playTavernCoinDubloon() {
+function playTavernGoldCoin() {
   try {
     if (window.__efQuiet || window.__efNoSfx) return;
     const c = getAudioCtx(); if (!c) return;
@@ -291,7 +291,7 @@ function playTone(ok, pack) {
     const p = pack || window.__efSoundPack || 'duo';
     
     if (p === 'tavern') {
-      if (ok) playTavernCoinDubloon();
+      if (ok) playTavernGoldCoin();
       else playTavernDoor();
       return;
     }
@@ -1296,15 +1296,25 @@ function confettiBurst() {
 }
 
 
-function speak(t, rate = 0.9) {
+function speak(t, rate = 0.9, phonetic = '') {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('ef-sound-caption', {
+      detail: { text: String(t || ''), phonetic: String(phonetic || '') }
+    }));
+  }
   if (!('speechSynthesis' in window) || window.__efQuiet) return;
-  speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(t);
-  u.lang = 'en-US';
-  // browsers often clamp; slow mode uses lower rate + slightly lower pitch
-  u.rate = Math.max(0.4, Math.min(1.2, rate));
-  u.pitch = rate < 0.75 ? 0.85 : 1;
-  speechSynthesis.speak(u);
+  try {
+    speechSynthesis.cancel();
+    if (speechSynthesis.paused) speechSynthesis.resume();
+    const u = new SpeechSynthesisUtterance(t);
+    u.lang = 'en-US';
+    // browsers often clamp; slow mode uses lower rate + slightly lower pitch
+    u.rate = Math.max(0.4, Math.min(1.2, rate));
+    u.pitch = rate < 0.75 ? 0.85 : 1;
+    speechSynthesis.speak(u);
+  } catch (err) {
+    console.warn('SpeechSynthesis error:', err);
+  }
 }
 function newEventId(){try{return crypto.randomUUID()}catch{return `${Date.now()}-${Math.random().toString(36).slice(2)}`}}
 function shuffle(arr) {
@@ -1442,8 +1452,45 @@ function Sidebar({mobile, setMobile, page, nav}) {
 
 function Layout({children, state, page, nav, mobile, setMobile}) {
   const isAdmin = state?.role === 'admin' || String(state?.nick).toLowerCase() === 'boss' || String(state?.name).toLowerCase() === 'boss';
+  const touchStartRef = useRef({ x: 0, y: 0, time: 0 });
+
+  useEffect(() => {
+    const unlockAudio = () => {
+      if (typeof window !== 'undefined' && window.speechSynthesis && window.speechSynthesis.paused) {
+        window.speechSynthesis.resume();
+      }
+    };
+    window.addEventListener('touchstart', unlockAudio, { passive: true, once: true });
+    return () => window.removeEventListener('touchstart', unlockAudio);
+  }, []);
+
+  const handleTouchStart = (e) => {
+    if (!e.touches || e.touches.length === 0) return;
+    touchStartRef.current = {
+      x: e.touches[0].clientX,
+      y: e.touches[0].clientY,
+      time: Date.now()
+    };
+  };
+
+  const handleTouchEnd = (e) => {
+    if (!e.changedTouches || e.changedTouches.length === 0) return;
+    const dx = e.changedTouches[0].clientX - touchStartRef.current.x;
+    const dy = e.changedTouches[0].clientY - touchStartRef.current.y;
+    const dt = Date.now() - touchStartRef.current.time;
+
+    // Horizontal swipe detection: swipe right from screen edge opens drawer, swipe left closes
+    if (Math.abs(dx) > Math.abs(dy) * 1.4 && dt < 600) {
+      if (!mobile && touchStartRef.current.x < 75 && dx > 40) {
+        setMobile(true);
+      } else if (mobile && dx < -40) {
+        setMobile(false);
+      }
+    }
+  };
+
   return (
-    <div className="app">
+    <div className="app" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
       {mobile && <div className="sidebar-backdrop" onClick={() => setMobile(false)} aria-hidden="true" />}
       <Sidebar mobile={mobile} setMobile={setMobile} page={page} nav={nav} />
       <main className="main">
@@ -1466,7 +1513,7 @@ function Layout({children, state, page, nav, mobile, setMobile}) {
           </div>
           <div className="header-stats">
             <span title="Серія днів" className="stat-chip streak-chip">🔥 {state.streak}</span>
-            <span title="Древні Монети / Поінти (ігрова валюта)" className="stat-chip currency-pill-coins" onClick={() => nav('shop')} style={{cursor:'pointer'}}>
+            <span title="Золоті Монети (ігрова валюта)" className="stat-chip currency-pill-coins" onClick={() => nav('shop')} style={{cursor:'pointer'}}>
               <AncientCoinIcon size={16} className="coin-icon-svg" /> {state.gems || 0}
             </span>
             <span title="Бали досвіду (натисніть щоб відкрити рейтинг)" className="stat-chip xp-chip" onClick={() => nav('leaderboard')} style={{cursor:'pointer'}}>
@@ -2178,6 +2225,7 @@ export default function App() {
       </Layout>
       <div className="version-badge">v{VERSION}</div>
       <Toast msg={toast} />
+      <SoundCaptionOverlay />
       <ConfirmModal modal={modal} onClose={() => setModal(null)} />
       {giftModal && <DailyGiftModal onClose={() => setGiftModal(false)} onOpen={async () => {
         try {
@@ -2276,28 +2324,69 @@ function EpicAchievementBanner({ badge, onClose }) {
 }
 
 /* ==========================================================================
-   v3.3.0 — CS:GO ROULETTE CASE FOR MYSTERY CHEST (100 ANCIENT POINTS)
+   v3.5.1 — MOBILE SOUND TEXT CAPTION OVERLAY
+   ========================================================================== */
+function SoundCaptionOverlay() {
+  const [caption, setCaption] = useState(null);
+  const timerRef = useRef(null);
+
+  useEffect(() => {
+    const handleCaption = (e) => {
+      const { text, phonetic } = e.detail || {};
+      if (!text) return;
+      if (timerRef.current) clearTimeout(timerRef.current);
+      setCaption({ text, phonetic });
+      timerRef.current = setTimeout(() => {
+        setCaption(null);
+      }, 3200);
+    };
+
+    window.addEventListener('ef-sound-caption', handleCaption);
+    return () => {
+      window.removeEventListener('ef-sound-caption', handleCaption);
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
+
+  if (!caption) return null;
+
+  return (
+    <div className="sound-caption-overlay" role="status" aria-live="polite">
+      <div className="sound-caption-pill">
+        <span className="sound-caption-wave">🔊</span>
+        <span className="sound-caption-text">{caption.text}</span>
+        {caption.phonetic ? (
+          <span className="sound-caption-phonetic">[{caption.phonetic}]</span>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+/* ==========================================================================
+   v3.5.1 — MYSTERY CHEST OF KNOWLEDGE (200 GOLDEN COINS)
    ========================================================================== */
 const MYSTERY_CHEST_ITEMS = [
-  { id: 'xp_50', name: '+50 XP Ліги', icon: '⚡', rarity: 'blue', type: 'xp', amount: 50, color: '#3b82f6' },
-  { id: 'points_15', name: '+15 Дублонів', icon: '🪙', rarity: 'blue', type: 'gems', amount: 15, color: '#3b82f6' },
+  { id: 'coins_25', name: '+25 Золотих Монет', icon: '🪙', rarity: 'blue', type: 'gems', amount: 25, color: '#3b82f6' },
   { id: 'second_chance', name: 'Стирач помилок', icon: '🔄', rarity: 'blue', type: 'second_chance', amount: 1, color: '#3b82f6' },
-  { id: 'xp_100', name: '+100 XP Ліги', icon: '⚡', rarity: 'purple', type: 'xp', amount: 100, color: '#a855f7' },
+  { id: 'synonym_compass', name: 'Компас синонімів (24г)', icon: '🧭', rarity: 'blue', type: 'synonym_compass', amount: 1, color: '#3b82f6' },
+  { id: 'coins_60', name: '+60 Золотих Монет', icon: '🪙', rarity: 'purple', type: 'gems', amount: 60, color: '#a855f7' },
   { id: 'freeze_1', name: 'Заморозка серії', icon: '❄️', rarity: 'purple', type: 'freeze', amount: 1, color: '#a855f7' },
-  { id: 'points_40', name: '+40 Дублонів', icon: '🪙', rarity: 'purple', type: 'gems', amount: 40, color: '#a855f7' },
-  { id: 'xp_200', name: '+200 XP Спринт', icon: '⚡', rarity: 'pink', type: 'xp', amount: 200, color: '#ec4899' },
-  { id: 'league_shield', name: 'Щит Ліги', icon: '🛡️', rarity: 'pink', type: 'league_shield', amount: 1, color: '#ec4899' },
-  { id: 'points_75', name: '+75 Дублонів', icon: '🪙', rarity: 'pink', type: 'gems', amount: 75, color: '#ec4899' },
-  { id: 'booster_1h', name: 'XP Booster 2×', icon: '⚡⚡', rarity: 'red', type: 'booster', amount: 1, color: '#ef4444' },
-  { id: 'points_150', name: '+150 Дублонів!', icon: '🪙🪙', rarity: 'red', type: 'gems', amount: 150, color: '#ef4444' },
+  { id: 'sprint_scroll', name: 'Сувій бліц-спринту', icon: '📜', rarity: 'purple', type: 'sprint_scroll', amount: 1, color: '#a855f7' },
+  { id: 'coins_120', name: '+120 Золотих Монет', icon: '🪙🪙', rarity: 'pink', type: 'gems', amount: 120, color: '#ec4899' },
+  { id: 'league_shield', name: 'Щит Ліги (Оберіг)', icon: '🛡️', rarity: 'pink', type: 'league_shield', amount: 1, color: '#ec4899' },
+  { id: 'pronounce_mirror', name: 'Дзеркало вимови (48г)', icon: '🪞', rarity: 'pink', type: 'pronounce_mirror', amount: 1, color: '#ec4899' },
+  { id: 'deep_focus', name: 'Сувій Глибокого Фокусу', icon: '⚡', rarity: 'red', type: 'deep_focus', amount: 1, color: '#ef4444' },
+  { id: 'coins_250', name: '+250 Золотих Монет!', icon: '💰', rarity: 'red', type: 'gems', amount: 250, color: '#ef4444' },
   { id: 'vip_frame', name: 'Золота VIP Рамка', icon: '👑', rarity: 'gold', type: 'vip_frame', amount: 1, color: '#f59e0b' },
-  { id: 'jackpot_500', name: 'ДЖЕКПОТ +500 XP & 200 🪙', icon: '💎', rarity: 'gold', type: 'jackpot', amount: 500, color: '#f59e0b' }
+  { id: 'jackpot_500', name: 'ДЖЕКПОТ +500 🪙 & АУРА', icon: '🌟', rarity: 'gold', type: 'jackpot', amount: 500, color: '#f59e0b' }
 ];
 
 function CsCaseRouletteModal({ isOpen, onClose, state, save }) {
   const [spinning, setSpinning] = useState(false);
   const [stripItems, setStripItems] = useState([]);
   const [winnerItem, setWinnerItem] = useState(null);
+  const [targetWinIndex, setTargetWinIndex] = useState(null);
   const [translateX, setTranslateX] = useState(0);
   const [transitionStyle, setTransitionStyle] = useState('none');
   const windowRef = useRef(null);
@@ -2307,6 +2396,7 @@ function CsCaseRouletteModal({ isOpen, onClose, state, save }) {
   useEffect(() => {
     if (isOpen) {
       setWinnerItem(null);
+      setTargetWinIndex(null);
       setTranslateX(0);
       setTransitionStyle('none');
       const items = [];
@@ -2327,8 +2417,8 @@ function CsCaseRouletteModal({ isOpen, onClose, state, save }) {
 
   const spin = () => {
     if (spinning) return;
-    if ((state.gems || 0) < 150) {
-      emitSiteError('Не вистачає Дублонів! Потрібно 150 🪙 для відкриття Таємничої Скрині Знань.', 'Скриня');
+    if ((state.gems || 0) < 200) {
+      emitSiteError('Не вистачає Золотих Монет! Потрібно 200 🪙 для відкриття Таємничої Скрині Знань.', 'Скриня');
       return;
     }
 
@@ -2338,11 +2428,12 @@ function CsCaseRouletteModal({ isOpen, onClose, state, save }) {
     setTranslateX(0);
 
     const winIdx = 45 + Math.floor(Math.random() * 20);
+    setTargetWinIndex(winIdx);
     const cardWidth = 154;
     const gap = 12;
     const itemFullWidth = cardWidth + gap;
 
-    let nextState = { ...state, gems: Math.max(0, (state.gems || 0) - 150) };
+    let nextState = { ...state, gems: Math.max(0, (state.gems || 0) - 200) };
     save(nextState);
 
     setTimeout(() => {
@@ -2380,14 +2471,17 @@ function CsCaseRouletteModal({ isOpen, onClose, state, save }) {
         let rewarded = { ...nextState };
         const inv = rewarded.inventory || { doubleXpUntil: null, secondChance: 0, vipFrame: false, leagueShield: false };
 
-        if (won.type === 'xp') rewarded.xp = (rewarded.xp || 0) + won.amount;
-        else if (won.type === 'gems') rewarded.gems = (rewarded.gems || 0) + won.amount;
+        if (won.type === 'gems') rewarded.gems = (rewarded.gems || 0) + won.amount;
         else if (won.type === 'freeze') rewarded.freezeCount = (rewarded.freezeCount || 0) + won.amount;
         else if (won.type === 'second_chance') rewarded.inventory = { ...inv, secondChance: (inv.secondChance || 0) + won.amount };
+        else if (won.type === 'synonym_compass') rewarded.inventory = { ...inv, synonymCompassUntil: Date.now() + 24 * 60 * 60 * 1000 };
+        else if (won.type === 'sprint_scroll') rewarded.inventory = { ...inv, sprintScrollUntil: Date.now() + 60 * 60 * 1000 };
+        else if (won.type === 'pronounce_mirror') rewarded.inventory = { ...inv, pronounceMirrorUntil: Date.now() + 48 * 60 * 60 * 1000 };
+        else if (won.type === 'deep_focus') rewarded.inventory = { ...inv, doubleXpUntil: Date.now() + 30 * 60 * 1000 };
         else if (won.type === 'league_shield') rewarded.inventory = { ...inv, leagueShield: true };
         else if (won.type === 'vip_frame') rewarded.inventory = { ...inv, vipFrame: true };
         else if (won.type === 'booster') rewarded.inventory = { ...inv, doubleXpUntil: Date.now() + 60 * 60 * 1000 };
-        else if (won.type === 'jackpot') { rewarded.xp = (rewarded.xp || 0) + 500; rewarded.gems = (rewarded.gems || 0) + 200; }
+        else if (won.type === 'jackpot') { rewarded.gems = (rewarded.gems || 0) + 500; rewarded.inventory = { ...inv, vipFrame: true }; }
 
         save(rewarded);
 
@@ -2412,7 +2506,7 @@ function CsCaseRouletteModal({ isOpen, onClose, state, save }) {
             <span style={{ fontSize: 24 }}>🎁</span>
             <div>
               <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800 }}>ТАЄМНИЧА СКРИНЯ ЗНАНЬ</h3>
-              <span className="muted" style={{ fontSize: 12 }}>Вартість відкриття: <b>150 🪙 Дублонів</b></span>
+              <span className="muted" style={{ fontSize: 12 }}>Вартість відкриття: <b>200 Золотих Монет</b></span>
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -2436,7 +2530,7 @@ function CsCaseRouletteModal({ isOpen, onClose, state, save }) {
               }}
             >
               {stripItems.map((item, idx) => {
-                const isWin = winnerItem && idx === 54;
+                const isWin = winnerItem && idx === targetWinIndex;
                 return (
                   <div
                     key={item.uid}
@@ -2463,7 +2557,7 @@ function CsCaseRouletteModal({ isOpen, onClose, state, save }) {
           </div>
 
           {winnerItem ? (
-            <div style={{ textAlign: 'center', animation: 'csFadeIn 0.3s ease-out', position: 'relative' }}>
+            <div className="cs-case-result" style={{ textAlign: 'center', animation: 'csFadeIn 0.3s ease-out', position: 'relative' }}>
               <div className="epic-rays-bg" />
               <span style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.08em', color: winnerItem.color, fontWeight: 800 }}>
                 🎉 ВІДКРИТО ПРЕДМЕТ ЗІ СКРИНІ!
@@ -2474,12 +2568,12 @@ function CsCaseRouletteModal({ isOpen, onClose, state, save }) {
               <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
                 <button
                   type="button"
-                  className="primary"
+                  className="primary cs-case-open-btn"
                   onClick={spin}
-                  disabled={(state.gems || 0) < 150}
+                  disabled={(state.gems || 0) < 200}
                   style={{ minWidth: 200, fontSize: 15, padding: '12px 24px' }}
                 >
-                  ▶ ВІДКРИТИ ЩЕ РАЗ (150 🪙)
+                  ▶ ВІДКРИТИ ЩЕ РАЗ (200 🪙)
                 </button>
                 <button type="button" className="secondary" onClick={onClose} style={{ padding: '12px 20px' }}>
                   Забрати й закрити
@@ -2490,9 +2584,9 @@ function CsCaseRouletteModal({ isOpen, onClose, state, save }) {
             <div style={{ textAlign: 'center' }}>
               <button
                 type="button"
-                className="primary"
+                className="primary cs-case-open-btn"
                 onClick={spin}
-                disabled={spinning || (state.gems || 0) < 150}
+                disabled={spinning || (state.gems || 0) < 200}
                 style={{
                   minWidth: 260,
                   fontSize: 16,
@@ -2503,7 +2597,7 @@ function CsCaseRouletteModal({ isOpen, onClose, state, save }) {
                   boxShadow: '0 0 25px rgba(245, 158, 11, 0.45)'
                 }}
               >
-                {spinning ? '⏳ СКРИНЯ ВІДКРИВАЄТЬСЯ...' : '▶ ВІДКРИТИ ТАЄМНИЧУ СКРИНЮ (150 🪙)'}
+                {spinning ? '⏳ СКРИНЯ ВІДКРИВАЄТЬСЯ...' : '▶ ВІДКРИТИ ТАЄМНИЧУ СКРИНЮ (200 🪙)'}
               </button>
               <div style={{ marginTop: 10, fontSize: 12, color: 'rgba(255,255,255,0.6)' }}>
                 Шанси: 🟦 55% Звичайне · 🟪 25% Рідкісне · 🟪 12% Епічне · 🟥 6% Міфічне · 🟨 2% Легендарний релікт
@@ -2526,7 +2620,7 @@ function EconomyManifestoModal({ isOpen = true, onClose }) {
             <span style={{ fontSize: 28 }}>📜</span>
             <div>
               <h2 style={{ margin: 0, fontSize: 20, fontWeight: 900 }}>Економічна Модель English Flow</h2>
-              <span className="muted small">v3.5.0 · Принцип абсолютної академічної чесності</span>
+              <span className="muted small">v3.5.1 · Принцип абсолютної академічної чесності</span>
             </div>
           </div>
           <button className="icon small" onClick={onClose}><X size={18}/></button>
@@ -2544,10 +2638,10 @@ function EconomyManifestoModal({ isOpen = true, onClose }) {
 
           <div style={{ padding: 14, borderRadius: 12, background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
             <b style={{ color: '#d97706', fontSize: 15, display: 'flex', alignItems: 'center', gap: 6 }}>
-              🪙 Дублони (Dubloons) — Навчальна Нагорода:
+              🪙 Золоті Монети — Навчальна Нагорода:
             </b>
             <p style={{ margin: '6px 0 0', fontSize: 13.5, lineHeight: 1.55 }}>
-              Дублони видаються за досягнення: щоденні квести, збереження стріку, виконання щоденних цілей та відкриття нових слів. За дублони купуються <b>бустери часу, стирачі помилок, захист від вильоту з ліги, унікальні анімовані персонажі та Таємнича Скриня</b>.
+              Золоті Монети видаються за досягнення: щоденні квести, збереження стріку, виконання щоденних цілей та відкриття нових слів. За золоті монети купуються <b>бустери часу, стирачі помилок, захист від вильоту з ліги, унікальні анімовані персонажі та Таємнича Скриня</b>.
             </p>
           </div>
 
@@ -2583,7 +2677,7 @@ function ShopPage({state, save, onRefreshGamification, allUsers}) {
 
   const buy = async (itemId, cost, extra = {}) => {
     if (gems < cost) {
-      emitSiteError(`Не вистачає Древніх Дублонів! Потрібно 🪙 ${cost}, у вас 🪙 ${gems}. Заробляйте монети за квести, уроки 100% та щоденну активність!`, 'Крамниця');
+      emitSiteError(`Не вистачає Золотих Монет! Потрібно 🪙 ${cost}, у вас 🪙 ${gems}. Заробляйте монети за квести, уроки 100% та щоденну активність!`, 'Крамниця');
       return;
     }
     setBusy(true);
@@ -2603,7 +2697,7 @@ function ShopPage({state, save, onRefreshGamification, allUsers}) {
         const doubleUntil = Date.now() + 30 * 60 * 1000;
         nextState.inventory = {...inventory, doubleXpUntil: doubleUntil};
         save(nextState);
-        emitSiteToast(`⚡ Підсилювач уроків (2× XP) активовано на 30 хв (-${cost} 🪙)!`, 'ok');
+        emitSiteToast(`⚡ Сувій глибокого фокусу активовано на 30 хв (-${cost} 🪙)!`, 'ok');
         confettiBurst();
       } else if (itemId === 'synonym_compass') {
         const until = Date.now() + 24 * 60 * 60 * 1000;
@@ -2737,7 +2831,7 @@ function ShopPage({state, save, onRefreshGamification, allUsers}) {
     { id: 'gift_gems_5', name: '🪙 5 Монет', desc: 'Подарунок — 5 Древніх Монет другу', cost: 7 },
     { id: 'gift_gems_15', name: '🪙 15 Монет', desc: 'Подарунок — 15 Древніх Монет другу', cost: 18 },
     { id: 'gift_freeze', name: '❄️ Заморозка', desc: 'Подаруй другу захист стріку на 1 день', cost: 18 },
-    { id: 'gift_booster', name: '⚡ XP Booster', desc: 'Подаруй другу 2× XP на 30 хвилин', cost: 30 },
+    { id: 'gift_booster', name: '📜 Сувій Фокусу', desc: "Подаруй другу сувій глибокого фокусу пам'яті на 30 хвилин", cost: 30 },
   ];
 
   const friends = (allUsers || []).filter(u => u.nick !== state.nick);
@@ -2749,13 +2843,13 @@ function ShopPage({state, save, onRefreshGamification, allUsers}) {
         <div className="tavern-wood-title-box">
           <span className="tavern-runic-eyebrow">⚜️ ENGLISH FLOW MARKETPLACE & KNOWLEDGE VAULT ⚜️</span>
           <div style={{display:'flex',alignItems:'center',gap:12,flexWrap:'wrap',marginBottom:4}}>
-            <h1 className="tavern-wood-h1" style={{margin:0}}>🏛️ КРАМНИЦЯ ДУБЛОНІВ ТА БУСТЕРІВ</h1>
+            <h1 className="tavern-wood-h1" style={{margin:0}}>🏛️ КРАМНИЦЯ ЗОЛОТИХ МОНЕТ ТА БУСТЕРІВ</h1>
             <button type="button" className="economy-manifesto-btn" onClick={() => setShowEconomyModal(true)}>
               📜 Економіка сайту ➔
             </button>
           </div>
           <p className="tavern-wood-sub">
-            Підсилюйте прогрес та відкривайте анімованих персонажів! Усі товари купуються виключно за <b>🪙 Дублони</b>. Бали <b>⚡ XP</b> є мірилом зусиль і їх неможливо купити!
+            Підсилюйте прогрес та відкривайте анімованих персонажів! Усі товари купуються виключно за <b>🪙 Золоті Монети</b>. Бали <b>⚡ XP</b> є мірилом зусиль і їх неможливо купити!
           </p>
         </div>
 
@@ -2767,12 +2861,6 @@ function ShopPage({state, save, onRefreshGamification, allUsers}) {
               <span className="tavern-purse-label">Скарбниця</span>
               <b className="tavern-purse-val">{gems} 🪙</b>
             </div>
-          </div>
-
-          {/* XP League Rating Pill */}
-          <div className="tavern-xp-badge">
-            <span className="tavern-purse-label">Рейтинг Ліги</span>
-            <b style={{color:'#facc15',fontSize:16}}>⚡ {xp} XP</b>
           </div>
         </div>
       </div>
@@ -2818,14 +2906,14 @@ function ShopPage({state, save, onRefreshGamification, allUsers}) {
               <span className="tavern-item-icon">⚡</span>
               <span className="tavern-tier-badge tier-rare">БУСТЕР 2×</span>
             </div>
-            <h3 className="tavern-item-title">XP Booster 2× (Подвійний досвід)</h3>
+            <h3 className="tavern-item-title">Сувій Глибокого Фокусу (2× Фокус)</h3>
             <p className="tavern-item-desc">
               {isBoosterActive
                 ? `🟢 Активно ще ${boosterMinutesLeft} хв. Подвійні очки XP за кожен правильний урок!`
                 : 'Подвоює всі зароблені бали XP у будь-яких уроках, тестах та спринтах на 30 хвилин.'}
             </p>
             <div className="tavern-card-footer">
-              <span className="tavern-price-tag">🪙 75 Дублонів</span>
+              <span className="tavern-price-tag">🪙 75 Золотих Монет</span>
               <button
                 type="button"
                 className="tavern-buy-action-btn"
@@ -2848,7 +2936,7 @@ function ShopPage({state, save, onRefreshGamification, allUsers}) {
               Підказує 3 семантичні та контекстні синоніми у складних тестових завданнях на 24 години.
             </p>
             <div className="tavern-card-footer">
-              <span className="tavern-price-tag">🪙 120 Дублонів</span>
+              <span className="tavern-price-tag">🪙 120 Золотих Монет</span>
               <button
                 type="button"
                 className="tavern-buy-action-btn"
@@ -2871,7 +2959,7 @@ function ShopPage({state, save, onRefreshGamification, allUsers}) {
               Подвоює бали швидкості за реакцію &lt;3с під час 1v1 дуелей на 1 годину.
             </p>
             <div className="tavern-card-footer">
-              <span className="tavern-price-tag">🪙 180 Дублонів</span>
+              <span className="tavern-price-tag">🪙 180 Золотих Монет</span>
               <button
                 type="button"
                 className="tavern-buy-action-btn"
@@ -2894,7 +2982,7 @@ function ShopPage({state, save, onRefreshGamification, allUsers}) {
               Миттєвий ШІ-аналіз вимови, наголосу та артикуляції у голосових уроках на 48 годин.
             </p>
             <div className="tavern-card-footer">
-              <span className="tavern-price-tag">🪙 240 Дублонів</span>
+              <span className="tavern-price-tag">🪙 240 Золотих Монет</span>
               <button
                 type="button"
                 className="tavern-buy-action-btn"
@@ -2917,7 +3005,7 @@ function ShopPage({state, save, onRefreshGamification, allUsers}) {
               Оптимізує алгоритм інтервального повторення слів на 7 днів для прискореного довгострокового запам'ятовування.
             </p>
             <div className="tavern-card-footer">
-              <span className="tavern-price-tag">🪙 95 Дублонів</span>
+              <span className="tavern-price-tag">🪙 95 Золотих Монет</span>
               <button
                 type="button"
                 className="tavern-buy-action-btn"
@@ -2940,12 +3028,12 @@ function ShopPage({state, save, onRefreshGamification, allUsers}) {
               Розблоковує доступ до рідкісних колокацій, сталих ідіом та автентичних виразів рівня C1/C2.
             </p>
             <div className="tavern-card-footer">
-              <span className="tavern-price-tag">🪙 150 Дублонів</span>
+              <span className="tavern-price-tag">🪙 200 Золотих Монет</span>
               <button
                 type="button"
                 className="tavern-buy-action-btn"
-                disabled={busy || gems < 150}
-                onClick={() => buy('ancient_map', 150)}
+                disabled={busy || gems < 200}
+                onClick={() => buy('ancient_map', 200)}
               >
                 [ КУПИТИ ]
               </button>
@@ -2963,7 +3051,7 @@ function ShopPage({state, save, onRefreshGamification, allUsers}) {
               Інтенсивний тренажер складних часових форм та конструкцій для закріплення практичних граматичних навичок.
             </p>
             <div className="tavern-card-footer">
-              <span className="tavern-price-tag">🪙 65 Дублонів</span>
+              <span className="tavern-price-tag">🪙 65 Золотих Монет</span>
               <button
                 type="button"
                 className="tavern-buy-action-btn"
@@ -2991,7 +3079,7 @@ function ShopPage({state, save, onRefreshGamification, allUsers}) {
               Автоматично захищає ваш ударний режим від скидання при випадковому пропуску дня. У вашому запасі: <b>{freezeCount}</b> шт.
             </p>
             <div className="tavern-card-footer">
-              <span className="tavern-price-tag">🪙 15 Дублонів</span>
+              <span className="tavern-price-tag">🪙 15 Золотих Монет</span>
               <button
                 type="button"
                 className="tavern-buy-action-btn"
@@ -3014,7 +3102,7 @@ function ShopPage({state, save, onRefreshGamification, allUsers}) {
               Дозволяє миттєво виправити помилку в уроці чи дуелі без втрати комбо та прогресу. У вас: <b>{inventory.secondChance || 0}</b> шт.
             </p>
             <div className="tavern-card-footer">
-              <span className="tavern-price-tag">🪙 10 Дублонів</span>
+              <span className="tavern-price-tag">🪙 10 Золотих Монет</span>
               <button
                 type="button"
                 className="tavern-buy-action-btn"
@@ -3037,7 +3125,7 @@ function ShopPage({state, save, onRefreshGamification, allUsers}) {
               Захищає від пониження у нижчу лігу наприкінці тижневого сезону, навіть якщо ви пропустили кілька днів.
             </p>
             <div className="tavern-card-footer">
-              <span className="tavern-price-tag">🪙 30 Дублонів</span>
+              <span className="tavern-price-tag">🪙 30 Золотих Монет</span>
               <button
                 type="button"
                 className="tavern-buy-action-btn"
@@ -3060,7 +3148,7 @@ function ShopPage({state, save, onRefreshGamification, allUsers}) {
               Надає додатковий запас часу та стійкості під час випробувань із Титаном Слів.
             </p>
             <div className="tavern-card-footer">
-              <span className="tavern-price-tag">🪙 20 Дублонів</span>
+              <span className="tavern-price-tag">🪙 20 Золотих Монет</span>
               <button
                 type="button"
                 className="tavern-buy-action-btn"
@@ -3085,10 +3173,10 @@ function ShopPage({state, save, onRefreshGamification, allUsers}) {
             </div>
             <h3 className="tavern-item-title">Таємнича Скриня Знань</h3>
             <p className="tavern-item-desc">
-              Відкрийте магічну скриню! Шанс отримати до 500 XP, 150 Древніх Дублонів, VIP-рамку чи Заморозку стріку.
+              Відкрийте магічну скриню! Шанс отримати до 200 Золотих Монет, VIP-рамку чи Заморозку стріку.
             </p>
             <div className="tavern-card-footer">
-              <span className="tavern-price-tag">🪙 100 Дублонів</span>
+              <span className="tavern-price-tag">🪙 200 Золотих Монет</span>
               <button
                 type="button"
                 className="tavern-buy-action-btn"
@@ -3108,10 +3196,10 @@ function ShopPage({state, save, onRefreshGamification, allUsers}) {
             </div>
             <h3 className="tavern-item-title">Сувій навчального контракту</h3>
             <p className="tavern-item-desc">
-              Особливе лінгвістичне завдання: пройдіть будь-який урок із точністю 100% та отримайте <b>+60 XP</b>.
+              Особливе лінгвістичне завдання: пройдіть будь-який урок із точністю 100% та отримайте бонусні Золоті Монети.
             </p>
             <div className="tavern-card-footer">
-              <span className="tavern-price-tag">🪙 25 Дублонів</span>
+              <span className="tavern-price-tag">🪙 25 Золотих Монет</span>
               <button
                 type="button"
                 className="tavern-buy-action-btn"
@@ -3131,10 +3219,10 @@ function ShopPage({state, save, onRefreshGamification, allUsers}) {
             </div>
             <h3 className="tavern-item-title">Карта стародавнього словника</h3>
             <p className="tavern-item-desc">
-              Старовинна пергаментна карта. Відкриває доступ до рідкісних мовних скарбів та додає <b>+100 XP</b>.
+              Старовинна пергаментна карта. Відкриває доступ до рідкісних мовних скарбів та відкриває преміум-колоду ідіом C1/C2.
             </p>
             <div className="tavern-card-footer">
-              <span className="tavern-price-tag">🪙 45 Дублонів</span>
+              <span className="tavern-price-tag">🪙 45 Золотих Монет</span>
               <button
                 type="button"
                 className="tavern-buy-action-btn"
@@ -3231,7 +3319,7 @@ function ShopPage({state, save, onRefreshGamification, allUsers}) {
                 Ексклюзивне анімоване сяйво навколо вашої аватарки у лізі, профілі та чаті.
               </p>
               <div className="tavern-card-footer">
-                <span className="tavern-price-tag">🪙 50 Дублонів</span>
+                <span className="tavern-price-tag">🪙 50 Золотих Монет</span>
                 <button
                   type="button"
                   className="tavern-buy-action-btn"
@@ -3253,7 +3341,7 @@ function ShopPage({state, save, onRefreshGamification, allUsers}) {
                 Шляхетна відзнака чемпіона. Виділяє ваш нікнейм у рейтингових таблицях особливим стилем.
               </p>
               <div className="tavern-card-footer">
-                <span className="tavern-price-tag">🪙 60 Дублонів</span>
+                <span className="tavern-price-tag">🪙 60 Золотих Монет</span>
                 <button
                   type="button"
                   className="tavern-buy-action-btn"
@@ -3364,7 +3452,7 @@ function ShopPage({state, save, onRefreshGamification, allUsers}) {
         <div className="tavern-keeper-text-box">
           <div className="tavern-keeper-name">Наставниця Едара</div>
           <p className="tavern-keeper-quote">
-            «Ласкаво прошу до нашої Крамниці Знань! Тут зібрано виключно корисні підсилювачі для вивчення англійської: подвійний XP для уроків, стирачі помилок, захист ударного режиму та ексклюзивні анімовані аватари героїв. Усі розрахунки ведуться виключно у Дублонах!»
+            «Ласкаво прошу до нашої Крамниці Знань! Тут зібрано виключно корисні підсилювачі для вивчення англійської: стирачі помилок, захист ударного режиму та ексклюзивні анімовані аватари героїв. Усі розрахунки ведуться виключно у Золотих Монетах!»
           </p>
         </div>
         <button
@@ -3381,7 +3469,7 @@ function ShopPage({state, save, onRefreshGamification, allUsers}) {
         <EconomyManifestoModal onClose={() => setShowEconomyModal(false)} />
       )}
 
-      {/* CS:GO Roulette Mystery Case Modal */}
+      {/* Mystery Chest Roulette Modal */}
       <CsCaseRouletteModal
         isOpen={caseModalOpen}
         onClose={() => setCaseModalOpen(false)}
@@ -3441,7 +3529,7 @@ function GiftFriendModal({gift, friends, gems, onClose, onSend}) {
         </div>
         <p style={{color:'#c4996a',fontSize:13,marginBottom:16}}>
           {gift.desc}<br/>
-          <b style={{color:'#fde68a'}}>Вартість: 🪙 {gift.cost} Дублонів</b> (у вас: {gems})
+          <b style={{color:'#fde68a'}}>Вартість: 🪙 {gift.cost} Золотих Монет</b> (у вас: {gems})
         </p>
 
         <p style={{color:'#fde68a',fontWeight:700,marginBottom:8,fontSize:13}}>Обери гравця-отримувача:</p>
@@ -3976,7 +4064,7 @@ function Dashboard({state, learned, due, words, onLearn, onReview, cloudMsg, que
               <div className="altar-runic-symbol">ᛏ</div>
               <div className="altar-icon-star">⚡</div>
               <div className="altar-metric-val">{state.xp || 0} XP</div>
-              <div className="altar-metric-label">🪙 {state.gems || 0} Дублонів</div>
+              <div className="altar-metric-label">🪙 {state.gems || 0} Золотих Монет</div>
             </div>
             <div className="stone-altar-pedestal">
               <div className="altar-runic-symbol">ᚱ</div>
@@ -4376,7 +4464,7 @@ function SprintGame({items, mode, state, save, onExit, onDone, lessonId}) {
           <h1>Урок завершено</h1>
           <p>Правильно: {okCount} · Помилки: {badCount} · Питань: {total}</p>
           <p className="bonus-line" style={{color:'#f59e0b',fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',gap:6}}>
-            <AncientCoinIcon size={18}/> +2 Древніх Поінти за урок (добовий ліміт уроків: 60 🪙)
+            <AncientCoinIcon size={18}/> +2 Золоті Монети за урок (добовий ліміт уроків: 60 🪙)
           </p>
           {badCount === 0 && okCount > 0 && <p className="bonus-line" style={{color:'#16a34a',fontWeight:700}}>✨ Ідеальний урок без жодної помилки!</p>}
           <CompareBlurb state={state} />
@@ -6593,18 +6681,18 @@ function AboutPage() {
     {v:'3.5.0', items:[
       '🗿 Тема «Камінний Храм Знань» (Stone RPG): автентичний стародавній кам\'яний портал, смолоскипи з живим полум\'ям, справжня дерев\'яна дартс-мішень зі стрілами та 4 рунічні постаменти метрик.',
       '✨ Серія 2 Анімованих Персонажів: 12 унікальних героїв у повен зріст у динамічній дії (Звіролов-Воїн, Качка-Пілот у літаку, Дерев\'яний Вартовий-Треант, Лицар із Сокирою, Лицар Тіні, Важкий Дроворуб, Лис-Слідопит, Прибулець-Шпигун, Тактичний Кіт, Темний Чорнокнижник, Космічний Бджоляр, Гном-Берсерк).',
-      '🪙 Оновлена Економічна Модель: валюту стандартизовано як «Дублони» (🪙). Бали XP суворо merit-based (тільки за навчання й зусилля, їх неможливо купити в крамниці). Додано модальний маніфест «📜 Економіка сайту ➔».',
+      '🪙 Оновлена Економічна Модель: валюту стандартизовано як «Золоті Монети» (🪙). Бали XP суворо merit-based (тільки за навчання й зусилля, їх неможливо купити в крамниці). Додано модальний маніфест «📜 Економіка сайту ➔».',
       '🎁 Таємнича Скриня Знань: повністю відцентрована по екрану модаль з випадковим початком та цільовим індексом, епічні обертові золоті промені та урочиста фанфара переможця.',
       '💬 Чат 3.5: селектор друзів, цитування та відповіді на повідомлення з банером, 15 емодзі-реакцій та повноекранний Lightbox для перегляду надісланих фото.',
       '👑 Рейтинг та Профілі: корона верифікації виключно для @Boss без текстового бейджа, кнопка «+ Додати розробника в друзі», перегляд публічного профілю будь-якого гравця з анімацією завантаження, захист тестера @tester.',
       '📜 Офіційний сертифікат знань CEFR: точний часовий штамп «13.09.2026 о 16:21:03 EEST (UTC+3, Східноєвропейський літній час, м. Київ)» з криптографічною печаткою та розширена політика нульового трекінгу третіми сторонами (GDPR / Законодавство України та ЄС).',
-      '🔊 Звуковий пакет «Середньовічна Таверна»: аудіо-синтез дзвону дублонів, дубових дверей, струн лютні та перекочування кісток.',
+      '🔊 Звуковий пакет «Середньовічна Таверна»: аудіо-синтез дзвону золотих монет, дубових дверей, струн лютні та перекочування кісток.',
       '🛠️ Чистка інтерфейсу: видалено технічні фрази («Немає слів з ≥2 помилками», «Консоль захищена...»), реальна кількість слів у діагностиці Notion, випадаюча шторка перегляду всіх іконок у налаштуваннях.'
     ]},
     {v:'3.4.0', items:[
       '🏛️ Новий інтерфейс Крамниці Знань: естетична шапка та 4 розділені навчальні категорії: [ Навчальні бустери ], [ Захист та підтримка ], [ Таємниці та дарунки ], [ Анімований гардероб ].',
       '✨ Ексклюзивні Анімовані Герої (Живі Аватарки): Гоблін-мандрівник (неспішна хода), Дракон Знань (політ над хмарами), Сонячний Фенікс (ширяння у вогні), Для Корони (сяйво суверена) та Арканний Чарівник (каст зоряних чар).',
-      '🎁 Таємнича Скриня Знань: повністю навчальні нагороди (XP ліги, Древні Поінти, заморозка серії, стирачі помилок, VIP-рамки) без сторонніх азартних асоціацій.',
+      '🎁 Таємнича Скриня Знань: повністю навчальні нагороди (XP ліги, Золоті Монети, заморозка серії, стирачі помилок, VIP-рамки) без сторонніх азартних асоціацій.',
       '⚔️ 3D Ігрові Аватарки Героїв у повний ріст у динамічній дії: Лицар замахується мечем, Сова летить із сувоєм, Принцеса танцює, Кібер-Ніндзя виконує ривок, Верховний Маг випускає вогняну кулю, Лучниця натягує тятиву (без повторів персонажів).',
       '🐉 Кастомні стилізовані іконки розігріву: Вогняний Дракон, Лицар-Вартовий, Міфічний Вовк, Королівський Грифон та Чарівник.',
       '⏱️ Бос-битва: додано таймер 30 секунд на кожне слово з інтерактивною смужкою зворотного відліку та захистом від затримок.',
@@ -7097,7 +7185,7 @@ function SettingsPage({state, save, onLogout}) {
               {value:'cyber', label:'⚡ Cyber Synth (Електронний синтезатор)'},
               {value:'zen', label:'🧘 Zen Marimba (Акустична маримба)'},
               {value:'mario', label:'🍄 Super Mario 8-bit (Автентичні звуки Маріо)'},
-              {value:'tavern', label:'🍺 Середньовічна Таверна (Дублони, Дуб, Лютня)'}
+              {value:'tavern', label:'🍺 Середньовічна Таверна (Золоті Монети, Дуб, Лютня)'}
             ]}
           />
 
@@ -7131,8 +7219,8 @@ function SettingsPage({state, save, onLogout}) {
             <button type="button" className="secondary sound-test-btn" onClick={() => playMarioGameOver()} style={{gridColumn:'span 2'}}>
               🍄 Mario Game Over
             </button>
-            <button type="button" className="secondary sound-test-btn" onClick={() => playTavernCoinDubloon()}>
-              🪙 Дзвін Дублона
+            <button type="button" className="secondary sound-test-btn" onClick={() => playTavernGoldCoin()}>
+              🪙 Дзвін Золотої Монети
             </button>
             <button type="button" className="secondary sound-test-btn" onClick={() => playTavernDoor()}>
               🚪 Дубові Двері

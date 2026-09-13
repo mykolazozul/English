@@ -66,7 +66,7 @@ export const BADGES = [
   {id:'dictation',title:'Уважне вухо',desc:'Пройди режим аудіо-диктанту',icon:'✍️',tier:'starter'},
   {id:'league_bronze',title:'Бронзова ліга',desc:'Набери перші 100 XP',icon:'🥉',tier:'starter'},
   {id:'gift_opened',title:'Перший подарунок',desc:'Відкрий щоденну скриню скарбів',icon:'🎁',tier:'starter'},
-  {id:'first_coin',title:'Перша монета',desc:'Зароби свої перші Древні Поінти',icon:'🪙',tier:'starter'},
+  {id:'first_coin',title:'Перша монета',desc:'Зароби свої перші Золоті Монети',icon:'🪙',tier:'starter'},
 
   // Середній рівень (Medium / Silver)
   {id:'streak_3',title:'3 дні поспіль',desc:'Тримай серію 3 дні поспіль',icon:'🔥',tier:'medium'},
@@ -88,8 +88,8 @@ export const BADGES = [
   {id:'accuracy_90',title:'Снайперська точність',desc:'90%+ правильних на 100 відповідях',icon:'🎯',tier:'advanced'},
   {id:'freeze_master',title:'Володар холоду',desc:'Збери запас із 3+ заморозок у магазині',icon:'🧊',tier:'advanced'},
   {id:'shop_patron',title:'Постійний клієнт',desc:'Придбай артефакт у магазині',icon:'🛍️',tier:'advanced'},
-  {id:'cs_case_unboxed',title:'Кейс-Майстер CS:GO',desc:'Відкрий Таємничу Мега-Скриню в рулетці',icon:'📦',tier:'advanced'},
-  {id:'coin_collector',title:'Золота Скарбниця',desc:'Накопичи понад 100 🪙 Древніх Поінтів',icon:'💰',tier:'advanced'},
+  {id:'cs_case_unboxed',title:'Майстер Таємничої Скрині',desc:'Відкрий Таємничу Скриню Знань',icon:'🗝️',tier:'advanced'},
+  {id:'coin_collector',title:'Золота Скарбниця',desc:'Накопичи понад 100 🪙 Золотих Монет',icon:'💰',tier:'advanced'},
 
   // Легендарний рівень (Legendary / Diamond)
   {id:'streak_30',title:'Місяць сили',desc:'Утримуй серію 30 днів поспіль',icon:'👑',tier:'legendary'},

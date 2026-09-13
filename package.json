@@ -1,12 +1,15 @@
 {
   "name": "english-flow",
   "private": true,
-  "version": "3.5.0",
+  "version": "3.5.1",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "agent:auditor": "node scripts/text-auditor-agent.mjs",
+    "agent:characters": "node scripts/character-generator-agent.mjs",
+    "agent:deep-qa": "node scripts/deep-qa-agent.mjs",
     "sync:notion": "node scripts/sync-notion.mjs",
     "test:agents": "node scripts/run-all-agents-verification.mjs",
     "audit": "node scripts/audit-static.mjs",
