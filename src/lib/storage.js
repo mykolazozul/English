@@ -24,6 +24,7 @@ export function getTesterProfile() {
     theme: 'system',
     skin: 'tavern',
     role: 'tester',
+    recoveryCode: 'EF-7777-TEST',
     admin: {
       lessonSize: 10, correctPoints: 4, wrongPoints: -2, masteryThreshold: 8,
       shuffleQuestions: true, shuffleAnswers: true, showPronunciation: true, perfectBonus: 10, badgeStyle: 'neo'
