@@ -1,5 +1,5 @@
 import React, {useEffect, useMemo, useState, useCallback, useRef, lazy, Suspense} from 'react';
-import {BarChart3, BookOpen, Check, CheckCircle2, ChevronRight, ChevronDown, Flame, Home, Lock, Menu, Moon, Palette, Play, RotateCcw, Settings, Sun, Target, Trophy, User, Volume2, X, XCircle, Shield, SlidersHorizontal, Brain, Sparkles, Keyboard, Layers, Award, Cloud, Users, MessageCircle, Ghost, VolumeX, Swords, ShieldAlert, Eye, Bell, Wifi, ShoppingBag} from 'lucide-react';
+import {BarChart3, BookOpen, Check, CheckCircle2, ChevronRight, ChevronDown, Flame, Home, Lock, Menu, Moon, Palette, Play, RotateCcw, Settings, Sun, Target, Trophy, User, Volume2, X, XCircle, Shield, SlidersHorizontal, Brain, Sparkles, Keyboard, Layers, Award, Cloud, Users, MessageCircle, Ghost, VolumeX, Swords, ShieldAlert, Eye, EyeOff, LogIn, UserPlus, ArrowRight, Bell, Wifi, ShoppingBag} from 'lucide-react';
 import {words as fallbackWords, rules, BADGES, LEAGUES, leagueForXp} from './data';
 import {notionWords, notionSyncMeta} from './notionWords.generated';
 import { Analytics } from '@vercel/analytics/react';
@@ -3434,6 +3434,7 @@ function Onboarding({onDone}) {
   const [nick, setNick] = useState('');
   const [name, setName] = useState('');
   const [pass, setPass] = useState('');
+  const [showPass, setShowPass] = useState(false);
   const [secQuestion, setSecQuestion] = useState('Улюблене місто?');
   const [secAnswer, setSecAnswer] = useState('');
   const [forgotOpen, setForgotOpen] = useState(false);
@@ -3535,62 +3536,163 @@ function Onboarding({onDone}) {
 
   return (
     <div className="onboarding fade-in">
-      <div className="welcome card">
-        <div className="logo" style={{display:'inline-flex',justifyContent:'center',alignItems:'center',marginBottom:8,background:'transparent'}}>
-          <BrandLogo size={52} />
-        </div>
-        <span className="eyebrow">ENGLISH FLOW</span>
-        <h1>{mode === 'login' ? 'Вхід' : 'Реєстрація'}</h1>
-        <p className="muted">Нік може бути як імʼя. Пароль ≠ нік і ≠ імʼя. Імʼя підтягнеться з профілю.</p>
-        <div className="row-btns" style={{marginBottom:12}}>
-          <button type="button" className={'theme' + (mode==='login'?' active':'')} onClick={() => setMode('login')}>Вхід</button>
-          <button type="button" className={'theme' + (mode==='register'?' active':'')} onClick={() => setMode('register')}>Реєстрація</button>
-        </div>
-        <label>Нік *</label>
-        <input className="search" value={nick} onChange={e => setNick(e.target.value)} placeholder="твій_нік" maxLength={24} autoComplete="username"/>
-        {mode === 'register' && (
-          <>
-            <label>Імʼя (опційно)</label>
-            <input className="search" value={name} onChange={e => setName(e.target.value)} placeholder="як звертатись"/>
-          </>
-        )}
-        <label>Пароль *</label>
-        <input className="search" type="password" value={pass} onChange={e => setPass(e.target.value)} placeholder="••••••••" autoComplete={mode==='login'?'current-password':'new-password'}
-          onKeyDown={e => e.key==='Enter' && (mode==='login'?doLogin():doRegister())}/>
+      {/* Dynamic Ambient Aurora Glows */}
+      <div className="auth-ambient-orb orb-1" aria-hidden="true" />
+      <div className="auth-ambient-orb orb-2" aria-hidden="true" />
+      <div className="auth-ambient-orb orb-3" aria-hidden="true" />
+      <div className="auth-grid-overlay" aria-hidden="true" />
 
-        {mode === 'login' && (
-          <button type="button" className="forgot-pass-btn" onClick={() => setForgotOpen(true)}>
-            Забули пароль?
+      <div className="auth-card-glass card">
+        {/* Floating Logo with Glow */}
+        <div className="auth-logo-wrapper">
+          <div className="auth-logo-glow" />
+          <BrandLogo size={58} showText={false} />
+        </div>
+
+        <div>
+          <span className="auth-brand-badge">⚡ Interactive RPG English</span>
+          <h1 className="auth-title">{mode === 'login' ? 'Вхід у гру' : 'Створення героя'}</h1>
+          <p className="auth-subtitle">
+            {mode === 'login'
+              ? 'Прокачуй англійську, збирай древнє золото та змагайся з друзями!'
+              : 'Розпочни свою фентезі-пригоду у світі вільної англійської мови'}
+          </p>
+        </div>
+
+        {/* Sliding Segmented Switch */}
+        <div className="auth-segmented-switch">
+          <button
+            type="button"
+            className={'auth-seg-btn' + (mode === 'login' ? ' active' : '')}
+            onClick={() => { setMode('login'); setErr(''); }}
+          >
+            <LogIn size={15} /> Вхід
           </button>
-        )}
+          <button
+            type="button"
+            className={'auth-seg-btn' + (mode === 'register' ? ' active' : '')}
+            onClick={() => { setMode('register'); setErr(''); }}
+          >
+            <UserPlus size={15} /> Реєстрація
+          </button>
+        </div>
 
-        {mode === 'register' && (
-          <div style={{marginTop: 8, padding:'10px 12px', background:'color-mix(in srgb, var(--surface) 40%, var(--border))', borderRadius: 12}}>
-            <small className="muted" style={{display:'block',marginBottom:4}}>Секретне питання для відновлення (опційно):</small>
-            <UiSelect
-              value={secQuestion}
-              onChange={setSecQuestion}
-              options={[
-                {value:'Улюблене місто?',label:'Улюблене місто?'},
-                {value:'Перша школа або вчитель?',label:'Перша школа або вчитель?'},
-                {value:'Кличка першого улюбленця?',label:'Кличка першого улюбленця?'},
-                {value:'Улюблена страва або десерт?',label:'Улюблена страва або десерт?'},
-                {value:'Дівоче прізвище матері?',label:'Дівоче прізвище матері?'}
-              ]}
-            />
-            <input className="search" style={{marginTop:6}} value={secAnswer} onChange={e => setSecAnswer(e.target.value)} placeholder="Відповідь на питання" />
+        {/* Form Fields */}
+        <div className="auth-form-fields">
+          <div className="auth-input-group">
+            <label className="auth-field-label">
+              <User size={14} color="#38bdf8" /> Нікнейм героя *
+            </label>
+            <div className="auth-field-box">
+              <span className="auth-input-icon"><User size={15} /></span>
+              <input
+                className="auth-input search"
+                value={nick}
+                onChange={e => setNick(e.target.value)}
+                placeholder="твій_нік (напр. shadow_knight)"
+                maxLength={24}
+                autoComplete="username"
+              />
+            </div>
           </div>
-        )}
 
-        {err && <p className="auth-err">{err}</p>}
-        <button className="primary full" type="button" disabled={busy} onClick={mode==='login'?doLogin:doRegister} style={{marginTop:12}}>
-          {busy ? '…' : (mode==='login' ? 'Увійти' : 'Створити акаунт')}
-        </button>
+          {mode === 'register' && (
+            <div className="auth-input-group">
+              <label className="auth-field-label">
+                <Sparkles size={14} color="#facc15" /> Відображуване імʼя (опційно)
+              </label>
+              <div className="auth-field-box">
+                <span className="auth-input-icon"><Sparkles size={15} /></span>
+                <input
+                  className="auth-input search"
+                  value={name}
+                  onChange={e => setName(e.target.value)}
+                  placeholder="Як до тебе звертатися друзям?"
+                />
+              </div>
+            </div>
+          )}
 
-        <div style={{marginTop:8}}>
-          <button className="secondary guest-btn full" type="button" onClick={guest} style={{justifyContent:'center',padding:'10px'}}>
-            <Ghost size={16}/> Продовжити як Гість
+          <div className="auth-input-group">
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <label className="auth-field-label">
+                <Lock size={14} color="#38bdf8" /> Пароль *
+              </label>
+              {mode === 'login' && (
+                <button type="button" className="auth-forgot-link-btn" onClick={() => setForgotOpen(true)}>
+                  Забули пароль?
+                </button>
+              )}
+            </div>
+            <div className="auth-field-box has-right-toggle">
+              <span className="auth-input-icon"><Lock size={15} /></span>
+              <input
+                className="auth-input search"
+                type={showPass ? 'text' : 'password'}
+                value={pass}
+                onChange={e => setPass(e.target.value)}
+                placeholder="••••••••"
+                autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+                onKeyDown={e => e.key === 'Enter' && (mode === 'login' ? doLogin() : doRegister())}
+              />
+              <button
+                type="button"
+                className="auth-pass-toggle-btn"
+                onClick={() => setShowPass(!showPass)}
+                title={showPass ? 'Приховати пароль' : 'Показати пароль'}
+              >
+                {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+            {mode === 'register' && (
+              <div className="auth-rules-pills">
+                <span className="auth-rule-pill">🔒 Мін. 12 знаків (A-Z, a-z, 0-9)</span>
+                <span className="auth-rule-pill">🛡️ Не збігається з ніком</span>
+              </div>
+            )}
+          </div>
+
+          {mode === 'register' && (
+            <div style={{marginTop: 4, padding:'12px 14px', background:'rgba(15, 23, 42, 0.65)', border:'1px solid rgba(255, 255, 255, 0.08)', borderRadius: 14}}>
+              <small style={{display:'block',marginBottom:6,color:'#94a3b8',fontSize:11.5,fontWeight:600}}>Секретне питання для відновлення (опційно):</small>
+              <UiSelect
+                value={secQuestion}
+                onChange={setSecQuestion}
+                options={[
+                  {value:'Улюблене місто?',label:'Улюблене місто?'},
+                  {value:'Перша школа або вчитель?',label:'Перша школа або вчитель?'},
+                  {value:'Кличка першого улюбленця?',label:'Кличка першого улюбленця?'},
+                  {value:'Улюблена страва або десерт?',label:'Улюблена страва або десерт?'},
+                  {value:'Дівоче прізвище матері?',label:'Дівоче прізвище матері?'}
+                ]}
+              />
+              <input className="auth-input search" style={{marginTop:8}} value={secAnswer} onChange={e => setSecAnswer(e.target.value)} placeholder="Відповідь на питання" />
+            </div>
+          )}
+
+          {err && <p className="auth-err" style={{margin:'4px 0 0 0',textAlign:'center'}}>{err}</p>}
+
+          <button className="auth-hero-btn" type="button" disabled={busy} onClick={mode === 'login' ? doLogin : doRegister}>
+            {busy ? (
+              'Завантаження…'
+            ) : mode === 'login' ? (
+              <><LogIn size={18} /> Увійти в гру</>
+            ) : (
+              <><Sparkles size={18} /> Створити героя</>
+            )}
           </button>
+
+          <button className="auth-guest-card-btn" type="button" onClick={guest}>
+            <Ghost size={16} /> Продовжити як Гість (без паролю)
+          </button>
+        </div>
+
+        {/* Feature Showcase Footer */}
+        <div className="auth-feature-pills-row">
+          <div className="auth-feature-badge"><span>🎭</span> 37 героїв</div>
+          <div className="auth-feature-badge"><span>🪙</span> Древні монети</div>
+          <div className="auth-feature-badge"><span>⚡</span> 1200+ слів</div>
+          <div className="auth-feature-badge"><span>⚔️</span> Арена дуелей</div>
         </div>
       </div>
 
@@ -3620,6 +3722,7 @@ function Onboarding({onDone}) {
     </div>
   );
 }
+
 function LeagueBadge({xp, style={}}) {
   const l = leagueForXp(xp);
   return (
