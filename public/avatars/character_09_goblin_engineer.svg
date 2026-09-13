@@ -1,0 +1,264 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Master Metallic UI Gradients -->
+    <linearGradient id="frameBevelGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#334155" />
+      <stop offset="25%" stop-color="#1e293b" />
+      <stop offset="70%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#020617" />
+    </linearGradient>
+    <linearGradient id="steelTrimGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#64748b" />
+      <stop offset="50%" stop-color="#334155" />
+      <stop offset="100%" stop-color="#1e293b" />
+    </linearGradient>
+    <linearGradient id="cyanNeonGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="50%" stop-color="#0284c7" />
+      <stop offset="100%" stop-color="#0369a1" />
+    </linearGradient>
+    <linearGradient id="goldPlateGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a" />
+      <stop offset="40%" stop-color="#eab308" />
+      <stop offset="100%" stop-color="#a16207" />
+    </linearGradient>
+    <linearGradient id="lightSweepGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="rgba(56,189,248,0)" />
+      <stop offset="50%" stop-color="rgba(56,189,248,0.5)" />
+      <stop offset="100%" stop-color="rgba(56,189,248,0)" />
+    </linearGradient>
+
+    <!-- Clip Path for Inside the Avatar Screen -->
+    <clipPath id="avatarScreenClip">
+      <rect x="44" y="44" width="424" height="424" rx="28" />
+    </clipPath>
+
+    
+    <radialGradient id="forgeBg" cx="50%" cy="45%" r="70%">
+      <stop offset="0%" stop-color="#78350f" />
+      <stop offset="50%" stop-color="#451a03" />
+      <stop offset="100%" stop-color="#1c1917" />
+    </radialGradient>
+    <linearGradient id="goblinSkin" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#84cc16" />
+      <stop offset="50%" stop-color="#65a30d" />
+      <stop offset="100%" stop-color="#4d7c0f" />
+    </linearGradient>
+    <linearGradient id="brassGoggles" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a" />
+      <stop offset="50%" stop-color="#d97706" />
+      <stop offset="100%" stop-color="#78350f" />
+    </linearGradient>
+  
+  </defs>
+
+  <style>
+    /* Frame continuous subtle animations */
+    @keyframes framePulse {
+      0%, 100% { stroke-opacity: 0.6; filter: drop-shadow(0 0 6px rgba(56,189,248,0.3)); }
+      50% { stroke-opacity: 1; filter: drop-shadow(0 0 14px rgba(56,189,248,0.8)); }
+    }
+    @keyframes sweepMove {
+      0% { transform: translateX(-400px); }
+      50%, 100% { transform: translateX(500px); }
+    }
+    .frame-neon-glow {
+      animation: framePulse 4s ease-in-out infinite;
+    }
+    .frame-sweep-line {
+      animation: sweepMove 6s ease-in-out infinite;
+    }
+  </style>
+
+  <!-- BACKGROUND & CHARACTER CONTENT (CLIPPED TO SCREEN) -->
+  <g clip-path="url(#avatarScreenClip)">
+    
+    <style>
+      @keyframes wrenchTurnAnim {
+        0%, 100% { transform: rotate(0deg); }
+        30% { transform: rotate(-28deg); }
+        45% { transform: rotate(8deg); }
+        60% { transform: rotate(-24deg); }
+      }
+      @keyframes fuseSparkleAnim {
+        0%, 100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        50% { transform: scale(1.4) rotate(180deg); opacity: 0.8; }
+      }
+      @keyframes earFlapAnim {
+        0%, 100% { transform: rotate(0deg); }
+        50% { transform: rotate(12deg); }
+      }
+      @keyframes gearRotate {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      @keyframes bombTicking {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+      }
+      .wrench-anim { transform-origin: 320px 330px; animation: wrenchTurnAnim 1.6s ease-in-out infinite; }
+      .fuse-spark { transform-origin: 236px 260px; animation: fuseSparkleAnim 0.3s linear infinite; }
+      .left-ear { transform-origin: 200px 200px; animation: earFlapAnim 1.2s ease-in-out infinite; }
+      .right-ear { transform-origin: 312px 200px; animation: earFlapAnim 1.2s 0.6s ease-in-out infinite; }
+      .bg-gear { transform-origin: 120px 140px; animation: gearRotate 12s linear infinite; }
+      .bomb-actor { transform-origin: 256px 370px; animation: bombTicking 0.8s ease-in-out infinite; }
+    </style>
+
+    <!-- FORGE BACKGROUND WITH SPINNING GEAR -->
+    <g id="background">
+      <rect x="44" y="44" width="424" height="424" fill="url(#forgeBg)" />
+      <!-- Spinning Clockwork Gear -->
+      <g class="bg-gear" opacity="0.35">
+        <circle cx="120" cy="140" r="50" fill="none" stroke="#d97706" stroke-width="14" stroke-dasharray="14 10" />
+        <circle cx="120" cy="140" r="20" fill="#78350f" stroke="#0f172a" stroke-width="4" />
+      </g>
+    </g>
+
+    <!-- CHARACTER SHADOW -->
+    <g id="character-shadow">
+      <ellipse cx="256" cy="435" rx="90" ry="20" fill="#000" opacity="0.5" />
+    </g>
+
+    <!-- TICKING MECHANICAL BOMB (FRONT) -->
+    <g id="character-bomb" class="bomb-actor">
+      <!-- Big Black Cast Iron Bomb -->
+      <circle cx="256" cy="370" r="62" fill="#1e293b" stroke="#0f172a" stroke-width="5" />
+      <!-- Metal Rivets and skull print on bomb -->
+      <path d="M246 360 Q256 350 266 360 L262 375 L250 375 Z" fill="#ef4444" />
+      <circle cx="250" cy="365" r="2.5" fill="#0f172a" />
+      <circle cx="262" cy="365" r="2.5" fill="#0f172a" />
+      <!-- Bomb Neck -->
+      <rect x="244" y="295" width="24" height="18" rx="4" fill="#64748b" stroke="#0f172a" stroke-width="3" />
+      <!-- Curved Rope Fuse -->
+      <path d="M256 295 Q270 270 236 260" fill="none" stroke="#ca8a04" stroke-width="5" stroke-linecap="round" />
+      <!-- Sizzling Fuse Spark (ANIMATED) -->
+      <g class="fuse-spark">
+        <polygon points="236,245 240,256 252,260 240,264 236,275 232,264 220,260 232,256" fill="#facc15" />
+        <circle cx="236" cy="260" r="4" fill="#ef4444" />
+      </g>
+    </g>
+
+    <!-- GOBLIN BODY -->
+    <g id="character-animation">
+      <!-- Slender Green Goblin Torso in Leather Apron -->
+      <g id="character-body">
+        <ellipse cx="256" cy="290" rx="55" ry="60" fill="url(#goblinSkin)" stroke="#0f172a" stroke-width="4" />
+        <!-- Tool Belt & Apron -->
+        <path d="M220 260 L292 260 L285 320 L227 320 Z" fill="#78350f" stroke="#0f172a" stroke-width="3" />
+        <!-- Dynamite Stick in pocket -->
+        <rect x="228" y="275" width="8" height="22" fill="#ef4444" rx="2" />
+        <rect x="238" y="278" width="8" height="20" fill="#ef4444" rx="2" />
+      </g>
+
+      <!-- GIANT WRENCH (CRANKING BOLT) -->
+      <g id="character-weapon" class="wrench-anim">
+        <!-- Huge Steel Adjustable Wrench -->
+        <rect x="305" y="250" width="18" height="120" rx="6" fill="#94a3b8" stroke="#0f172a" stroke-width="3.5" transform="rotate(35 314 310)" />
+        <!-- Wrench Head Jaws clamped on bomb nut -->
+        <g transform="translate(260, 340)">
+          <path d="M0 0 L25 -10 L35 10 L10 20 Z" fill="#64748b" stroke="#0f172a" stroke-width="3" />
+        </g>
+        <!-- Goblin clawed hand gripping handle -->
+        <circle cx="340" cy="285" r="14" fill="url(#goblinSkin)" stroke="#0f172a" stroke-width="3" />
+      </g>
+
+      <!-- GOBLIN HEAD & EARS -->
+      <g id="character-head">
+        <!-- Giant Pointy Goblin Ears (ANIMATED FLAP) -->
+        <g class="left-ear">
+          <path d="M205 195 C150 190 90 145 70 120 C110 145 160 175 205 185 Z" fill="url(#goblinSkin)" stroke="#0f172a" stroke-width="4" />
+          <path d="M185 185 C145 180 105 145 90 130 C120 145 155 170 185 180 Z" fill="#f472b6" opacity="0.4" />
+        </g>
+        <g class="right-ear">
+          <path d="M307 195 C362 190 422 145 442 120 C402 145 352 175 307 185 Z" fill="url(#goblinSkin)" stroke="#0f172a" stroke-width="4" />
+          <path d="M327 185 C367 180 407 145 422 130 C392 145 357 170 327 180 Z" fill="#f472b6" opacity="0.4" />
+        </g>
+
+        <!-- Main Goblin Head -->
+        <ellipse cx="256" cy="190" rx="58" ry="50" fill="url(#goblinSkin)" stroke="#0f172a" stroke-width="4" />
+
+        <!-- Wide Manic Grin with Sharp Yellow Teeth -->
+        <g id="character-mouth">
+          <path d="M220 205 Q256 240 292 205 Q256 220 220 205 Z" fill="#450a0a" stroke="#0f172a" stroke-width="3.5" />
+          <!-- Sharp fangs sticking out -->
+          <polygon points="230,208 234,220 238,209" fill="#fef08a" />
+          <polygon points="246,211 250,224 254,212" fill="#fef08a" />
+          <polygon points="262,212 266,224 270,211" fill="#fef08a" />
+          <polygon points="278,209 282,220 286,208" fill="#fef08a" />
+        </g>
+
+        <!-- Long Warty Goblin Nose -->
+        <path d="M256 180 C265 195 270 205 260 215 C250 212 248 195 256 180 Z" fill="#65a30d" stroke="#0f172a" stroke-width="2.5" />
+        <circle cx="262" cy="205" r="2" fill="#451a03" />
+
+        <!-- Crazy Asymmetrical Steampunk Goggles -->
+        <g id="character-goggles">
+          <rect x="200" y="145" width="112" height="12" rx="4" fill="#451a03" />
+          <!-- Left Small Lens -->
+          <circle cx="228" cy="150" r="20" fill="#38bdf8" stroke="url(#brassGoggles)" stroke-width="5" />
+          <!-- Right Massive Triple-Magnifier Lens -->
+          <circle cx="284" cy="150" r="26" fill="#facc15" stroke="url(#brassGoggles)" stroke-width="6" />
+          <!-- Goggle Crosshairs -->
+          <line x1="284" y1="128" x2="284" y2="172" stroke="#0f172a" stroke-width="2" opacity="0.6" />
+          <line x1="262" y1="150" x2="306" y2="150" stroke="#0f172a" stroke-width="2" opacity="0.6" />
+          <!-- Eyeballs looking wild behind lenses -->
+          <circle cx="228" cy="150" r="7" fill="#0f172a" />
+          <circle cx="284" cy="150" r="10" fill="#0f172a" />
+        </g>
+      </g>
+    </g>
+  
+  </g>
+
+  <!-- ================= MASTER FUTURISTIC METALLIC FRAME ================= -->
+  <g id="frame">
+    <!-- Outer Shadow Layer -->
+    <rect x="18" y="18" width="476" height="476" rx="42" fill="none" stroke="#020617" stroke-width="12" opacity="0.9" />
+
+    <!-- Main Outer Beveled Steel Shell -->
+    <rect x="24" y="24" width="464" height="464" rx="38" fill="none" stroke="url(#frameBevelGrad)" stroke-width="26" />
+    
+    <!-- Outer Highlight Rim -->
+    <rect x="37" y="37" width="438" height="438" rx="32" fill="none" stroke="url(#steelTrimGrad)" stroke-width="4" opacity="0.8" />
+
+    <!-- Neon Cyan Inner Cyber Border -->
+    <rect x="44" y="44" width="424" height="424" rx="28" fill="none" stroke="url(#cyanNeonGrad)" stroke-width="5" class="frame-neon-glow" />
+
+    <!-- Corner Armor Clamp 1: Top-Left -->
+    <g transform="translate(24, 24)">
+      <polygon points="0,0 48,0 24,24 0,48" fill="url(#goldPlateGrad)" />
+      <polygon points="4,4 40,4 20,24 4,40" fill="#1e293b" />
+      <circle cx="16" cy="16" r="4.5" fill="#fef08a" stroke="#78350f" stroke-width="1.5" />
+    </g>
+
+    <!-- Corner Armor Clamp 2: Top-Right -->
+    <g transform="translate(488, 24) scale(-1, 1)">
+      <polygon points="0,0 48,0 24,24 0,48" fill="url(#goldPlateGrad)" />
+      <polygon points="4,4 40,4 20,24 4,40" fill="#1e293b" />
+      <circle cx="16" cy="16" r="4.5" fill="#fef08a" stroke="#78350f" stroke-width="1.5" />
+    </g>
+
+    <!-- Corner Armor Clamp 3: Bottom-Left -->
+    <g transform="translate(24, 488) scale(1, -1)">
+      <polygon points="0,0 48,0 24,24 0,48" fill="url(#goldPlateGrad)" />
+      <polygon points="4,4 40,4 20,24 4,40" fill="#1e293b" />
+      <circle cx="16" cy="16" r="4.5" fill="#fef08a" stroke="#78350f" stroke-width="1.5" />
+    </g>
+
+    <!-- Corner Armor Clamp 4: Bottom-Right -->
+    <g transform="translate(488, 488) scale(-1, -1)">
+      <polygon points="0,0 48,0 24,24 0,48" fill="url(#goldPlateGrad)" />
+      <polygon points="4,4 40,4 20,24 4,40" fill="#1e293b" />
+      <circle cx="16" cy="16" r="4.5" fill="#fef08a" stroke="#78350f" stroke-width="1.5" />
+    </g>
+
+    <!-- Decorative Edge Screws / Rivets -->
+    <circle cx="256" cy="31" r="3.5" fill="#94a3b8" stroke="#0f172a" stroke-width="1.5" />
+    <circle cx="256" cy="481" r="3.5" fill="#94a3b8" stroke="#0f172a" stroke-width="1.5" />
+    <circle cx="31" cy="256" r="3.5" fill="#94a3b8" stroke="#0f172a" stroke-width="1.5" />
+    <circle cx="481" cy="256" r="3.5" fill="#94a3b8" stroke="#0f172a" stroke-width="1.5" />
+
+    <!-- Top Bevel Light Sweep Shimmer Line -->
+    <rect x="60" y="32" width="200" height="4" fill="url(#lightSweepGrad)" class="frame-sweep-line" />
+  </g>
+</svg>

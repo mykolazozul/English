@@ -576,66 +576,87 @@ function awardDailyCoins(currentState, amount = 2, maxDaily = 60) {
 /* ==========================================================================
    22 FUNNY FANTASY CHARACTER AVATARS (OFFICIAL 2026 MOBILE GAME ROSTER)
    ========================================================================== */
+/* ==========================================================================
+   12 UNIQUE ANIMATED SVG GAME CHARACTER AVATARS (OFFICIAL 2026 ROSTER)
+   Real scalable animated vector SVG characters with multi-element animations
+   ========================================================================== */
 export const GAME_AVATARS_FUNNY = [
-  { id: 'funny_barbarian', name: 'Незграбний Варвар', action: 'Крихітний варвар із велетенським камʼяним молотом', image: 'funny_barbarian.png', tag: '🔨 Варвар' },
-  { id: 'funny_duck_pilot', name: 'Качка-Пілот', action: 'Качка-ас в авіаторському шоломі керує крихітним літаком', image: 'funny_duck_pilot.png', tag: '✈️ Пілот' },
-  { id: 'funny_tree_warrior', name: 'Збентежений Треант', action: 'Живий треант, що розгублено жонглює червоними яблуками', image: 'funny_tree_warrior.png', tag: '🌳 Треант' },
-  { id: 'funny_knight', name: 'Самовпевнений Лицар', action: 'Лицар гордо віддає честь, коли забрало шолома падає на ніс', image: 'funny_knight.png', tag: '⚔️ Лицар' },
-  { id: 'funny_dragon_sleepy', name: 'Сонний Дракончик', action: 'Дракончик у нічному ковпаку позіхає та чхає полумʼям', image: 'funny_dragon_sleepy.png', tag: '🐲 Дракон' },
-  { id: 'funny_wizard', name: 'Сердитий Чаклун', action: 'Маг у зоряному капелюсі з обгорілою бородою від закляття', image: 'funny_wizard.png', tag: '🧙 Чаклун' },
-  { id: 'funny_ninja_cat', name: 'Кіт-Ніндзя', action: 'Чорний кіт-ніндзя у стрибку з рибкою-кинжалом', image: 'funny_ninja_cat.png', tag: '🐱 Ніндзя' },
-  { id: 'funny_pirate_frog', name: 'Жаба-Пірат', action: 'Жаба в трикутному капелюсі з повʼязкою та золотою шаблею', image: 'funny_pirate_frog.png', tag: '🏴‍☠️ Жаба' },
-  { id: 'funny_goblin_engineer', name: 'Гоблін-Інженер', action: 'Гоблін в окулярах щасливо сміється над цокаючою бомбою', image: 'funny_goblin_engineer.png', tag: '💣 Гоблін' },
-  { id: 'funny_tiny_giant', name: 'Крихітний Велетень', action: 'Камʼяний міні-колос гордо грає мускулами', image: 'funny_tiny_giant.png', tag: '🗿 Велетень' },
-  { id: 'funny_castle', name: 'Живий Замок', action: 'Ожила камʼяна фортеця з очима-бійницями та ротом-мостом', image: 'funny_castle.png', tag: '🏰 Замок' },
-  { id: 'funny_chicken', name: 'Бойовий Півень', action: 'Спартанський півень у шоломі зі списом-зубочисткою', image: 'funny_chicken.png', tag: '🐓 Півень' },
-  { id: 'funny_alien_cowboy', name: 'Прибулець-Ковбой', action: 'Триокий бірюзовий прибулець у капелюсі з неоновими бластерами', image: 'funny_alien_cowboy.png', tag: '🤠 Ковбой' },
-  { id: 'funny_prince', name: 'Принц-Чепурун', action: 'Принц із пишним чубом та короною надсилає поцілунок', image: 'funny_prince.png', tag: '👑 Принц' },
-  { id: 'funny_queen', name: 'Могутня Королева', action: 'Гордовита королева чаклує іскристими метеликами', image: 'funny_queen.png', tag: '👸 Королева' },
-  { id: 'funny_dragon_rider', name: 'Вершник на Драконі', action: 'Хлопчик у каструлі на голові верхи на усміхненому дракончику', image: 'funny_dragon_rider.png', tag: '🐉 Вершник' },
-  { id: 'funny_carriage', name: 'Казкова Карета', action: 'Жива королівська карета на великих колесах мчить уперед', image: 'funny_carriage.png', tag: '🎠 Карета' },
-  { id: 'funny_little_king', name: 'Кумедний Король', action: 'Пухкий король наступає на власну вельветову мантію', image: 'funny_little_king.png', tag: '👑 Король' },
-  { id: 'funny_jester', name: 'Пустотливий Блазень', action: 'Блазень з бубонцями жонглює картами та кидає пиріг-бомбу', image: 'funny_jester.png', tag: '🃏 Блазень' },
-  { id: 'funny_heroic_cat', name: 'Героїчний Кіт у Латах', action: 'Рудий кіт у лицарських латах на три розміри більших', image: 'funny_heroic_cat.png', tag: '🛡️ Кіт' },
-  { id: 'funny_talking_tree', name: 'Дерево, що жонглює', action: 'Живе дерево весело розмовляє та жонглює яблуками', image: 'funny_talking_tree.png', tag: '🍎 Дерево' },
-  { id: 'funny_dragon_chef', name: 'Дракончик-Шеф', action: 'Дракончик у білому ковпаку смажить маршмеллоу подихом вогню', image: 'funny_dragon_chef.png', tag: '👨‍🍳 Шеф' }
+  { id: 'character_01_clumsy_barbarian', name: 'Незграбний Варвар', action: 'Крихітний варвар хитається під вагою гігантського камʼяного молота', image: 'character_01_clumsy_barbarian.svg', tag: '🔨 Варвар' },
+  { id: 'character_02_flying_duck_pilot', name: 'Качка-Пілот', action: 'Качка в авіаторському шоломі відчайдушно керує літаком з гвинтом', image: 'character_02_flying_duck_pilot.svg', tag: '✈️ Пілот' },
+  { id: 'character_03_confused_tree_warrior', name: 'Збентежений Треант', action: 'Живий треант чухає потилицю та розгублено жонглює яблуками', image: 'character_03_confused_tree_warrior.svg', tag: '🌳 Треант' },
+  { id: 'character_04_overconfident_knight', name: 'Самовпевнений Лицар', action: 'Лицар гордо показує палець вгору, поки важке забрало падає на ніс', image: 'character_04_overconfident_knight.svg', tag: '⚔️ Лицар' },
+  { id: 'character_05_sleepy_dragon', name: 'Сонний Дракончик', action: 'Дракончик у нічному ковпаку позіхає, хропе і раптово чхає полумʼям', image: 'character_05_sleepy_dragon.svg', tag: '🐲 Дракон' },
+  { id: 'character_06_angry_wizard', name: 'Сердитий Чаклун', action: 'Маг у зоряному капелюсі з обгорілою від вибуху бородою та посохом', image: 'character_06_angry_wizard.svg', tag: '🧙 Чаклун' },
+  { id: 'character_07_ninja_cat', name: 'Кіт-Ніндзя', action: 'Чорний кіт із рибкою-кунаєм; його хвіст несамовито смикається', image: 'character_07_ninja_cat.svg', tag: '🐱 Ніндзя' },
+  { id: 'character_08_pirate_frog', name: 'Жаба-Пірат', action: 'Капітан із золотою шаблею та повʼязкою стріляє язиком по мусі', image: 'character_08_pirate_frog.svg', tag: '🏴‍☠️ Жаба' },
+  { id: 'character_09_goblin_engineer', name: 'Гоблін-Інженер', action: 'Гоблін в окулярах закручує гайку на цокаючій бомбі з іскрами', image: 'character_09_goblin_engineer.svg', tag: '💣 Гоблін' },
+  { id: 'character_10_tiny_giant', name: 'Крихітний Велетень', action: 'Міні-колос напружено грає біцепсами, поки на голові цвіте ромашка', image: 'character_10_tiny_giant.svg', tag: '🗿 Велетень' },
+  { id: 'character_11_chicken_warrior', name: 'Бойовий Півень', action: 'Спартанський півень у шоломі зі списом, коліна якого тремтять від жаху', image: 'character_11_chicken_warrior.svg', tag: '🐓 Півень' },
+  { id: 'character_12_alien_cowboy', name: 'Прибулець-Ковбой', action: 'Триокий прибулець крутить бластери і підморгує верхи на слимаку', image: 'character_12_alien_cowboy.svg', tag: '🤠 Ковбой' }
 ];
 
 export const GAME_AVATARS_30 = GAME_AVATARS_FUNNY;
 
 export const OLD_AVATAR_MAP = {
-  'duo_owl': 'funny_duck_pilot',
-  'avatar_boss': 'funny_little_king',
-  'action_king': 'funny_little_king',
-  'action_knight': 'funny_knight',
-  'avatar_knight': 'funny_knight',
-  'avatar_wizard': 'funny_wizard',
-  'action_wizard': 'funny_wizard',
-  'avatar_ninja': 'funny_ninja_cat',
-  'action_ninja': 'funny_ninja_cat',
-  'avatar_dragon': 'funny_dragon_sleepy',
-  'action_dragon': 'funny_dragon_sleepy',
-  'avatar_barbarian': 'funny_barbarian',
-  'avatar_archer': 'funny_tree_warrior',
-  'avatar_valkyrie': 'funny_queen',
-  'action_princess': 'funny_queen',
-  'duo_pirate': 'funny_pirate_frog',
-  'duo_cat': 'funny_ninja_cat',
-  'duo_fox': 'funny_alien_cowboy',
-  'duo_robot': 'funny_goblin_engineer',
-  'avatar_golem': 'funny_tiny_giant',
-  'series2_monster': 'funny_barbarian',
-  'series2_pilot_duck': 'funny_duck_pilot',
-  'series2_treant': 'funny_tree_warrior',
-  'series2_axe_knight': 'funny_knight',
-  'series2_death_knight': 'funny_ninja_cat',
-  'series2_heavy_axe': 'funny_barbarian',
-  'series2_hunter_fox': 'funny_alien_cowboy',
-  'series2_rogue_alien': 'funny_alien_cowboy',
-  'series2_tactical_cat': 'funny_heroic_cat',
-  'series2_warlock': 'funny_wizard',
-  'series2_swarm_alien': 'funny_goblin_engineer',
-  'series2_dwarf_berserker': 'funny_barbarian',
+  // Legacy avatars
+  'duo_owl': 'character_02_flying_duck_pilot',
+  'avatar_boss': 'character_04_overconfident_knight',
+  'action_king': 'character_04_overconfident_knight',
+  'action_knight': 'character_04_overconfident_knight',
+  'avatar_knight': 'character_04_overconfident_knight',
+  'avatar_wizard': 'character_06_angry_wizard',
+  'action_wizard': 'character_06_angry_wizard',
+  'avatar_ninja': 'character_07_ninja_cat',
+  'action_ninja': 'character_07_ninja_cat',
+  'avatar_dragon': 'character_05_sleepy_dragon',
+  'action_dragon': 'character_05_sleepy_dragon',
+  'avatar_barbarian': 'character_01_clumsy_barbarian',
+  'avatar_archer': 'character_03_confused_tree_warrior',
+  'avatar_valkyrie': 'character_04_overconfident_knight',
+  'action_princess': 'character_12_alien_cowboy',
+  'duo_pirate': 'character_08_pirate_frog',
+  'duo_cat': 'character_07_ninja_cat',
+  'duo_fox': 'character_12_alien_cowboy',
+  'duo_robot': 'character_09_goblin_engineer',
+  'avatar_golem': 'character_10_tiny_giant',
+
+  // Funny batch 1 mapping
+  'funny_barbarian': 'character_01_clumsy_barbarian',
+  'funny_duck_pilot': 'character_02_flying_duck_pilot',
+  'funny_tree_warrior': 'character_03_confused_tree_warrior',
+  'funny_knight': 'character_04_overconfident_knight',
+  'funny_dragon_sleepy': 'character_05_sleepy_dragon',
+  'funny_wizard': 'character_06_angry_wizard',
+  'funny_ninja_cat': 'character_07_ninja_cat',
+  'funny_pirate_frog': 'character_08_pirate_frog',
+  'funny_goblin_engineer': 'character_09_goblin_engineer',
+  'funny_tiny_giant': 'character_10_tiny_giant',
+  'funny_chicken': 'character_11_chicken_warrior',
+  'funny_alien_cowboy': 'character_12_alien_cowboy',
+  'funny_castle': 'character_10_tiny_giant',
+  'funny_prince': 'character_04_overconfident_knight',
+  'funny_queen': 'character_06_angry_wizard',
+  'funny_dragon_rider': 'character_05_sleepy_dragon',
+  'funny_carriage': 'character_02_flying_duck_pilot',
+  'funny_little_king': 'character_04_overconfident_knight',
+  'funny_jester': 'character_09_goblin_engineer',
+  'funny_heroic_cat': 'character_07_ninja_cat',
+  'funny_talking_tree': 'character_03_confused_tree_warrior',
+  'funny_dragon_chef': 'character_05_sleepy_dragon',
+
+  // Series 2
+  'series2_monster': 'character_01_clumsy_barbarian',
+  'series2_pilot_duck': 'character_02_flying_duck_pilot',
+  'series2_treant': 'character_03_confused_tree_warrior',
+  'series2_axe_knight': 'character_04_overconfident_knight',
+  'series2_death_knight': 'character_07_ninja_cat',
+  'series2_heavy_axe': 'character_01_clumsy_barbarian',
+  'series2_hunter_fox': 'character_12_alien_cowboy',
+  'series2_rogue_alien': 'character_12_alien_cowboy',
+  'series2_tactical_cat': 'character_07_ninja_cat',
+  'series2_warlock': 'character_06_angry_wizard',
+  'series2_swarm_alien': 'character_09_goblin_engineer',
+  'series2_dwarf_berserker': 'character_01_clumsy_barbarian',
 };
 
 function AvatarIcon({ id, av: propAv, size = 44, className = '', style = {}, aura = '', frame = '' }) {
@@ -644,7 +665,7 @@ function AvatarIcon({ id, av: propAv, size = 44, className = '', style = {}, aur
     actualId = OLD_AVATAR_MAP[actualId];
   }
   const av = GAME_AVATARS_FUNNY.find(a => a.id === actualId) || (propAv && typeof propAv === 'object' ? propAv : GAME_AVATARS_FUNNY[0]);
-  const imgUrl = av?.image ? `/avatars/${av.image}` : '/avatars/funny_duck_pilot.png';
+  const imgUrl = av?.image ? `/avatars/${av.image}` : '/avatars/character_02_flying_duck_pilot.svg';
 
   const wrap = (node) => (!aura && !frame ? node : (
     <span className={`avatar-cosmetic-wrap ${aura || ''} ${frame || ''}`} style={{display:'inline-flex',alignItems:'center',justifyContent:'center',position:'relative',borderRadius:14,flexShrink:0}}>
@@ -690,7 +711,7 @@ function BrandLogo({size = 36, showText = true, className = ''}) {
   return (
     <div className={'brand-logo-wrap ' + className} style={{display:'inline-flex',alignItems:'center',gap:10}}>
       <img
-        src="/brand_logo.png"
+        src="/brand_logo.svg"
         alt="English Flow"
         style={{
           width: size,
@@ -1852,7 +1873,7 @@ export default function App() {
         {page === 'leaderboard' && <Leaderboard state={state} gamification={gamification} onViewProfile={setPublicProfileNick} />}
         {page === 'shop' && <ShopPage state={state} save={save} onRefreshGamification={refreshGamification} allUsers={gamification?.leaderboard?.global || []} />}
         {page === 'settings' && <SettingsPage state={state} save={save} onLogout={handleLogout} />}
-        {page === 'friends' && <FriendsPage state={state} onViewProfile={setPublicProfileNick} />}
+        {page === 'friends' && <FriendsPage state={state} save={save} onViewProfile={setPublicProfileNick} />}
         {page === 'challenges' && <ChallengesPage state={state} save={save} wordsCatalog={activeWords} />}
         {page === 'profile' && <Profile state={state} save={save} gamification={gamification} onRefreshGamification={refreshGamification} onLogout={handleLogout} />}
         {page === 'about' && <AboutPage />}
@@ -2468,24 +2489,20 @@ function ShopPage({state, save, onRefreshGamification, allUsers}) {
   const isBoosterActive = inventory.doubleXpUntil && inventory.doubleXpUntil > Date.now();
   const boosterMinutesLeft = isBoosterActive ? Math.ceil((inventory.doubleXpUntil - Date.now()) / 60000) : 0;
 
-  // Catalogues — Funny Fantasy Game Roster
+    // Catalogues — 12 Animated SVG Game Heroes
   const ANIMATED_AVATARS_SHOP = [
-    { id: 'funny_duck_pilot', name: 'Качка-Пілот', desc: 'Авіатор на крихітному червоному біплані з гвинтом, що обертається', cost: 450 },
-    { id: 'funny_barbarian', name: 'Незграбний Варвар', desc: 'Крихітний варвар, що героїчно бореться з велетенським молотом', cost: 500 },
-    { id: 'funny_dragon_sleepy', name: 'Сонний Дракончик', desc: 'Малюк у нічному ковпаку, який позіхає та чхає полумʼям', cost: 650 },
-    { id: 'funny_ninja_cat', name: 'Кіт-Ніндзя', desc: 'Чорний кіт-шинобі у неймовірному стрибку з рибкою-кинжалом', cost: 600 },
-    { id: 'funny_wizard', name: 'Сердитий Чаклун', desc: 'Маг у зоряному капелюсі з обгорілою бородою від закляття', cost: 550 },
-    { id: 'funny_pirate_frog', name: 'Жаба-Пірат', desc: 'Капітан із піратською повʼязкою та блискучою золотою шаблею', cost: 400 },
-    { id: 'funny_goblin_engineer', name: 'Гоблін-Інженер', desc: 'Гоблін в окулярах щасливо сміється над цокаючою бомбою', cost: 450 },
-    { id: 'funny_castle', name: 'Живий Замок', desc: 'Ожила камʼяна фортеця з очима-бійницями та ротом-мостом', cost: 700 },
-    { id: 'funny_chicken', name: 'Бойовий Півень', desc: 'Спартанський півень у шоломі зі списом-зубочисткою', cost: 350 },
-    { id: 'funny_alien_cowboy', name: 'Прибулець-Ковбой', desc: 'Триокий бірюзовий ковбой із подвійними неоновими бластерами', cost: 550 },
-    { id: 'funny_little_king', name: 'Кумедний Король', desc: 'Пухкий король у вельветовій мантії із золотим скіпетром', cost: 800 },
-    { id: 'funny_jester', name: 'Пустотливий Блазень', action: 'Блазень з бубонцями кидає пиріг-бомбу', cost: 500 },
-    { id: 'funny_heroic_cat', name: 'Героїчний Кіт у Латах', desc: 'Рудий кіт у лицарських латах на три розміри більших', cost: 600 },
-    { id: 'funny_talking_tree', name: 'Дерево, що жонглює', desc: 'Живе дерево весело розмовляє та жонглює яблуками', cost: 500 },
-    { id: 'funny_carriage', name: 'Казкова Карета', desc: 'Жива королівська карета на великих колесах мчить уперед', cost: 600 },
-    { id: 'funny_dragon_chef', name: 'Дракончик-Шеф', desc: 'Дракончик у білому ковпаку смажить маршмеллоу подихом вогню', cost: 650 },
+    { id: 'character_02_flying_duck_pilot', name: 'Качка-Пілот', desc: 'Анімований векторний SVG: гвинт обертається, літак хитає турбулентність, шарф майорить', cost: 450 },
+    { id: 'character_01_clumsy_barbarian', name: 'Незграбний Варвар', desc: 'Анімований векторний SVG: молот перехиляється, варвар тремтить та балансує з потом', cost: 500 },
+    { id: 'character_05_sleepy_dragon', name: 'Сонний Дракончик', desc: 'Анімований векторний SVG: дихання животом, похитування голови і раптовий спалах полумʼя', cost: 650 },
+    { id: 'character_07_ninja_cat', name: 'Кіт-Ніндзя', desc: 'Анімований векторний SVG: нервове сіпання пухнастого хвоста, вушка на сторожі, звуження зіниць', cost: 600 },
+    { id: 'character_06_angry_wizard', name: 'Сердитий Чаклун', desc: 'Анімований векторний SVG: магічна сфера левітує й іскрить, дим із бороди, брови сіпаються', cost: 550 },
+    { id: 'character_08_pirate_frog', name: 'Жаба-Пірат', desc: 'Анімований векторний SVG: роздування горла, миттєвий кидок язика за дзижчачою мухою', cost: 400 },
+    { id: 'character_09_goblin_engineer', name: 'Гоблін-Інженер', desc: 'Анімований векторний SVG: обертання шестерень, закручування гайкового ключа та іскри запалу', cost: 450 },
+    { id: 'character_10_tiny_giant', name: 'Крихітний Велетень', desc: 'Анімований векторний SVG: камʼяні біцепси напружуються, руни пульсують, ромашка хитається', cost: 500 },
+    { id: 'character_11_chicken_warrior', name: 'Бойовий Півень', desc: 'Анімований векторний SVG: коліна шалено стукають від страху, спис вібрує, пірʼя кружляє', cost: 350 },
+    { id: 'character_12_alien_cowboy', name: 'Прибулець-Ковбой', desc: 'Анімований векторний SVG: бластер обертається на 360°, третє око підморгує, слимак пружинить', cost: 550 },
+    { id: 'character_04_overconfident_knight', name: 'Самовпевнений Лицар', desc: 'Анімований векторний SVG: важке забрало з гуркотом падає на очі, лицар підкидає його назад', cost: 600 },
+    { id: 'character_03_confused_tree_warrior', name: 'Збентежений Треант', desc: 'Анімований векторний SVG: безперервне жонглювання яблуками та спантеличене чухання верхівки', cost: 500 }
   ];
 
   const AURAS = [
@@ -5714,8 +5731,8 @@ function Profile({state, save, gamification, onRefreshGamification}) {
 
         {/* 30 Character Avatars */}
         <div className="card">
-          <h2>🎭 Колекція Кумедних Героїв (Funny Fantasy Avatars)</h2>
-          <p className="muted small">22 кумедних, високодеталізованих персонажі у стилі мобільних фентезі-ігор: виразні емоції, гумор, жива анімація та фірмові сталеві рамки:</p>
+          <h2>🎭 Колекція Анімованих SVG Героїв (Animated Game Avatars)</h2>
+          <p className="muted small">12 унікальних живих анімованих SVG-персонажів у стилі мобільних фентезі-ігор: справжня безперервна векторна анімація, виразні емоції, гумор та фірмові сталеві рамки:</p>
           <div className="avatar-grid-duo" style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(68px, 1fr))',gap:8,marginTop:12}}>
             {GAME_AVATARS_30.map(av => {
               const isSelected = selectedAvatar === av.id;
@@ -7119,7 +7136,7 @@ function SettingsPage({state, save, onLogout}) {
   );
 }
 
-function FriendsPage({state, onViewProfile}) {
+function FriendsPage({state, save, onViewProfile}) {
   const [q, setQ] = useState('');
   const [msg, setMsg] = useState('');
   const [chatWith, setChatWith] = useState(null);
@@ -7130,6 +7147,15 @@ function FriendsPage({state, onViewProfile}) {
   const [busy, setBusy] = useState(false);
   const [friendsView, setFriendsView] = useState('cards'); // 'cards' | 'chat' | 'rivalry'
   const friendsRef = useRef([]);
+
+  const [cheeredSet, setCheeredSet] = useState(() => {
+    try {
+      const saved = localStorage.getItem(`ef_cheered_${state.nick}`);
+      return saved ? JSON.parse(saved) : (state.cheeredFriends || {});
+    } catch {
+      return state.cheeredFriends || {};
+    }
+  });
 
   const load = useCallback(async () => {
     if (state.guest) return;
@@ -7194,9 +7220,22 @@ function FriendsPage({state, onViewProfile}) {
   };
 
   const cheerFriend = (nick) => {
+    if (!nick) return;
+    if (cheeredSet[nick]) {
+      emitSiteToast(`Ви вже надіслали буст для @${nick}! Буст спрацьовує тільки один раз для друга.`, 'info');
+      return;
+    }
     playTone(true);
     confettiBurst();
-    emitSiteToast(`🔥 Ви надіслали підбадьорення для @${nick}!`, 'ok');
+    const updated = { ...cheeredSet, [nick]: Date.now() };
+    setCheeredSet(updated);
+    try {
+      localStorage.setItem(`ef_cheered_${state.nick}`, JSON.stringify(updated));
+    } catch {}
+    if (save) {
+      save({ ...state, cheeredFriends: updated });
+    }
+    emitSiteToast(`🔥 Ви надіслали буст для @${nick}! (використано 1 з 1)`, 'ok');
   };
 
   const social = async (action) => {
@@ -7314,9 +7353,20 @@ function FriendsPage({state, onViewProfile}) {
                         <button className="primary small" style={{flex:1}} onClick={() => { setChatWith(f.nick); setFriendsView('chat'); }}>
                           💬 Чат
                         </button>
-                        <button className="secondary small" title="Надіслати підбадьорення" onClick={() => cheerFriend(f.nick)}>
-                          🔥 Буст
-                        </button>
+                        {(() => {
+                          const hasBoosted = Boolean(cheeredSet[f.nick]);
+                          return (
+                            <button
+                              className="secondary small"
+                              title={hasBoosted ? "Буст уже надіслано цьому другу (дозволено лише 1 раз)" : "Надіслати підбадьорення (1 раз)"}
+                              disabled={hasBoosted}
+                              onClick={() => cheerFriend(f.nick)}
+                              style={hasBoosted ? { opacity: 0.65, cursor: 'not-allowed', background: 'rgba(255,255,255,0.06)' } : {}}
+                            >
+                              {hasBoosted ? '✓ Буст' : '🔥 Буст'}
+                            </button>
+                          );
+                        })()}
                       </>
                     )}
                     {f.status === 'pending' && f.requested_by !== state.id && (
@@ -7389,7 +7439,21 @@ function FriendsPage({state, onViewProfile}) {
                   <button className="primary" disabled={!text.trim()} onClick={send}>Надіслати</button>
                 </div>
                 <div className="row-btns wrap" style={{marginTop: 12}}>
-                  <button className="secondary" type="button" onClick={() => cheerFriend(chatWith)}>🔥 Підбадьорити</button>
+                  {(() => {
+                    const hasBoostedChat = Boolean(cheeredSet[chatWith]);
+                    return (
+                      <button
+                        className="secondary"
+                        type="button"
+                        disabled={hasBoostedChat}
+                        onClick={() => cheerFriend(chatWith)}
+                        title={hasBoostedChat ? "Буст уже використано для цього друга (1 раз)" : "Надіслати підбадьорення"}
+                        style={hasBoostedChat ? { opacity: 0.65, cursor: 'not-allowed', background: 'rgba(255,255,255,0.06)' } : {}}
+                      >
+                        {hasBoostedChat ? '✓ Буст надіслано' : '🔥 Підбадьорити'}
+                      </button>
+                    );
+                  })()}
                   <button className="secondary" type="button" onClick={() => social('mute')}>🔕 Mute</button>
                   <button className="secondary" type="button" onClick={() => social('block')}>🚫 Block</button>
                   <button className="secondary" type="button" onClick={report}>⚑ Report</button>

@@ -1,0 +1,260 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Master Metallic UI Gradients -->
+    <linearGradient id="frameBevelGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#334155" />
+      <stop offset="25%" stop-color="#1e293b" />
+      <stop offset="70%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#020617" />
+    </linearGradient>
+    <linearGradient id="steelTrimGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#64748b" />
+      <stop offset="50%" stop-color="#334155" />
+      <stop offset="100%" stop-color="#1e293b" />
+    </linearGradient>
+    <linearGradient id="cyanNeonGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="50%" stop-color="#0284c7" />
+      <stop offset="100%" stop-color="#0369a1" />
+    </linearGradient>
+    <linearGradient id="goldPlateGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a" />
+      <stop offset="40%" stop-color="#eab308" />
+      <stop offset="100%" stop-color="#a16207" />
+    </linearGradient>
+    <linearGradient id="lightSweepGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="rgba(56,189,248,0)" />
+      <stop offset="50%" stop-color="rgba(56,189,248,0.5)" />
+      <stop offset="100%" stop-color="rgba(56,189,248,0)" />
+    </linearGradient>
+
+    <!-- Clip Path for Inside the Avatar Screen -->
+    <clipPath id="avatarScreenClip">
+      <rect x="44" y="44" width="424" height="424" rx="28" />
+    </clipPath>
+
+    
+    <radialGradient id="knightArenaBg" cx="50%" cy="40%" r="70%">
+      <stop offset="0%" stop-color="#4338ca" />
+      <stop offset="50%" stop-color="#1e1b4b" />
+      <stop offset="100%" stop-color="#090524" />
+    </radialGradient>
+    <linearGradient id="armorSteel" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f1f5f9" />
+      <stop offset="40%" stop-color="#cbd5e1" />
+      <stop offset="75%" stop-color="#64748b" />
+      <stop offset="100%" stop-color="#334155" />
+    </linearGradient>
+    <linearGradient id="goldFiligree" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#fef08a" />
+      <stop offset="50%" stop-color="#eab308" />
+      <stop offset="100%" stop-color="#a16207" />
+    </linearGradient>
+  
+  </defs>
+
+  <style>
+    /* Frame continuous subtle animations */
+    @keyframes framePulse {
+      0%, 100% { stroke-opacity: 0.6; filter: drop-shadow(0 0 6px rgba(56,189,248,0.3)); }
+      50% { stroke-opacity: 1; filter: drop-shadow(0 0 14px rgba(56,189,248,0.8)); }
+    }
+    @keyframes sweepMove {
+      0% { transform: translateX(-400px); }
+      50%, 100% { transform: translateX(500px); }
+    }
+    .frame-neon-glow {
+      animation: framePulse 4s ease-in-out infinite;
+    }
+    .frame-sweep-line {
+      animation: sweepMove 6s ease-in-out infinite;
+    }
+  </style>
+
+  <!-- BACKGROUND & CHARACTER CONTENT (CLIPPED TO SCREEN) -->
+  <g clip-path="url(#avatarScreenClip)">
+    
+    <style>
+      @keyframes visorSlipClank {
+        0%, 35% { transform: translateY(0); }
+        40% { transform: translateY(32px); } /* Clank down! */
+        42% { transform: translateY(28px); } /* Rebound */
+        44% { transform: translateY(32px); }
+        75% { transform: translateY(32px); } /* Stays stuck down */
+        82% { transform: translateY(-4px); } /* Head flick! */
+        86%, 100% { transform: translateY(0); }
+      }
+      @keyframes capeFlutter {
+        0%, 100% { transform: skewY(0deg) rotate(0deg); }
+        50% { transform: skewY(-5deg) rotate(-3deg); }
+      }
+      @keyframes plumeFlutter {
+        0%, 100% { transform: rotate(0deg); }
+        50% { transform: rotate(8deg); }
+      }
+      @keyframes glintFlash {
+        0%, 70%, 100% { transform: scale(0) rotate(0deg); opacity: 0; }
+        75% { transform: scale(1.2) rotate(45deg); opacity: 1; }
+        80% { transform: scale(0.2) rotate(90deg); opacity: 0; }
+      }
+      .visor-slip { animation: visorSlipClank 3.6s cubic-bezier(0.68, -0.55, 0.27, 1.55) infinite; }
+      .cape-anim { transform-origin: 256px 260px; animation: capeFlutter 2s ease-in-out infinite; }
+      .plume-anim { transform-origin: 256px 110px; animation: plumeFlutter 1.6s ease-in-out infinite; }
+      .star-glint { transform-origin: 220px 320px; animation: glintFlash 3.6s ease-in-out infinite; }
+    </style>
+
+    <!-- ARENA BACKGROUND -->
+    <g id="background">
+      <rect x="44" y="44" width="424" height="424" fill="url(#knightArenaBg)" />
+      <!-- Golden light rays -->
+      <polygon points="256,44 180,468 220,468" fill="#facc15" opacity="0.12" />
+      <polygon points="256,44 320,468 280,468" fill="#facc15" opacity="0.12" />
+    </g>
+
+    <!-- CAPE (BEHIND BODY) -->
+    <g id="character-clothing" class="cape-anim">
+      <path d="M180 270 C140 330 130 400 150 435 C200 420 230 430 256 425 C282 430 312 420 362 435 C382 400 372 330 332 270 Z" fill="#7e22ce" stroke="#0f172a" stroke-width="4" />
+      <path d="M150 435 Q256 415 362 435 L350 445 Q256 425 160 445 Z" fill="url(#goldFiligree)" />
+    </g>
+
+    <!-- CHARACTER SHADOW -->
+    <g id="character-shadow">
+      <ellipse cx="256" cy="435" rx="85" ry="20" fill="#000" opacity="0.5" />
+    </g>
+
+    <!-- KNIGHT BODY -->
+    <g id="character-animation">
+      <!-- LEGS -->
+      <g id="character-legs">
+        <rect x="212" y="380" width="34" height="45" rx="8" fill="url(#armorSteel)" stroke="#0f172a" stroke-width="4" />
+        <rect x="266" y="380" width="34" height="45" rx="8" fill="url(#armorSteel)" stroke="#0f172a" stroke-width="4" />
+      </g>
+
+      <!-- BREASTPLATE & SHOULDERS -->
+      <g id="character-body">
+        <!-- Puffed Out Chest Plate -->
+        <path d="M185 270 Q256 255 327 270 L315 385 Q256 400 197 385 Z" fill="url(#armorSteel)" stroke="#0f172a" stroke-width="4.5" />
+        <!-- Golden heraldic lion / sun crest -->
+        <path d="M236 300 Q256 280 276 300 L268 340 Q256 355 244 340 Z" fill="url(#goldFiligree)" stroke="#78350f" stroke-width="2.5" />
+        <!-- Big Round Pauldrons (Shoulder Guards) -->
+        <circle cx="178" cy="275" r="26" fill="url(#armorSteel)" stroke="#0f172a" stroke-width="4" />
+        <circle cx="334" cy="275" r="26" fill="url(#armorSteel)" stroke="#0f172a" stroke-width="4" />
+        <circle cx="178" cy="275" r="14" fill="url(#goldFiligree)" />
+        <circle cx="334" cy="275" r="14" fill="url(#goldFiligree)" />
+      </g>
+
+      <!-- STAR SHINE GLINT ON ARMOR -->
+      <g class="star-glint">
+        <polygon points="220,305 225,317 237,320 225,323 220,335 215,323 203,320 215,317" fill="#fff" />
+      </g>
+
+      <!-- THUMBS-UP GAUNTLET -->
+      <g id="character-arms">
+        <!-- Right arm resting on hip -->
+        <path d="M180 285 Q150 330 175 365" fill="none" stroke="url(#armorSteel)" stroke-width="22" stroke-linecap="round" />
+        <!-- Left arm giving enthusiastic Thumbs Up -->
+        <path d="M330 285 Q375 320 360 350" fill="none" stroke="url(#armorSteel)" stroke-width="22" stroke-linecap="round" />
+        <!-- Gauntlet Fist with Thumbs Up -->
+        <g transform="translate(360, 335)">
+          <circle cx="0" cy="0" r="16" fill="url(#goldFiligree)" stroke="#0f172a" stroke-width="3" />
+          <!-- Thumb pointing up -->
+          <rect x="-6" y="-24" width="12" height="18" rx="6" fill="url(#goldFiligree)" stroke="#0f172a" stroke-width="3" />
+        </g>
+      </g>
+
+      <!-- HELMET & FACE COMPOSITION -->
+      <g id="character-head">
+        <!-- Plume of Feathers on Top -->
+        <g class="plume-anim">
+          <path d="M256 120 C230 60 280 40 310 50 C290 80 280 100 256 120 Z" fill="#ef4444" stroke="#0f172a" stroke-width="3" />
+          <path d="M256 120 C240 70 290 60 325 75 C295 95 280 110 256 120 Z" fill="#facc15" stroke="#0f172a" stroke-width="3" />
+        </g>
+
+        <!-- Steel Great Helm -->
+        <path d="M196 225 C196 145 316 145 316 225 C316 270 306 280 256 285 C206 280 196 270 196 225 Z" fill="url(#armorSteel)" stroke="#0f172a" stroke-width="4.5" />
+        <!-- Gold helmet brow trim -->
+        <rect x="194" y="195" width="124" height="14" rx="4" fill="url(#goldFiligree)" stroke="#0f172a" stroke-width="2.5" />
+
+        <!-- Eyes visible beneath helmet (when visor is up) -->
+        <g id="character-eyes">
+          <ellipse cx="236" cy="225" rx="14" ry="12" fill="#fff" stroke="#0f172a" stroke-width="3" />
+          <ellipse cx="276" cy="225" rx="14" ry="12" fill="#fff" stroke="#0f172a" stroke-width="3" />
+          <circle cx="238" cy="225" r="6" fill="#2563eb" />
+          <circle cx="278" cy="225" r="6" fill="#2563eb" />
+          <!-- Smug smile under helmet opening -->
+          <path d="M246 254 Q256 262 266 254" stroke="#78350f" stroke-width="3.5" fill="none" stroke-linecap="round" />
+        </g>
+
+        <!-- SLIPPING VISOR (ANIMATED CLANK) -->
+        <g id="character-visor" class="visor-slip">
+          <!-- The visor plate that falls down over the eye opening -->
+          <path d="M190 195 C220 185 292 185 322 195 L318 245 C285 260 227 260 194 245 Z" fill="url(#armorSteel)" stroke="#0f172a" stroke-width="4" />
+          <!-- Visor Vision Slits -->
+          <rect x="216" y="215" width="32" height="6" rx="2" fill="#0f172a" />
+          <rect x="264" y="215" width="32" height="6" rx="2" fill="#0f172a" />
+          <!-- Breathing breath holes -->
+          <circle cx="236" cy="235" r="2.5" fill="#0f172a" />
+          <circle cx="248" cy="235" r="2.5" fill="#0f172a" />
+          <circle cx="264" cy="235" r="2.5" fill="#0f172a" />
+          <circle cx="276" cy="235" r="2.5" fill="#0f172a" />
+          <!-- Big gold pivot screw on visor side -->
+          <circle cx="194" cy="205" r="7" fill="url(#goldFiligree)" stroke="#0f172a" stroke-width="2" />
+          <circle cx="318" cy="205" r="7" fill="url(#goldFiligree)" stroke="#0f172a" stroke-width="2" />
+        </g>
+      </g>
+    </g>
+  
+  </g>
+
+  <!-- ================= MASTER FUTURISTIC METALLIC FRAME ================= -->
+  <g id="frame">
+    <!-- Outer Shadow Layer -->
+    <rect x="18" y="18" width="476" height="476" rx="42" fill="none" stroke="#020617" stroke-width="12" opacity="0.9" />
+
+    <!-- Main Outer Beveled Steel Shell -->
+    <rect x="24" y="24" width="464" height="464" rx="38" fill="none" stroke="url(#frameBevelGrad)" stroke-width="26" />
+    
+    <!-- Outer Highlight Rim -->
+    <rect x="37" y="37" width="438" height="438" rx="32" fill="none" stroke="url(#steelTrimGrad)" stroke-width="4" opacity="0.8" />
+
+    <!-- Neon Cyan Inner Cyber Border -->
+    <rect x="44" y="44" width="424" height="424" rx="28" fill="none" stroke="url(#cyanNeonGrad)" stroke-width="5" class="frame-neon-glow" />
+
+    <!-- Corner Armor Clamp 1: Top-Left -->
+    <g transform="translate(24, 24)">
+      <polygon points="0,0 48,0 24,24 0,48" fill="url(#goldPlateGrad)" />
+      <polygon points="4,4 40,4 20,24 4,40" fill="#1e293b" />
+      <circle cx="16" cy="16" r="4.5" fill="#fef08a" stroke="#78350f" stroke-width="1.5" />
+    </g>
+
+    <!-- Corner Armor Clamp 2: Top-Right -->
+    <g transform="translate(488, 24) scale(-1, 1)">
+      <polygon points="0,0 48,0 24,24 0,48" fill="url(#goldPlateGrad)" />
+      <polygon points="4,4 40,4 20,24 4,40" fill="#1e293b" />
+      <circle cx="16" cy="16" r="4.5" fill="#fef08a" stroke="#78350f" stroke-width="1.5" />
+    </g>
+
+    <!-- Corner Armor Clamp 3: Bottom-Left -->
+    <g transform="translate(24, 488) scale(1, -1)">
+      <polygon points="0,0 48,0 24,24 0,48" fill="url(#goldPlateGrad)" />
+      <polygon points="4,4 40,4 20,24 4,40" fill="#1e293b" />
+      <circle cx="16" cy="16" r="4.5" fill="#fef08a" stroke="#78350f" stroke-width="1.5" />
+    </g>
+
+    <!-- Corner Armor Clamp 4: Bottom-Right -->
+    <g transform="translate(488, 488) scale(-1, -1)">
+      <polygon points="0,0 48,0 24,24 0,48" fill="url(#goldPlateGrad)" />
+      <polygon points="4,4 40,4 20,24 4,40" fill="#1e293b" />
+      <circle cx="16" cy="16" r="4.5" fill="#fef08a" stroke="#78350f" stroke-width="1.5" />
+    </g>
+
+    <!-- Decorative Edge Screws / Rivets -->
+    <circle cx="256" cy="31" r="3.5" fill="#94a3b8" stroke="#0f172a" stroke-width="1.5" />
+    <circle cx="256" cy="481" r="3.5" fill="#94a3b8" stroke="#0f172a" stroke-width="1.5" />
+    <circle cx="31" cy="256" r="3.5" fill="#94a3b8" stroke="#0f172a" stroke-width="1.5" />
+    <circle cx="481" cy="256" r="3.5" fill="#94a3b8" stroke="#0f172a" stroke-width="1.5" />
+
+    <!-- Top Bevel Light Sweep Shimmer Line -->
+    <rect x="60" y="32" width="200" height="4" fill="url(#lightSweepGrad)" class="frame-sweep-line" />
+  </g>
+</svg>

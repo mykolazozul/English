@@ -1,0 +1,257 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Master Metallic UI Gradients -->
+    <linearGradient id="frameBevelGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#334155" />
+      <stop offset="25%" stop-color="#1e293b" />
+      <stop offset="70%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#020617" />
+    </linearGradient>
+    <linearGradient id="steelTrimGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#64748b" />
+      <stop offset="50%" stop-color="#334155" />
+      <stop offset="100%" stop-color="#1e293b" />
+    </linearGradient>
+    <linearGradient id="cyanNeonGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="50%" stop-color="#0284c7" />
+      <stop offset="100%" stop-color="#0369a1" />
+    </linearGradient>
+    <linearGradient id="goldPlateGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a" />
+      <stop offset="40%" stop-color="#eab308" />
+      <stop offset="100%" stop-color="#a16207" />
+    </linearGradient>
+    <linearGradient id="lightSweepGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="rgba(56,189,248,0)" />
+      <stop offset="50%" stop-color="rgba(56,189,248,0.5)" />
+      <stop offset="100%" stop-color="rgba(56,189,248,0)" />
+    </linearGradient>
+
+    <!-- Clip Path for Inside the Avatar Screen -->
+    <clipPath id="avatarScreenClip">
+      <rect x="44" y="44" width="424" height="424" rx="28" />
+    </clipPath>
+
+    
+    <radialGradient id="mountainBg" cx="50%" cy="40%" r="70%">
+      <stop offset="0%" stop-color="#3f3f46" />
+      <stop offset="50%" stop-color="#27272a" />
+      <stop offset="100%" stop-color="#09090b" />
+    </radialGradient>
+    <linearGradient id="graniteRock" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#a1a1aa" />
+      <stop offset="45%" stop-color="#71717a" />
+      <stop offset="100%" stop-color="#3f3f46" />
+    </linearGradient>
+    <linearGradient id="runeGlow" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#0284c7" />
+    </linearGradient>
+  
+  </defs>
+
+  <style>
+    /* Frame continuous subtle animations */
+    @keyframes framePulse {
+      0%, 100% { stroke-opacity: 0.6; filter: drop-shadow(0 0 6px rgba(56,189,248,0.3)); }
+      50% { stroke-opacity: 1; filter: drop-shadow(0 0 14px rgba(56,189,248,0.8)); }
+    }
+    @keyframes sweepMove {
+      0% { transform: translateX(-400px); }
+      50%, 100% { transform: translateX(500px); }
+    }
+    .frame-neon-glow {
+      animation: framePulse 4s ease-in-out infinite;
+    }
+    .frame-sweep-line {
+      animation: sweepMove 6s ease-in-out infinite;
+    }
+  </style>
+
+  <!-- BACKGROUND & CHARACTER CONTENT (CLIPPED TO SCREEN) -->
+  <g clip-path="url(#avatarScreenClip)">
+    
+    <style>
+      @keyframes colossusFlexAnim {
+        0%, 100% { transform: scale(1, 1); }
+        40% { transform: scale(1.08, 0.96) translateY(4px); } /* Maximum flex! */
+        45% { transform: scale(1.10, 0.95); }
+        60% { transform: scale(0.98, 1.02); }
+      }
+      @keyframes flowerBreeze {
+        0%, 100% { transform: rotate(0deg); }
+        50% { transform: rotate(18deg); }
+      }
+      @keyframes butterflyHover {
+        0%, 100% { transform: translate(140px, 180px); }
+        35% { transform: translate(160px, 155px); }
+        70% { transform: translate(130px, 170px); }
+      }
+      @keyframes wingFlap {
+        0%, 100% { transform: scaleX(1); }
+        50% { transform: scaleX(0.2); }
+      }
+      @keyframes runePulse {
+        0%, 100% { opacity: 0.6; filter: drop-shadow(0 0 4px #38bdf8); }
+        50% { opacity: 1; filter: drop-shadow(0 0 12px #38bdf8); }
+      }
+      .flex-actor { transform-origin: 256px 420px; animation: colossusFlexAnim 2.4s cubic-bezier(0.68, -0.55, 0.27, 1.55) infinite; }
+      .daisy-anim { transform-origin: 270px 150px; animation: flowerBreeze 2.2s ease-in-out infinite; }
+      .butterfly-group { animation: butterflyHover 4s ease-in-out infinite; }
+      .b-wing { transform-origin: center; animation: wingFlap 0.2s linear infinite; }
+      .rune-crack { animation: runePulse 2s ease-in-out infinite; }
+    </style>
+
+    <!-- MOUNTAIN PEAKS BACKGROUND -->
+    <g id="background">
+      <rect x="44" y="44" width="424" height="424" fill="url(#mountainBg)" />
+      <!-- Sharp Granite Peak Silhouettes -->
+      <polygon points="44,380 140,240 240,380" fill="#18181b" />
+      <polygon points="260,380 370,220 468,380" fill="#18181b" />
+    </g>
+
+    <!-- BUTTERFLY HOVERING (COMEDIC CONTRAST) -->
+    <g class="butterfly-group">
+      <ellipse cx="0" cy="0" rx="3" ry="8" fill="#18181b" />
+      <g class="b-wing">
+        <circle cx="-7" cy="-3" r="6" fill="#facc15" />
+        <circle cx="7" cy="-3" r="6" fill="#facc15" />
+      </g>
+    </g>
+
+    <!-- TINY MOUND & SHADOW -->
+    <g id="character-shadow">
+      <ellipse cx="256" cy="425" rx="80" ry="18" fill="#000" opacity="0.6" />
+      <!-- Small pebble mound -->
+      <polygon points="180,435 256,415 332,435" fill="#52525b" stroke="#0f172a" stroke-width="3" />
+    </g>
+
+    <!-- WHOLE STONE GIANT (ANIMATED BICEP FLEX) -->
+    <g id="character-animation" class="flex-actor">
+      <!-- STONE LEGS -->
+      <g id="character-legs">
+        <rect x="205" y="375" width="42" height="45" rx="10" fill="url(#graniteRock)" stroke="#0f172a" stroke-width="4.5" />
+        <rect x="265" y="375" width="42" height="45" rx="10" fill="url(#graniteRock)" stroke="#0f172a" stroke-width="4.5" />
+      </g>
+
+      <!-- CHISELED GRANITE TORSO -->
+      <g id="character-body">
+        <!-- Angular Rock Plates -->
+        <polygon points="180,260 256,245 332,260 315,385 197,385" fill="url(#graniteRock)" stroke="#0f172a" stroke-width="5" />
+        
+        <!-- Glowing Cyan Arcane Cracks (ANIMATED PULSE) -->
+        <g class="rune-crack">
+          <path d="M225 285 L256 315 L245 345 L265 375" stroke="url(#runeGlow)" stroke-width="4.5" fill="none" stroke-linecap="round" />
+          <path d="M256 315 L285 300 L295 335" stroke="url(#runeGlow)" stroke-width="4" fill="none" stroke-linecap="round" />
+        </g>
+      </g>
+
+      <!-- COMICALLY FLEXED BICEPS (ARMS UP) -->
+      <g id="character-arms">
+        <!-- Left Arm Flexing Up -->
+        <path d="M185 270 C140 260 120 220 135 180 C155 185 170 215 190 240 Z" fill="url(#graniteRock)" stroke="#0f172a" stroke-width="4.5" />
+        <!-- Huge Stone Fist -->
+        <circle cx="138" cy="180" r="22" fill="url(#graniteRock)" stroke="#0f172a" stroke-width="4" />
+        <!-- Bicep muscle peak -->
+        <ellipse cx="160" cy="225" rx="14" ry="18" fill="url(#graniteRock)" stroke="#0f172a" stroke-width="3" />
+
+        <!-- Right Arm Flexing Up -->
+        <path d="M327 270 C372 260 392 220 377 180 C357 185 342 215 322 240 Z" fill="url(#graniteRock)" stroke="#0f172a" stroke-width="4.5" />
+        <!-- Huge Stone Fist -->
+        <circle cx="374" cy="180" r="22" fill="url(#graniteRock)" stroke="#0f172a" stroke-width="4" />
+        <!-- Bicep muscle peak -->
+        <ellipse cx="352" cy="225" rx="14" ry="18" fill="url(#graniteRock)" stroke="#0f172a" stroke-width="3" />
+      </g>
+
+      <!-- STONE BLOCK HEAD -->
+      <g id="character-head">
+        <!-- Angular Granite Head -->
+        <polygon points="196,155 256,140 316,155 322,235 256,245 190,235" fill="url(#graniteRock)" stroke="#0f172a" stroke-width="5" />
+
+        <!-- Chiseled Brow -->
+        <polygon points="205,175 256,185 307,175 302,192 256,200 210,192" fill="#52525b" stroke="#0f172a" stroke-width="3" />
+
+        <!-- Glowing Blue Rune Eyes -->
+        <g id="character-eyes">
+          <polygon points="222,195 242,198 238,206 220,202" fill="#38bdf8" filter="drop-shadow(0 0 6px #38bdf8)" />
+          <polygon points="290,195 270,198 274,206 292,202" fill="#38bdf8" filter="drop-shadow(0 0 6px #38bdf8)" />
+        </g>
+
+        <!-- Ferocious Stone Roar Mouth -->
+        <polygon points="236,218 276,218 270,236 242,236" fill="#18181b" stroke="#0f172a" stroke-width="3" />
+        <rect x="246" y="218" width="8" height="5" fill="#f8fafc" />
+        <rect x="258" y="218" width="8" height="5" fill="#f8fafc" />
+
+        <!-- CUTE PINK DAISY SPROUTED IN HEAD CRACK (ANIMATED SWAY) -->
+        <g id="character-flower" class="daisy-anim">
+          <!-- Green stem emerging from skull crack -->
+          <path d="M266 148 Q270 125 264 105" stroke="#22c55e" stroke-width="4" fill="none" stroke-linecap="round" />
+          <!-- Daisy Flower Petals -->
+          <g transform="translate(264, 105)">
+            <circle cx="0" cy="-10" r="6" fill="#f472b6" />
+            <circle cx="10" cy="-3" r="6" fill="#f472b6" />
+            <circle cx="7" cy="8" r="6" fill="#f472b6" />
+            <circle cx="-7" cy="8" r="6" fill="#f472b6" />
+            <circle cx="-10" cy="-3" r="6" fill="#f472b6" />
+            <!-- Yellow Flower Center -->
+            <circle cx="0" cy="0" r="6" fill="#facc15" stroke="#78350f" stroke-width="1.5" />
+          </g>
+        </g>
+      </g>
+    </g>
+  
+  </g>
+
+  <!-- ================= MASTER FUTURISTIC METALLIC FRAME ================= -->
+  <g id="frame">
+    <!-- Outer Shadow Layer -->
+    <rect x="18" y="18" width="476" height="476" rx="42" fill="none" stroke="#020617" stroke-width="12" opacity="0.9" />
+
+    <!-- Main Outer Beveled Steel Shell -->
+    <rect x="24" y="24" width="464" height="464" rx="38" fill="none" stroke="url(#frameBevelGrad)" stroke-width="26" />
+    
+    <!-- Outer Highlight Rim -->
+    <rect x="37" y="37" width="438" height="438" rx="32" fill="none" stroke="url(#steelTrimGrad)" stroke-width="4" opacity="0.8" />
+
+    <!-- Neon Cyan Inner Cyber Border -->
+    <rect x="44" y="44" width="424" height="424" rx="28" fill="none" stroke="url(#cyanNeonGrad)" stroke-width="5" class="frame-neon-glow" />
+
+    <!-- Corner Armor Clamp 1: Top-Left -->
+    <g transform="translate(24, 24)">
+      <polygon points="0,0 48,0 24,24 0,48" fill="url(#goldPlateGrad)" />
+      <polygon points="4,4 40,4 20,24 4,40" fill="#1e293b" />
+      <circle cx="16" cy="16" r="4.5" fill="#fef08a" stroke="#78350f" stroke-width="1.5" />
+    </g>
+
+    <!-- Corner Armor Clamp 2: Top-Right -->
+    <g transform="translate(488, 24) scale(-1, 1)">
+      <polygon points="0,0 48,0 24,24 0,48" fill="url(#goldPlateGrad)" />
+      <polygon points="4,4 40,4 20,24 4,40" fill="#1e293b" />
+      <circle cx="16" cy="16" r="4.5" fill="#fef08a" stroke="#78350f" stroke-width="1.5" />
+    </g>
+
+    <!-- Corner Armor Clamp 3: Bottom-Left -->
+    <g transform="translate(24, 488) scale(1, -1)">
+      <polygon points="0,0 48,0 24,24 0,48" fill="url(#goldPlateGrad)" />
+      <polygon points="4,4 40,4 20,24 4,40" fill="#1e293b" />
+      <circle cx="16" cy="16" r="4.5" fill="#fef08a" stroke="#78350f" stroke-width="1.5" />
+    </g>
+
+    <!-- Corner Armor Clamp 4: Bottom-Right -->
+    <g transform="translate(488, 488) scale(-1, -1)">
+      <polygon points="0,0 48,0 24,24 0,48" fill="url(#goldPlateGrad)" />
+      <polygon points="4,4 40,4 20,24 4,40" fill="#1e293b" />
+      <circle cx="16" cy="16" r="4.5" fill="#fef08a" stroke="#78350f" stroke-width="1.5" />
+    </g>
+
+    <!-- Decorative Edge Screws / Rivets -->
+    <circle cx="256" cy="31" r="3.5" fill="#94a3b8" stroke="#0f172a" stroke-width="1.5" />
+    <circle cx="256" cy="481" r="3.5" fill="#94a3b8" stroke="#0f172a" stroke-width="1.5" />
+    <circle cx="31" cy="256" r="3.5" fill="#94a3b8" stroke="#0f172a" stroke-width="1.5" />
+    <circle cx="481" cy="256" r="3.5" fill="#94a3b8" stroke="#0f172a" stroke-width="1.5" />
+
+    <!-- Top Bevel Light Sweep Shimmer Line -->
+    <rect x="60" y="32" width="200" height="4" fill="url(#lightSweepGrad)" class="frame-sweep-line" />
+  </g>
+</svg>

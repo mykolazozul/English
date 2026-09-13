@@ -1,0 +1,248 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Master Metallic UI Gradients -->
+    <linearGradient id="frameBevelGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#334155" />
+      <stop offset="25%" stop-color="#1e293b" />
+      <stop offset="70%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#020617" />
+    </linearGradient>
+    <linearGradient id="steelTrimGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#64748b" />
+      <stop offset="50%" stop-color="#334155" />
+      <stop offset="100%" stop-color="#1e293b" />
+    </linearGradient>
+    <linearGradient id="cyanNeonGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="50%" stop-color="#0284c7" />
+      <stop offset="100%" stop-color="#0369a1" />
+    </linearGradient>
+    <linearGradient id="goldPlateGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a" />
+      <stop offset="40%" stop-color="#eab308" />
+      <stop offset="100%" stop-color="#a16207" />
+    </linearGradient>
+    <linearGradient id="lightSweepGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="rgba(56,189,248,0)" />
+      <stop offset="50%" stop-color="rgba(56,189,248,0.5)" />
+      <stop offset="100%" stop-color="rgba(56,189,248,0)" />
+    </linearGradient>
+
+    <!-- Clip Path for Inside the Avatar Screen -->
+    <clipPath id="avatarScreenClip">
+      <rect x="44" y="44" width="424" height="424" rx="28" />
+    </clipPath>
+
+    
+    <radialGradient id="duckSkyBg" cx="50%" cy="40%" r="70%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="60%" stop-color="#0284c7" />
+      <stop offset="100%" stop-color="#082f49" />
+    </radialGradient>
+    <linearGradient id="planeRed" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ef4444" />
+      <stop offset="50%" stop-color="#dc2626" />
+      <stop offset="100%" stop-color="#991b1b" />
+    </linearGradient>
+  
+  </defs>
+
+  <style>
+    /* Frame continuous subtle animations */
+    @keyframes framePulse {
+      0%, 100% { stroke-opacity: 0.6; filter: drop-shadow(0 0 6px rgba(56,189,248,0.3)); }
+      50% { stroke-opacity: 1; filter: drop-shadow(0 0 14px rgba(56,189,248,0.8)); }
+    }
+    @keyframes sweepMove {
+      0% { transform: translateX(-400px); }
+      50%, 100% { transform: translateX(500px); }
+    }
+    .frame-neon-glow {
+      animation: framePulse 4s ease-in-out infinite;
+    }
+    .frame-sweep-line {
+      animation: sweepMove 6s ease-in-out infinite;
+    }
+  </style>
+
+  <!-- BACKGROUND & CHARACTER CONTENT (CLIPPED TO SCREEN) -->
+  <g clip-path="url(#avatarScreenClip)">
+    
+    <style>
+      @keyframes planeTurbulence {
+        0%, 100% { transform: translateY(0px) rotate(0deg); }
+        25% { transform: translateY(-12px) rotate(-7deg); }
+        50% { transform: translateY(8px) rotate(4deg); }
+        75% { transform: translateY(-6px) rotate(-3deg); }
+      }
+      @keyframes propellerSpin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      @keyframes scarfFlutter {
+        0%, 100% { transform: rotate(0deg) skewY(0deg); }
+        50% { transform: rotate(-12deg) skewY(-8deg); }
+      }
+      @keyframes billChatter {
+        0%, 100% { transform: scaleY(1); }
+        50% { transform: scaleY(1.25); }
+      }
+      @keyframes cloudDrift {
+        0% { transform: translateX(0); }
+        100% { transform: translateX(-180px); }
+      }
+      .plane-anim { transform-origin: 256px 300px; animation: planeTurbulence 2.2s ease-in-out infinite; }
+      .prop-blade { transform-origin: 256px 390px; animation: propellerSpin 0.12s linear infinite; }
+      .scarf-tail { transform-origin: 190px 240px; animation: scarfFlutter 0.6s ease-in-out infinite; }
+      .duck-bill { transform-origin: 256px 225px; animation: billChatter 0.4s ease-in-out infinite; }
+      .cloud-move { animation: cloudDrift 5s linear infinite; }
+    </style>
+
+    <!-- SKY BACKGROUND WITH SPEED CLOUDS -->
+    <g id="background">
+      <rect x="44" y="44" width="424" height="424" fill="url(#duckSkyBg)" />
+      <!-- Drifting cartoon clouds -->
+      <g class="cloud-move" opacity="0.5">
+        <path d="M420 120 Q440 100 460 120 Q480 120 480 140 Q480 160 450 160 L400 160 Q390 140 420 120 Z" fill="#fff" />
+        <path d="M300 200 Q320 180 340 200 Q360 200 360 220 L280 220 Q280 200 300 200 Z" fill="#fff" opacity="0.6" />
+      </g>
+    </g>
+
+    <!-- PLANE & DUCK COMPOSITION -->
+    <g id="character-animation" class="plane-anim">
+      <!-- FLAPPING SCARF TAIL (BEHIND DUCK) -->
+      <g id="character-clothing" class="scarf-tail">
+        <path d="M190 235 C140 230 110 210 80 230 C100 250 140 260 185 248 Z" fill="#ef4444" stroke="#0f172a" stroke-width="3.5" />
+      </g>
+
+      <!-- DUCK PILOT -->
+      <g id="character-body">
+        <!-- Plump Yellow Body -->
+        <ellipse cx="256" cy="245" rx="68" ry="60" fill="#facc15" stroke="#0f172a" stroke-width="4" />
+        <!-- Wings gripping the sides -->
+        <path d="M185 240 C170 265 195 295 210 290 Z" fill="#eab308" stroke="#0f172a" stroke-width="3.5" />
+        <path d="M327 240 C342 265 317 295 302 290 Z" fill="#eab308" stroke="#0f172a" stroke-width="3.5" />
+      </g>
+
+      <!-- DUCK HEAD -->
+      <g id="character-head">
+        <ellipse cx="256" cy="180" rx="58" ry="52" fill="#facc15" stroke="#0f172a" stroke-width="4" />
+
+        <!-- Big Panicked Aviator Eyes -->
+        <g id="character-eyes">
+          <ellipse cx="236" cy="175" rx="17" ry="22" fill="#fff" stroke="#0f172a" stroke-width="3.5" />
+          <ellipse cx="276" cy="175" rx="17" ry="22" fill="#fff" stroke="#0f172a" stroke-width="3.5" />
+          <!-- Swirling dizzy/panicked pupils -->
+          <circle cx="238" cy="176" r="7.5" fill="#0f172a" />
+          <circle cx="274" cy="176" r="7.5" fill="#0f172a" />
+          <circle cx="236" cy="172" r="2.5" fill="#fff" />
+          <circle cx="272" cy="172" r="2.5" fill="#fff" />
+        </g>
+
+        <!-- Wide Orange Quacking Bill -->
+        <g id="character-mouth" class="duck-bill">
+          <path d="M216 205 Q256 195 296 205 C304 225 284 240 256 240 C228 240 208 225 216 205 Z" fill="#f97316" stroke="#0f172a" stroke-width="3.5" />
+          <path d="M228 215 Q256 220 284 215" stroke="#9a3412" stroke-width="3" fill="none" />
+          <circle cx="244" cy="208" r="2" fill="#7c2d12" />
+          <circle cx="268" cy="208" r="2" fill="#7c2d12" />
+        </g>
+
+        <!-- Red Scarf Collar -->
+        <path d="M210 230 Q256 245 302 230 Q308 250 256 255 Q204 250 210 230 Z" fill="#ef4444" stroke="#0f172a" stroke-width="3.5" />
+
+        <!-- Leather Aviator Helmet with Goggles -->
+        <path d="M198 175 C198 120 314 120 314 175 C314 185 308 210 306 220 L292 215 L296 185 L216 185 L220 215 L206 220 Z" fill="#78350f" stroke="#0f172a" stroke-width="4" />
+        <!-- Ear Flaps -->
+        <rect x="194" y="175" width="16" height="35" rx="8" fill="#9a3412" stroke="#0f172a" stroke-width="3" />
+        <rect x="302" y="175" width="16" height="35" rx="8" fill="#9a3412" stroke="#0f172a" stroke-width="3" />
+        
+        <!-- Big Round Aviator Goggles on Brow -->
+        <g id="character-goggles">
+          <rect x="212" y="138" width="88" height="10" rx="4" fill="#1e293b" />
+          <circle cx="236" cy="142" r="18" fill="#38bdf8" stroke="#f59e0b" stroke-width="4" />
+          <circle cx="276" cy="142" r="18" fill="#38bdf8" stroke="#f59e0b" stroke-width="4" />
+          <!-- Lens glint -->
+          <path d="M228 134 Q238 132 244 140" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" />
+          <path d="M268 134 Q278 132 284 140" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" />
+        </g>
+      </g>
+
+      <!-- MICRO BI-PLANE FUSELAGE -->
+      <g id="character-airplane">
+        <!-- Upper Wing -->
+        <rect x="116" y="270" width="280" height="20" rx="8" fill="#eab308" stroke="#0f172a" stroke-width="4" />
+        <!-- Cockpit Body -->
+        <path d="M180 290 Q256 275 332 290 L310 400 Q256 420 202 400 Z" fill="url(#planeRed)" stroke="#0f172a" stroke-width="4.5" />
+        <!-- Wing Struts -->
+        <line x1="160" y1="290" x2="180" y2="340" stroke="#0f172a" stroke-width="4" />
+        <line x1="352" y1="290" x2="332" y2="340" stroke="#0f172a" stroke-width="4" />
+        <!-- Lower Wing -->
+        <rect x="136" y="340" width="240" height="18" rx="7" fill="#eab308" stroke="#0f172a" stroke-width="4" />
+
+        <!-- Propeller Hub and Spinning Blur -->
+        <circle cx="256" cy="390" r="38" fill="rgba(255,255,255,0.25)" stroke="#38bdf8" stroke-width="2" stroke-dasharray="8 6" />
+        <!-- Spinning 3-blade Propeller -->
+        <g class="prop-blade">
+          <ellipse cx="256" cy="345" rx="8" ry="40" fill="#f8fafc" stroke="#0f172a" stroke-width="3" />
+          <ellipse cx="295" cy="412" rx="40" ry="8" fill="#f8fafc" stroke="#0f172a" stroke-width="3" transform="rotate(30 295 412)" />
+          <ellipse cx="217" cy="412" rx="40" ry="8" fill="#f8fafc" stroke="#0f172a" stroke-width="3" transform="rotate(-30 217 412)" />
+        </g>
+        <!-- Center Spinner Nose Cone -->
+        <circle cx="256" cy="390" r="14" fill="#facc15" stroke="#0f172a" stroke-width="3.5" />
+      </g>
+    </g>
+  
+  </g>
+
+  <!-- ================= MASTER FUTURISTIC METALLIC FRAME ================= -->
+  <g id="frame">
+    <!-- Outer Shadow Layer -->
+    <rect x="18" y="18" width="476" height="476" rx="42" fill="none" stroke="#020617" stroke-width="12" opacity="0.9" />
+
+    <!-- Main Outer Beveled Steel Shell -->
+    <rect x="24" y="24" width="464" height="464" rx="38" fill="none" stroke="url(#frameBevelGrad)" stroke-width="26" />
+    
+    <!-- Outer Highlight Rim -->
+    <rect x="37" y="37" width="438" height="438" rx="32" fill="none" stroke="url(#steelTrimGrad)" stroke-width="4" opacity="0.8" />
+
+    <!-- Neon Cyan Inner Cyber Border -->
+    <rect x="44" y="44" width="424" height="424" rx="28" fill="none" stroke="url(#cyanNeonGrad)" stroke-width="5" class="frame-neon-glow" />
+
+    <!-- Corner Armor Clamp 1: Top-Left -->
+    <g transform="translate(24, 24)">
+      <polygon points="0,0 48,0 24,24 0,48" fill="url(#goldPlateGrad)" />
+      <polygon points="4,4 40,4 20,24 4,40" fill="#1e293b" />
+      <circle cx="16" cy="16" r="4.5" fill="#fef08a" stroke="#78350f" stroke-width="1.5" />
+    </g>
+
+    <!-- Corner Armor Clamp 2: Top-Right -->
+    <g transform="translate(488, 24) scale(-1, 1)">
+      <polygon points="0,0 48,0 24,24 0,48" fill="url(#goldPlateGrad)" />
+      <polygon points="4,4 40,4 20,24 4,40" fill="#1e293b" />
+      <circle cx="16" cy="16" r="4.5" fill="#fef08a" stroke="#78350f" stroke-width="1.5" />
+    </g>
+
+    <!-- Corner Armor Clamp 3: Bottom-Left -->
+    <g transform="translate(24, 488) scale(1, -1)">
+      <polygon points="0,0 48,0 24,24 0,48" fill="url(#goldPlateGrad)" />
+      <polygon points="4,4 40,4 20,24 4,40" fill="#1e293b" />
+      <circle cx="16" cy="16" r="4.5" fill="#fef08a" stroke="#78350f" stroke-width="1.5" />
+    </g>
+
+    <!-- Corner Armor Clamp 4: Bottom-Right -->
+    <g transform="translate(488, 488) scale(-1, -1)">
+      <polygon points="0,0 48,0 24,24 0,48" fill="url(#goldPlateGrad)" />
+      <polygon points="4,4 40,4 20,24 4,40" fill="#1e293b" />
+      <circle cx="16" cy="16" r="4.5" fill="#fef08a" stroke="#78350f" stroke-width="1.5" />
+    </g>
+
+    <!-- Decorative Edge Screws / Rivets -->
+    <circle cx="256" cy="31" r="3.5" fill="#94a3b8" stroke="#0f172a" stroke-width="1.5" />
+    <circle cx="256" cy="481" r="3.5" fill="#94a3b8" stroke="#0f172a" stroke-width="1.5" />
+    <circle cx="31" cy="256" r="3.5" fill="#94a3b8" stroke="#0f172a" stroke-width="1.5" />
+    <circle cx="481" cy="256" r="3.5" fill="#94a3b8" stroke="#0f172a" stroke-width="1.5" />
+
+    <!-- Top Bevel Light Sweep Shimmer Line -->
+    <rect x="60" y="32" width="200" height="4" fill="url(#lightSweepGrad)" class="frame-sweep-line" />
+  </g>
+</svg>

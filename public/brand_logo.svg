@@ -1,0 +1,251 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Master Metallic UI Gradients -->
+    <linearGradient id="frameBevelGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#334155" />
+      <stop offset="25%" stop-color="#1e293b" />
+      <stop offset="70%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#020617" />
+    </linearGradient>
+    <linearGradient id="steelTrimGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#64748b" />
+      <stop offset="50%" stop-color="#334155" />
+      <stop offset="100%" stop-color="#1e293b" />
+    </linearGradient>
+    <linearGradient id="cyanNeonGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="50%" stop-color="#0284c7" />
+      <stop offset="100%" stop-color="#0369a1" />
+    </linearGradient>
+    <linearGradient id="goldPlateGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a" />
+      <stop offset="40%" stop-color="#eab308" />
+      <stop offset="100%" stop-color="#a16207" />
+    </linearGradient>
+    <linearGradient id="lightSweepGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="rgba(56,189,248,0)" />
+      <stop offset="50%" stop-color="rgba(56,189,248,0.5)" />
+      <stop offset="100%" stop-color="rgba(56,189,248,0)" />
+    </linearGradient>
+
+    <!-- Clip Path for Inside the Avatar Screen -->
+    <clipPath id="avatarScreenClip">
+      <rect x="44" y="44" width="424" height="424" rx="28" />
+    </clipPath>
+
+    
+    <radialGradient id="logoArcaneBg" cx="50%" cy="40%" r="70%">
+      <stop offset="0%" stop-color="#0284c7" />
+      <stop offset="45%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#020617" />
+    </radialGradient>
+    <linearGradient id="owlFeathers" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="50%" stop-color="#0284c7" />
+      <stop offset="100%" stop-color="#0369a1" />
+    </linearGradient>
+    <linearGradient id="goldHelm" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a" />
+      <stop offset="45%" stop-color="#eab308" />
+      <stop offset="100%" stop-color="#a16207" />
+    </linearGradient>
+    <linearGradient id="bookCover" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f97316" />
+      <stop offset="100%" stop-color="#c2410c" />
+    </linearGradient>
+  
+  </defs>
+
+  <style>
+    /* Frame continuous subtle animations */
+    @keyframes framePulse {
+      0%, 100% { stroke-opacity: 0.6; filter: drop-shadow(0 0 6px rgba(56,189,248,0.3)); }
+      50% { stroke-opacity: 1; filter: drop-shadow(0 0 14px rgba(56,189,248,0.8)); }
+    }
+    @keyframes sweepMove {
+      0% { transform: translateX(-400px); }
+      50%, 100% { transform: translateX(500px); }
+    }
+    .frame-neon-glow {
+      animation: framePulse 4s ease-in-out infinite;
+    }
+    .frame-sweep-line {
+      animation: sweepMove 6s ease-in-out infinite;
+    }
+  </style>
+
+  <!-- BACKGROUND & CHARACTER CONTENT (CLIPPED TO SCREEN) -->
+  <g clip-path="url(#avatarScreenClip)">
+    
+    <style>
+      @keyframes bookGlowPulse {
+        0%, 100% { filter: drop-shadow(0 0 10px rgba(56,189,248,0.5)); transform: scale(1); }
+        50% { filter: drop-shadow(0 0 24px rgba(56,189,248,0.9)); transform: scale(1.03); }
+      }
+      @keyframes plumeSway {
+        0%, 100% { transform: rotate(0deg); }
+        50% { transform: rotate(10deg); }
+      }
+      @keyframes owlWink {
+        0%, 75%, 100% { transform: scaleY(1); }
+        80%, 90% { transform: scaleY(0.1); }
+      }
+      @keyframes sparkFloat {
+        0% { transform: translateY(0) scale(0.6); opacity: 0; }
+        50% { opacity: 1; }
+        100% { transform: translateY(-80px) scale(1.2); opacity: 0; }
+      }
+      .book-glow { transform-origin: 256px 370px; animation: bookGlowPulse 2.4s ease-in-out infinite; }
+      .plume-anim { transform-origin: 256px 85px; animation: plumeSway 1.8s ease-in-out infinite; }
+      .wink-eye { transform-origin: 284px 215px; animation: owlWink 3.5s ease-in-out infinite; }
+      .spark1 { animation: sparkFloat 2.8s ease-out infinite; }
+      .spark2 { animation: sparkFloat 2.8s 1.4s ease-out infinite; }
+    </style>
+
+    <!-- COSMIC ARCANE BACKGROUND -->
+    <g id="background">
+      <rect x="44" y="44" width="424" height="424" fill="url(#logoArcaneBg)" />
+      <!-- Magical Star Sparkles -->
+      <polygon points="130,120 134,130 144,134 134,138 130,148 126,138 116,134 126,130" fill="#facc15" opacity="0.6" />
+      <polygon points="380,140 383,148 391,151 383,154 380,162 377,154 369,151 377,148" fill="#38bdf8" opacity="0.7" />
+      <!-- Rising Knowledge Sparks (ANIMATED) -->
+      <circle cx="210" cy="340" r="4" fill="#38bdf8" class="spark1" />
+      <circle cx="300" cy="350" r="5" fill="#facc15" class="spark2" />
+    </g>
+
+    <!-- CHARACTER SHADOW -->
+    <g id="character-shadow">
+      <ellipse cx="256" cy="435" rx="90" ry="20" fill="#000" opacity="0.6" />
+    </g>
+
+    <!-- OWL-KNIGHT MASCOT -->
+    <g id="character-animation">
+      <!-- Blue-Feather Body -->
+      <g id="character-body">
+        <ellipse cx="256" cy="320" rx="72" ry="68" fill="url(#owlFeathers)" stroke="#0f172a" stroke-width="4.5" />
+        <!-- White/Cyan Breast Plumage -->
+        <ellipse cx="256" cy="328" rx="46" ry="50" fill="#e0f2fe" stroke="#0f172a" stroke-width="3" />
+        <!-- Feathery scallops -->
+        <path d="M236 315 Q246 325 256 315 Q266 325 276 315" stroke="#38bdf8" stroke-width="3" fill="none" />
+        <path d="M230 340 Q243 350 256 340 Q269 350 282 340" stroke="#38bdf8" stroke-width="3" fill="none" />
+      </g>
+
+      <!-- OPEN GLOWING SPELLBOOK OF ENGLISH (ANIMATED GLOW) -->
+      <g id="character-book" class="book-glow">
+        <!-- Book Leather Cover -->
+        <path d="M170 345 L256 370 L342 345 L346 415 L256 435 L166 415 Z" fill="url(#bookCover)" stroke="#0f172a" stroke-width="4" />
+        <!-- Open Pages -->
+        <path d="M175 350 Q215 340 254 365 L254 425 Q215 400 172 410 Z" fill="#fef08a" stroke="#0f172a" stroke-width="3" />
+        <path d="M337 350 Q297 340 258 365 L258 425 Q297 400 340 410 Z" fill="#fef08a" stroke="#0f172a" stroke-width="3" />
+        <!-- Gold Letters A B C on Pages -->
+        <text x="195" y="385" font-family="Arial, sans-serif" font-weight="900" font-size="20" fill="#c2410c">A</text>
+        <text x="220" y="398" font-family="Arial, sans-serif" font-weight="900" font-size="16" fill="#c2410c">B</text>
+        <text x="285" y="385" font-family="Arial, sans-serif" font-weight="900" font-size="20" fill="#0284c7">C</text>
+        <text x="306" y="398" font-family="Arial, sans-serif" font-weight="900" font-size="16" fill="#0284c7">✦</text>
+        <!-- Owl claws holding book -->
+        <circle cx="210" cy="415" r="7" fill="#facc15" stroke="#78350f" stroke-width="2" />
+        <circle cx="302" cy="415" r="7" fill="#facc15" stroke="#78350f" stroke-width="2" />
+      </g>
+
+      <!-- HEAD & GOLDEN KNIGHT HELMET -->
+      <g id="character-head">
+        <!-- Owl Head Base -->
+        <ellipse cx="256" cy="210" rx="64" ry="56" fill="url(#owlFeathers)" stroke="#0f172a" stroke-width="4.5" />
+
+        <!-- Big Expressive Cartoon Eyes (One Winking!) -->
+        <g id="character-eyes">
+          <!-- Left Eye (Open, Wise, Shining) -->
+          <circle cx="226" cy="215" r="22" fill="#fff" stroke="#0f172a" stroke-width="4" />
+          <circle cx="228" cy="215" r="11" fill="#0284c7" />
+          <circle cx="228" cy="215" r="6" fill="#0f172a" />
+          <circle cx="224" cy="210" r="3.5" fill="#fff" />
+
+          <!-- Right Eye (ANIMATED WINK) -->
+          <g class="wink-eye">
+            <circle cx="286" cy="215" r="22" fill="#fff" stroke="#0f172a" stroke-width="4" />
+            <circle cx="284" cy="215" r="11" fill="#0284c7" />
+            <circle cx="284" cy="215" r="6" fill="#0f172a" />
+            <circle cx="280" cy="210" r="3.5" fill="#fff" />
+          </g>
+        </g>
+
+        <!-- Cute Golden Beak -->
+        <polygon points="256,225 248,242 264,242" fill="#f59e0b" stroke="#0f172a" stroke-width="2.5" />
+
+        <!-- GOLDEN WINGED KNIGHT HELMET -->
+        <g id="character-helmet">
+          <!-- Feather Plume (ANIMATED SWAY) -->
+          <g class="plume-anim">
+            <path d="M256 95 C235 45 285 25 315 35 C295 65 285 85 256 95 Z" fill="#38bdf8" stroke="#0f172a" stroke-width="3" />
+            <path d="M256 95 C245 55 285 45 315 55 C290 75 280 88 256 95 Z" fill="#facc15" stroke="#0f172a" stroke-width="2.5" />
+          </g>
+
+          <!-- Golden Helmet Dome -->
+          <path d="M196 195 C196 120 316 120 316 195 L306 205 L206 205 Z" fill="url(#goldHelm)" stroke="#0f172a" stroke-width="4.5" />
+          <!-- Brow Plate with Cyan Gem -->
+          <rect x="200" y="180" width="112" height="14" rx="4" fill="#ca8a04" stroke="#0f172a" stroke-width="2.5" />
+          <polygon points="256,178 263,187 256,196 249,187" fill="#38bdf8" stroke="#0f172a" stroke-width="1.5" />
+          
+          <!-- Golden Wings on Helmet Sides -->
+          <!-- Left Wing -->
+          <path d="M198 185 C160 165 140 130 135 95 C160 115 175 145 198 165 Z" fill="url(#goldHelm)" stroke="#0f172a" stroke-width="3.5" />
+          <!-- Right Wing -->
+          <path d="M314 185 C352 165 372 130 377 95 C352 115 337 145 314 165 Z" fill="url(#goldHelm)" stroke="#0f172a" stroke-width="3.5" />
+        </g>
+      </g>
+    </g>
+  
+  </g>
+
+  <!-- ================= MASTER FUTURISTIC METALLIC FRAME ================= -->
+  <g id="frame">
+    <!-- Outer Shadow Layer -->
+    <rect x="18" y="18" width="476" height="476" rx="42" fill="none" stroke="#020617" stroke-width="12" opacity="0.9" />
+
+    <!-- Main Outer Beveled Steel Shell -->
+    <rect x="24" y="24" width="464" height="464" rx="38" fill="none" stroke="url(#frameBevelGrad)" stroke-width="26" />
+    
+    <!-- Outer Highlight Rim -->
+    <rect x="37" y="37" width="438" height="438" rx="32" fill="none" stroke="url(#steelTrimGrad)" stroke-width="4" opacity="0.8" />
+
+    <!-- Neon Cyan Inner Cyber Border -->
+    <rect x="44" y="44" width="424" height="424" rx="28" fill="none" stroke="url(#cyanNeonGrad)" stroke-width="5" class="frame-neon-glow" />
+
+    <!-- Corner Armor Clamp 1: Top-Left -->
+    <g transform="translate(24, 24)">
+      <polygon points="0,0 48,0 24,24 0,48" fill="url(#goldPlateGrad)" />
+      <polygon points="4,4 40,4 20,24 4,40" fill="#1e293b" />
+      <circle cx="16" cy="16" r="4.5" fill="#fef08a" stroke="#78350f" stroke-width="1.5" />
+    </g>
+
+    <!-- Corner Armor Clamp 2: Top-Right -->
+    <g transform="translate(488, 24) scale(-1, 1)">
+      <polygon points="0,0 48,0 24,24 0,48" fill="url(#goldPlateGrad)" />
+      <polygon points="4,4 40,4 20,24 4,40" fill="#1e293b" />
+      <circle cx="16" cy="16" r="4.5" fill="#fef08a" stroke="#78350f" stroke-width="1.5" />
+    </g>
+
+    <!-- Corner Armor Clamp 3: Bottom-Left -->
+    <g transform="translate(24, 488) scale(1, -1)">
+      <polygon points="0,0 48,0 24,24 0,48" fill="url(#goldPlateGrad)" />
+      <polygon points="4,4 40,4 20,24 4,40" fill="#1e293b" />
+      <circle cx="16" cy="16" r="4.5" fill="#fef08a" stroke="#78350f" stroke-width="1.5" />
+    </g>
+
+    <!-- Corner Armor Clamp 4: Bottom-Right -->
+    <g transform="translate(488, 488) scale(-1, -1)">
+      <polygon points="0,0 48,0 24,24 0,48" fill="url(#goldPlateGrad)" />
+      <polygon points="4,4 40,4 20,24 4,40" fill="#1e293b" />
+      <circle cx="16" cy="16" r="4.5" fill="#fef08a" stroke="#78350f" stroke-width="1.5" />
+    </g>
+
+    <!-- Decorative Edge Screws / Rivets -->
+    <circle cx="256" cy="31" r="3.5" fill="#94a3b8" stroke="#0f172a" stroke-width="1.5" />
+    <circle cx="256" cy="481" r="3.5" fill="#94a3b8" stroke="#0f172a" stroke-width="1.5" />
+    <circle cx="31" cy="256" r="3.5" fill="#94a3b8" stroke="#0f172a" stroke-width="1.5" />
+    <circle cx="481" cy="256" r="3.5" fill="#94a3b8" stroke="#0f172a" stroke-width="1.5" />
+
+    <!-- Top Bevel Light Sweep Shimmer Line -->
+    <rect x="60" y="32" width="200" height="4" fill="url(#lightSweepGrad)" class="frame-sweep-line" />
+  </g>
+</svg>

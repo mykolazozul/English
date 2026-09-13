@@ -1,0 +1,263 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Master Metallic UI Gradients -->
+    <linearGradient id="frameBevelGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#334155" />
+      <stop offset="25%" stop-color="#1e293b" />
+      <stop offset="70%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#020617" />
+    </linearGradient>
+    <linearGradient id="steelTrimGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#64748b" />
+      <stop offset="50%" stop-color="#334155" />
+      <stop offset="100%" stop-color="#1e293b" />
+    </linearGradient>
+    <linearGradient id="cyanNeonGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="50%" stop-color="#0284c7" />
+      <stop offset="100%" stop-color="#0369a1" />
+    </linearGradient>
+    <linearGradient id="goldPlateGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a" />
+      <stop offset="40%" stop-color="#eab308" />
+      <stop offset="100%" stop-color="#a16207" />
+    </linearGradient>
+    <linearGradient id="lightSweepGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="rgba(56,189,248,0)" />
+      <stop offset="50%" stop-color="rgba(56,189,248,0.5)" />
+      <stop offset="100%" stop-color="rgba(56,189,248,0)" />
+    </linearGradient>
+
+    <!-- Clip Path for Inside the Avatar Screen -->
+    <clipPath id="avatarScreenClip">
+      <rect x="44" y="44" width="424" height="424" rx="28" />
+    </clipPath>
+
+    
+    <radialGradient id="dragonCaveBg" cx="50%" cy="45%" r="70%">
+      <stop offset="0%" stop-color="#581c87" />
+      <stop offset="55%" stop-color="#2e1065" />
+      <stop offset="100%" stop-color="#0f051d" />
+    </radialGradient>
+    <linearGradient id="dragonScales" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#c084fc" />
+      <stop offset="40%" stop-color="#a855f7" />
+      <stop offset="100%" stop-color="#7e22ce" />
+    </linearGradient>
+    <linearGradient id="dragonBelly" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#67e8f9" />
+      <stop offset="100%" stop-color="#06b6d4" />
+    </linearGradient>
+    <linearGradient id="flameGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ef4444" />
+      <stop offset="50%" stop-color="#f97316" />
+      <stop offset="100%" stop-color="#fde047" />
+    </linearGradient>
+  
+  </defs>
+
+  <style>
+    /* Frame continuous subtle animations */
+    @keyframes framePulse {
+      0%, 100% { stroke-opacity: 0.6; filter: drop-shadow(0 0 6px rgba(56,189,248,0.3)); }
+      50% { stroke-opacity: 1; filter: drop-shadow(0 0 14px rgba(56,189,248,0.8)); }
+    }
+    @keyframes sweepMove {
+      0% { transform: translateX(-400px); }
+      50%, 100% { transform: translateX(500px); }
+    }
+    .frame-neon-glow {
+      animation: framePulse 4s ease-in-out infinite;
+    }
+    .frame-sweep-line {
+      animation: sweepMove 6s ease-in-out infinite;
+    }
+  </style>
+
+  <!-- BACKGROUND & CHARACTER CONTENT (CLIPPED TO SCREEN) -->
+  <g clip-path="url(#avatarScreenClip)">
+    
+    <style>
+      @keyframes dragonNodAndSneeze {
+        0%, 35% { transform: rotate(0deg) translateY(0); }
+        45% { transform: rotate(10deg) translateY(14px); } /* Droop asleep */
+        60% { transform: rotate(14deg) translateY(18px); }
+        66% { transform: rotate(-12deg) translateY(-8px) scale(1.08); } /* Sudden Sneeze! */
+        72% { transform: rotate(-4deg) translateY(-2px); }
+        85%, 100% { transform: rotate(0deg) translateY(0); }
+      }
+      @keyframes flameBurst {
+        0%, 64% { transform: scale(0); opacity: 0; }
+        66% { transform: scale(1.3); opacity: 1; }
+        72% { transform: scale(0.6) translate(40px, -20px); opacity: 0; }
+        100% { transform: scale(0); opacity: 0; }
+      }
+      @keyframes pomPomSway {
+        0%, 100% { transform: rotate(0deg); }
+        50% { transform: rotate(-24deg); }
+      }
+      @keyframes bellyBreathe {
+        0%, 100% { transform: scale(1, 1); }
+        50% { transform: scale(1.04, 1.02); }
+      }
+      @keyframes zzzFloatAnim {
+        0% { transform: translate(0, 0) scale(0.5); opacity: 0; }
+        40% { opacity: 0.8; }
+        64% { opacity: 0.8; }
+        66% { opacity: 0; } /* Poofed by sneeze! */
+        100% { transform: translate(40px, -60px) scale(1.2); opacity: 0; }
+      }
+      .dragon-head-group { transform-origin: 256px 260px; animation: dragonNodAndSneeze 4.5s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite; }
+      .flame-sneeze { transform-origin: 310px 245px; animation: flameBurst 4.5s ease-out infinite; }
+      .pompom-anim { transform-origin: 200px 85px; animation: pomPomSway 2.2s ease-in-out infinite; }
+      .belly-breathe { transform-origin: 256px 360px; animation: bellyBreathe 3s ease-in-out infinite; }
+      .zzz-text { animation: zzzFloatAnim 4.5s ease-out infinite; }
+    </style>
+
+    <!-- BACKGROUND -->
+    <g id="background">
+      <rect x="44" y="44" width="424" height="424" fill="url(#dragonCaveBg)" />
+      <!-- Starry cave crystals -->
+      <polygon points="120,100 126,115 140,120 126,125 120,140 114,125 100,120 114,115" fill="#e9d5ff" opacity="0.4" />
+      <polygon points="400,160 405,172 418,176 405,180 400,192 395,180 382,176 395,172" fill="#e9d5ff" opacity="0.3" />
+      
+      <!-- Cartoon Zzz Floating -->
+      <text x="320" y="160" font-family="Arial, sans-serif" font-weight="900" font-size="28" fill="#facc15" class="zzz-text">Z z z</text>
+    </g>
+
+    <!-- CHARACTER SHADOW -->
+    <g id="character-shadow">
+      <ellipse cx="256" cy="435" rx="95" ry="22" fill="#000" opacity="0.5" />
+    </g>
+
+    <!-- DRAGON BODY -->
+    <g id="character-body" class="belly-breathe">
+      <!-- Stubby Dragon Tail curled to side -->
+      <path d="M190 380 C130 395 110 350 95 320 C105 320 130 350 170 365 Z" fill="url(#dragonScales)" stroke="#0f172a" stroke-width="4" />
+      <!-- Tail spade/heart -->
+      <path d="M95 320 L75 300 L105 295 Z" fill="#06b6d4" stroke="#0f172a" stroke-width="3" />
+
+      <!-- Cute Tiny Dragon Wings -->
+      <path d="M175 260 C130 230 110 170 145 155 C160 195 175 230 195 255 Z" fill="#06b6d4" stroke="#0f172a" stroke-width="3.5" />
+      <path d="M337 260 C382 230 402 170 367 155 C352 195 337 230 317 255 Z" fill="#06b6d4" stroke="#0f172a" stroke-width="3.5" />
+
+      <!-- Chubby Round Body -->
+      <ellipse cx="256" cy="335" rx="76" ry="72" fill="url(#dragonScales)" stroke="#0f172a" stroke-width="4.5" />
+
+      <!-- Soft Teal Belly Plates -->
+      <ellipse cx="256" cy="348" rx="46" ry="52" fill="url(#dragonBelly)" stroke="#0f172a" stroke-width="3.5" />
+      <path d="M225 330 Q256 340 287 330" stroke="#0891b2" stroke-width="3" fill="none" />
+      <path d="M220 360 Q256 370 292 360" stroke="#0891b2" stroke-width="3" fill="none" />
+
+      <!-- Claws / Feet -->
+      <ellipse cx="210" cy="405" rx="22" ry="14" fill="url(#dragonScales)" stroke="#0f172a" stroke-width="3.5" />
+      <ellipse cx="302" cy="405" rx="22" ry="14" fill="url(#dragonScales)" stroke="#0f172a" stroke-width="3.5" />
+    </g>
+
+    <!-- HEAD & NIGHTCAP (ANIMATED NOD & SNEEZE) -->
+    <g id="character-head" class="dragon-head-group">
+      <!-- Head Base -->
+      <ellipse cx="256" cy="210" rx="66" ry="58" fill="url(#dragonScales)" stroke="#0f172a" stroke-width="4.5" />
+      <!-- Chubby Cheeks -->
+      <circle cx="210" cy="235" r="16" fill="#f472b6" opacity="0.4" />
+      <circle cx="302" cy="235" r="16" fill="#f472b6" opacity="0.4" />
+
+      <!-- Cute Horn Nubs -->
+      <path d="M216 165 C205 130 195 120 185 110 C205 125 218 145 224 165 Z" fill="#fef08a" stroke="#0f172a" stroke-width="3" />
+      <path d="M296 165 C307 130 317 120 327 110 C307 125 294 145 288 165 Z" fill="#fef08a" stroke="#0f172a" stroke-width="3" />
+
+      <!-- Heavy Sleepy Eyelids & Eyes -->
+      <g id="character-eyes">
+        <ellipse cx="232" cy="205" rx="16" ry="14" fill="#fff" stroke="#0f172a" stroke-width="3.5" />
+        <ellipse cx="280" cy="205" rx="16" ry="14" fill="#fff" stroke="#0f172a" stroke-width="3.5" />
+        <!-- Closed drooping eyelid curve -->
+        <path d="M216 205 Q232 215 248 205" stroke="#0f172a" stroke-width="4.5" fill="none" stroke-linecap="round" />
+        <path d="M264 205 Q280 215 296 205" stroke="#0f172a" stroke-width="4.5" fill="none" stroke-linecap="round" />
+      </g>
+
+      <!-- Snout with Nostrils -->
+      <path d="M236 230 Q256 220 276 230 Q286 255 256 260 Q226 255 236 230 Z" fill="#c084fc" stroke="#0f172a" stroke-width="3.5" />
+      <!-- Nostrils puffing -->
+      <ellipse cx="248" cy="242" rx="4" ry="5" fill="#4c1d95" />
+      <ellipse cx="264" cy="242" rx="4" ry="5" fill="#4c1d95" />
+
+      <!-- STRIPED SLEEPY NIGHTCAP -->
+      <g id="character-nightcap">
+        <!-- Cap Base -->
+        <path d="M206 175 C206 125 280 100 290 85 C270 120 250 140 230 160 Z" fill="#ef4444" stroke="#0f172a" stroke-width="3.5" />
+        <!-- Stripes -->
+        <path d="M216 160 L246 135" stroke="#fff" stroke-width="8" stroke-linecap="round" />
+        <path d="M236 135 L266 110" stroke="#fff" stroke-width="8" stroke-linecap="round" />
+        <!-- Fluffy white rim -->
+        <rect x="200" y="165" width="112" height="18" rx="9" fill="#f8fafc" stroke="#0f172a" stroke-width="3.5" />
+        <!-- Cap Tail hanging down with Pom-Pom (ANIMATED) -->
+        <g class="pompom-anim">
+          <path d="M290 85 C320 70 335 110 320 145" stroke="#ef4444" stroke-width="12" fill="none" stroke-linecap="round" />
+          <circle cx="320" cy="150" r="15" fill="#f8fafc" stroke="#0f172a" stroke-width="3" />
+        </g>
+      </g>
+
+      <!-- FLAME BURST (SNEEZE EFFECT) -->
+      <g id="character-effects" class="flame-sneeze">
+        <path d="M275 240 Q330 200 370 230 Q340 255 380 270 Q320 270 275 250 Z" fill="url(#flameGrad)" stroke="#7c2d12" stroke-width="3" />
+        <!-- Sparks -->
+        <circle cx="390" cy="220" r="4" fill="#fde047" />
+        <circle cx="400" cy="260" r="3" fill="#f97316" />
+        <circle cx="360" cy="290" r="3.5" fill="#fde047" />
+      </g>
+    </g>
+  
+  </g>
+
+  <!-- ================= MASTER FUTURISTIC METALLIC FRAME ================= -->
+  <g id="frame">
+    <!-- Outer Shadow Layer -->
+    <rect x="18" y="18" width="476" height="476" rx="42" fill="none" stroke="#020617" stroke-width="12" opacity="0.9" />
+
+    <!-- Main Outer Beveled Steel Shell -->
+    <rect x="24" y="24" width="464" height="464" rx="38" fill="none" stroke="url(#frameBevelGrad)" stroke-width="26" />
+    
+    <!-- Outer Highlight Rim -->
+    <rect x="37" y="37" width="438" height="438" rx="32" fill="none" stroke="url(#steelTrimGrad)" stroke-width="4" opacity="0.8" />
+
+    <!-- Neon Cyan Inner Cyber Border -->
+    <rect x="44" y="44" width="424" height="424" rx="28" fill="none" stroke="url(#cyanNeonGrad)" stroke-width="5" class="frame-neon-glow" />
+
+    <!-- Corner Armor Clamp 1: Top-Left -->
+    <g transform="translate(24, 24)">
+      <polygon points="0,0 48,0 24,24 0,48" fill="url(#goldPlateGrad)" />
+      <polygon points="4,4 40,4 20,24 4,40" fill="#1e293b" />
+      <circle cx="16" cy="16" r="4.5" fill="#fef08a" stroke="#78350f" stroke-width="1.5" />
+    </g>
+
+    <!-- Corner Armor Clamp 2: Top-Right -->
+    <g transform="translate(488, 24) scale(-1, 1)">
+      <polygon points="0,0 48,0 24,24 0,48" fill="url(#goldPlateGrad)" />
+      <polygon points="4,4 40,4 20,24 4,40" fill="#1e293b" />
+      <circle cx="16" cy="16" r="4.5" fill="#fef08a" stroke="#78350f" stroke-width="1.5" />
+    </g>
+
+    <!-- Corner Armor Clamp 3: Bottom-Left -->
+    <g transform="translate(24, 488) scale(1, -1)">
+      <polygon points="0,0 48,0 24,24 0,48" fill="url(#goldPlateGrad)" />
+      <polygon points="4,4 40,4 20,24 4,40" fill="#1e293b" />
+      <circle cx="16" cy="16" r="4.5" fill="#fef08a" stroke="#78350f" stroke-width="1.5" />
+    </g>
+
+    <!-- Corner Armor Clamp 4: Bottom-Right -->
+    <g transform="translate(488, 488) scale(-1, -1)">
+      <polygon points="0,0 48,0 24,24 0,48" fill="url(#goldPlateGrad)" />
+      <polygon points="4,4 40,4 20,24 4,40" fill="#1e293b" />
+      <circle cx="16" cy="16" r="4.5" fill="#fef08a" stroke="#78350f" stroke-width="1.5" />
+    </g>
+
+    <!-- Decorative Edge Screws / Rivets -->
+    <circle cx="256" cy="31" r="3.5" fill="#94a3b8" stroke="#0f172a" stroke-width="1.5" />
+    <circle cx="256" cy="481" r="3.5" fill="#94a3b8" stroke="#0f172a" stroke-width="1.5" />
+    <circle cx="31" cy="256" r="3.5" fill="#94a3b8" stroke="#0f172a" stroke-width="1.5" />
+    <circle cx="481" cy="256" r="3.5" fill="#94a3b8" stroke="#0f172a" stroke-width="1.5" />
+
+    <!-- Top Bevel Light Sweep Shimmer Line -->
+    <rect x="60" y="32" width="200" height="4" fill="url(#lightSweepGrad)" class="frame-sweep-line" />
+  </g>
+</svg>

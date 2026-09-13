@@ -1,0 +1,264 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Master Metallic UI Gradients -->
+    <linearGradient id="frameBevelGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#334155" />
+      <stop offset="25%" stop-color="#1e293b" />
+      <stop offset="70%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#020617" />
+    </linearGradient>
+    <linearGradient id="steelTrimGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#64748b" />
+      <stop offset="50%" stop-color="#334155" />
+      <stop offset="100%" stop-color="#1e293b" />
+    </linearGradient>
+    <linearGradient id="cyanNeonGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="50%" stop-color="#0284c7" />
+      <stop offset="100%" stop-color="#0369a1" />
+    </linearGradient>
+    <linearGradient id="goldPlateGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a" />
+      <stop offset="40%" stop-color="#eab308" />
+      <stop offset="100%" stop-color="#a16207" />
+    </linearGradient>
+    <linearGradient id="lightSweepGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="rgba(56,189,248,0)" />
+      <stop offset="50%" stop-color="rgba(56,189,248,0.5)" />
+      <stop offset="100%" stop-color="rgba(56,189,248,0)" />
+    </linearGradient>
+
+    <!-- Clip Path for Inside the Avatar Screen -->
+    <clipPath id="avatarScreenClip">
+      <rect x="44" y="44" width="424" height="424" rx="28" />
+    </clipPath>
+
+    
+    <radialGradient id="barbarianBg" cx="50%" cy="50%" r="65%">
+      <stop offset="0%" stop-color="#7f1d1d" />
+      <stop offset="60%" stop-color="#450a0a" />
+      <stop offset="100%" stop-color="#180404" />
+    </radialGradient>
+    <linearGradient id="hammerStone" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#94a3b8" />
+      <stop offset="50%" stop-color="#64748b" />
+      <stop offset="100%" stop-color="#334155" />
+    </linearGradient>
+    <linearGradient id="hammerRune" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#fb923c" />
+      <stop offset="100%" stop-color="#ef4444" />
+    </linearGradient>
+  
+  </defs>
+
+  <style>
+    /* Frame continuous subtle animations */
+    @keyframes framePulse {
+      0%, 100% { stroke-opacity: 0.6; filter: drop-shadow(0 0 6px rgba(56,189,248,0.3)); }
+      50% { stroke-opacity: 1; filter: drop-shadow(0 0 14px rgba(56,189,248,0.8)); }
+    }
+    @keyframes sweepMove {
+      0% { transform: translateX(-400px); }
+      50%, 100% { transform: translateX(500px); }
+    }
+    .frame-neon-glow {
+      animation: framePulse 4s ease-in-out infinite;
+    }
+    .frame-sweep-line {
+      animation: sweepMove 6s ease-in-out infinite;
+    }
+  </style>
+
+  <!-- BACKGROUND & CHARACTER CONTENT (CLIPPED TO SCREEN) -->
+  <g clip-path="url(#avatarScreenClip)">
+    
+    <style>
+      @keyframes barbarianWobble {
+        0%, 100% { transform: rotate(0deg); }
+        25% { transform: rotate(-14deg) translateY(6px); }
+        50% { transform: rotate(2deg) scale(0.96, 1.04); }
+        75% { transform: rotate(10deg) translateY(4px); }
+      }
+      @keyframes hammerTilt {
+        0%, 100% { transform: rotate(0deg); }
+        25% { transform: rotate(-22deg) translateX(-10px); }
+        50% { transform: rotate(3deg) translateY(12px); }
+        75% { transform: rotate(16deg) translateX(8px); }
+      }
+      @keyframes eyePanic {
+        0%, 100% { transform: scale(1); }
+        15%, 65% { transform: scale(1.15, 0.9); }
+        35% { transform: scale(0.9, 1.15); }
+      }
+      @keyframes sweatFly {
+        0% { opacity: 0; transform: translate(0, 0) scale(0.5); }
+        50% { opacity: 1; transform: translate(14px, -18px) scale(1.2); }
+        100% { opacity: 0; transform: translate(26px, -30px) scale(0.2); }
+      }
+      @keyframes emberFloat {
+        0% { transform: translateY(0) translateX(0); opacity: 0.8; }
+        100% { transform: translateY(-160px) translateX(25px); opacity: 0; }
+      }
+      .barbarian-anim-group { transform-origin: 256px 420px; animation: barbarianWobble 2.8s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite; }
+      .hammer-anim-group { transform-origin: 190px 320px; animation: hammerTilt 2.8s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite; }
+      .eye-anim { animation: eyePanic 1.4s ease-in-out infinite; transform-origin: center; }
+      .sweat-drop1 { animation: sweatFly 1.8s ease-out infinite; }
+      .sweat-drop2 { animation: sweatFly 1.8s 0.9s ease-out infinite; }
+      .ember1 { animation: emberFloat 3s linear infinite; }
+      .ember2 { animation: emberFloat 4s 1.5s linear infinite; }
+    </style>
+
+    <!-- BACKGROUND -->
+    <g id="background">
+      <rect x="44" y="44" width="424" height="424" fill="url(#barbarianBg)" />
+      <!-- Volcanic Embers -->
+      <circle cx="120" cy="400" r="3" fill="#f97316" class="ember1" />
+      <circle cx="380" cy="380" r="4" fill="#ef4444" class="ember2" />
+      <circle cx="200" cy="420" r="2.5" fill="#facc15" class="ember1" style="animation-delay:0.8s;" />
+    </g>
+
+    <!-- CHARACTER SHADOW -->
+    <g id="character-shadow">
+      <ellipse cx="256" cy="430" rx="90" ry="24" fill="#000" opacity="0.45" />
+    </g>
+
+    <!-- WHOLE BARBARIAN ACTOR -->
+    <g id="character-animation" class="barbarian-anim-group">
+      <!-- LEGS & BOOTS -->
+      <g id="character-legs">
+        <rect x="210" y="370" width="36" height="48" rx="10" fill="#78350f" stroke="#0f172a" stroke-width="4" />
+        <rect x="266" y="370" width="36" height="48" rx="10" fill="#78350f" stroke="#0f172a" stroke-width="4" />
+        <!-- Fur boot cuffs -->
+        <rect x="204" y="360" width="48" height="18" rx="8" fill="#d97706" />
+        <rect x="260" y="360" width="48" height="18" rx="8" fill="#d97706" />
+      </g>
+
+      <!-- TORSO & BELT -->
+      <g id="character-body">
+        <path d="M190 280 Q256 260 322 280 L315 370 Q256 385 197 370 Z" fill="#b45309" stroke="#0f172a" stroke-width="4" />
+        <!-- Muscle shading -->
+        <path d="M226 295 Q256 285 286 295 L280 340 Q256 350 232 340 Z" fill="#d97706" opacity="0.4" />
+        <!-- Huge Studded Belt -->
+        <rect x="188" y="340" width="136" height="24" rx="6" fill="#451a03" stroke="#0f172a" stroke-width="3" />
+        <circle cx="256" cy="352" r="14" fill="#f59e0b" stroke="#0f172a" stroke-width="3" />
+        <rect x="250" y="346" width="12" height="12" fill="#78350f" />
+      </g>
+
+      <!-- HEAD & HELMET -->
+      <g id="character-head">
+        <!-- Wild Orange Beard -->
+        <path d="M185 250 C170 330 220 365 256 365 C292 365 342 330 327 250 Z" fill="#ea580c" stroke="#0f172a" stroke-width="4" />
+        <!-- Face base -->
+        <ellipse cx="256" cy="240" rx="55" ry="46" fill="#fed7aa" stroke="#0f172a" stroke-width="4" />
+        <!-- Open Gasping Mouth -->
+        <ellipse cx="256" cy="272" rx="18" ry="14" fill="#450a0a" stroke="#0f172a" stroke-width="3" />
+        <path d="M246 266 Q256 270 266 266" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" />
+        
+        <!-- Big Panicked Eyes -->
+        <g id="character-eyes" class="eye-anim">
+          <ellipse cx="236" cy="235" rx="16" ry="20" fill="#fff" stroke="#0f172a" stroke-width="3.5" />
+          <ellipse cx="276" cy="235" rx="16" ry="20" fill="#fff" stroke="#0f172a" stroke-width="3.5" />
+          <!-- Trembling pupils looking UP at the falling hammer -->
+          <circle cx="232" cy="226" r="8" fill="#0f172a" />
+          <circle cx="272" cy="226" r="8" fill="#0f172a" />
+          <circle cx="230" cy="223" r="3" fill="#fff" />
+          <circle cx="270" cy="223" r="3" fill="#fff" />
+        </g>
+
+        <!-- Red Strained Nose -->
+        <ellipse cx="256" cy="246" rx="12" ry="9" fill="#f87171" stroke="#0f172a" stroke-width="2.5" />
+
+        <!-- Iron Horned Helmet -->
+        <path d="M196 230 C196 170 316 170 316 230 Z" fill="#64748b" stroke="#0f172a" stroke-width="4" />
+        <rect x="194" y="222" width="124" height="14" rx="4" fill="#334155" stroke="#0f172a" stroke-width="3" />
+        <!-- Left Horn (Large, Curved) -->
+        <path d="M200 224 C150 210 130 150 145 120 C155 155 190 190 206 210 Z" fill="#fef08a" stroke="#0f172a" stroke-width="3.5" />
+        <!-- Right Horn (Broken / Chipped comically) -->
+        <path d="M312 224 C340 210 355 180 348 160 L334 175 C330 195 316 210 306 215 Z" fill="#fef08a" stroke="#0f172a" stroke-width="3.5" />
+      </g>
+
+      <!-- SWEAT PARTICLES -->
+      <g id="character-effects">
+        <path d="M320 200 Q330 190 325 180 Q320 190 320 200 Z" fill="#38bdf8" class="sweat-drop1" />
+        <path d="M190 195 Q180 185 185 175 Q190 185 190 195 Z" fill="#38bdf8" class="sweat-drop2" />
+      </g>
+
+      <!-- MASSIVE OVERSIZED STONE WARHAMMER -->
+      <g id="character-weapon" class="hammer-anim-group">
+        <!-- Long Wood Handle Gripped by Hands -->
+        <rect x="180" y="140" width="22" height="230" rx="8" fill="#78350f" stroke="#0f172a" stroke-width="4" transform="rotate(-25 190 250)" />
+        <!-- Leather grip wrap -->
+        <path d="M172 260 L188 280 M176 285 L192 305 M180 310 L196 330" stroke="#fde047" stroke-width="3.5" stroke-linecap="round" />
+
+        <!-- Barbarian Straining Arms -->
+        <g id="character-arms">
+          <ellipse cx="206" cy="300" rx="18" ry="14" fill="#fed7aa" stroke="#0f172a" stroke-width="3.5" />
+          <ellipse cx="230" cy="285" rx="18" ry="14" fill="#fed7aa" stroke="#0f172a" stroke-width="3.5" />
+        </g>
+
+        <!-- Gigantic Stone Hammer Head (5x bigger than barbarian head!) -->
+        <g transform="translate(100, 40) rotate(-25)">
+          <rect x="0" y="0" width="160" height="110" rx="18" fill="url(#hammerStone)" stroke="#0f172a" stroke-width="5" />
+          <!-- Stone bevel & cracks -->
+          <path d="M20 20 L50 40 L40 70 L80 90" fill="none" stroke="#1e293b" stroke-width="4" />
+          <polygon points="12,12 148,12 138,28 22,28" fill="#cbd5e1" opacity="0.6" />
+          <!-- Glowing Magic Rune etched in stone -->
+          <path d="M70 35 L90 55 L70 75 M90 35 L70 55 L90 75" fill="none" stroke="url(#hammerRune)" stroke-width="5" stroke-linecap="round" />
+        </g>
+      </g>
+    </g>
+  
+  </g>
+
+  <!-- ================= MASTER FUTURISTIC METALLIC FRAME ================= -->
+  <g id="frame">
+    <!-- Outer Shadow Layer -->
+    <rect x="18" y="18" width="476" height="476" rx="42" fill="none" stroke="#020617" stroke-width="12" opacity="0.9" />
+
+    <!-- Main Outer Beveled Steel Shell -->
+    <rect x="24" y="24" width="464" height="464" rx="38" fill="none" stroke="url(#frameBevelGrad)" stroke-width="26" />
+    
+    <!-- Outer Highlight Rim -->
+    <rect x="37" y="37" width="438" height="438" rx="32" fill="none" stroke="url(#steelTrimGrad)" stroke-width="4" opacity="0.8" />
+
+    <!-- Neon Cyan Inner Cyber Border -->
+    <rect x="44" y="44" width="424" height="424" rx="28" fill="none" stroke="url(#cyanNeonGrad)" stroke-width="5" class="frame-neon-glow" />
+
+    <!-- Corner Armor Clamp 1: Top-Left -->
+    <g transform="translate(24, 24)">
+      <polygon points="0,0 48,0 24,24 0,48" fill="url(#goldPlateGrad)" />
+      <polygon points="4,4 40,4 20,24 4,40" fill="#1e293b" />
+      <circle cx="16" cy="16" r="4.5" fill="#fef08a" stroke="#78350f" stroke-width="1.5" />
+    </g>
+
+    <!-- Corner Armor Clamp 2: Top-Right -->
+    <g transform="translate(488, 24) scale(-1, 1)">
+      <polygon points="0,0 48,0 24,24 0,48" fill="url(#goldPlateGrad)" />
+      <polygon points="4,4 40,4 20,24 4,40" fill="#1e293b" />
+      <circle cx="16" cy="16" r="4.5" fill="#fef08a" stroke="#78350f" stroke-width="1.5" />
+    </g>
+
+    <!-- Corner Armor Clamp 3: Bottom-Left -->
+    <g transform="translate(24, 488) scale(1, -1)">
+      <polygon points="0,0 48,0 24,24 0,48" fill="url(#goldPlateGrad)" />
+      <polygon points="4,4 40,4 20,24 4,40" fill="#1e293b" />
+      <circle cx="16" cy="16" r="4.5" fill="#fef08a" stroke="#78350f" stroke-width="1.5" />
+    </g>
+
+    <!-- Corner Armor Clamp 4: Bottom-Right -->
+    <g transform="translate(488, 488) scale(-1, -1)">
+      <polygon points="0,0 48,0 24,24 0,48" fill="url(#goldPlateGrad)" />
+      <polygon points="4,4 40,4 20,24 4,40" fill="#1e293b" />
+      <circle cx="16" cy="16" r="4.5" fill="#fef08a" stroke="#78350f" stroke-width="1.5" />
+    </g>
+
+    <!-- Decorative Edge Screws / Rivets -->
+    <circle cx="256" cy="31" r="3.5" fill="#94a3b8" stroke="#0f172a" stroke-width="1.5" />
+    <circle cx="256" cy="481" r="3.5" fill="#94a3b8" stroke="#0f172a" stroke-width="1.5" />
+    <circle cx="31" cy="256" r="3.5" fill="#94a3b8" stroke="#0f172a" stroke-width="1.5" />
+    <circle cx="481" cy="256" r="3.5" fill="#94a3b8" stroke="#0f172a" stroke-width="1.5" />
+
+    <!-- Top Bevel Light Sweep Shimmer Line -->
+    <rect x="60" y="32" width="200" height="4" fill="url(#lightSweepGrad)" class="frame-sweep-line" />
+  </g>
+</svg>
