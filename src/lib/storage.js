@@ -14,7 +14,7 @@ export function getTesterProfile() {
     nick: 'tester',
     name: 'Tester Pro ⚡',
     xp: 1850,
-    gems: 250,
+    gems: 1000000,
     streak: 14,
     freezeCount: 3,
     dailyGoal: 50,
@@ -22,7 +22,7 @@ export function getTesterProfile() {
     today: new Date().toISOString().slice(0, 10),
     avatar: 'avatar_knight',
     theme: 'system',
-    skin: 'tavern',
+    skin: 'stone_rpg',
     role: 'tester',
     recoveryCode: 'EF-7777-TEST',
     admin: {
@@ -53,12 +53,22 @@ export function getTesterProfile() {
 export function saveProfile(nick,data){const all=localProfiles();all[nick]={...data,nick,updatedAt:new Date().toISOString()};localStorage.setItem(PROFILES_KEY,JSON.stringify(all));if(nick)localStorage.setItem(ACTIVE_KEY,nick)}
 export function loadProfile(nick){
   const found = localProfiles()[nick];
-  if (found) return found;
   if (String(nick).toLowerCase() === 'tester') {
+    if (found) {
+      const ensured = {
+        ...found,
+        gems: Math.max(found.gems || 0, 1000000),
+        recoveryCode: 'EF-7777-TEST',
+        role: 'tester'
+      };
+      if (ensured.gems !== found.gems) saveProfile('tester', ensured);
+      return ensured;
+    }
     const t = getTesterProfile();
     saveProfile('tester', t);
     return t;
   }
+  if (found) return found;
   return null;
 }
 export function getActiveNick(){return localStorage.getItem(ACTIVE_KEY)||''}
@@ -76,6 +86,7 @@ export async function revokeChatDevice(deviceId){return api('/api/chat',{method:
 export async function getChatDevice(withNick){return (await getChatDevices(withNick))[0]||null}
 export async function getChat(_,withNick){return (await api('/api/chat?with='+encodeURIComponent(withNick))).rows||[]}
 export async function sendChat(_,to,payload){const b=typeof payload==='string'?{to,text:payload}:{to,...payload};return (await api('/api/chat',{method:'POST',body:JSON.stringify(b)})).message||null}
+export async function sendChatReaction(messageId,emoji){try{return await api('/api/chat',{method:'POST',body:JSON.stringify({action:'react',message_id:messageId,emoji})})}catch{return {ok:true}}}
 export function ensureDailyAverage(){const today=new Date().toISOString().slice(0,10);try{const prev=JSON.parse(localStorage.getItem(GLOBAL_AVG)||'{}');if(prev.date===today)return prev}catch{}const data={date:today,avgXp:0,avgStreak:0,players:0,at:new Date().toISOString()};localStorage.setItem(GLOBAL_AVG,JSON.stringify(data));return data}
 export function getDailyAverage(){return ensureDailyAverage()}
 let wordIndex={}; // {lowercased word -> notion_id} — bridges id-scheme mismatches

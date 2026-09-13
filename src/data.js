@@ -97,13 +97,11 @@ export const BADGES = [
   {id:'league_platinum',title:'Платинова еліта',desc:'Набери 1000 XP (Платинова ліга)',icon:'💠',tier:'legendary'},
   {id:'league_diamond',title:'Діамантовий титан',desc:'Набери 2000 XP (Діамантова ліга)',icon:'🔮',tier:'legendary'},
   {id:'league_legend',title:'Легенда English Flow',desc:'Набери 3500+ XP та увійди в історію',icon:'🌟',tier:'legendary'},
-  {id:'boss_slayer',title:'Переможець Боса',desc:'Здолай Боса граматики у челенджах',icon:'⚔️',tier:'legendary'},
-  {id:'legendary_drop',title:'Золотий Дроп CS',desc:'Вибий легендарний предмет у кейс-рулетці',icon:'✨',tier:'legendary'},
+  {id:'legendary_drop',title:'Золотий Дроп Скрині',desc:'Вибий легендарний предмет у Таємничій Скрині Знань',icon:'✨',tier:'legendary'},
 
   // Секретні досягнення (Secret)
-  {id:'secret_vault',title:'Таємний Сейф',desc:'Відвідай захищений Cyber Vault в Адмінці',icon:'🗝️',tier:'secret'},
   {id:'night_owl',title:'Нічний Мисливець',desc:'Вивчай англійську у пізній час (після 23:00)',icon:'🦉',tier:'secret'},
-  {id:'boss_crown',title:'Королівська Аудієнція',desc:'Знайди верифікованого @Boss у рейтингу',icon:'👑',tier:'secret'}
+  {id:'boss_crown',title:'Королівська Аудієнція',desc:'Добавити розробника в друзі',icon:'👑',tier:'secret'}
 ];
 
 // League tiers — thresholds: 100, 200, 500, 1000, 2000, 3500+ XP

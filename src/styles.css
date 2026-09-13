@@ -4517,7 +4517,8 @@ input[type="checkbox"]:focus-visible {
 }
 
 /* Enhanced Yellow Glow for Shop Points & Purse */
-.tavern-price-tag, .tavern-purse-val, .coin-icon-svg, .currency-pill-coins {
+/* Glowing aura strictly on Treasury purse, NOT goods */
+.tavern-purse-val, .coin-icon-svg, .currency-pill-coins {
   color: #facc15 !important;
   text-shadow: 0 0 14px #facc15, 0 0 28px rgba(250, 204, 21, 0.7) !important;
   filter: drop-shadow(0 0 8px rgba(250, 204, 21, 0.65)) !important;
@@ -4539,4 +4540,473 @@ input[type="checkbox"]:focus-visible {
 .icon-style-item:hover {
   transform: translateX(4px);
   border-color: var(--accent) !important;
+}
+
+/* ==========================================================================
+   RELEASE v3.5.0: STONE & WOOD RPG THEME, SERIES 2 ANIMATIONS, CHAT LIGHTBOX
+   ========================================================================== */
+
+/* 1. RARITY-CODED COLORS */
+.tier-common {
+  color: #10b981 !important;
+  background: rgba(16, 185, 129, 0.12) !important;
+  border: 1px solid rgba(16, 185, 129, 0.35) !important;
+}
+.tier-rare {
+  color: #3b82f6 !important;
+  background: rgba(59, 130, 246, 0.12) !important;
+  border: 1px solid rgba(59, 130, 246, 0.35) !important;
+}
+.tier-epic {
+  color: #a855f7 !important;
+  background: rgba(168, 85, 247, 0.12) !important;
+  border: 1px solid rgba(168, 85, 247, 0.35) !important;
+}
+.tier-legendary {
+  color: #f59e0b !important;
+  background: rgba(245, 158, 11, 0.12) !important;
+  border: 1px solid rgba(245, 158, 11, 0.35) !important;
+}
+
+/* 2. ANIMATED ECONOMICS MANIFESTO BUTTON */
+.economy-manifesto-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-weight: 800;
+  font-size: 14px;
+  color: #fff !important;
+  background: linear-gradient(135deg, #b45309 0%, #d97706 40%, #f59e0b 70%, #b45309 100%);
+  background-size: 250% 250%;
+  animation: goldShimmerMove 3.5s ease infinite;
+  border: 2px solid rgba(253, 230, 138, 0.5);
+  box-shadow: 0 4px 18px rgba(217, 119, 6, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  text-decoration: none;
+}
+.economy-manifesto-btn:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 25px rgba(245, 158, 11, 0.65), 0 0 15px rgba(250, 204, 21, 0.5);
+  border-color: #fef08a;
+}
+@keyframes goldShimmerMove {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* 3. VERTICALLY & HORIZONTALLY CENTERED MYSTERY CHEST MODAL */
+.cs-case-modal-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  z-index: 99999 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: rgba(8, 10, 15, 0.88) !important;
+  backdrop-filter: blur(10px) !important;
+  padding: 16px !important;
+  overflow: hidden !important;
+}
+.cs-case-modal {
+  margin: auto !important;
+  max-height: 90vh !important;
+  overflow-y: auto !important;
+}
+
+/* 4. EPIC WINNING CEREMONY WITH ROTATING RAYS & BURST */
+.epic-winner-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: linear-gradient(180deg, rgba(245, 158, 11, 0.25) 0%, rgba(15, 23, 42, 0.95) 100%);
+  border: 3px solid #f59e0b;
+  border-radius: 20px;
+  box-shadow: 0 0 50px rgba(245, 158, 11, 0.6), inset 0 0 30px rgba(245, 158, 11, 0.3);
+  animation: epicWinPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  overflow: hidden;
+}
+@keyframes epicWinPop {
+  0% { transform: scale(0.6); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.epic-rays-bg {
+  position: absolute;
+  width: 380px;
+  height: 380px;
+  top: 50%;
+  left: 50%;
+  margin-top: -190px;
+  margin-left: -190px;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg 20deg,
+    rgba(250, 204, 21, 0.25) 20deg 40deg,
+    transparent 40deg 60deg,
+    rgba(250, 204, 21, 0.25) 60deg 80deg,
+    transparent 80deg 100deg,
+    rgba(250, 204, 21, 0.25) 100deg 120deg,
+    transparent 120deg 140deg,
+    rgba(250, 204, 21, 0.25) 140deg 160deg,
+    transparent 160deg 180deg,
+    rgba(250, 204, 21, 0.25) 180deg 200deg,
+    transparent 200deg 220deg,
+    rgba(250, 204, 21, 0.25) 220deg 240deg,
+    transparent 240deg 260deg,
+    rgba(250, 204, 21, 0.25) 260deg 280deg,
+    transparent 280deg 300deg,
+    rgba(250, 204, 21, 0.25) 300deg 320deg,
+    transparent 320deg 340deg,
+    rgba(250, 204, 21, 0.25) 340deg 360deg
+  );
+  animation: rotateRays 14s linear infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+@keyframes rotateRays {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* 5. CHAT REPLY BAR, 15 REACTIONS DOCK, AND PHOTO LIGHTBOX */
+.chat-reply-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  background: var(--surface-sunken, rgba(0,0,0,0.15));
+  border-left: 3px solid var(--accent);
+  border-radius: 6px;
+  margin-bottom: 6px;
+  font-size: 12px;
+}
+.chat-reactions-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+  margin-top: 4px;
+}
+.chat-reaction-emoji-btn {
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 3px 5px;
+  border-radius: 6px;
+  transition: transform 0.15s;
+}
+.chat-reaction-emoji-btn:hover {
+  transform: scale(1.3);
+  background: rgba(255,255,255,0.1);
+}
+.chat-reactions-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+.chat-reaction-pill {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  cursor: pointer;
+}
+.chat-photo-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  background: rgba(0,0,0,0.92);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.chat-photo-lightbox img {
+  max-width: 90vw;
+  max-height: 80vh;
+  object-fit: contain;
+  border-radius: 12px;
+  box-shadow: 0 0 35px rgba(0,0,0,0.8);
+}
+
+/* 6. SERIES 2 AVATAR ANIMATIONS */
+/* Pilot Duck */
+@keyframes planeFly {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  25% { transform: translate(2px, -3px) rotate(-2deg); }
+  50% { transform: translate(-1px, 2px) rotate(1.5deg); }
+  75% { transform: translate(3px, 1px) rotate(-1deg); }
+  100% { transform: translate(0, 0) rotate(0deg); }
+}
+@keyframes propSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.anim-plane-fly {
+  animation: planeFly 2.2s ease-in-out infinite;
+}
+.anim-prop-spin {
+  animation: propSpin 0.15s linear infinite;
+  transform-origin: 30px 48px;
+}
+
+/* Warlock Mage */
+@keyframes warlockLightning {
+  0%, 100% { opacity: 0.3; filter: drop-shadow(0 0 2px #38bdf8); }
+  15% { opacity: 1; filter: drop-shadow(0 0 10px #38bdf8) drop-shadow(0 0 20px #0284c7); }
+  30% { opacity: 0.4; }
+  55% { opacity: 0.9; filter: drop-shadow(0 0 12px #38bdf8); }
+  70% { opacity: 0.2; }
+}
+.anim-warlock-lightning {
+  animation: warlockLightning 1.8s ease-in-out infinite;
+}
+
+/* Treant Defender */
+@keyframes treantMace {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(-8deg); }
+}
+.anim-treant-mace {
+  animation: treantMace 2.5s ease-in-out infinite;
+  transform-origin: 65px 35px;
+}
+
+/* Death Knight */
+@keyframes deathDarkPulse {
+  0%, 100% { filter: drop-shadow(0 0 3px #a855f7); }
+  50% { filter: drop-shadow(0 0 12px #a855f7) drop-shadow(0 0 24px #7e22ce); }
+}
+.anim-death-knight {
+  animation: deathDarkPulse 2s ease-in-out infinite;
+}
+
+/* Hunter Fox */
+@keyframes foxBowDraw {
+  0%, 100% { transform: scaleX(1); }
+  50% { transform: scaleX(1.08); }
+}
+.anim-fox-bow {
+  animation: foxBowDraw 2.4s ease-in-out infinite;
+  transform-origin: 50px 50px;
+}
+
+/* Rogue Alien */
+@keyframes rogueDaggerGlint {
+  0%, 80%, 100% { filter: none; }
+  90% { filter: drop-shadow(0 0 6px #38bdf8) brightness(1.6); }
+}
+.anim-rogue-dagger {
+  animation: rogueDaggerGlint 2s ease-in-out infinite;
+}
+
+/* Tactical Cat */
+@keyframes catTacticalScan {
+  0%, 100% { transform: rotate(0deg); }
+  40% { transform: rotate(-3deg); }
+  80% { transform: rotate(2deg); }
+}
+.anim-tactical-cat {
+  animation: catTacticalScan 3s ease-in-out infinite;
+  transform-origin: 50px 75px;
+}
+
+/* Dwarf Berserker */
+@keyframes dwarfAxeSwing {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(10deg); }
+}
+.anim-dwarf-axe {
+  animation: dwarfAxeSwing 1.6s ease-in-out infinite;
+  transform-origin: 25px 35px;
+}
+
+/* 7. STONE & CARVED WOOD RPG THEME (data-skin="stone_rpg") */
+[data-skin="stone_rpg"] {
+  --bg: #141816;
+  --surface: #1e2421;
+  --surface-sunken: #171c19;
+  --border: #323b36;
+  --text: #e2e8e4;
+  --muted: #88968e;
+  --accent: #10b981;
+}
+[data-skin="stone_rpg"] body,
+[data-skin="stone_rpg"] .app {
+  background-color: #141816 !important;
+  background-image: 
+    radial-gradient(ellipse at 50% 0%, rgba(16, 185, 129, 0.08) 0%, transparent 60%),
+    radial-gradient(circle at 10% 20%, rgba(245, 158, 11, 0.04) 0%, transparent 40%),
+    linear-gradient(rgba(20, 24, 22, 0.95), rgba(20, 24, 22, 0.95)) !important;
+}
+[data-skin="stone_rpg"] .sidebar {
+  background: #19201d !important;
+  border-right: 3px solid #2f3833 !important;
+  box-shadow: inset -2px 0 8px rgba(0,0,0,0.6) !important;
+}
+[data-skin="stone_rpg"] .sidebar .nav {
+  background: #232b27 !important;
+  border: 1px solid #37433d !important;
+  border-bottom: 2px solid #1a201d !important;
+  border-top: 1px solid #45544d !important;
+  color: #d1dcd5 !important;
+  border-radius: 8px !important;
+  margin-bottom: 6px !important;
+  font-weight: 700 !important;
+  transition: all 0.15s ease !important;
+}
+[data-skin="stone_rpg"] .sidebar .nav:hover {
+  background: #2b3530 !important;
+  border-color: #10b981 !important;
+  color: #fff !important;
+}
+[data-skin="stone_rpg"] .sidebar .nav.active {
+  background: linear-gradient(90deg, #10b981 0%, #059669 100%) !important;
+  color: #fff !important;
+  border-color: #34d399 !important;
+  box-shadow: 0 0 14px rgba(16, 185, 129, 0.45) !important;
+}
+[data-skin="stone_rpg"] .card {
+  background: #1e2421 !important;
+  border: 2px solid #35403a !important;
+  border-top: 2px solid #4a5951 !important;
+  border-bottom: 3px solid #141816 !important;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06) !important;
+  border-radius: 14px !important;
+}
+
+/* Stone Temple Greeting Portal */
+.stone-rpg-portal {
+  background: linear-gradient(180deg, #222a26 0%, #1a201d 100%) !important;
+  border: 3px solid #3d4a43 !important;
+  border-top: 4px solid #54665c !important;
+  border-bottom: 5px solid #101412 !important;
+  border-radius: 16px !important;
+  position: relative !important;
+  overflow: hidden !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.6), inset 0 2px 0 rgba(255,255,255,0.08) !important;
+}
+.stone-pillar-lantern {
+  width: 10px;
+  height: 38px;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #fef08a 0%, #f59e0b 80%, #b45309 100%);
+  box-shadow: 0 0 18px #f59e0b, 0 0 35px rgba(245, 158, 11, 0.6);
+  animation: torchFlicker 1.8s ease-in-out infinite alternate;
+}
+@keyframes torchFlicker {
+  0% { filter: brightness(1) drop-shadow(0 0 8px #f59e0b); }
+  50% { filter: brightness(1.25) drop-shadow(0 0 16px #facc15); }
+  100% { filter: brightness(0.9) drop-shadow(0 0 6px #d97706); }
+}
+
+/* Stone Dartboard Target */
+.stone-dartboard-target {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #b45309 0% 12%, #1e2421 12% 28%, #10b981 28% 44%, #b45309 44% 60%, #1e2421 60% 76%, #3d4a43 76% 100%);
+  border: 4px solid #d97706;
+  box-shadow: 0 0 20px rgba(0,0,0,0.6), inset 0 0 10px rgba(0,0,0,0.8);
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+.stone-dartboard-target::after {
+  content: "🎯";
+  font-size: 40px;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.7));
+}
+
+/* Stone Altar Pedestal Cards */
+.stone-altar-pedestal {
+  background: linear-gradient(180deg, #252e29 0%, #1c221f 100%) !important;
+  border: 2px solid #3b4740 !important;
+  border-top: 3px solid #506157 !important;
+  border-bottom: 4px solid #111513 !important;
+  border-radius: 14px !important;
+  padding: 16px 20px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  box-shadow: 0 6px 14px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.06) !important;
+  transition: transform 0.2s ease, border-color 0.2s ease !important;
+}
+.stone-altar-pedestal:hover {
+  transform: translateY(-3px) !important;
+  border-color: #10b981 !important;
+}
+.stone-compass-glow {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: rgba(16, 185, 129, 0.15);
+  border: 2px solid #10b981;
+  box-shadow: 0 0 16px rgba(16, 185, 129, 0.5), inset 0 0 8px rgba(16, 185, 129, 0.3);
+  font-size: 22px;
+}
+.stone-star-gold {
+  filter: drop-shadow(0 0 10px #f59e0b) drop-shadow(0 0 20px rgba(245, 158, 11, 0.6));
+}
+
+/* Polished Marble Warmup Slab */
+.stone-marble-warmup-slab {
+  background: linear-gradient(135deg, #e5e7eb 0%, #d1d5db 40%, #e5e7eb 70%, #f3f4f6 100%) !important;
+  color: #1f2937 !important;
+  border: 2px solid #9ca3af !important;
+  border-radius: 12px !important;
+  padding: 14px 20px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 16px !important;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.3) !important;
+}
+.stone-marble-warmup-slab b,
+.stone-marble-warmup-slab span {
+  color: #111827 !important;
+}
+
+/* 8. ICON STYLE PREVIEW TRAY */
+.icon-style-preview-tray {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 14px;
+  margin-top: 10px;
+  background: var(--surface-sunken, rgba(0,0,0,0.06));
+  border-radius: 10px;
+  border: 1px dashed var(--border);
+  animation: trayExpand 0.25s ease-out;
+}
+@keyframes trayExpand {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.icon-style-preview-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 11px;
+  background: var(--surface);
+  border: 1px solid var(--border);
 }
