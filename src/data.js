@@ -66,6 +66,7 @@ export const BADGES = [
   {id:'dictation',title:'Уважне вухо',desc:'Пройди режим аудіо-диктанту',icon:'✍️',tier:'starter'},
   {id:'league_bronze',title:'Бронзова ліга',desc:'Набери перші 100 XP',icon:'🥉',tier:'starter'},
   {id:'gift_opened',title:'Перший подарунок',desc:'Відкрий щоденну скриню скарбів',icon:'🎁',tier:'starter'},
+  {id:'first_coin',title:'Перша монета',desc:'Зароби свої перші Древні Поінти',icon:'🪙',tier:'starter'},
 
   // Середній рівень (Medium / Silver)
   {id:'streak_3',title:'3 дні поспіль',desc:'Тримай серію 3 дні поспіль',icon:'🔥',tier:'medium'},
@@ -76,6 +77,7 @@ export const BADGES = [
   {id:'quest_master',title:'Квест-майстер',desc:'Виконай усі 3 щоденних квести',icon:'🎖️',tier:'medium'},
   {id:'freeze_used',title:'Крижаний порятунок',desc:'Врятуй серію заморозкою стріку',icon:'❄️',tier:'medium'},
   {id:'social_star',title:'Коло друзів',desc:'Додай перших 3 друзів',icon:'⭐',tier:'medium'},
+  {id:'speed_demon',title:'Швидкісний спринт',desc:'Дай 5 швидких правильних відповідей',icon:'⚡',tier:'medium'},
 
   // Просунутий рівень (Advanced / Gold)
   {id:'streak_7',title:'Тиждень вогню',desc:'Утримуй серію 7 днів поспіль',icon:'⚡',tier:'advanced'},
@@ -85,7 +87,9 @@ export const BADGES = [
   {id:'combo_king',title:'Combo King',desc:'Зроби 10 правильних відповідей поспіль',icon:'🔥',tier:'advanced'},
   {id:'accuracy_90',title:'Снайперська точність',desc:'90%+ правильних на 100 відповідях',icon:'🎯',tier:'advanced'},
   {id:'freeze_master',title:'Володар холоду',desc:'Збери запас із 3+ заморозок у магазині',icon:'🧊',tier:'advanced'},
-  {id:'shop_patron',title:'Постійний клієнт',desc:'Придбай артефакт у магазині XP',icon:'🛍️',tier:'advanced'},
+  {id:'shop_patron',title:'Постійний клієнт',desc:'Придбай артефакт у магазині',icon:'🛍️',tier:'advanced'},
+  {id:'cs_case_unboxed',title:'Кейс-Майстер CS:GO',desc:'Відкрий Таємничу Мега-Скриню в рулетці',icon:'📦',tier:'advanced'},
+  {id:'coin_collector',title:'Золота Скарбниця',desc:'Накопичи понад 100 🪙 Древніх Поінтів',icon:'💰',tier:'advanced'},
 
   // Легендарний рівень (Legendary / Diamond)
   {id:'streak_30',title:'Місяць сили',desc:'Утримуй серію 30 днів поспіль',icon:'👑',tier:'legendary'},
@@ -93,7 +97,13 @@ export const BADGES = [
   {id:'league_platinum',title:'Платинова еліта',desc:'Набери 1000 XP (Платинова ліга)',icon:'💠',tier:'legendary'},
   {id:'league_diamond',title:'Діамантовий титан',desc:'Набери 2000 XP (Діамантова ліга)',icon:'🔮',tier:'legendary'},
   {id:'league_legend',title:'Легенда English Flow',desc:'Набери 3500+ XP та увійди в історію',icon:'🌟',tier:'legendary'},
-  {id:'boss_slayer',title:'Переможець Боса',desc:'Здолай Боса граматики у челенджах',icon:'⚔️',tier:'legendary'}
+  {id:'boss_slayer',title:'Переможець Боса',desc:'Здолай Боса граматики у челенджах',icon:'⚔️',tier:'legendary'},
+  {id:'legendary_drop',title:'Золотий Дроп CS',desc:'Вибий легендарний предмет у кейс-рулетці',icon:'✨',tier:'legendary'},
+
+  // Секретні досягнення (Secret)
+  {id:'secret_vault',title:'Таємний Сейф',desc:'Відвідай захищений Cyber Vault в Адмінці',icon:'🗝️',tier:'secret'},
+  {id:'night_owl',title:'Нічний Мисливець',desc:'Вивчай англійську у пізній час (після 23:00)',icon:'🦉',tier:'secret'},
+  {id:'boss_crown',title:'Королівська Аудієнція',desc:'Знайди верифікованого @Boss у рейтингу',icon:'👑',tier:'secret'}
 ];
 
 // League tiers — thresholds: 100, 200, 500, 1000, 2000, 3500+ XP

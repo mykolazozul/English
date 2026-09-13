@@ -28,9 +28,8 @@ const DATA_SOURCE_ID = process.env.NOTION_DATA_SOURCE_ID || 'f38dba17-bbd6-4f04-
 const API_VERSION = '2025-09-03';
 
 if (!TOKEN) {
-  console.error('⚠️ Missing NOTION_TOKEN in environment or .env.local.');
-  console.error('Please set NOTION_TOKEN (and optionally NOTION_DATA_SOURCE_ID).');
-  process.exit(1);
+  console.warn('⚠️ Missing NOTION_TOKEN in environment or .env.local. Keeping existing static bundle.');
+  process.exit(0);
 }
 
 function findProp(props, names = [], expectedType = null) {

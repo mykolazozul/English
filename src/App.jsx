@@ -12,7 +12,7 @@ import {ensureChatIdentity,publicKeyPayload,encryptChatPayload,decryptChatText,e
 import {track} from './lib/analytics.js';
 
 
-const VERSION = '3.2.0';
+const VERSION = '3.3.0';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -342,6 +342,22 @@ function playBossHitSound() {
   } catch {}
 }
 
+function playCaseTickSound() {
+  try {
+    if (window.__efQuiet || window.__efNoSfx) return;
+    const C = window.AudioContext || window.webkitAudioContext; if (!C) return;
+    const c = new C();
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = 'triangle';
+    o.frequency.setValueAtTime(640, c.currentTime);
+    o.frequency.exponentialRampToValueAtTime(160, c.currentTime + 0.032);
+    g.gain.setValueAtTime(0.24, c.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 0.032);
+    o.connect(g); g.connect(c.destination);
+    o.start(c.currentTime); o.stop(c.currentTime + 0.035);
+  } catch {}
+}
+
 /* ==========================================================================
    v3.2.0 — AUTHENTIC ANCIENT COIN / POINT VECTOR SVG
    ========================================================================== */
@@ -380,11 +396,40 @@ function AncientCoinIcon({ size = 20, className = '', style = {} }) {
     </svg>
   );
 }
+ 
+/* ==========================================================================
+   STRICT ECONOMY: DAILY COIN EARNING CAP HELPER (MAX 60 COINS/DAY FROM LESSONS)
+   ========================================================================== */
+function awardDailyCoins(currentState, amount = 2, maxDaily = 60) {
+  const today = todayStr();
+  const daily = (currentState.dailyCoins && currentState.dailyCoins.date === today)
+    ? currentState.dailyCoins
+    : { date: today, earned: 0 };
+
+  const canEarn = Math.max(0, maxDaily - daily.earned);
+  const actualEarned = Math.min(amount, canEarn);
+
+  const nextDaily = {
+    date: today,
+    earned: daily.earned + actualEarned
+  };
+
+  return {
+    actualEarned,
+    remainingToday: Math.max(0, maxDaily - nextDaily.earned),
+    nextState: {
+      ...currentState,
+      gems: (currentState.gems || 0) + actualEarned,
+      dailyCoins: nextDaily
+    }
+  };
+}
 
 /* ==========================================================================
-   30 CHARACTER AVATARS (KNIGHT, SAMURAI, WIZARD, SPARTAN, AND CREATURES)
+   40+ CHARACTER AVATARS (KNIGHT, SAMURAI, WIZARD, CREATURES & LEGENDS)
    ========================================================================== */
 const GAME_AVATARS_30 = [
+  // RPG Heroes & Legends
   { id: 'avatar_knight', name: 'Лицар Світла', bg: '#475569', eyeBg: '#FFFFFF', pupil: '#0284C7', beak: '#F59E0B', archetype: 'knight', tag: '🛡️ Лицар' },
   { id: 'avatar_samurai', name: 'Кібер-Самурай', bg: '#991B1B', eyeBg: '#FEF08A', pupil: '#18181B', beak: '#DC2626', archetype: 'samurai', tag: '⚔️ Самурай' },
   { id: 'avatar_wizard', name: 'Верховний Маг', bg: '#6D28D9', eyeBg: '#FFFFFF', pupil: '#38BDF8', beak: '#F59E0B', archetype: 'wizard', tag: '🧙 Маг' },
@@ -395,19 +440,34 @@ const GAME_AVATARS_30 = [
   { id: 'avatar_dragon', name: 'Вершник Дракона', bg: '#047857', eyeBg: '#FEF08A', pupil: '#064E3B', beak: '#EA580C', archetype: 'dragon_rider', tag: '🐲 Дракон' },
   { id: 'avatar_detective', name: 'Детектив Нуар', bg: '#374151', eyeBg: '#FFFFFF', pupil: '#111827', beak: '#9CA3AF', archetype: 'detective', tag: '🕵️ Детектив' },
   { id: 'avatar_phoenix', name: 'Сонячний Фенікс', bg: '#EA580C', eyeBg: '#FEF08A', pupil: '#7C2D12', beak: '#FACC15', archetype: 'phoenix', tag: '🔥 Фенікс' },
+  { id: 'avatar_king', name: 'Король Артур', bg: '#B45309', eyeBg: '#FEF08A', pupil: '#1E293B', beak: '#F59E0B', ears: 'crown', archetype: 'king', tag: '👑 Король' },
+  { id: 'avatar_castle', name: 'Цитадель Замок', bg: '#334155', eyeBg: '#38BDF8', pupil: '#0F172A', beak: '#94A3B8', archetype: 'castle', tag: '🏰 Замок' },
+  { id: 'avatar_golem', name: 'Камʼяний Ґолем', bg: '#64748B', eyeBg: '#4ADE80', pupil: '#166534', beak: '#475569', archetype: 'golem', tag: '🗿 Ґолем' },
+  { id: 'avatar_gold_pile', name: 'Купа Золота', bg: '#D97706', eyeBg: '#FEF08A', pupil: '#78350F', beak: '#F59E0B', archetype: 'gold', tag: '💰 Золото' },
+  { id: 'avatar_chest', name: 'Міфічна Скриня', bg: '#78350F', eyeBg: '#FEF08A', pupil: '#1E293B', beak: '#F59E0B', archetype: 'chest', tag: '📦 Скриня' },
+  { id: 'avatar_wolf', name: 'Полярний Вовк', bg: '#475569', eyeBg: '#E0F2FE', pupil: '#0284C7', beak: '#1E293B', ears: 'fox', tag: '🐺 Вовк' },
+  { id: 'avatar_eagle', name: 'Гірський Орел', bg: '#78350F', eyeBg: '#FEF08A', pupil: '#18181B', beak: '#F59E0B', archetype: 'phoenix', tag: '🦅 Орел' },
+  { id: 'avatar_bear_grizzly', name: 'Грізлі Берсерк', bg: '#451A03', eyeBg: '#FEF08A', pupil: '#18181B', beak: '#1E293B', ears: 'bear', tag: '🐻 Грізлі' },
+  { id: 'avatar_valkyrie', name: 'Валькірія Небес', bg: '#0284C7', eyeBg: '#FFFFFF', pupil: '#0369A1', beak: '#F59E0B', archetype: 'knight', tag: '🛡️ Валькірія' },
+  { id: 'avatar_druid', name: 'Лісовий Друїд', bg: '#15803D', eyeBg: '#DCFCE7', pupil: '#166534', beak: '#84CC16', ears: 'feather', tag: '🌿 Друїд' },
+  { id: 'avatar_vampire', name: 'Нічний Лорд', bg: '#4C1D95', eyeBg: '#EF4444', pupil: '#7F1D1D', beak: '#1E293B', archetype: 'ninja', tag: '🦇 Лорд' },
+  { id: 'avatar_paladin', name: 'Паладин Сонця', bg: '#EAB308', eyeBg: '#FFFFFF', pupil: '#0284C7', beak: '#D97706', archetype: 'knight', tag: '⚔️ Паладин' },
+
+  // Wild Beasts & Duolingo Style Creatures
   { id: 'duo_owl', name: 'Зелена Сова', bg: '#58CC02', eyeBg: '#FFFFFF', pupil: '#1E293B', beak: '#F59E0B', ears: 'feather', tag: '🦉 Сова' },
   { id: 'duo_fox', name: 'Хитрий Лис', bg: '#EA580C', eyeBg: '#FFFFFF', pupil: '#1E293B', beak: '#18181B', ears: 'fox', tag: '🦊 Лис' },
+  { id: 'duo_lion', name: 'Золотий Лев', bg: '#D97706', eyeBg: '#FFFFFF', pupil: '#18181B', beak: '#78350F', ears: 'lion', tag: '🦁 Лев' },
   { id: 'duo_cat', name: 'Кіт-Геймер', bg: '#8B5CF6', eyeBg: '#FFFFFF', pupil: '#1E293B', beak: '#EC4899', ears: 'cat', tag: '🐱 Кіт' },
   { id: 'duo_bear', name: 'Синій Ведмідь', bg: '#2563EB', eyeBg: '#FFFFFF', pupil: '#0F172A', beak: '#1E293B', ears: 'bear', tag: '🐻 Ведмідь' },
   { id: 'duo_frog', name: 'Жабка Спринт', bg: '#10B981', eyeBg: '#FFFFFF', pupil: '#064E3B', beak: '#F59E0B', ears: 'frog', tag: '🐸 Жабка' },
   { id: 'duo_panda', name: 'Бамбукова Панда', bg: '#E2E8F0', eyeBg: '#FFFFFF', pupil: '#0F172A', beak: '#0F172A', ears: 'panda', tag: '🐼 Панда' },
-  { id: 'duo_lion', name: 'Золотий Лев', bg: '#D97706', eyeBg: '#FFFFFF', pupil: '#18181B', beak: '#78350F', ears: 'lion', tag: '🦁 Лев' },
+  { id: 'duo_tiger', name: 'Смугастий Тигр', bg: '#F97316', eyeBg: '#FFFFFF', pupil: '#18181B', beak: '#7C2D12', ears: 'tiger', tag: '🐯 Тигр' },
+  { id: 'duo_leopard', name: 'Сніговий Барс', bg: '#94A3B8', eyeBg: '#E0F2FE', pupil: '#0284C7', beak: '#334155', ears: 'cat', tag: '🐆 Барс' },
   { id: 'duo_robot', name: 'Кібер-Бот X', bg: '#06B6D4', eyeBg: '#FEF08A', pupil: '#0E7490', beak: '#0284C7', ears: 'robot', tag: '🤖 Робот' },
   { id: 'duo_dragon', name: 'Смарагдовий Дракон', bg: '#059669', eyeBg: '#FEF08A', pupil: '#064E3B', beak: '#F97316', ears: 'dragon', tag: '🐲 Дракон' },
   { id: 'duo_koala', name: 'Сіра Коала', bg: '#64748B', eyeBg: '#FFFFFF', pupil: '#0F172A', beak: '#0F172A', ears: 'koala', tag: '🐨 Коала' },
   { id: 'duo_dog', name: 'Коргі Чемпіон', bg: '#F59E0B', eyeBg: '#FFFFFF', pupil: '#18181B', beak: '#18181B', ears: 'dog', tag: '🐶 Коргі' },
   { id: 'duo_penguin', name: 'Пінгвін у шарфі', bg: '#0F172A', eyeBg: '#FFFFFF', pupil: '#0F172A', beak: '#F59E0B', ears: 'penguin', tag: '🐧 Пінгвін' },
-  { id: 'duo_tiger', name: 'Смугастий Тигр', bg: '#F97316', eyeBg: '#FFFFFF', pupil: '#18181B', beak: '#7C2D12', ears: 'tiger', tag: '🐯 Тигр' },
   { id: 'duo_raccoon', name: 'Єнот Граматик', bg: '#475569', eyeBg: '#FFFFFF', pupil: '#0F172A', beak: '#0F172A', ears: 'raccoon', tag: '🦝 Єнот' },
   { id: 'duo_alien', name: 'Космічний Прибулець', bg: '#84CC16', eyeBg: '#FFFFFF', pupil: '#166534', beak: '#4ADE80', ears: 'alien', tag: '👽 Прибулець' },
   { id: 'duo_bunny', name: 'Спритний Зайчик', bg: '#F1F5F9', eyeBg: '#FFFFFF', pupil: '#0F172A', beak: '#F43F5E', ears: 'bunny', tag: '🐰 Зайчик' },
@@ -454,6 +514,18 @@ function AvatarIcon({ id, size = 44, className = '', style = {} }) {
       </defs>
       
       {/* Ear / Headgear Addons */}
+      {av.archetype === 'castle' && (
+        <path d="M24 16 H34 V24 H46 V16 H54 V24 H66 V16 H76 V34 H24 Z" fill="#94A3B8" />
+      )}
+      {av.archetype === 'golem' && (
+        <polygon points="30,22 50,10 70,22 80,34 20,34" fill="#64748B" />
+      )}
+      {av.archetype === 'gold' && (
+        <circle cx="50" cy="20" r="12" fill="#F59E0B" stroke="#FEF08A" strokeWidth="2" />
+      )}
+      {av.archetype === 'chest' && (
+        <rect x="24" y="16" width="52" height="18" rx="4" fill="#B45309" stroke="#FEF08A" strokeWidth="2" />
+      )}
       {av.archetype === 'knight' && (
         <>
           <rect x="46" y="2" width="8" height="24" rx="3" fill="#F59E0B" />
@@ -536,8 +608,14 @@ function AvatarIcon({ id, size = 44, className = '', style = {} }) {
       <rect x="8" y="14" width="84" height="80" rx="26" fill={`url(#grad_${av.id})`} />
       
       {/* Forehead Feathers / Helmet Visor */}
-      {av.archetype === 'knight' ? (
+      {av.archetype === 'knight' || av.archetype === 'castle' ? (
         <rect x="18" y="44" width="64" height="18" rx="6" fill="#1E293B" stroke="#94A3B8" strokeWidth="2" />
+      ) : av.archetype === 'golem' ? (
+        <path d="M22 46 L78 46 L74 58 L26 58 Z" fill="#334155" stroke="#10B981" strokeWidth="1.5" />
+      ) : av.archetype === 'gold' ? (
+        <ellipse cx="50" cy="50" rx="26" ry="14" fill="#FEF08A" stroke="#B45309" strokeWidth="2" />
+      ) : av.archetype === 'chest' ? (
+        <rect x="24" y="44" width="52" height="14" rx="4" fill="#D97706" stroke="#FEF08A" strokeWidth="2" />
       ) : av.archetype === 'astronaut' ? (
         <ellipse cx="50" cy="50" rx="30" ry="20" fill="#F59E0B" stroke="#0F172A" strokeWidth="3" />
       ) : (
@@ -962,6 +1040,14 @@ export default function App() {
   const [gamification, setGamification] = useState(null);
   const [giftModal, setGiftModal] = useState(false);
   const [publicProfileNick, setPublicProfileNick] = useState(null);
+  const [epicBadge, setEpicBadge] = useState(null);
+  useEffect(() => {
+    const onBadge = (e) => {
+      if (e?.detail) setEpicBadge(e.detail);
+    };
+    window.addEventListener('ef-badge-unlocked', onBadge);
+    return () => window.removeEventListener('ef-badge-unlocked', onBadge);
+  }, []);
   const refreshGamification = useCallback(async () => {
     if (state.guest) return;
     try { const g = await getGamification(); if (g?.ok) { setGamification(g); if (g.giftAvailable) setGiftModal(true); } } catch {}
@@ -1036,16 +1122,12 @@ export default function App() {
     const onVis = () => {
       if (document.hidden) lock();
     };
-    const onBlur = () => {
-      lock(); // Switched to another app or minimized browser
-    };
 
     bump();
     window.addEventListener('mousemove', bump);
     window.addEventListener('keydown', bump);
     window.addEventListener('touchstart', bump);
     window.addEventListener('scroll', bump, true);
-    window.addEventListener('blur', onBlur);
     document.addEventListener('visibilitychange', onVis);
 
     return () => {
@@ -1054,7 +1136,6 @@ export default function App() {
       window.removeEventListener('keydown', bump);
       window.removeEventListener('touchstart', bump);
       window.removeEventListener('scroll', bump, true);
-      window.removeEventListener('blur', onBlur);
       document.removeEventListener('visibilitychange', onVis);
     };
   }, [page]);
@@ -1294,14 +1375,317 @@ export default function App() {
         />
       )}
       {!state.guest && <FloatingChatWidget state={state} nav={nav} />}
+      {epicBadge && <EpicAchievementBanner badge={epicBadge} onClose={() => setEpicBadge(null)} />}
       <Analytics />
     </>
+  );
+}
+
+/* ==========================================================================
+   v3.3.0 — EPIC STEAM / RPG BADGE ACHIEVEMENT BANNER
+   ========================================================================== */
+function EpicAchievementBanner({ badge, onClose }) {
+  useEffect(() => {
+    playFanfareTone();
+    confettiBurst();
+    const timer = setTimeout(() => {
+      onClose();
+    }, 5500);
+    return () => clearTimeout(timer);
+  }, [badge, onClose]);
+
+  if (!badge) return null;
+
+  const tierColors = {
+    starter: '#38bdf8',
+    medium: '#a855f7',
+    advanced: '#f59e0b',
+    legendary: '#ec4899',
+    secret: '#ef4444'
+  };
+  const tierNames = {
+    starter: '🥉 СТАРТОВЕ ДОСЯГНЕННЯ',
+    medium: '🥈 СРІБНЕ ДОСЯГНЕННЯ',
+    advanced: '🥇 ЗОЛОТЕ ДОСЯГНЕННЯ',
+    legendary: '💎 ЛЕГЕНДАРНЕ ДОСЯГНЕННЯ',
+    secret: '🔮 СЕКРЕТНЕ ДОСЯГНЕННЯ'
+  };
+
+  const color = tierColors[badge.tier || 'starter'] || '#f59e0b';
+  const label = tierNames[badge.tier || 'starter'] || '🎖️ ДОСЯГНЕННЯ';
+
+  return (
+    <div className="epic-badge-banner" onClick={onClose} style={{ borderColor: color }}>
+      <div className="banner-icon-burst" style={{ borderColor: color, boxShadow: `0 0 24px ${color}88` }}>
+        {badge.icon || '🏆'}
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.08em', color, textTransform: 'uppercase' }}>
+          {label} РОЗБЛОКОВАНО!
+        </div>
+        <div style={{ fontSize: 16, fontWeight: 800, color: '#ffffff', margin: '2px 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          {badge.title}
+        </div>
+        <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)', lineHeight: 1.3, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+          {badge.desc}
+        </div>
+      </div>
+      <button
+        type="button"
+        className="icon small"
+        onClick={(e) => { e.stopPropagation(); onClose(); }}
+        style={{ color: 'rgba(255,255,255,0.6)', border: 'none', background: 'transparent', cursor: 'pointer' }}
+      >
+        ✕
+      </button>
+    </div>
+  );
+}
+
+/* ==========================================================================
+   v3.3.0 — CS:GO ROULETTE CASE FOR MYSTERY CHEST (100 ANCIENT POINTS)
+   ========================================================================== */
+const CS_CASE_ITEMS = [
+  { id: 'xp_50', name: '+50 XP Ліги', icon: '⚡', rarity: 'blue', type: 'xp', amount: 50, color: '#3b82f6' },
+  { id: 'points_15', name: '+15 Поінтів', icon: '🪙', rarity: 'blue', type: 'gems', amount: 15, color: '#3b82f6' },
+  { id: 'second_chance', name: 'Другий шанс', icon: '🔄', rarity: 'blue', type: 'second_chance', amount: 1, color: '#3b82f6' },
+  { id: 'xp_100', name: '+100 XP Ліги', icon: '⚡', rarity: 'purple', type: 'xp', amount: 100, color: '#a855f7' },
+  { id: 'freeze_1', name: 'Заморозка серії', icon: '❄️', rarity: 'purple', type: 'freeze', amount: 1, color: '#a855f7' },
+  { id: 'points_40', name: '+40 Поінтів', icon: '🪙', rarity: 'purple', type: 'gems', amount: 40, color: '#a855f7' },
+  { id: 'xp_200', name: '+200 XP Спринт', icon: '⚡', rarity: 'pink', type: 'xp', amount: 200, color: '#ec4899' },
+  { id: 'league_shield', name: 'Щит Ліги', icon: '🛡️', rarity: 'pink', type: 'league_shield', amount: 1, color: '#ec4899' },
+  { id: 'points_75', name: '+75 Поінтів', icon: '🪙', rarity: 'pink', type: 'gems', amount: 75, color: '#ec4899' },
+  { id: 'booster_1h', name: 'XP Booster 2×', icon: '⚡⚡', rarity: 'red', type: 'booster', amount: 1, color: '#ef4444' },
+  { id: 'points_150', name: '+150 Поінтів!', icon: '🪙🪙', rarity: 'red', type: 'gems', amount: 150, color: '#ef4444' },
+  { id: 'vip_frame', name: 'Золота VIP Рамка', icon: '👑', rarity: 'gold', type: 'vip_frame', amount: 1, color: '#f59e0b' },
+  { id: 'jackpot_500', name: 'ДЖЕКПОТ +500 XP & 200 🪙', icon: '💎', rarity: 'gold', type: 'jackpot', amount: 500, color: '#f59e0b' }
+];
+
+function CsCaseRouletteModal({ isOpen, onClose, state, save }) {
+  const [spinning, setSpinning] = useState(false);
+  const [stripItems, setStripItems] = useState([]);
+  const [winnerItem, setWinnerItem] = useState(null);
+  const [translateX, setTranslateX] = useState(0);
+  const [transitionStyle, setTransitionStyle] = useState('none');
+  const windowRef = useRef(null);
+  const timerRef = useRef(null);
+
+  // Generate strip on open
+  useEffect(() => {
+    if (isOpen) {
+      setWinnerItem(null);
+      setTranslateX(0);
+      setTransitionStyle('none');
+      const items = [];
+      for (let i = 0; i < 70; i++) {
+        const rand = Math.random();
+        let pool;
+        if (rand < 0.55) pool = CS_CASE_ITEMS.filter(x => x.rarity === 'blue');
+        else if (rand < 0.80) pool = CS_CASE_ITEMS.filter(x => x.rarity === 'purple');
+        else if (rand < 0.92) pool = CS_CASE_ITEMS.filter(x => x.rarity === 'pink');
+        else if (rand < 0.98) pool = CS_CASE_ITEMS.filter(x => x.rarity === 'red');
+        else pool = CS_CASE_ITEMS.filter(x => x.rarity === 'gold');
+        const chosen = pool[Math.floor(Math.random() * pool.length)];
+        items.push({ ...chosen, uid: `${chosen.id}_${i}_${Math.random()}` });
+      }
+      setStripItems(items);
+    }
+  }, [isOpen]);
+
+  const spin = () => {
+    if (spinning) return;
+    if ((state.gems || 0) < 100) {
+      emitSiteError('Не вистачає Древніх Поінтів! Потрібно 100 🪙 для відкриття CS:GO кейсу.', 'Скриня');
+      return;
+    }
+
+    setSpinning(true);
+    setWinnerItem(null);
+    setTransitionStyle('none');
+    setTranslateX(0);
+
+    const winIdx = 54;
+    const cardWidth = 154;
+    const gap = 12;
+    const itemFullWidth = cardWidth + gap;
+
+    let nextState = { ...state, gems: Math.max(0, (state.gems || 0) - 100) };
+    save(nextState);
+
+    setTimeout(() => {
+      const windowW = windowRef.current ? windowRef.current.offsetWidth : 800;
+      const centerLine = windowW / 2;
+      const wobble = (Math.random() - 0.5) * 60;
+      const targetCardCenter = 20 + winIdx * itemFullWidth + cardWidth / 2 + wobble;
+      const finalX = -(targetCardCenter - centerLine);
+
+      setTransitionStyle('transform 5.4s cubic-bezier(0.12, 0.8, 0.18, 1)');
+      setTranslateX(finalX);
+
+      // Deceleration tick loop
+      const startTime = Date.now();
+      const duration = 5400;
+      let tickTimeout;
+      const tick = () => {
+        const elapsed = Date.now() - startTime;
+        if (elapsed >= duration) return;
+        playCaseTickSound();
+        const progress = elapsed / duration;
+        const nextDelay = 60 + Math.pow(progress, 2.8) * 550;
+        tickTimeout = setTimeout(tick, nextDelay);
+      };
+      tickTimeout = setTimeout(tick, 60);
+
+      timerRef.current = setTimeout(() => {
+        clearTimeout(tickTimeout);
+        const won = stripItems[winIdx] || CS_CASE_ITEMS[0];
+        setWinnerItem(won);
+        setSpinning(false);
+        playFanfareTone();
+        confettiBurst();
+
+        let rewarded = { ...nextState };
+        const inv = rewarded.inventory || { doubleXpUntil: null, secondChance: 0, vipFrame: false, leagueShield: false };
+
+        if (won.type === 'xp') rewarded.xp = (rewarded.xp || 0) + won.amount;
+        else if (won.type === 'gems') rewarded.gems = (rewarded.gems || 0) + won.amount;
+        else if (won.type === 'freeze') rewarded.freezeCount = (rewarded.freezeCount || 0) + won.amount;
+        else if (won.type === 'second_chance') rewarded.inventory = { ...inv, secondChance: (inv.secondChance || 0) + won.amount };
+        else if (won.type === 'league_shield') rewarded.inventory = { ...inv, leagueShield: true };
+        else if (won.type === 'vip_frame') rewarded.inventory = { ...inv, vipFrame: true };
+        else if (won.type === 'booster') rewarded.inventory = { ...inv, doubleXpUntil: Date.now() + 60 * 60 * 1000 };
+        else if (won.type === 'jackpot') { rewarded.xp = (rewarded.xp || 0) + 500; rewarded.gems = (rewarded.gems || 0) + 200; }
+
+        save(rewarded);
+
+        const bCase = BADGES.find(b => b.id === 'cs_case_unboxed');
+        if (bCase) window.dispatchEvent(new CustomEvent('ef-badge-unlocked', { detail: bCase }));
+
+        if (won.rarity === 'gold' || won.rarity === 'red') {
+          const bDrop = BADGES.find(b => b.id === 'legendary_drop');
+          if (bDrop) window.dispatchEvent(new CustomEvent('ef-badge-unlocked', { detail: bDrop }));
+        }
+      }, 5450);
+    }, 50);
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="cs-case-overlay" onClick={spinning ? undefined : onClose}>
+      <div className="cs-case-modal" onClick={e => e.stopPropagation()}>
+        <div className="cs-case-header">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: 24 }}>🎁</span>
+            <div>
+              <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800 }}>ТАЄМНИЧА CS:GO СКРИНЯ ДРЕВНІХ ПОІНТІВ</h3>
+              <span className="muted" style={{ fontSize: 12 }}>Вартість відкриття: <b>100 🪙 Поінтів</b></span>
+            </div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div className="stat-chip currency-pill-coins" style={{ padding: '6px 14px', fontSize: 14 }}>
+              <AncientCoinIcon size={18} /> {state.gems || 0} 🪙
+            </div>
+            {!spinning && (
+              <button type="button" className="icon small" onClick={onClose} style={{ color: '#94a3b8' }}>✕</button>
+            )}
+          </div>
+        </div>
+
+        <div className="cs-case-body">
+          <div className="cs-roulette-window" ref={windowRef}>
+            <div className="cs-roulette-indicator" />
+            <div
+              className="cs-roulette-strip"
+              style={{
+                transform: `translateX(${translateX}px)`,
+                transition: transitionStyle
+              }}
+            >
+              {stripItems.map((item, idx) => {
+                const isWin = winnerItem && idx === 54;
+                return (
+                  <div
+                    key={item.uid}
+                    className={`cs-case-card ${isWin ? 'winner' : ''}`}
+                    style={{
+                      borderTopColor: item.color,
+                      background: isWin ? 'rgba(245, 158, 11, 0.2)' : undefined
+                    }}
+                  >
+                    <div style={{ fontSize: 38, marginBottom: 8, filter: 'drop-shadow(0 4px 10px rgba(0,0,0,0.5))' }}>
+                      {item.icon}
+                    </div>
+                    <div style={{ fontSize: 12, fontWeight: 700, textAlign: 'center', color: '#f8fafc', lineHeight: 1.2 }}>
+                      {item.name}
+                    </div>
+                    <div
+                      className={`rarity-stripe cs-rarity-${item.rarity}`}
+                      style={{ background: item.color }}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {winnerItem ? (
+            <div style={{ textAlign: 'center', animation: 'csFadeIn 0.3s ease-out' }}>
+              <span style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.08em', color: winnerItem.color, fontWeight: 800 }}>
+                🎉 ВИТАСКАНО ПРЕДМЕТ!
+              </span>
+              <h2 style={{ margin: '4px 0 14px', fontSize: 24, color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                <span>{winnerItem.icon}</span> {winnerItem.name}
+              </h2>
+              <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+                <button
+                  type="button"
+                  className="primary"
+                  onClick={spin}
+                  disabled={(state.gems || 0) < 100}
+                  style={{ minWidth: 200, fontSize: 15, padding: '12px 24px' }}
+                >
+                  ▶ КРУТИТИ ЩЕ РАЗ (100 🪙)
+                </button>
+                <button type="button" className="secondary" onClick={onClose} style={{ padding: '12px 20px' }}>
+                  Забрати й закрити
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div style={{ textAlign: 'center' }}>
+              <button
+                type="button"
+                className="primary"
+                onClick={spin}
+                disabled={spinning || (state.gems || 0) < 100}
+                style={{
+                  minWidth: 260,
+                  fontSize: 16,
+                  fontWeight: 800,
+                  letterSpacing: '0.04em',
+                  padding: '14px 32px',
+                  borderRadius: 16,
+                  boxShadow: '0 0 25px rgba(245, 158, 11, 0.45)'
+                }}
+              >
+                {spinning ? '⏳ РУЛЕТКА КРУТИТЬСЯ...' : '▶ ВІДКРИТИ КЕЙС (100 🪙)'}
+              </button>
+              <div style={{ marginTop: 10, fontSize: 12, color: 'rgba(255,255,255,0.6)' }}>
+                Шанси: 🟦 55% Common · 🟪 25% Rare · 🟪 12% Epic · 🟥 6% Covert · 🟨 2% Special Legendary
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
 
 function ShopPage({state, save, onRefreshGamification}) {
   const [busy, setBusy] = useState(false);
   const [showEconomyModal, setShowEconomyModal] = useState(false);
+  const [caseModalOpen, setCaseModalOpen] = useState(false);
   const xp = state.xp || 0;
   const gems = state.gems || 0;
   const freezeCount = state.freezeCount || 0;
@@ -1506,19 +1890,19 @@ function ShopPage({state, save, onRefreshGamification}) {
           </div>
         </div>
 
-        {/* Item 6: Mystery Legendary Chest */}
+        {/* Item 6: Mystery Legendary Chest (CS:GO Case) */}
         <div className="card shop-card shop-card-gaming">
           <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
             <div className="shop-icon">🎁</div>
-            <span className="rarity-badge rarity-legendary">LEGENDARY</span>
+            <span className="rarity-badge rarity-legendary">CS:GO CASE</span>
           </div>
           <div className="shop-card-content">
-            <h3>Таємнича Мега-скриня</h3>
-            <p className="muted small">Відкрийте легендарну скриню! Шанс отримати до 150 XP рейтингу, 20 Древніх Поінтів або Заморозку серії.</p>
+            <h3>Таємнича CS:GO Скриня</h3>
+            <p className="muted small">Відкрийте рулетку кейсу! Шанс отримати до 500 XP рейтингу, 150 Древніх Поінтів, VIP-рамку чи Заморозку серії.</p>
           </div>
           <div className="shop-footer" style={{marginTop:12}}>
-            <button className="primary full" style={{fontSize:13,display:'flex',alignItems:'center',justifyContent:'center',gap:6}} disabled={busy || gems < 20} onClick={() => buy('mystery_chest', 20)}>
-              <AncientCoinIcon size={16}/> 20 Поінтів
+            <button className="primary full" style={{fontSize:13,display:'flex',alignItems:'center',justifyContent:'center',gap:6}} disabled={busy} onClick={() => setCaseModalOpen(true)}>
+              <AncientCoinIcon size={16}/> 100 Поінтів
             </button>
           </div>
         </div>
@@ -1546,20 +1930,21 @@ function ShopPage({state, save, onRefreshGamification}) {
               <div>
                 <h3 style={{margin:'8px 0 4px',fontSize:15}}>📥 Де брати Древні Поінти:</h3>
                 <ul style={{margin:'4px 0 0 16px',padding:0}}>
-                  <li><b>Щоденні квести:</b> від +5 до +15 🪙 за виконання кожного завдання.</li>
-                  <li><b>Ідеальні уроки:</b> +5 🪙 за проходження уроку з точністю 100%.</li>
-                  <li><b>Перемоги у Спринті:</b> +10 🪙 за перемогу над суперником у дуелі.</li>
-                  <li><b>Щоденна скриня подарунків:</b> +5–25 🪙 при регулярному відвідуванні.</li>
-                  <li><b>Підвищення в Лізі:</b> від +50 до +100 🪙 при переході у вищу лігу.</li>
+                  <li><b>Завершені уроки:</b> +2 🪙 за кожен завершений урок (добовий ліміт заробітку з уроків: максимум 60 🪙).</li>
+                  <li><b>Щоденні квести:</b> від +3 до +5 🪙 за виконання кожного завдання.</li>
+                  <li><b>Перемоги у Спринті:</b> +4 🪙 за перемогу над суперником у дуелі.</li>
+                  <li><b>Щоденний подарунок:</b> від +5 до +25 🪙 при регулярному відвідуванні.</li>
+                  <li><b>Підвищення в Лізі:</b> від +25 до +50 🪙 при переході у вищу лігу.</li>
                 </ul>
               </div>
 
               <div>
                 <h3 style={{margin:'8px 0 4px',fontSize:15}}>🛡️ Захист від нескінченного фарму (Fair Play):</h3>
                 <ul style={{margin:'4px 0 0 16px',padding:0}}>
-                  <li><b>Добовий ліміт заробітку:</b> максимум <b>150 Поінтів на добу</b>. Це унеможливлює використання ботів чи безкінечний клікінг.</li>
+                  <li><b>Добовий ліміт з уроків:</b> максимум <b>60 Поінтів на добу</b>. Це унеможливлює використання автоклікерів та зберігає чесний баланс.</li>
+                  <li><b>Таємнича CS:GO Скриня:</b> коштує <b>100 Поінтів</b> — преміальна рулетка з шансом вибити легендарні предмети.</li>
                   <li><b>Нульовий донат:</b> поінти не можна купити за реальні гроші. Тільки знання та щоденна дисципліна!</li>
-                  <li><b>Анти-інфляційний баланс:</b> вартість артефактів збалансована так, щоб кожен гравець мав відчутну цінність кожної монети.</li>
+                  <li><b>Анти-інфляційний баланс:</b> вартість артефактів збалансована для збереження високої цінності кожної монети.</li>
                 </ul>
               </div>
             </div>
@@ -1570,6 +1955,14 @@ function ShopPage({state, save, onRefreshGamification}) {
           </div>
         </div>
       )}
+
+      {/* CS:GO Roulette Mystery Case Modal */}
+      <CsCaseRouletteModal
+        isOpen={caseModalOpen}
+        onClose={() => setCaseModalOpen(false)}
+        state={state}
+        save={save}
+      />
     </section>
   );
 }
@@ -1872,17 +2265,6 @@ function Onboarding({onDone}) {
         <button className="primary full" type="button" disabled={busy} onClick={mode==='login'?doLogin:doRegister} style={{marginTop:12}}>
           {busy ? '…' : (mode==='login' ? 'Увійти' : 'Створити акаунт')}
         </button>
-
-        {mode === 'login' && (
-          <button
-            className="secondary full"
-            type="button"
-            onClick={loginVipTester}
-            style={{marginTop:8,background:'linear-gradient(135deg,rgba(245,158,11,0.18),rgba(234,179,8,0.28))',border:'1px solid #f59e0b',color:'var(--text)',fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',gap:8,padding:'10px 14px',borderRadius:12}}
-          >
-            <span>👑</span> Швидкий вхід: VIP Тестер (9,999 🪙 • Ліга Легенда)
-          </button>
-        )}
 
         <button className="secondary full guest-btn" type="button" onClick={guest}>
           <Ghost size={18}/> Увійти як гість
@@ -2339,13 +2721,17 @@ function SprintGame({items, mode, state, save, onExit, onDone, lessonId}) {
           <span className="eyebrow">LESSON COMPLETE</span>
           <h1>Урок завершено</h1>
           <p>Правильно: {okCount} · Помилки: {badCount} · Питань: {total}</p>
-{badCount === 0 && okCount > 0 && <p className="bonus-line" style={{color:'#16a34a',fontWeight:700}}>✨ Ідеальний урок! Отримано бонус: +3 💎 Смарагди</p>}
+          <p className="bonus-line" style={{color:'#f59e0b',fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',gap:6}}>
+            <AncientCoinIcon size={18}/> +2 Древніх Поінти за урок (добовий ліміт уроків: 60 🪙)
+          </p>
+          {badCount === 0 && okCount > 0 && <p className="bonus-line" style={{color:'#16a34a',fontWeight:700}}>✨ Ідеальний урок без жодної помилки!</p>}
           <CompareBlurb state={state} />
           <button className="primary" type="button" onClick={() => {
             let next = {...state, gamesPlayed: (state.gamesPlayed || 0) + 1};
+            const { nextState } = awardDailyCoins(next, 2, 60);
+            next = nextState;
             if (badCount === 0 && okCount > 0) {
               confettiBurst();
-              next.gems = (next.gems || 0) + 3;
             }
             save(next);
             if (!state.guest && lessonId) Promise.allSettled(pendingProgress.current).then(() => cloudFinishLesson(lessonId).then(r => { if(r?.user) save({...stateRef.current,...r.user}); }).catch(() => {}));
@@ -3014,7 +3400,8 @@ function BadgesPage({state}) {
     {id: 'starter', label: '🥉 Стартові'},
     {id: 'medium', label: '🥈 Срібні'},
     {id: 'advanced', label: '🥇 Золоті'},
-    {id: 'legendary', label: '💎 Легендарні'}
+    {id: 'legendary', label: '💎 Легендарні'},
+    {id: 'secret', label: '🔮 Секретні'}
   ];
 
   const filteredBadges = BADGES.filter(b => tierFilter === 'all' || (b.tier || 'starter') === tierFilter);
@@ -3112,7 +3499,8 @@ function Leaderboard({state, gamification, onViewProfile}) {
     return () => { alive = false; };
   }, [gamification, state.guest]);
 
-  const list = rows ? (tab === 'global' ? (rows.global || []) : (rows.friends || [])) : [];
+  const rawList = rows ? (tab === 'global' ? (rows.global || []) : (rows.friends || [])) : [];
+  const list = rawList.filter(p => String(p.nick || '').toLowerCase() !== 'tester');
   const podium = list.slice(0, 3);
   const rest = list.slice(3);
 
@@ -3162,6 +3550,7 @@ function Leaderboard({state, gamification, onViewProfile}) {
               {list.map((p, idx) => {
                 const nick = String(p.nick || '');
                 const isMe = nick === state.nick;
+                const isBoss = nick.toLowerCase() === 'boss' || String(p.name||'').toLowerCase() === 'boss';
                 return (
                   <tr
                     key={nick || idx}
@@ -3174,7 +3563,10 @@ function Leaderboard({state, gamification, onViewProfile}) {
                       <div style={{display:'flex',alignItems:'center',gap:10}}>
                         <AvatarIcon id={p.avatar || 'duo_owl'} size={32} />
                         <div>
-                          <b>{isMe ? '👤 ' + (p.name || nick) + ' (Ти)' : (p.name || nick)}</b>
+                          <b>
+                            {isMe ? '👤 ' + (p.name || nick) + ' (Ти)' : (p.name || nick)}
+                            {isBoss && <span className="boss-crown" title="Verified Boss">👑</span>}
+                          </b>
                           <div className="muted small">@{nick}</div>
                         </div>
                       </div>
@@ -3202,7 +3594,12 @@ function Leaderboard({state, gamification, onViewProfile}) {
                     <AvatarIcon id={podium[1].avatar || 'duo_owl'} size={44} />
                   </div>
                   <div className="podium-medal">🥈</div>
-                  <div className="podium-name">{podium[1].nick === state.nick ? '👤 Ти' : (podium[1].name || podium[1].nick)}</div>
+                  <div className="podium-name">
+                    {podium[1].nick === state.nick ? '👤 Ти' : (podium[1].name || podium[1].nick)}
+                    {(String(podium[1].nick||'').toLowerCase() === 'boss' || String(podium[1].name||'').toLowerCase() === 'boss') && (
+                      <span className="boss-crown" title="Verified Boss">👑</span>
+                    )}
+                  </div>
                   <LeagueBadge xp={podium[1].xp} style={{fontSize:10, padding:'2px 8px'}} />
                   <div className="podium-xp">{podium[1].xp} XP</div>
                   <div className="podium-bar h-2" />
@@ -3210,12 +3607,16 @@ function Leaderboard({state, gamification, onViewProfile}) {
               )}
               {podium[0] && (
                 <div className="podium-slot podium-1" onClick={() => podium[0].nick && onViewProfile?.(podium[0].nick)}>
-                  <div className="podium-crown">👑</div>
                   <div className="podium-avatar">
                     <AvatarIcon id={podium[0].avatar || 'duo_owl'} size={54} />
                   </div>
                   <div className="podium-medal">🥇</div>
-                  <div className="podium-name">{podium[0].nick === state.nick ? '👤 Ти' : (podium[0].name || podium[0].nick)}</div>
+                  <div className="podium-name">
+                    {podium[0].nick === state.nick ? '👤 Ти' : (podium[0].name || podium[0].nick)}
+                    {(String(podium[0].nick||'').toLowerCase() === 'boss' || String(podium[0].name||'').toLowerCase() === 'boss') && (
+                      <span className="boss-crown" title="Verified Boss">👑</span>
+                    )}
+                  </div>
                   <LeagueBadge xp={podium[0].xp} style={{fontSize:10, padding:'2px 8px'}} />
                   <div className="podium-xp">{podium[0].xp} XP</div>
                   <div className="podium-bar h-1" />
@@ -3227,7 +3628,12 @@ function Leaderboard({state, gamification, onViewProfile}) {
                     <AvatarIcon id={podium[2].avatar || 'duo_owl'} size={44} />
                   </div>
                   <div className="podium-medal">🥉</div>
-                  <div className="podium-name">{podium[2].nick === state.nick ? '👤 Ти' : (podium[2].name || podium[2].nick)}</div>
+                  <div className="podium-name">
+                    {podium[2].nick === state.nick ? '👤 Ти' : (podium[2].name || podium[2].nick)}
+                    {(String(podium[2].nick||'').toLowerCase() === 'boss' || String(podium[2].name||'').toLowerCase() === 'boss') && (
+                      <span className="boss-crown" title="Verified Boss">👑</span>
+                    )}
+                  </div>
                   <LeagueBadge xp={podium[2].xp} style={{fontSize:10, padding:'2px 8px'}} />
                   <div className="podium-xp">{podium[2].xp} XP</div>
                   <div className="podium-bar h-3" />
@@ -3242,6 +3648,7 @@ function Leaderboard({state, gamification, onViewProfile}) {
                 const nick = String((p && p.nick) || '');
                 if (!nick) return null;
                 const isMe = nick === state.nick;
+                const isBoss = nick.toLowerCase() === 'boss' || String(p.name||'').toLowerCase() === 'boss';
                 return (
                   <div
                     className={'leader-row' + (isMe ? ' leader-me' : '')}
@@ -3253,7 +3660,10 @@ function Leaderboard({state, gamification, onViewProfile}) {
                     <span className="rank">{rankMedal(i + 3)}</span>
                     <AvatarIcon id={p.avatar || 'duo_owl'} size={32} />
                     <div className="leader-info">
-                      <b>{isMe ? '👤 Ти' : (p.name || nick)}</b>
+                      <b>
+                        {isMe ? '👤 Ти' : (p.name || nick)}
+                        {isBoss && <span className="boss-crown" title="Verified Boss">👑</span>}
+                      </b>
                       <div className="muted small">
                         @{nick}
                         {Number(p.streak) > 0 ? ' · 🔥 ' + Number(p.streak) : ''}
@@ -3290,22 +3700,26 @@ function Leaderboard({state, gamification, onViewProfile}) {
                   <p className="muted small" style={{margin:'6px 0'}}>У цій лізі ще немає гравців. Навчайтесь, щоб піднятися сюди!</p>
                 ) : (
                   <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(200px, 1fr))',gap:8}}>
-                    {leagueUsers.map(u => (
-                      <div
-                        key={u.nick}
-                        className="card"
-                        style={{margin:0,padding:'8px 10px',display:'flex',alignItems:'center',gap:8,cursor:'pointer'}}
-                        onClick={() => onViewProfile?.(u.nick)}
-                      >
-                        <AvatarIcon id={u.avatar || 'duo_owl'} size={24} />
-                        <div style={{flex:1,overflow:'hidden'}}>
-                          <div style={{fontWeight:600,fontSize:13,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
-                            {u.nick === state.nick ? '👤 ' + (u.name || u.nick) : (u.name || u.nick)}
+                    {leagueUsers.map(u => {
+                      const isBoss = String(u.nick||'').toLowerCase() === 'boss' || String(u.name||'').toLowerCase() === 'boss';
+                      return (
+                        <div
+                          key={u.nick}
+                          className="card"
+                          style={{margin:0,padding:'8px 10px',display:'flex',alignItems:'center',gap:8,cursor:'pointer'}}
+                          onClick={() => onViewProfile?.(u.nick)}
+                        >
+                          <AvatarIcon id={u.avatar || 'duo_owl'} size={24} />
+                          <div style={{flex:1,overflow:'hidden'}}>
+                            <div style={{fontWeight:600,fontSize:13,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
+                              {u.nick === state.nick ? '👤 ' + (u.name || u.nick) : (u.name || u.nick)}
+                              {isBoss && <span className="boss-crown" title="Verified Boss">👑</span>}
+                            </div>
+                            <div className="muted small">{u.xp} XP {u.streak > 0 ? `· 🔥${u.streak}` : ''}</div>
                           </div>
-                          <div className="muted small">{u.xp} XP {u.streak > 0 ? `· 🔥${u.streak}` : ''}</div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -3801,29 +4215,26 @@ function Admin({state, save, setWordsLive, wordsLive, setModal}) {
 
           {authErr && <p className="auth-err" style={{margin:'6px 0 12px'}}>{authErr}</p>}
 
-          <button
-            className="primary full"
-            type="button"
-            disabled={authBusy || !pin}
-            onClick={tryUnlock}
-            style={{padding:'12px',fontSize:14,fontWeight:700,borderRadius:12,display:'flex',alignItems:'center',justifyContent:'center',gap:8}}
-          >
-            {authBusy ? '🔐 Перевірка доступу…' : '🔓 Увійти в Сейф'}
-          </button>
+          <div style={{display:'flex',flexDirection:'column',alignItems:'center',width:'100%',marginTop:8}}>
+            <button
+              className="primary"
+              type="button"
+              disabled={authBusy || !pin}
+              onClick={tryUnlock}
+              style={{width:'100%',maxWidth:320,padding:'12px',fontSize:14,fontWeight:700,borderRadius:12,display:'flex',alignItems:'center',justifyContent:'center',gap:8}}
+            >
+              {authBusy ? '🔐 Перевірка доступу…' : '🔓 Увійти в Сейф'}
+            </button>
 
-          <button
-            className="secondary full"
-            type="button"
-            disabled={authBusy}
-            onClick={passkeyLogin}
-            style={{marginTop:8,borderRadius:12,padding:'10px',display:'flex',alignItems:'center',justifyContent:'center',gap:8}}
-          >
-            🔑 Біометрія або Passkey
-          </button>
-
-          <div style={{marginTop:16,paddingTop:12,borderTop:'1px dashed var(--border)',display:'flex',justifyContent:'space-between',alignItems:'center',fontSize:11}} className="muted">
-            <span>Шифрування: SHA-512 + AES</span>
-            <span>Авто-блок: 30с</span>
+            <button
+              className="secondary"
+              type="button"
+              disabled={authBusy}
+              onClick={passkeyLogin}
+              style={{width:'100%',maxWidth:320,marginTop:8,borderRadius:12,padding:'10px',display:'flex',alignItems:'center',justifyContent:'center',gap:8}}
+            >
+              🔑 Біометрія або Passkey
+            </button>
           </div>
         </div>
       </section>
@@ -4015,19 +4426,33 @@ function Admin({state, save, setWordsLive, wordsLive, setModal}) {
 
             <div className="card">
               <h2>Симуляція видачі досягнень</h2>
-              <p className="muted">Перевірка звукового та візуального тосту Steam-стилю:</p>
-              <div className="row-btns wrap">
-                {BADGES.slice(0, 12).map(b => (
-                  <button key={b.id} className="secondary" type="button" onClick={() => {
-                    playTone(true);
-                    const el = document.createElement('div');
-                    el.className = 'steam-toast steam-right';
-                    el.innerHTML = '<b>ТЕСТ · симуляція</b><span>Demo: ' + b.title + '</span>';
-                    document.body.appendChild(el);
-                    setTimeout(() => el.remove(), 3000);
-                  }}>{b.icon} {b.title}</button>
-                ))}
-              </div>
+              <p className="muted">Перевірка звукового та візуального спливаючого Steam / RPG банера для всіх 5 категорій:</p>
+              {['starter', 'medium', 'advanced', 'legendary', 'secret'].map(t => {
+                const group = BADGES.filter(b => (b.tier || 'starter') === t);
+                const tLabels = { starter: '🥉 Стартові', medium: '🥈 Срібні', advanced: '🥇 Золоті', legendary: '💎 Легендарні', secret: '🔮 Секретні' };
+                return (
+                  <div key={t} style={{ marginTop: 10 }}>
+                    <span style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', opacity: 0.75, display: 'block', marginBottom: 4 }}>
+                      {tLabels[t] || t} ({group.length})
+                    </span>
+                    <div className="row-btns wrap" style={{ gap: 6 }}>
+                      {group.map(b => (
+                        <button
+                          key={b.id}
+                          className="secondary"
+                          type="button"
+                          onClick={() => {
+                            window.dispatchEvent(new CustomEvent('ef-badge-unlocked', { detail: b }));
+                          }}
+                          style={{ fontSize: 12, padding: '4px 8px' }}
+                        >
+                          {b.icon} {b.title}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </ErrorBoundary>
