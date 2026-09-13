@@ -1,13 +1,14 @@
 {
   "name": "english-flow",
   "private": true,
-  "version": "3.1.0",
+  "version": "3.3.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
     "sync:notion": "node scripts/sync-notion.mjs",
+    "test:agents": "node scripts/run-all-agents-verification.mjs",
     "audit": "node scripts/audit-static.mjs",
     "test:e2e": "playwright test tests/e2e/app.spec.js",
     "test:security": "playwright test tests/e2e/security.spec.js",

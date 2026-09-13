@@ -477,11 +477,16 @@ const GAME_AVATARS_30 = [
   { id: 'duo_crown', name: 'Королівський Птах', bg: '#E11D48', eyeBg: '#FFFFFF', pupil: '#0F172A', beak: '#F59E0B', ears: 'crown', tag: '👑 Король' }
 ];
 
-function AvatarIcon({ id, size = 44, className = '', style = {} }) {
+function AvatarIcon({ id, size = 44, className = '', style = {}, aura = '', frame = '' }) {
   const av = GAME_AVATARS_30.find(a => a.id === id) || GAME_AVATARS_30[0];
+  const wrap = (node) => (!aura && !frame ? node : (
+    <span className={`avatar-cosmetic-wrap ${aura || ''} ${frame || ''}`} style={{display:'inline-flex',alignItems:'center',justifyContent:'center',position:'relative',borderRadius:14,flexShrink:0}}>
+      {node}
+    </span>
+  ));
   
   if (!id || (!id.startsWith('duo_') && !id.startsWith('avatar_') && !GAME_AVATARS_30.some(x => x.id === id))) {
-    return (
+    return wrap(
       <span
         className={'avatar-emoji-fallback ' + className}
         style={{
@@ -496,7 +501,7 @@ function AvatarIcon({ id, size = 44, className = '', style = {} }) {
     );
   }
 
-  return (
+  const svgNode = (
     <svg
       width={size}
       height={size}
@@ -646,6 +651,7 @@ function AvatarIcon({ id, size = 44, className = '', style = {} }) {
       )}
     </svg>
   );
+  return wrap(svgNode);
 }
 
 function colorMixDark(hex) {
@@ -861,18 +867,26 @@ function Layout({children, state, page, nav, mobile, setMobile}) {
       <Sidebar mobile={mobile} setMobile={setMobile} page={page} nav={nav} />
       <main className="main">
         <header>
-          <button className="icon mobile-only" onClick={() => setMobile(!mobile)}>{mobile ? <X/> : <Menu/>}</button>
-          <div className="header-user-info" onClick={() => nav('profile')} style={{cursor:'pointer'}}>
-            <AvatarIcon id={state.avatar || 'duo_owl'} size={28} style={{borderRadius:8}} />
-            <b>{state.name || state.nick}</b>
-            {(String(state.nick||'').toLowerCase()==='boss' || String(state.name||'').toLowerCase()==='boss') && <span className="boss-badge" title="Verified">👑</span>}
-            <span className="muted"> · @{state.nick}</span>
-            {state.guest && <span className="pill guest-pill"><Ghost size={12}/> гість</span>}
+          <div className="header-left">
+            <button className="icon mobile-only" onClick={() => setMobile(!mobile)}>{mobile ? <X/> : <Menu/>}</button>
+            <div className="header-user-info" onClick={() => nav('profile')} style={{cursor:'pointer'}}>
+              <AvatarIcon
+                id={state.avatar || 'duo_owl'}
+                size={28}
+                style={{borderRadius:8}}
+                aura={state.inventory?.cosmetics?.equipped_aura}
+                frame={state.inventory?.cosmetics?.equipped_frame}
+              />
+              <b className="header-user-name">{state.name || state.nick}</b>
+              {(String(state.nick||'').toLowerCase()==='boss' || String(state.name||'').toLowerCase()==='boss') && <span className="boss-badge" title="Verified">👑</span>}
+              <span className="muted header-user-nick"> · @{state.nick}</span>
+              {state.guest && <span className="pill guest-pill"><Ghost size={12}/> гість</span>}
+            </div>
           </div>
           <div className="header-stats">
             <span title="Серія днів" className="stat-chip streak-chip">🔥 {state.streak}</span>
             <span title="Древні Монети / Поінти (ігрова валюта)" className="stat-chip currency-pill-coins" onClick={() => nav('shop')} style={{cursor:'pointer'}}>
-              <AncientCoinIcon size={18} className="coin-icon-svg" /> {state.gems || 0}
+              <AncientCoinIcon size={16} className="coin-icon-svg" /> {state.gems || 0}
             </span>
             <span title="Бали досвіду" className="stat-chip xp-chip">⚡ {state.xp} XP</span>
             {(state.freezeCount > 0) && (
@@ -891,12 +905,29 @@ function Layout({children, state, page, nav, mobile, setMobile}) {
   );
 }
 
+// Ukrainian + English profanity word list (censorship filter)
+const PROFANITY_LIST = ['хуй','піздец','пізда','бля','блядь','єбать','їбать','сука','курва','мудак','залупа','ємать','cunt','fuck','shit','bitch','dick','ass','bastard','damn'];
+function censorMessage(text) {
+  if (!text) return text;
+  let out = text;
+  PROFANITY_LIST.forEach(w => {
+    const re = new RegExp(w, 'gi');
+    out = out.replace(re, '*'.repeat(w.length));
+  });
+  return out;
+}
+
 function FloatingChatWidget({state, nav}) {
   const [open, setOpen] = useState(false);
   const [friends, setFriends] = useState([]);
   const [activeFriend, setActiveFriend] = useState(null);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
+  const [bubble, setBubble] = useState(null); // {text, nick} for speech bubble
+  const [bubbleFading, setBubbleFading] = useState(false);
+  const [hasNewMsg, setHasNewMsg] = useState(false);
+  const [lastMsgCount, setLastMsgCount] = useState(0);
+  const isAdmin = state.role === 'admin' || String(state.nick).toLowerCase() === 'boss';
 
   useEffect(() => {
     if (state.guest || !open) return;
@@ -907,22 +938,49 @@ function FloatingChatWidget({state, nav}) {
   }, [open, state.nick, state.guest, activeFriend]);
 
   useEffect(() => {
-    if (!open || !activeFriend || state.guest) return;
+    if (!activeFriend || state.guest) return;
     let alive = true;
     const fetchChat = async () => {
       try {
         const raw = await getChat(state.nick, activeFriend);
-        if (alive && raw) setMessages(raw);
+        if (alive && raw) {
+          // Check for new messages to show speech bubble
+          if (!open && raw.length > lastMsgCount && raw.length > 0) {
+            const latest = raw[raw.length - 1];
+            const senderNick = latest?.sender_nick || activeFriend;
+            if (String(senderNick).toLowerCase() !== String(state.nick).toLowerCase()) {
+              // Show speech bubble BEFORE the blue dot
+              setBubble({ text: `💬 Нове повідомлення від @${senderNick}!`, nick: senderNick });
+              setBubbleFading(false);
+              setHasNewMsg(false); // dot comes AFTER bubble fades
+              setTimeout(() => {
+                setBubbleFading(true);
+                setTimeout(() => {
+                  setBubble(null);
+                  setBubbleFading(false);
+                  setHasNewMsg(true); // NOW show dot
+                }, 500);
+              }, 3000);
+            }
+          }
+          setLastMsgCount(raw.length);
+          setMessages(raw);
+        }
       } catch {}
     };
     fetchChat();
     const interval = setInterval(fetchChat, 3000);
     return () => { alive = false; clearInterval(interval); };
-  }, [open, activeFriend, state.nick, state.guest]);
+  }, [open, activeFriend, state.nick, state.guest, lastMsgCount]);
+
+  // Clear dot when chat is opened
+  useEffect(() => {
+    if (open) { setHasNewMsg(false); setBubble(null); }
+  }, [open]);
 
   const send = async (e) => {
     e?.preventDefault();
-    const t = input.trim();
+    const t = censorMessage(input.trim());
     if (!activeFriend || !t) return;
     setInput('');
     try {
@@ -933,10 +991,34 @@ function FloatingChatWidget({state, nav}) {
     } catch {}
   };
 
+  const handlePhotoUpload = async (e) => {
+    if (!isAdmin) return;
+    const file = e.target.files?.[0];
+    if (!file || !activeFriend) return;
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+      const dataUrl = ev.target.result;
+      try {
+        const sent = await sendChat(state.nick, activeFriend, `[img]${dataUrl}`);
+        if (sent) setMessages(prev => [...prev, sent]);
+        const raw = await getChat(state.nick, activeFriend);
+        if (raw) setMessages(raw);
+      } catch {}
+    };
+    reader.readAsDataURL(file);
+  };
+
   if (state.guest) return null;
 
   return (
     <div className="floating-chat-root">
+      {/* Speech bubble notification */}
+      {bubble && (
+        <div className={`chat-incoming-bubble${bubbleFading ? ' fading' : ''}`}>
+          {bubble.text}
+        </div>
+      )}
+
       {open && (
         <div className="floating-chat-window card">
           <div className="floating-chat-header">
@@ -974,9 +1056,13 @@ function FloatingChatWidget({state, nav}) {
             {messages.length === 0 && <p className="muted small" style={{textAlign:'center',padding:16}}>Ще немає повідомлень. Напишіть!</p>}
             {messages.slice(-15).map(m => {
               const isMe = String(m.sender_nick || '').toLowerCase() === String(state.nick).toLowerCase();
+              const isImg = (m.text || '').startsWith('[img]');
               return (
                 <div key={m.id || Math.random()} className={'floating-chat-msg' + (isMe ? ' me' : '')}>
-                  <span>{m.text || '🔒 Повідомлення'}</span>
+                  {isImg
+                    ? <img src={m.text.slice(5)} className="chat-msg-image" alt="Photo" onClick={() => window.open(m.text.slice(5), '_blank')}/>
+                    : <span>{censorMessage(m.text) || '🔒 Повідомлення'}</span>
+                  }
                 </div>
               );
             })}
@@ -988,6 +1074,12 @@ function FloatingChatWidget({state, nav}) {
               onChange={e => setInput(e.target.value)}
               placeholder="Повідомлення…"
             />
+            {isAdmin && (
+              <label className="chat-admin-photo-btn" title="Відправити фото (тільки адмін)">
+                📷
+                <input type="file" accept="image/*" style={{display:'none'}} onChange={handlePhotoUpload}/>
+              </label>
+            )}
             <button type="submit" disabled={!input.trim()}>✈️</button>
           </form>
         </div>
@@ -1001,7 +1093,7 @@ function FloatingChatWidget({state, nav}) {
         aria-label="Швидкий чат"
       >
         <MessageCircle size={24} />
-        <span className="floating-chat-badge"></span>
+        {hasNewMsg && <span className="floating-chat-badge"></span>}
       </button>
     </div>
   );
@@ -1057,8 +1149,8 @@ export default function App() {
       if (state.guest) return;
       const path = String((e && e.detail && e.detail.path) || '');
       // The lesson flow already surfaces a stale session inline with a retry.
-      // Don't ALSO yank the user off the lesson onto the auth screen.
-      if (path.startsWith('/api/lessons')) return;
+      // Admin endpoints handle auth/mock internally without kicking the admin out.
+      if (path.startsWith('/api/lessons') || path.startsWith('/api/admin')) return;
       // For other resources keep the current page and offer a re-login button
       // instead of silently dumping the user onto the auth screen.
       setModal({type:'error',title:'Сесію завершено',text:'Сервер більше не приймає цю сесію. Увійди ще раз — локальний профіль залишиться на пристрої.',yes:'Увійти знову',onYes:()=>{setLessonCfg(null);setPage('onboarding')}});
@@ -1108,7 +1200,7 @@ export default function App() {
     setPage(p); setMobile(false);
   };
 
-  // Strict Admin Security Lock: 30s inactivity, blur (switch program/minimize), and tab switch
+  // Strict Admin Security Lock: 10min inactivity, full document hide only (not tab-switching within admin)
   useEffect(() => {
     if (page !== 'admin') return;
     let timer = null;
@@ -1117,10 +1209,20 @@ export default function App() {
     };
     const bump = () => {
       if (timer) clearTimeout(timer);
-      timer = setTimeout(lock, 30 * 1000); // 30s
+      timer = setTimeout(lock, 10 * 60 * 1000); // 10 minutes - allow normal admin navigation
     };
     const onVis = () => {
-      if (document.hidden) lock();
+      // Only lock if the page is actually hidden (minimized, different app, etc.)
+      // NOT when switching between browser tabs during admin work
+      if (document.hidden) {
+        // Give 30 seconds grace period before locking on visibility change
+        // This prevents locking when admin quickly switches to another tab to reference something
+        if (timer) clearTimeout(timer);
+        timer = setTimeout(lock, 30 * 1000);
+      } else {
+        // Page became visible again - reset the full inactivity timer
+        bump();
+      }
     };
 
     bump();
@@ -1128,6 +1230,7 @@ export default function App() {
     window.addEventListener('keydown', bump);
     window.addEventListener('touchstart', bump);
     window.addEventListener('scroll', bump, true);
+    window.addEventListener('click', bump);
     document.addEventListener('visibilitychange', onVis);
 
     return () => {
@@ -1136,6 +1239,7 @@ export default function App() {
       window.removeEventListener('keydown', bump);
       window.removeEventListener('touchstart', bump);
       window.removeEventListener('scroll', bump, true);
+      window.removeEventListener('click', bump);
       document.removeEventListener('visibilitychange', onVis);
     };
   }, [page]);
@@ -1324,7 +1428,7 @@ export default function App() {
         {page === 'badges' && <BadgesPage state={state} />}
         {page === 'problems' && <ProblemsPage state={state} save={save} wordsCatalog={wordsLive} onStart={(m,d,c) => { setLessonCfg({mode:m,direction:d,category:c}); setPage('lesson'); }} />}
         {page === 'leaderboard' && <Leaderboard state={state} gamification={gamification} onViewProfile={setPublicProfileNick} />}
-        {page === 'shop' && <ShopPage state={state} save={save} onRefreshGamification={refreshGamification} />}
+        {page === 'shop' && <ShopPage state={state} save={save} onRefreshGamification={refreshGamification} allUsers={gamification?.leaderboard?.global || []} />}
         {page === 'settings' && <SettingsPage state={state} save={save} onLogout={handleLogout} />}
         {page === 'friends' && <FriendsPage state={state} />}
         {page === 'challenges' && <ChallengesPage state={state} save={save} wordsCatalog={activeWords} />}
@@ -1682,18 +1786,20 @@ function CsCaseRouletteModal({ isOpen, onClose, state, save }) {
   );
 }
 
-function ShopPage({state, save, onRefreshGamification}) {
+function ShopPage({state, save, onRefreshGamification, allUsers}) {
   const [busy, setBusy] = useState(false);
   const [showEconomyModal, setShowEconomyModal] = useState(false);
   const [caseModalOpen, setCaseModalOpen] = useState(false);
+  const [giftModal, setGiftModal] = useState(null); // {item, cost, itemId}
   const xp = state.xp || 0;
   const gems = state.gems || 0;
   const freezeCount = state.freezeCount || 0;
-  const inventory = state.inventory || { doubleXpUntil: null, secondChance: 0, vipFrame: false, leagueShield: false };
+  const inventory = state.inventory || { doubleXpUntil: null, secondChance: 0, vipFrame: false, leagueShield: false, cosmetics: {} };
+  const cosmetics = inventory.cosmetics || {};
 
   const buy = async (itemId, cost) => {
     if (gems < cost) {
-      emitSiteError(`Не вистачає Древніх Поінтів! Потрібно 🪙 ${cost}, у вас 🪙 ${gems}. Заробляйте монети за квести, уроки 100% та щоденну активність!`, 'Магазин');
+      emitSiteError(`Не вистачає Древніх Поінтів! Потрібно 🪙 ${cost}, у вас 🪙 ${gems}. Заробляйте монети за квести, уроки 100% та щоденну активність!`, 'Таверна');
       return;
     }
     setBusy(true);
@@ -1746,16 +1852,60 @@ function ShopPage({state, save, onRefreshGamification}) {
         save(nextState);
         emitSiteToast(`🎁 Скриня: ${res.msg}`, 'ok');
         confettiBurst();
+      } else if (itemId.startsWith('cosmetic_')) {
+        // Cosmetic items: aura, frame, animated avatar
+        nextState.inventory = {...inventory, cosmetics: {...cosmetics, [itemId]: true}};
+        save(nextState);
+        emitSiteToast(`✨ Косметику придбано! (-${cost} 🪙 Поінтів)`, 'ok');
+        confettiBurst();
       }
     } catch (e) {
-      emitSiteError(e.message || 'Помилка покупки', 'Магазин');
+      emitSiteError(e.message || 'Помилка покупки', 'Таверна');
     } finally {
       setBusy(false);
     }
   };
 
+  const equipCosmetic = (type, value) => {
+    const nextCosmetics = {...cosmetics, [`equipped_${type}`]: value};
+    save({...state, inventory: {...inventory, cosmetics: nextCosmetics}});
+    emitSiteToast(`✅ Косметику застосовано!`, 'ok');
+  };
+
   const isBoosterActive = inventory.doubleXpUntil && inventory.doubleXpUntil > Date.now();
   const boosterMinutesLeft = isBoosterActive ? Math.ceil((inventory.doubleXpUntil - Date.now()) / 60000) : 0;
+
+  // Cosmetic catalog
+  const AURAS = [
+    { id: 'cosmetic_aura_gold', css: 'aura-gold', name: '🌟 Золота аура', rarity: 'RARE', cost: 35 },
+    { id: 'cosmetic_aura_rainbow', css: 'aura-rainbow', name: '🌈 Веселкова аура', rarity: 'LEGENDARY', cost: 80 },
+    { id: 'cosmetic_aura_neon', css: 'aura-neon', name: '💙 Неон аура', rarity: 'EPIC', cost: 55 },
+    { id: 'cosmetic_aura_cosmic', css: 'aura-cosmic', name: '🔮 Космічна аура', rarity: 'EPIC', cost: 60 },
+    { id: 'cosmetic_aura_crimson', css: 'aura-crimson', name: '🔴 Кримсон аура', rarity: 'RARE', cost: 40 },
+  ];
+  const FRAMES = [
+    { id: 'cosmetic_frame_gold', css: 'frame-gold', name: '👑 Золота рамка', rarity: 'RARE', cost: 45 },
+    { id: 'cosmetic_frame_hex', css: 'frame-hex', name: '⬡ Hex рамка', rarity: 'EPIC', cost: 65 },
+    { id: 'cosmetic_frame_runic', css: 'frame-runic', name: '🪨 Рунічна рамка', rarity: 'RARE', cost: 40 },
+    { id: 'cosmetic_frame_ice', css: 'frame-ice', name: '🧊 Льодяна рамка', rarity: 'EPIC', cost: 55 },
+    { id: 'cosmetic_frame_emerald', css: 'frame-emerald', name: '🍀 Смарагдова рамка', rarity: 'COMMON', cost: 25 },
+  ];
+  const ANIMATED_AVATARS = [
+    { id: 'cosmetic_ava_cyber', css: 'cyber-flame', emoji: '🤖', name: '🔷 Кіберполум\'я', rarity: 'EPIC', cost: 70 },
+    { id: 'cosmetic_ava_dragon', css: 'neon-dragon', emoji: '🐉', name: '🐉 Неон-Дракон', rarity: 'LEGENDARY', cost: 100 },
+    { id: 'cosmetic_ava_phoenix', css: 'royal-phoenix', emoji: '🦅', name: '🦅 Королівський Фенікс', rarity: 'LEGENDARY', cost: 110 },
+    { id: 'cosmetic_ava_star', css: 'celestial-star', emoji: '⭐', name: '⭐ Небесна Зірка', rarity: 'EPIC', cost: 75 },
+  ];
+  // Gift catalog - items you can send to friends (not keep for yourself)
+  const GIFTABLE = [
+    { id: 'gift_gems_5', name: '🪙 5 Монет', desc: 'Подарунок — 5 Древніх Монет другу', cost: 7 },
+    { id: 'gift_gems_15', name: '🪙 15 Монет', desc: 'Подарунок — 15 Древніх Монет другу', cost: 18 },
+    { id: 'gift_freeze', name: '❄️ Заморозка', desc: 'Подаруй другу захист стріку на 1 день', cost: 18 },
+    { id: 'gift_booster', name: '⚡ XP Booster', desc: 'Подаруй другу 2× XP на 30 хвилин', cost: 30 },
+  ];
+
+  // Friends list for gift targeting
+  const friends = (allUsers || []).filter(u => u.nick !== state.nick);
 
   return (
     <section className="fade-in">
@@ -1765,7 +1915,7 @@ function ShopPage({state, save, onRefreshGamification}) {
           <span className="eyebrow" style={{color:'#f59e0b',fontWeight:800,letterSpacing:'0.06em',display:'flex',alignItems:'center',gap:6}}>
             <AncientCoinIcon size={16}/> ANCIENT TREASURY & COIN MARKET
           </span>
-          <h2 style={{margin:'6px 0 8px',fontSize:24}}>🛒 Скарбниця Древніх Поінтів</h2>
+          <h2 className="tavern-title" style={{margin:'6px 0 8px',fontSize:24}}>🏰 Таверна Стародавнього Мандрівника</h2>
           <p className="muted" style={{margin:0,fontSize:14,lineHeight:1.5}}>
             Купуйте артефакти виключно за <b>🪙 Древні Поінти</b>. Бали <b>⚡ XP</b> недоторканні — вони служать тільки для рейтингу ліги!
           </p>
@@ -1908,6 +2058,117 @@ function ShopPage({state, save, onRefreshGamification}) {
         </div>
       </div>
 
+      {/* ============================================================
+          ANCIENT TAVERN: COSMETICS SECTION
+         ============================================================ */}
+      <div className="tavern-section-title">🎭 Косметика — Аури для профілю</div>
+      <div className="tavern-shelf">
+        {AURAS.map(aura => {
+          const owned = cosmetics[aura.id];
+          const equipped = cosmetics['equipped_aura'] === aura.css;
+          return (
+            <div key={aura.id} className={'tavern-item-card'}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
+                <div style={{position:'relative',width:56,height:56,borderRadius:'50%',background:'rgba(255,255,255,0.08)',display:'grid',placeItems:'center',fontSize:28}}>
+                  <span className={aura.css} style={{width:40,height:40,borderRadius:'50%',display:'block',background:'rgba(255,255,255,0.05)'}}></span>
+                </div>
+                <span className={'rarity-badge rarity-' + aura.rarity.toLowerCase().replace('legendary','legendary')}>{aura.rarity}</span>
+              </div>
+              <h3>{aura.name}</h3>
+              <p>Яскраве пульсуюче сяйво навколо вашого аватара.</p>
+              {equipped && <div className="cosmetic-equipped-tag">✓ Одягнено</div>}
+              {owned
+                ? <button className="tavern-price-btn" onClick={() => equipCosmetic('aura', aura.css)}>
+                    {equipped ? '✓ Активна' : '👗 Одягнути'}
+                  </button>
+                : <button className="tavern-price-btn" disabled={busy || gems < aura.cost} onClick={() => buy(aura.id, aura.cost)}>
+                    🪙 {aura.cost} Поінтів
+                  </button>
+              }
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="tavern-section-title">🪞 Косметика — Рамки для аватара</div>
+      <div className="tavern-shelf">
+        {FRAMES.map(frame => {
+          const owned = cosmetics[frame.id];
+          const equipped = cosmetics['equipped_frame'] === frame.css;
+          return (
+            <div key={frame.id} className={'tavern-item-card'}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
+                <div style={{position:'relative',width:56,height:56,display:'grid',placeItems:'center',fontSize:28}}>
+                  <div className={frame.css} style={{width:40,height:40,display:'block',background:'rgba(255,255,255,0.08)'}}></div>
+                </div>
+                <span className={'rarity-badge rarity-' + frame.rarity.toLowerCase()}>{frame.rarity}</span>
+              </div>
+              <h3>{frame.name}</h3>
+              <p>Унікальна декоративна рамка навколо вашої аватарки.</p>
+              {equipped && <div className="cosmetic-equipped-tag">✓ Одягнено</div>}
+              {owned
+                ? <button className="tavern-price-btn" onClick={() => equipCosmetic('frame', frame.css)}>
+                    {equipped ? '✓ Активна' : '👗 Одягнути'}
+                  </button>
+                : <button className="tavern-price-btn" disabled={busy || gems < frame.cost} onClick={() => buy(frame.id, frame.cost)}>
+                    🪙 {frame.cost} Поінтів
+                  </button>
+              }
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="tavern-section-title">✨ Косметика — Анімовані аватарки</div>
+      <div className="tavern-shelf">
+        {ANIMATED_AVATARS.map(ava => {
+          const owned = cosmetics[ava.id];
+          const equipped = cosmetics['equipped_animava'] === ava.css;
+          return (
+            <div key={ava.id} className={'tavern-item-card'}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
+                <div className={`avatar-animated ${ava.css}`} style={{width:56,height:56,borderRadius:'50%',background:'rgba(255,255,255,0.12)',display:'grid',placeItems:'center',fontSize:30,flexShrink:0}}>
+                  {ava.emoji}
+                </div>
+                <span className={'rarity-badge rarity-' + ava.rarity.toLowerCase()}>{ava.rarity}</span>
+              </div>
+              <h3>{ava.name}</h3>
+              <p>Анімований аватар із постійним ефектом сяйва.</p>
+              {equipped && <div className="cosmetic-equipped-tag">✓ Одягнено</div>}
+              {owned
+                ? <button className="tavern-price-btn" onClick={() => equipCosmetic('animava', ava.css)}>
+                    {equipped ? '✓ Активна' : '👗 Одягнути'}
+                  </button>
+                : <button className="tavern-price-btn" disabled={busy || gems < ava.cost} onClick={() => buy(ava.id, ava.cost)}>
+                    🪙 {ava.cost} Поінтів
+                  </button>
+              }
+            </div>
+          );
+        })}
+      </div>
+
+      {/* GIFT SHOP - Send to Friends */}
+      <div className="tavern-section-title">🎁 Крамниця Подарунків — Надіслати другу</div>
+      <p className="muted small" style={{marginBottom:16}}>🚫 Подарунки не можна залишити собі — тільки відправити іншому гравцю!</p>
+      <div className="tavern-shelf">
+        {GIFTABLE.map(gift => (
+          <div key={gift.id} className="tavern-item-card">
+            <div style={{fontSize:36,marginBottom:8}}>{gift.name.split(' ')[0]}</div>
+            <h3>{gift.name}</h3>
+            <p>{gift.desc}</p>
+            <button
+              className="tavern-gift-btn"
+              disabled={busy}
+              onClick={() => setGiftModal({...gift})}
+            >
+              🎁 Надіслати (🪙 {gift.cost} Поінтів)
+            </button>
+            {friends.length === 0 && <p className="muted small" style={{marginTop:6}}>Потрібно мати друзів 👥</p>}
+          </div>
+        ))}
+      </div>
+
       {/* Financial Economy & Rules Modal */}
       {showEconomyModal && (
         <div className="modal-backdrop" onClick={() => setShowEconomyModal(false)}>
@@ -1963,7 +2224,95 @@ function ShopPage({state, save, onRefreshGamification}) {
         state={state}
         save={save}
       />
+
+      {/* Gift Friend Modal */}
+      {giftModal && (
+        <GiftFriendModal
+          gift={giftModal}
+          friends={friends}
+          gems={gems}
+          onClose={() => setGiftModal(null)}
+          onSend={async (recipientNick) => {
+            if (gems < giftModal.cost) {
+              emitSiteError('Недостатньо монет!', 'Таверна');
+              return;
+            }
+            setBusy(true);
+            try {
+              // Deduct cost from sender
+              const nextState = {...state, gems: gems - giftModal.cost};
+              save(nextState);
+              // Send notification to recipient via chat
+              await sendChat(state.nick, recipientNick, `🎁 Подарунок від @${state.nick}: ${giftModal.name}! ${giftModal.desc}`).catch(() => {});
+              emitSiteToast(`🎁 Подарунок відправлено @${recipientNick}! (-${giftModal.cost} 🪙)`, 'ok');
+              confettiBurst();
+              setGiftModal(null);
+            } catch (e) {
+              emitSiteError(e.message || 'Помилка відправки подарунку', 'Таверна');
+            } finally {
+              setBusy(false);
+            }
+          }}
+        />
+      )}
     </section>
+  );
+}
+
+function GiftFriendModal({gift, friends, gems, onClose, onSend}) {
+  const [selected, setSelected] = useState(null);
+  const [busy, setBusy] = useState(false);
+
+  const handleSend = async () => {
+    if (!selected) return;
+    setBusy(true);
+    await onSend(selected);
+    setBusy(false);
+  };
+
+  return (
+    <div className="gift-friend-modal-backdrop" onClick={onClose}>
+      <div className="gift-friend-modal" onClick={e => e.stopPropagation()}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+          <h3>🎁 Надіслати: {gift.name}</h3>
+          <button className="icon" onClick={onClose}>✕</button>
+        </div>
+        <p style={{color:'#c4996a',fontSize:13,marginBottom:16}}>
+          {gift.desc}<br/>
+          <b style={{color:'#fde68a'}}>Вартість: 🪙 {gift.cost} Поінтів</b> (у вас: {gems})
+        </p>
+
+        <p style={{color:'#fde68a',fontWeight:700,marginBottom:8,fontSize:13}}>Обери гравця-отримувача:</p>
+        <div className="friend-select-list">
+          {friends.length === 0 && <p className="muted small" style={{padding:12,textAlign:'center'}}>Немає доступних гравців</p>}
+          {friends.map(f => (
+            <div
+              key={f.nick}
+              className={'friend-select-row' + (selected === f.nick ? ' selected' : '')}
+              onClick={() => setSelected(f.nick)}
+            >
+              <span style={{fontSize:20}}>{f.avatar ? '👤' : '🧑'}</span>
+              <div>
+                <div className="friend-select-nick">@{f.nick}</div>
+                <div className="friend-select-sub">{f.name || ''}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div style={{display:'flex',gap:10,marginTop:16}}>
+          <button className="secondary" style={{flex:1}} onClick={onClose}>Скасувати</button>
+          <button
+            className="primary"
+            style={{flex:2,background:'linear-gradient(135deg,#d97706,#b45309)',border:'1px solid #f59e0b'}}
+            disabled={!selected || busy || gems < gift.cost}
+            onClick={handleSend}
+          >
+            {busy ? '⏳ Відправка…' : `🎁 Надіслати @${selected || '?'}`}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -2346,9 +2695,9 @@ function Dashboard({state, learned, due, words, onLearn, onReview, cloudMsg, que
       <div className="announce card jungle-announce">
         <span className="vine-deco left" aria-hidden="true">🌿</span>
         <span className="vine-deco right" aria-hidden="true">🌿</span>
-        <span className="eyebrow">UPDATE · v2.9.0</span>
-        <h2>🏆 Ліги, Скриня, 3 Нові Макети та Захист Стріку</h2>
-        <p>Оновлена система ліг по очках XP (100, 200, 500...), 3 структурні макети навігації (Сайдбар, Верхній, Док, Дзен), відновлення паролю та щоденні квести.</p>
+        <span className="eyebrow">UPDATE · v3.3.0</span>
+        <h2>🏰 Таверна Мандрівника, Двобої, Магазин Подарунків</h2>
+        <p>Новий тематичний магазин у стилі стародавньої таверни, система подарунків між гравцями, косметика (аури, рамки, анімовані аватари), Зала Суперників з дуелями на швидкість, виправлено Матч-режим та адмін-панель.</p>
       </div>
 
       {giftAvailable && (
@@ -2372,7 +2721,7 @@ function Dashboard({state, learned, due, words, onLearn, onReview, cloudMsg, que
           <h1>Привіт, {state.name || state.nick} 👋</h1>
           <div className="hero-league-row">
             <LeagueBadge xp={state.xp || 0} />
-            {state.streak > 0 && <span className="freeze-chip">🔥 {state.streak} днів</span>}
+            {state.streak > 0 && <span className="freeze-chip"><span className="emoji-animated-streak">🔥</span> {state.streak} днів</span>}
           </div>
           <p>Слів у базі: <b>{words}</b> · Вивчено: <b>{learned}</b> · На повторення SRS: <b>{due}</b></p>
           {cloudMsg && <p className="saved-message">{cloudMsg}</p>}
@@ -2385,10 +2734,10 @@ function Dashboard({state, learned, due, words, onLearn, onReview, cloudMsg, que
       </div>
       <EmojiPulse state={state}/>
       <div className="grid stats">
-        <Card icon={<Flame/>} title="Streak" value={state.streak} sub="днів" />
-        <Card icon={<Sparkles/>} title="XP" value={state.xp} sub={`сьогодні ${state.todayXp}`} />
-        <Card icon={<Target/>} title="Ціль" value={`${Math.min(100, Math.round((state.todayXp / state.dailyGoal) * 100))}%`} sub={`${state.todayXp}/${state.dailyGoal}`} />
-        <Card icon={<Brain/>} title="Вивчено" value={learned} sub={`з ${words}`} />
+        <Card icon={<span className="emoji-animated-streak">🔥</span>} title="Streak" value={state.streak} sub="днів" />
+        <Card icon={<span className="emoji-animated-xp">⚡</span>} title="XP" value={state.xp} sub={`сьогодні ${state.todayXp}`} />
+        <Card icon={<span className="emoji-animated-target">🎯</span>} title="Ціль" value={`${Math.min(100, Math.round((state.todayXp / state.dailyGoal) * 100))}%`} sub={`${state.todayXp}/${state.dailyGoal}`} />
+        <Card icon={<span className="emoji-animated-learned">🧠</span>} title="Вивчено" value={learned} sub={`з ${words}`} />
       </div>
       <DailyQuests quests={quests} />
     </section>
@@ -2895,7 +3244,8 @@ function MatchGame({items, state, save, onExit, onDone, lessonId, direction='en-
   const [selL, setSelL] = useState(null);
   const [selR, setSelR] = useState(null);
   const [matched, setMatched] = useState({});
-  const [flash, setFlash] = useState({});
+  const [flash, setFlash] = useState({}); // {id: 'correct'} only for correct matches
+  const [shakeWrong, setShakeWrong] = useState({}); // {id: true} for shake animation
   const stateRef = useRef(state);
   stateRef.current = state;
   const pendingProgress = useRef([]);
@@ -2903,21 +3253,29 @@ function MatchGame({items, state, save, onExit, onDone, lessonId, direction='en-
   useEffect(() => {
     if (!selL || !selR) return;
     const ok = selL === selR;
-    setFlash({[selL]: ok ? 'correct' : 'wrong'});
     playTone(ok);
     const st = stateRef.current;
     if (ok) {
+      // Correct match: show green flash and keep matched
+      setFlash(f => ({...f, [selL]: 'correct'}));
       setMatched(m => ({...m, [selL]: true}));
       const points = st.admin.correctPoints;
       save({...st, xp: st.xp + points, todayXp: st.todayXp + points,
         history: [...st.history, {word: selL, correct: true, points, date: new Date().toISOString(), mode: 'match'}].slice(-2000)});
       if (!st.guest) pendingProgress.current.push(cloudRecordProgress({notion_id: selL, mode:'match', answer:selR, direction, quality:4, event_id:newEventId(), lesson_id:lessonId||''}).then(r=>{if(r?.user){const cur=stateRef.current,c=r.card;save({...cur,xp:r.user.xp,streak:r.user.streak,todayXp:r.user.todayXp,today:r.user.today,badges:[...new Set([...(cur.badges||[]),...(r.earned||[])])],...(c?{mastery:{...cur.mastery,[c.notion_id]:c.mastery},srs:{...cur.srs,[c.notion_id]:c.srs},attempts:{...cur.attempts,[c.notion_id]:c.attempts}}:{})})}return r}).catch(()=>null));
+      setSelL(null); setSelR(null);
     } else {
+      // Wrong match: shake both selected cards, do NOT reveal which is correct
       save({...st, xp: st.xp + st.admin.wrongPoints, todayXp: st.todayXp + st.admin.wrongPoints});
       if (!st.guest) pendingProgress.current.push(cloudRecordProgress({notion_id: selL, mode:'match', answer:selR, direction, quality:1, event_id:newEventId(), lesson_id:lessonId||''}).then(r=>{if(r?.user){const cur=stateRef.current,c=r.card;save({...cur,xp:r.user.xp,streak:r.user.streak,todayXp:r.user.todayXp,today:r.user.today,badges:[...new Set([...(cur.badges||[]),...(r.earned||[])])],...(c?{mastery:{...cur.mastery,[c.notion_id]:c.mastery},srs:{...cur.srs,[c.notion_id]:c.srs},attempts:{...cur.attempts,[c.notion_id]:c.attempts}}:{})})}return r}).catch(()=>null));
+      // Apply shake animation to the wrong-selected items
+      setShakeWrong({[selL]: true, [selR]: true});
+      const t = setTimeout(() => {
+        setShakeWrong({});
+        setSelL(null); setSelR(null);
+      }, 600);
+      return () => clearTimeout(t);
     }
-    const t = setTimeout(() => { setSelL(null); setSelR(null); setFlash({}); }, 450);
-    return () => clearTimeout(t);
   }, [selL, selR]);
 
   const allDone = items.length > 0 && items.every(w => matched[w.id]);
@@ -2926,13 +3284,13 @@ function MatchGame({items, state, save, onExit, onDone, lessonId, direction='en-
   return (
     <section>
       <button className="back" onClick={onExit}>← Назад</button>
-      <Title title="Match" text="Обери слово і відповідний переклад"/>
+      <Title title="Match" text="Обери слово і відповідний переклад. Неправильна пара — спробуй ще!"/>
       <div className="match-board">
         <div className="match-col">{left.map(x => (
-          <button key={x.id} disabled={matched[x.id]} className={'option match-item' + (matched[x.id] ? ' correct matched-stay' : '') + (selL === x.id ? ' selected' : '') + (flash[x.id] ? ' ' + flash[x.id] : '')} onClick={() => setSelL(x.id)}>{x.text}</button>
+          <button key={x.id} disabled={matched[x.id]} className={'option match-item' + (matched[x.id] ? ' correct matched-stay' : '') + (selL === x.id && !shakeWrong[x.id] ? ' selected' : '') + (flash[x.id] === 'correct' ? ' correct' : '') + (shakeWrong[x.id] ? ' shake-wrong' : '')} onClick={() => { if (!shakeWrong[x.id]) setSelL(x.id); }}>{x.text}</button>
         ))}</div>
         <div className="match-col">{right.map(x => (
-          <button key={x.id} disabled={matched[x.id]} className={'option match-item' + (matched[x.id] ? ' correct matched-stay' : '') + (selR === x.id ? ' selected' : '') + (flash[x.id] ? ' ' + flash[x.id] : '')} onClick={() => setSelR(x.id)}>{x.text}</button>
+          <button key={x.id} disabled={matched[x.id]} className={'option match-item' + (matched[x.id] ? ' correct matched-stay' : '') + (selR === x.id && !shakeWrong[x.id] ? ' selected' : '') + (flash[x.id] === 'correct' ? ' correct' : '') + (shakeWrong[x.id] ? ' shake-wrong' : '')} onClick={() => { if (!shakeWrong[x.id]) setSelR(x.id); }}>{x.text}</button>
         ))}</div>
       </div>
     </section>
@@ -3296,7 +3654,17 @@ function Stats({state, learned}) {
       {statDesign === 'cefr' && (
         <div className="card cefr-diploma-container fade-in">
           {/* Top Diploma Header with Official Crest */}
-          <div className="cefr-diploma-header">
+          <div className="cefr-diploma-header" style={{position:'relative'}}>
+            <button
+              type="button"
+              className="cert-print-icon-btn"
+              onClick={() => window.print()}
+              title="Роздрукувати офіційний сертифікат або зберегти як PDF"
+              style={{position:'absolute',top:14,right:14}}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+              <span>Друк / PDF</span>
+            </button>
             <div className="cefr-crest-emblem">
               <div className="cefr-crest-icon">🏛️</div>
             </div>
@@ -3378,11 +3746,12 @@ function Stats({state, learned}) {
 
             <button
               type="button"
-              className="secondary"
+              className="cert-print-icon-btn"
               onClick={() => window.print()}
-              style={{display:'inline-flex',alignItems:'center',gap:8,padding:'10px 16px',borderRadius:12,fontSize:13,fontWeight:700}}
+              style={{padding:'9px 16px',fontSize:13}}
             >
-              🖨️ Друк сертифіката / PDF
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+              <span>🖨️ Друк сертифіката / PDF</span>
             </button>
           </div>
         </div>
@@ -5391,13 +5760,237 @@ function TelegramNotifyBanner({notify, onReply, onClose}) {
   );
 }
 
+function DuelArena({state, save, activeWords}) {
+  const [duelActive, setDuelActive] = useState(false);
+  const [duelQ, setDuelQ] = useState(null);
+  const [duelPlayerHp, setDuelPlayerHp] = useState(100);
+  const [duelEnemyHp, setDuelEnemyHp] = useState(100);
+  const [duelTimeLeft, setDuelTimeLeft] = useState(10);
+  const [duelFinished, setDuelFinished] = useState(null); // null | 'win' | 'lose'
+  const [duelAnswered, setDuelAnswered] = useState(null); // null | 'correct' | 'wrong'
+  const duelTimerRef = useRef(null);
+
+  const DUEL_WORDS = (activeWords && activeWords.length >= 6) ? activeWords : fallbackWords;
+  const nextDuelQ = useCallback(() => {
+    const idx = Math.floor(Math.random() * DUEL_WORDS.length);
+    const w = DUEL_WORDS[idx];
+    const word = w.word || w.en || w.front || '';
+    const translation = w.translation || w.ua || w.back || '';
+    const distractors = DUEL_WORDS.filter((_, i) => i !== idx)
+      .sort(() => Math.random() - 0.5).slice(0, 3)
+      .map(x => x.translation || x.ua || x.back || '');
+    const opts = [translation, ...distractors].sort(() => Math.random() - 0.5);
+    return { en: word, ua: translation, opts };
+  }, [DUEL_WORDS]);
+
+  const startDuel = () => {
+    clearInterval(duelTimerRef.current);
+    setDuelPlayerHp(100);
+    setDuelEnemyHp(100);
+    setDuelFinished(null);
+    setDuelAnswered(null);
+    setDuelTimeLeft(10);
+    const q = nextDuelQ();
+    setDuelQ(q);
+    setDuelActive(true);
+  };
+
+  const finishDuel = (winner) => {
+    clearInterval(duelTimerRef.current);
+    setDuelActive(false);
+    setDuelFinished(winner);
+    if (winner === 'win') {
+      confettiBurst();
+      if (save) {
+        save({
+          ...state,
+          xp: (state.xp || 0) + 100,
+          gems: (state.gems || 0) + 30
+        });
+      }
+      emitSiteToast('🏆 Перемога у Дуелі! +100 XP +30 🪙', 'ok');
+    }
+  };
+
+  const handleDuelAnswer = (opt) => {
+    if (!duelQ || duelAnswered) return;
+    clearInterval(duelTimerRef.current);
+    const correct = opt === duelQ.ua;
+    setDuelAnswered(correct ? 'correct' : 'wrong');
+    if (correct) {
+      playTone(true);
+      const newEnemyHp = Math.max(0, duelEnemyHp - 25);
+      setDuelEnemyHp(newEnemyHp);
+      if (newEnemyHp <= 0) { finishDuel('win'); return; }
+    } else {
+      playTone(false);
+      const newPlayerHp = Math.max(0, duelPlayerHp - 20);
+      setDuelPlayerHp(newPlayerHp);
+      if (newPlayerHp <= 0) { finishDuel('lose'); return; }
+      const newEnemyHit = Math.max(0, newPlayerHp - 15);
+      setDuelPlayerHp(newEnemyHit);
+      if (newEnemyHit <= 0) { finishDuel('lose'); return; }
+    }
+    setTimeout(() => {
+      setDuelAnswered(null);
+      setDuelTimeLeft(10);
+      setDuelQ(nextDuelQ());
+    }, 900);
+  };
+
+  useEffect(() => {
+    if (!duelActive || !duelQ || duelAnswered) return;
+    clearInterval(duelTimerRef.current);
+    const t = setInterval(() => {
+      setDuelTimeLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(t);
+          setDuelPlayerHp(hp => {
+            const newHp = Math.max(0, hp - 20);
+            if (newHp <= 0) { setTimeout(() => finishDuel('lose'), 100); }
+            return newHp;
+          });
+          setTimeout(() => {
+            setDuelAnswered(null);
+            setDuelTimeLeft(10);
+            setDuelQ(nextDuelQ());
+          }, 700);
+          return 10;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    duelTimerRef.current = t;
+    return () => clearInterval(t);
+  }, [duelQ, duelActive, duelAnswered, nextDuelQ]);
+
+  useEffect(() => {
+    return () => clearInterval(duelTimerRef.current);
+  }, []);
+
+  return (
+    <div className="duel-arena fade-in">
+      <div className="duel-header">
+        <div className="duel-title">⚡ Зала Суперників</div>
+        <p className="duel-subtitle">Швидка дуель 1v1 проти AI-суперника. Відповідай правильно — бий противника на 25 HP. Помилка — -20 HP тобі!</p>
+      </div>
+
+      {!duelActive && !duelFinished && (
+        <div className="duel-start-panel card" style={{textAlign:'center',padding:32}}>
+          <div style={{fontSize:72,lineHeight:1}}>⚔️</div>
+          <h2 style={{color:'#f5f3ff',marginTop:12}}>Готовий до двобою?</h2>
+          <p className="muted" style={{maxWidth:480,margin:'0 auto'}}>У кожного по 100 HP. 10 секунд на відповідь. Переможець отримує <b style={{color:'#f59e0b'}}>+100 XP</b> та <b style={{color:'#f59e0b'}}>+30 🪙 Монет</b>!</p>
+          <button className="duel-start-btn" style={{marginTop:20,maxWidth:280,marginInline:'auto'}} onClick={startDuel}>
+            ⚡ Почати Дуель!
+          </button>
+        </div>
+      )}
+
+      {duelActive && duelQ && (
+        <div style={{display:'flex',flexDirection:'column',gap:16}}>
+          {/* Fighters & HP */}
+          <div className="duel-players">
+            <div className={`duel-player-card ${duelAnswered === 'wrong' ? 'hit' : ''}`}>
+              <div className="duel-player-name">🧑 {state?.name || state?.nick || 'Ви'}</div>
+              <div className="duel-health-bar">
+                <div
+                  className={`duel-health-fill ${duelPlayerHp <= 25 ? 'low' : duelPlayerHp <= 50 ? 'mid' : ''}`}
+                  style={{width: `${duelPlayerHp}%`}}
+                />
+              </div>
+              <div className="duel-hp-num" style={{fontSize:13,fontWeight:700,marginTop:4,color:duelPlayerHp>50?'#10b981':duelPlayerHp>25?'#f59e0b':'#ef4444'}}>
+                {duelPlayerHp} HP
+              </div>
+            </div>
+
+            <div className="duel-vs-badge">VS</div>
+
+            <div className={`duel-player-card ${duelAnswered === 'correct' ? 'hit' : ''}`}>
+              <div className="duel-player-name">🤖 Словник-Бот</div>
+              <div className="duel-health-bar">
+                <div
+                  className={`duel-health-fill ${duelEnemyHp <= 25 ? 'low' : duelEnemyHp <= 50 ? 'mid' : ''}`}
+                  style={{width: `${duelEnemyHp}%`}}
+                />
+              </div>
+              <div className="duel-hp-num" style={{fontSize:13,fontWeight:700,marginTop:4,color:'#ef4444'}}>
+                {duelEnemyHp} HP
+              </div>
+            </div>
+          </div>
+
+          {/* Speed timer */}
+          <div className="duel-speed-timer">
+            <div
+              className={`duel-speed-fill ${duelTimeLeft <= 3 ? 'urgent' : ''}`}
+              style={{width: `${(duelTimeLeft / 10) * 100}%`}}
+            />
+          </div>
+          <div style={{textAlign:'center',fontSize:13,color:duelTimeLeft<=3?'#ef4444':'#a78bfa',marginTop:-8}}>
+            ⏱ {duelTimeLeft}с
+          </div>
+
+          {/* Question */}
+          <div className="duel-question-card">
+            <div className="duel-question-sub">Як перекласти українською?</div>
+            <div className="duel-question-word">{duelQ.en}</div>
+          </div>
+
+          {/* Options */}
+          <div className="duel-options">
+            {duelQ.opts.map(opt => {
+              let cls = 'duel-option-btn';
+              if (duelAnswered) {
+                if (opt === duelQ.ua) cls += ' correct';
+                else if (opt !== duelQ.ua && duelAnswered === 'wrong') cls += ' wrong';
+              }
+              return (
+                <button
+                  key={opt}
+                  className={cls}
+                  onClick={() => handleDuelAnswer(opt)}
+                  disabled={!!duelAnswered}
+                >
+                  {opt}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {duelFinished && (
+        <div className="duel-finish-screen card" style={{textAlign:'center',padding:40}}>
+          {duelFinished === 'win' ? (
+            <div className="duel-reward-banner">
+              <div style={{fontSize:72}}>🏆</div>
+              <div className="duel-reward-title">Перемога! Ви переможець!</div>
+              <div className="duel-reward-gems">+30 🪙 Монет</div>
+              <div className="duel-reward-xp">+100 XP Досвіду</div>
+            </div>
+          ) : (
+            <div className="duel-reward-banner">
+              <div style={{fontSize:72}}>💀</div>
+              <div className="duel-reward-title" style={{color:'#ef4444'}}>Поразка…</div>
+              <p className="muted" style={{marginTop:8}}>Не здавайся! Повтори слова в SRS та повертайся до арени.</p>
+            </div>
+          )}
+          <button className="duel-start-btn" style={{marginTop:16,maxWidth:240,marginInline:'auto'}} onClick={startDuel}>
+            🔁 Ще один двобій!
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ChallengesPage({state, save, wordsCatalog}){
   const [rows,setRows]=useState([]);
   const [title,setTitle]=useState('');
   const [metric,setMetric]=useState('xp');
   const [goal,setGoal]=useState(100);
   const [busy,setBusy]=useState(false);
-  const [activeTab, setActiveTab] = useState('events'); // 'events' | 'custom'
+  const [activeTab, setActiveTab] = useState('events'); // 'events' | 'duel' | 'custom'
 
   // --- Boss Battle State ---
   const [bossHp, setBossHp] = useState(100);
@@ -5573,16 +6166,29 @@ function ChallengesPage({state, save, wordsCatalog}){
           className={activeTab === 'events' ? 'primary' : 'secondary'}
           onClick={() => setActiveTab('events')}
         >
-          ⚔️ Епічні Події (Інтерактивні Арени)
+          ⚔️ Епічні події
+        </button>
+        <button
+          type="button"
+          className={activeTab === 'duel' ? 'primary' : 'secondary'}
+          onClick={() => setActiveTab('duel')}
+          style={activeTab === 'duel' ? {background:'linear-gradient(135deg,#7c3aed,#6d28d9)',borderColor:'#7c3aed'} : {borderColor:'#6d28d9',color:'#a78bfa'}}
+        >
+          ⚡ Зала Суперників (Дуель)
         </button>
         <button
           type="button"
           className={activeTab === 'custom' ? 'primary' : 'secondary'}
           onClick={() => setActiveTab('custom')}
         >
-          🏆 Користувацькі Челенджі ({rows.length})
+          🏆 Челенджі ({rows.length})
         </button>
       </div>
+
+      {/* DUEL — RIVALRY HALL */}
+      {activeTab === 'duel' && (
+        <DuelArena state={state} save={save} activeWords={activeWords} />
+      )}
 
       {activeTab === 'events' && (
         <div style={{display:'flex',flexDirection:'column',gap:16}}>
