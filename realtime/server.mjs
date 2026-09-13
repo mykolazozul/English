@@ -22,8 +22,14 @@ async function canChat(a,b){
   return privacy.rows[0]?.allow_messages !== false;
 }
 async function presence(userId,status){try{await pool.query(`INSERT INTO realtime_presence(user_id,status,last_seen_at) VALUES($1,$2,now()) ON CONFLICT(user_id) DO UPDATE SET status=excluded.status,last_seen_at=now()`,[userId,status])}catch{}}
+const duelRooms = new Map();
+function broadcastDuel(room, msg) {
+  if (room.p1?.readyState === 1) room.p1.send(JSON.stringify(msg));
+  if (room.p2?.readyState === 1) room.p2.send(JSON.stringify(msg));
+}
+
 wss.on('connection',(ws,user)=>{
-  ws.user=user;ws.channel=null;ws.messageTimes=[];presence(user.id,'online');
+  ws.user=user;ws.channel=null;ws.duelPin=null;ws.messageTimes=[];presence(user.id,'online');
   ws.send(JSON.stringify({type:'ready',user:{id:user.id,nick:user.nick}}));
   ws.on('message',async raw=>{
     try{
@@ -31,6 +37,112 @@ wss.on('connection',(ws,user)=>{
       const m=JSON.parse(String(raw));
       if(m.type==='ping'){ws.send(JSON.stringify({type:'pong',clientTs:Number(m.clientTs)||now,serverTs:Date.now()}));return;}
       await presence(user.id,'online');
+
+      // Live Multiplayer Duel Handlers
+      if(m.type==='duel_create'){
+        const pin = String(m.pin || ('DUEL-' + Math.floor(1000 + Math.random() * 9000))).toUpperCase();
+        ws.duelPin = pin;
+        duelRooms.set(pin, {
+          pin,
+          p1: ws,
+          p1Info: { id: user.id, nick: user.nick, name: m.name || user.nick, avatar: m.avatar || 'knight' },
+          p2: null,
+          p2Info: null,
+          p1Hp: 100,
+          p2Hp: 100,
+          createdAt: now
+        });
+        ws.send(JSON.stringify({ type: 'duel_created', pin, host: user.nick }));
+        return;
+      }
+
+      if(m.type==='duel_join'){
+        const pin = String(m.pin || '').trim().toUpperCase();
+        const room = duelRooms.get(pin);
+        if(!room){
+          ws.send(JSON.stringify({ type: 'duel_error', error: 'Кімнату дуелі не знайдено або термін дії вичерпано' }));
+          return;
+        }
+        if(room.p2 && room.p2 !== ws){
+          ws.send(JSON.stringify({ type: 'duel_error', error: 'Кімната вже заповнена двома бійцями' }));
+          return;
+        }
+        ws.duelPin = pin;
+        room.p2 = ws;
+        room.p2Info = { id: user.id, nick: user.nick, name: m.name || user.nick, avatar: m.avatar || 'ninja' };
+        broadcastDuel(room, {
+          type: 'duel_matched',
+          pin,
+          p1: room.p1Info,
+          p2: room.p2Info,
+          p1Hp: 100,
+          p2Hp: 100
+        });
+        return;
+      }
+
+      if(m.type==='duel_round_sync'){
+        const pin = ws.duelPin || m.pin;
+        const room = duelRooms.get(pin);
+        if(room){
+          broadcastDuel(room, {
+            type: 'duel_round_start',
+            question: m.question,
+            roundIndex: m.roundIndex,
+            timestamp: now
+          });
+        }
+        return;
+      }
+
+      if(m.type==='duel_answer'){
+        const pin = ws.duelPin || m.pin;
+        const room = duelRooms.get(pin);
+        if(room){
+          const isP1 = ws === room.p1;
+          const damage = m.correct ? 25 : 0;
+          const selfDmg = m.correct ? 0 : 20;
+          if (isP1) {
+            room.p2Hp = Math.max(0, room.p2Hp - damage);
+            room.p1Hp = Math.max(0, room.p1Hp - selfDmg);
+          } else {
+            room.p1Hp = Math.max(0, room.p1Hp - damage);
+            room.p2Hp = Math.max(0, room.p2Hp - selfDmg);
+          }
+          broadcastDuel(room, {
+            type: 'duel_hp_update',
+            p1Hp: room.p1Hp,
+            p2Hp: room.p2Hp,
+            answeredBy: isP1 ? 'p1' : 'p2',
+            correct: !!m.correct,
+            opt: m.opt
+          });
+          if(room.p1Hp <= 0 || room.p2Hp <= 0){
+            const winner = room.p1Hp > 0 ? 'p1' : 'p2';
+            broadcastDuel(room, {
+              type: 'duel_game_over',
+              winner,
+              winnerNick: winner === 'p1' ? room.p1Info.nick : room.p2Info.nick
+            });
+            duelRooms.delete(pin);
+          }
+        }
+        return;
+      }
+
+      if(m.type==='duel_leave'){
+        if(ws.duelPin && duelRooms.has(ws.duelPin)){
+          const room = duelRooms.get(ws.duelPin);
+          const other = ws === room.p1 ? room.p2 : room.p1;
+          if(other?.readyState === 1){
+            other.send(JSON.stringify({ type: 'duel_opponent_left' }));
+          }
+          duelRooms.delete(ws.duelPin);
+          ws.duelPin = null;
+        }
+        return;
+      }
+
       if(m.type==='join_chat'){
         const other=String(m.userId||'');
         if(!(await canChat(user.id,other)))return ws.send(JSON.stringify({type:'error',error:'Chat unavailable'}));
@@ -57,7 +169,17 @@ wss.on('connection',(ws,user)=>{
       }
     }catch{try{ws.send(JSON.stringify({type:'error',error:'Invalid realtime message'}))}catch{}}
   });
-  ws.on('close',()=>{if(ws.channel&&rooms.has(ws.channel)){rooms.get(ws.channel).delete(ws);if(!rooms.get(ws.channel).size)rooms.delete(ws.channel)};presence(user.id,'offline')});
+  ws.on('close',()=>{
+    if(ws.duelPin && duelRooms.has(ws.duelPin)){
+      const room = duelRooms.get(ws.duelPin);
+      const other = ws === room.p1 ? room.p2 : room.p1;
+      if(other?.readyState === 1){
+        other.send(JSON.stringify({ type: 'duel_opponent_left' }));
+      }
+      duelRooms.delete(ws.duelPin);
+    }
+    if(ws.channel&&rooms.has(ws.channel)){rooms.get(ws.channel).delete(ws);if(!rooms.get(ws.channel).size)rooms.delete(ws.channel)};presence(user.id,'offline')
+  });
 });
 const server=http.createServer((req,res)=>{if(req.method==='GET'&&req.url?.startsWith('/health')){res.writeHead(200,{'content-type':'application/json','cache-control':'no-store'});res.end(JSON.stringify({ok:true,service:'english-flow-realtime',at:new Date().toISOString()}));return}res.writeHead(200,{'content-type':'application/json','cache-control':'no-store'});res.end(JSON.stringify({ok:true,service:'english-flow-realtime'}));});
 server.on('upgrade',async(req,socket,head)=>{try{const user=await auth(req);if(!user){socket.write('HTTP/1.1 401 Unauthorized\r\nConnection: close\r\n\r\n');socket.destroy();return}wss.handleUpgrade(req,socket,head,ws=>wss.emit('connection',ws,user))}catch{socket.destroy()}});

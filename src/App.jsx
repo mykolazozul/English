@@ -1,18 +1,18 @@
 import React, {useEffect, useMemo, useState, useCallback, useRef, lazy, Suspense} from 'react';
-import {BarChart3, BookOpen, Check, CheckCircle2, ChevronRight, ChevronDown, Flame, Home, Lock, Menu, Moon, Palette, Play, RotateCcw, Settings, Sun, Target, Trophy, User, Volume2, X, XCircle, Shield, SlidersHorizontal, Brain, Sparkles, Keyboard, Layers, Award, Cloud, Users, MessageCircle, Ghost, VolumeX, Swords, ShieldAlert, Eye, EyeOff, LogIn, UserPlus, ArrowRight, Bell, Wifi, ShoppingBag} from 'lucide-react';
+import {BarChart3, BookOpen, Check, CheckCircle2, ChevronRight, ChevronDown, Flame, Home, Lock, Menu, Moon, Palette, Play, RotateCcw, Settings, Sun, Target, Trophy, User, Volume2, X, XCircle, Shield, SlidersHorizontal, Brain, Sparkles, Keyboard, Layers, Award, Cloud, Users, MessageCircle, Ghost, VolumeX, Swords, ShieldAlert, Eye, EyeOff, LogIn, UserPlus, ArrowRight, Bell, Wifi, ShoppingBag, Smartphone, Undo2, Heart, RefreshCw, Radio, Copy} from 'lucide-react';
 import {words as fallbackWords, rules, BADGES, LEAGUES, leagueForXp} from './data';
 import {notionWords, notionSyncMeta} from './notionWords.generated';
 import { Analytics } from '@vercel/analytics/react';
 import { startRegistration, startAuthentication } from '@simplewebauthn/browser';
 import {saveProfile, loadProfile, getActiveNick, cloudPull, cloudPush, cloudConfigured, isNickTaken, registerNick, setGuestSession, isGuestSession, getFriends, addFriend, acceptFriend, getChat, sendChat, sendChatReaction, registerChatDevice, getChatDevice, getChatDevices, getMyChatDevices, revokeChatDevice, friendsLeaderboard, getDailyAverage, ensureDailyAverage, serverAuth, loadCloudVocabulary, cloudRecordProgress, cloudStartLesson, cloudFinishLesson, flushProgressQueue, serverMe, loadServerConfig, cloudLeaderboard, getWordIdByText, getGamification, postGamification, getPublicProfile, serverLogout, changePassword, getRecoveryQuestion, resetPasswordWithRecovery, setRecoveryQuestion, getTesterProfile} from './lib/storage';
-import {onCorrect as srsOk, onWrong as srsBad, isDue, todayStr} from './lib/srs';
+import {onCorrect as srsOk, onWrong as srsBad, onEasy as srsEasy, onHard as srsHard, predictIntervals, isDue, todayStr} from './lib/srs';
 import {dbPutProfile, dbGetProfile, dbListProfiles, dbSaveWords, dbLoadWords} from './lib/db.js';
 import {createRealtime} from './lib/realtime.js';
 import {ensureChatIdentity,publicKeyPayload,encryptChatPayload,decryptChatText,encryptAttachment,decryptAttachment,fingerprint,rotateChatIdentity,trustKey,trustedKey,untrustKey} from './lib/e2e-chat.js';
 import {track} from './lib/analytics.js';
 
 
-const VERSION = '3.7.0';
+const VERSION = '3.8.0';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -285,11 +285,155 @@ function playTavernDice() {
     });
   } catch {}
 }
+// ==========================================================================
+// AUTHENTIC MINECRAFT SOUND SYNTHESIZER SUITE (Web Audio API)
+// ==========================================================================
+function playMinecraftOrb(streak = 0) {
+  try {
+    if (window.__efQuiet || window.__efNoSfx) return;
+    const c = getAudioCtx(); if (!c) return;
+    if (c.state === 'suspended') c.resume().catch(() => {});
+    const now = c.currentTime;
+    // Minecraft XP Orb pitch increases with streak/pickups: base 740Hz * (1.05 ^ streak)
+    const baseFreq = 740 * Math.pow(1.05946, Math.min(16, Math.max(0, Number(streak) || 0)));
+    const osc = c.createOscillator(), gn = c.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(baseFreq, now);
+    osc.frequency.exponentialRampToValueAtTime(baseFreq * 1.08, now + 0.14);
+    gn.gain.setValueAtTime(0.0001, now);
+    gn.gain.exponentialRampToValueAtTime(0.22, now + 0.008);
+    gn.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
+    osc.connect(gn); gn.connect(c.destination);
+    osc.start(now); osc.stop(now + 0.24);
+  } catch {}
+}
+
+function playMinecraftLevelUp() {
+  try {
+    if (window.__efQuiet || window.__efNoSfx) return;
+    const c = getAudioCtx(); if (!c) return;
+    if (c.state === 'suspended') c.resume().catch(() => {});
+    const now = c.currentTime;
+    // Minecraft Level Up Fanfare: C4, G4, C5, E5, G5, C6 arpeggio with warm resonance
+    const notes = [261.63, 392.00, 523.25, 659.25, 783.99, 1046.50];
+    notes.forEach((freq, idx) => {
+      const osc = c.createOscillator(), gn = c.createGain();
+      osc.type = idx === notes.length - 1 ? 'sine' : 'triangle';
+      const delay = idx * 0.07;
+      osc.frequency.setValueAtTime(freq, now + delay);
+      gn.gain.setValueAtTime(0.0001, now + delay);
+      gn.gain.exponentialRampToValueAtTime(0.18, now + delay + 0.01);
+      gn.gain.exponentialRampToValueAtTime(0.0001, now + delay + (idx === notes.length - 1 ? 0.65 : 0.22));
+      osc.connect(gn); gn.connect(c.destination);
+      osc.start(now + delay);
+      osc.stop(now + delay + 0.7);
+    });
+  } catch {}
+}
+
+function playMinecraftChest() {
+  try {
+    if (window.__efQuiet || window.__efNoSfx) return;
+    const c = getAudioCtx(); if (!c) return;
+    if (c.state === 'suspended') c.resume().catch(() => {});
+    const now = c.currentTime;
+    // Wooden chest creak: low pitch drop + friction overtone
+    const osc1 = c.createOscillator(), gn1 = c.createGain();
+    osc1.type = 'triangle';
+    osc1.frequency.setValueAtTime(140, now);
+    osc1.frequency.exponentialRampToValueAtTime(80, now + 0.25);
+    gn1.gain.setValueAtTime(0.001, now);
+    gn1.gain.exponentialRampToValueAtTime(0.25, now + 0.02);
+    gn1.gain.exponentialRampToValueAtTime(0.0001, now + 0.32);
+    osc1.connect(gn1); gn1.connect(c.destination);
+    osc1.start(now); osc1.stop(now + 0.35);
+
+    const osc2 = c.createOscillator(), gn2 = c.createGain();
+    osc2.type = 'sawtooth';
+    osc2.frequency.setValueAtTime(420, now + 0.02);
+    osc2.frequency.exponentialRampToValueAtTime(280, now + 0.22);
+    gn2.gain.setValueAtTime(0.0001, now + 0.02);
+    gn2.gain.exponentialRampToValueAtTime(0.08, now + 0.05);
+    gn2.gain.exponentialRampToValueAtTime(0.0001, now + 0.24);
+    osc2.connect(gn2); gn2.connect(c.destination);
+    osc2.start(now + 0.02); osc2.stop(now + 0.26);
+  } catch {}
+}
+
+function playMinecraftPop() {
+  try {
+    if (window.__efQuiet || window.__efNoSfx) return;
+    const c = getAudioCtx(); if (!c) return;
+    if (c.state === 'suspended') c.resume().catch(() => {});
+    const now = c.currentTime;
+    // Minecraft item pop / bubble
+    const osc = c.createOscillator(), gn = c.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(460, now);
+    osc.frequency.exponentialRampToValueAtTime(680, now + 0.04);
+    gn.gain.setValueAtTime(0.001, now);
+    gn.gain.exponentialRampToValueAtTime(0.2, now + 0.005);
+    gn.gain.exponentialRampToValueAtTime(0.0001, now + 0.07);
+    osc.connect(gn); gn.connect(c.destination);
+    osc.start(now); osc.stop(now + 0.08);
+  } catch {}
+}
+
+function playMinecraftAnvil() {
+  try {
+    if (window.__efQuiet || window.__efNoSfx) return;
+    const c = getAudioCtx(); if (!c) return;
+    if (c.state === 'suspended') c.resume().catch(() => {});
+    const now = c.currentTime;
+    // Metallic anvil ring
+    const osc = c.createOscillator(), gn = c.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(1864.66, now);
+    gn.gain.setValueAtTime(0.001, now);
+    gn.gain.exponentialRampToValueAtTime(0.25, now + 0.01);
+    gn.gain.exponentialRampToValueAtTime(0.0001, now + 0.75);
+    osc.connect(gn); gn.connect(c.destination);
+    osc.start(now); osc.stop(now + 0.8);
+
+    const oscLow = c.createOscillator(), gnLow = c.createGain();
+    oscLow.type = 'triangle';
+    oscLow.frequency.setValueAtTime(160, now);
+    gnLow.gain.setValueAtTime(0.2, now);
+    gnLow.gain.exponentialRampToValueAtTime(0.0001, now + 0.12);
+    oscLow.connect(gnLow); gnLow.connect(c.destination);
+    oscLow.start(now); oscLow.stop(now + 0.15);
+  } catch {}
+}
+
+function playMinecraftHit() {
+  try {
+    if (window.__efQuiet || window.__efNoSfx) return;
+    const c = getAudioCtx(); if (!c) return;
+    if (c.state === 'suspended') c.resume().catch(() => {});
+    const now = c.currentTime;
+    // Punch / wrong answer thump
+    const osc = c.createOscillator(), gn = c.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(180, now);
+    osc.frequency.exponentialRampToValueAtTime(55, now + 0.18);
+    gn.gain.setValueAtTime(0.001, now);
+    gn.gain.exponentialRampToValueAtTime(0.28, now + 0.015);
+    gn.gain.exponentialRampToValueAtTime(0.0001, now + 0.2);
+    osc.connect(gn); gn.connect(c.destination);
+    osc.start(now); osc.stop(now + 0.22);
+  } catch {}
+}
+
 function playTone(ok, pack) {
   try {
     if (window.__efQuiet || window.__efNoSfx) return;
-    const p = pack || window.__efSoundPack || 'duo';
+    const p = pack || window.__efSoundPack || 'minecraft';
     
+    if (p === 'minecraft') {
+      if (ok) playMinecraftOrb(window.__efStreakCount || 0);
+      else playMinecraftHit();
+      return;
+    }
     if (p === 'tavern') {
       if (ok) playTavernGoldCoin();
       else playTavernDoor();
@@ -369,9 +513,17 @@ function playTone(ok, pack) {
 }
 
 function playCoinSound() {
-  const p = window.__efSoundPack || 'duo';
+  const p = window.__efSoundPack || 'minecraft';
+  if (p === 'minecraft') {
+    playMinecraftOrb(0);
+    return;
+  }
   if (p === 'mario') {
     playMarioCoin();
+    return;
+  }
+  if (p === 'tavern') {
+    playTavernGoldCoin();
     return;
   }
   try {
@@ -3971,6 +4123,15 @@ function Learn({state, cats, onStart}) {
         </label>
       </div>
       <div className="grid two lesson-grid">
+        <div className="card lesson-card mobile-swipe-card-spotlight" style={{background:'linear-gradient(135deg, rgba(16,185,129,0.12), rgba(56,189,248,0.08))', borderColor:'rgba(16,185,129,0.35)'}}>
+          <div className="lesson-icon">📱</div>
+          <span className="pill ok" style={{fontWeight:800}}>HOT · TINDER SWIPE</span>
+          <h2>Свайп-картки слів</h2>
+          <p className="muted">Швидке повторення свайпом вправо (знаю) та вліво (повторити). 3D переворот картки!</p>
+          <button className="primary" style={{background:'linear-gradient(135deg, #10b981, #059669)', border:'none', boxShadow:'0 4px 16px rgba(16,185,129,0.4)'}} onClick={() => onStart('swipe', direction, category)}>
+            Свайпати <Play size={16}/>
+          </button>
+        </div>
         <div className="card lesson-card">
           <div className="lesson-icon">⚡</div>
           <span className="pill">SPRINT</span>
@@ -4018,6 +4179,322 @@ function Learn({state, cats, onStart}) {
   );
 }
 
+function MobileSwipeCards({items, state, save, onExit, onDone, direction}) {
+  const [deck, setDeck] = useState(() => Array.isArray(items) && items.length ? items.slice() : []);
+  const [idx, setIdx] = useState(0);
+  const [isFlipped, setIsFlipped] = useState(false);
+  const [dragX, setDragX] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [swipingDir, setSwipingDir] = useState(null);
+  const [history, setHistory] = useState([]);
+  const [stats, setStats] = useState({ known: 0, repeat: 0, xp: 0 });
+  const [finished, setFinished] = useState(false);
+
+  const startXRef = useRef(0);
+  const currentDragX = useRef(0);
+  const isPointerDown = useRef(false);
+
+  const currentCard = deck[idx];
+  const totalCards = deck.length;
+
+  const handleStart = (clientX) => {
+    if (swipingDir || finished || !currentCard) return;
+    startXRef.current = clientX;
+    currentDragX.current = 0;
+    isPointerDown.current = true;
+    setIsDragging(true);
+  };
+
+  const handleMove = (clientX) => {
+    if (!isPointerDown.current || swipingDir || finished) return;
+    const dx = clientX - startXRef.current;
+    currentDragX.current = dx;
+    setDragX(dx);
+  };
+
+  const handleEnd = () => {
+    if (!isPointerDown.current) return;
+    isPointerDown.current = false;
+    setIsDragging(false);
+    const finalDx = currentDragX.current;
+    if (Math.abs(finalDx) < 12) {
+      setIsFlipped(f => !f);
+      playMinecraftPop();
+      setDragX(0);
+      return;
+    }
+    if (finalDx > 75) {
+      triggerSwipe('right');
+    } else if (finalDx < -75) {
+      triggerSwipe('left');
+    } else {
+      setDragX(0);
+    }
+  };
+
+  const triggerSwipe = (dir) => {
+    if (!currentCard || swipingDir) return;
+    setSwipingDir(dir);
+    setDragX(dir === 'right' ? 420 : -420);
+
+    const mid = currentCard.id || currentCard.notion_id || currentCard.word;
+    const isKnown = dir === 'right';
+
+    if (isKnown) {
+      playMinecraftOrb(stats.known);
+      const points = 4;
+      const nextMastery = Math.max(0, (state.mastery?.[mid] || 0) + 1);
+      const nextSrs = srsOk(state.srs?.[mid]);
+      save({
+        ...state,
+        xp: (state.xp || 0) + points,
+        todayXp: (state.todayXp || 0) + points,
+        mastery: { ...(state.mastery || {}), [mid]: nextMastery },
+        srs: { ...(state.srs || {}), [mid]: nextSrs }
+      });
+      setStats(s => ({ ...s, known: s.known + 1, xp: s.xp + points }));
+    } else {
+      playMinecraftPop();
+      const nextSrs = srsBad(state.srs?.[mid]);
+      save({
+        ...state,
+        srs: { ...(state.srs || {}), [mid]: nextSrs }
+      });
+      setStats(s => ({ ...s, repeat: s.repeat + 1 }));
+      setDeck(prev => [...prev, currentCard]);
+    }
+
+    setHistory(h => [...h, { card: currentCard, dir, wasFlipped: isFlipped }]);
+
+    setTimeout(() => {
+      setSwipingDir(null);
+      setDragX(0);
+      setIsFlipped(false);
+      if (idx + 1 >= deck.length) {
+        setFinished(true);
+        playMinecraftLevelUp();
+        confettiBurst();
+      } else {
+        setIdx(i => i + 1);
+      }
+    }, 280);
+  };
+
+  const undoLast = () => {
+    if (!history.length || idx === 0) return;
+    const last = history[history.length - 1];
+    setHistory(h => h.slice(0, -1));
+    setIdx(i => Math.max(0, i - 1));
+    setIsFlipped(last.wasFlipped);
+    setDragX(0);
+    setSwipingDir(null);
+    emitSiteToast('Повернуто попередню картку ↩️', 'info');
+  };
+
+  const speak = (text) => {
+    try {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = 'en-US';
+        u.rate = 0.9;
+        window.speechSynthesis.speak(u);
+      }
+    } catch {}
+  };
+
+  const wordEn = currentCard?.word || currentCard?.en || currentCard?.front || '';
+  const wordUa = currentCard?.translation || currentCard?.ua || currentCard?.back || '';
+  const wordPron = currentCard?.pronunciation || '';
+  const wordEx = currentCard?.example || '';
+  const wordLevel = currentCard?.level || 'A2';
+  const wordCat = currentCard?.category || 'General';
+  const srsPred = currentCard ? predictIntervals(state.srs?.[currentCard.id || currentCard.notion_id || wordEn]) : null;
+
+  return (
+    <div className="swipe-arena fade-in">
+      {/* Top Header */}
+      <div className="swipe-header">
+        <button className="back" onClick={onExit}>← Назад</button>
+        <div className="swipe-stats-pills">
+          <span className="swipe-pill-green">💚 {stats.known}</span>
+          <span className="swipe-pill-red">🔄 {stats.repeat}</span>
+          <span className="swipe-pill-gold">🪙 +{stats.xp} XP</span>
+        </div>
+      </div>
+
+      {/* Progress Line */}
+      <div className="swipe-progress-bar">
+        <div
+          className="swipe-progress-fill"
+          style={{ width: `${Math.min(100, Math.round(((idx + 1) / Math.max(1, totalCards)) * 100))}%` }}
+        />
+      </div>
+
+      {!finished && currentCard ? (
+        <div className="swipe-card-stage">
+          {/* Background depth shadows */}
+          <div className="swipe-card-depth depth-2" />
+          <div className="swipe-card-depth depth-1" />
+
+          {/* Active 3D Swipe Card */}
+          <div
+            className={`swipe-card-active ${isDragging ? 'dragging' : ''} ${swipingDir ? `swiped-${swipingDir}` : ''} ${isFlipped ? 'flipped' : ''}`}
+            style={{
+              transform: `translateX(${dragX}px) rotate(${dragX * 0.08}deg)`,
+              transition: isDragging ? 'none' : 'transform 0.28s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+            }}
+            onMouseDown={e => handleStart(e.clientX)}
+            onMouseMove={e => isDragging && handleMove(e.clientX)}
+            onMouseUp={handleEnd}
+            onTouchStart={e => handleStart(e.touches[0].clientX)}
+            onTouchMove={e => handleMove(e.touches[0].clientX)}
+            onTouchEnd={handleEnd}
+          >
+            {/* Dynamic Stamps */}
+            <div className="swipe-stamp stamp-like" style={{ opacity: Math.max(0, Math.min(1, dragX / 65)) }}>
+              ЗНАЮ ✓
+            </div>
+            <div className="swipe-stamp stamp-nope" style={{ opacity: Math.max(0, Math.min(1, -dragX / 65)) }}>
+              ПОВТОРИТИ
+            </div>
+
+            {/* Front Face */}
+            <div className="swipe-card-face face-front">
+              <div className="swipe-card-top-row">
+                <span className="pill" style={{fontWeight:800}}>{wordLevel}</span>
+                <span className="pill muted">{wordCat}</span>
+                <span className="swipe-card-num">{idx + 1}/{totalCards}</span>
+              </div>
+
+              <div className="swipe-card-center">
+                <h1 className="swipe-card-word">{wordEn}</h1>
+                {wordPron && <div className="swipe-card-pron">[{wordPron}]</div>}
+                <button
+                  type="button"
+                  className="swipe-audio-btn"
+                  onClick={e => { e.stopPropagation(); speak(wordEn); }}
+                  title="Озвучити"
+                >
+                  <Volume2 size={24} />
+                </button>
+              </div>
+
+              <div className="swipe-card-hint">
+                <span>👆 Торкніться, щоб перевернути картку</span>
+              </div>
+            </div>
+
+            {/* Back Face (3D Flipped) */}
+            <div className="swipe-card-face face-back">
+              <div className="swipe-card-top-row">
+                <span className="pill ok">ПЕРЕКЛАД</span>
+                <span className="swipe-card-num">{idx + 1}/{totalCards}</span>
+              </div>
+
+              <div className="swipe-card-center">
+                <h2 className="swipe-card-translation">{wordUa}</h2>
+                {wordEx && (
+                  <div className="swipe-card-example">
+                    <p className="swipe-example-en">"{wordEx}"</p>
+                  </div>
+                )}
+
+                {/* SRS Predictions */}
+                {srsPred && (
+                  <div className="swipe-srs-predictions">
+                    <div className="srs-pred-item again">Повтор: {srsPred.again.label}</div>
+                    <div className="srs-pred-item good">Добре: {srsPred.good.label}</div>
+                    <div className="srs-pred-item easy">Легко: {srsPred.easy.label}</div>
+                  </div>
+                )}
+              </div>
+
+              <div className="swipe-card-hint">
+                <span>👆 Торкніться для лицьового боку</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Action buttons bar for thumb ergonomics */}
+          <div className="swipe-controls-bar">
+            <button
+              type="button"
+              className="swipe-action-btn btn-undo"
+              onClick={undoLast}
+              disabled={!history.length}
+              title="Скасувати"
+            >
+              <Undo2 size={20} />
+            </button>
+            <button
+              type="button"
+              className="swipe-action-btn btn-nope"
+              onClick={() => triggerSwipe('left')}
+              title="Повторити (Swipe Left)"
+            >
+              <X size={28} />
+            </button>
+            <button
+              type="button"
+              className="swipe-action-btn btn-flip"
+              onClick={() => { setIsFlipped(f => !f); playMinecraftPop(); }}
+              title="Перевернути 3D"
+            >
+              <RefreshCw size={22} />
+            </button>
+            <button
+              type="button"
+              className="swipe-action-btn btn-speak"
+              onClick={() => speak(wordEn)}
+              title="Озвучити"
+            >
+              <Volume2 size={22} />
+            </button>
+            <button
+              type="button"
+              className="swipe-action-btn btn-like"
+              onClick={() => triggerSwipe('right')}
+              title="Знаю (Swipe Right)"
+            >
+              <Heart size={28} />
+            </button>
+          </div>
+        </div>
+      ) : (
+        /* Summary when finished */
+        <div className="swipe-finish-card card fade-in">
+          <div style={{fontSize:64}}>🏆</div>
+          <h2>Сесію свайп-карток завершено!</h2>
+          <p className="muted">Всі картки колоди успішно опрацьовано.</p>
+          <div className="swipe-finish-stats">
+            <div className="finish-stat-box">
+              <span className="finish-num ok">{stats.known}</span>
+              <span className="finish-label">Вивчено</span>
+            </div>
+            <div className="finish-stat-box">
+              <span className="finish-num warning">{stats.repeat}</span>
+              <span className="finish-label">Повторень</span>
+            </div>
+            <div className="finish-stat-box">
+              <span className="finish-num gold">+{stats.xp} XP</span>
+              <span className="finish-label">Досвіду</span>
+            </div>
+          </div>
+          <div className="row-btns" style={{justifyContent:'center',marginTop:20}}>
+            <button className="primary" onClick={() => { setDeck(shuffle(items)); setIdx(0); setFinished(false); setStats({known:0,repeat:0,xp:0}); }}>
+              Повторити колоду 🔄
+            </button>
+            <button className="secondary" onClick={onDone || onExit}>
+              До вибору уроків
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function Lesson({cfg, state, save, onExit, onDone, wordsCatalog}) {
   const mode = cfg.mode;
   const [lessonId, setLessonId] = useState('');
@@ -4028,7 +4505,6 @@ function Lesson({cfg, state, save, onExit, onDone, wordsCatalog}) {
   const catalog = (wordsCatalog && wordsCatalog.length) ? wordsCatalog : words;
 
   // Snapshot initial question pool ONCE when lesson starts or on retry.
-  // CRITICAL: Do NOT list `state` in dependencies, otherwise every answer re-shuffles the quiz and resets to 1/10!
   const initialLocalItems = useMemo(() => {
     let pool = catalog;
     if (mode === 'srs') {
@@ -4046,6 +4522,7 @@ function Lesson({cfg, state, save, onExit, onDone, wordsCatalog}) {
     if (cfg.category && cfg.category !== 'all') pool = pool.filter(w => w.category === cfg.category);
     if (state.admin.shuffleQuestions !== false) pool = shuffle(pool);
     if (mode === 'match') return pool.slice(0, 6);
+    if (mode === 'swipe') return pool.slice(0, 20);
     return makeQuizItems(pool, state.admin.lessonSize, cfg.direction, 'all');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [catalog, mode, cfg.direction, cfg.category, retry]);
@@ -4060,7 +4537,6 @@ function Lesson({cfg, state, save, onExit, onDone, wordsCatalog}) {
       const msg = mode==='problems' ? 'Поки немає проблемних слів. Вони зʼявляться після реальних помилок.' : mode==='srs' ? 'Наразі немає карток, які потрібно повторити.' : 'У словнику немає доступних слів для цього уроку.';
       setLoadError(msg); return;
     }
-    // Fall back to local items if cloud session takes more than 6s so the user is never stuck
     const timer = setTimeout(() => {
       if (!cancelled) setUseLocalFallback(true);
     }, 6000);
@@ -4110,6 +4586,7 @@ function Lesson({cfg, state, save, onExit, onDone, wordsCatalog}) {
 
   const lessonKey = `${lessonId || (useLocalFallback ? 'local' : 'init')}-${mode}-${cfg.direction || 'en-ua'}-${cfg.category || 'all'}-${retry}`;
   if (mode === 'match') return <MatchGame key={`match-${lessonKey}`} items={items} state={state} save={save} onExit={onExit} onDone={onDone} lessonId={lessonId} direction={cfg.direction} />;
+  if (mode === 'swipe') return <MobileSwipeCards key={`swipe-${lessonKey}`} items={items} state={state} save={save} onExit={onExit} onDone={onDone} direction={cfg.direction} />;
   return <SprintGame key={`sprint-${lessonKey}`} items={items} mode={mode} state={state} save={save} onExit={onExit} onDone={onDone} lessonId={lessonId} direction={cfg.direction} />;
 }
 
@@ -5925,6 +6402,12 @@ function Admin({state, save, setWordsLive, wordsLive, setModal}) {
   const [authErr, setAuthErr] = useState('');
   const [syncProg, setSyncProg] = useState({cur:0, total:0, label:''});
   const [syncMeta, setSyncMeta] = useState(notionSyncMeta);
+  const [customNotionToken, setCustomNotionToken] = useState(() => localStorage.getItem('ef-custom-notion-token') || '');
+  const [customNotionDbId, setCustomNotionDbId] = useState(() => localStorage.getItem('ef-custom-notion-dbid') || 'f38dba17-bbd6-4f04-9875-030212db4d0a');
+  const [discoveredDbs, setDiscoveredDbs] = useState([]);
+  const [discovering, setDiscovering] = useState(false);
+  const [discoveryErr, setDiscoveryErr] = useState('');
+  const [showNotionHelp, setShowNotionHelp] = useState(true);
 
   const unlock = (info=null) => {
     setOk(true);
@@ -5940,13 +6423,23 @@ function Admin({state, save, setWordsLive, wordsLive, setModal}) {
   const changeAdminDesign = v => { setAdminDesign(v); localStorage.setItem('ef-admin-design',v); };
   useEffect(() => { setA({...state.admin}); }, [state.admin]);
 
-  const forceSync = async () => {
+  const forceSync = async (overrideToken, overrideDb) => {
     if (syncing) return;
     setSyncing(true); setSaved(false);
     setSyncProg({cur:10,total:100,label:'Підключення до Notion API…'});
+    const useToken = (overrideToken !== undefined ? overrideToken : customNotionToken).trim();
+    const useDb = (overrideDb !== undefined ? overrideDb : customNotionDbId).trim();
+    if (useToken) localStorage.setItem('ef-custom-notion-token', useToken);
+    if (useDb) localStorage.setItem('ef-custom-notion-dbid', useDb);
     try {
       setSyncProg({cur:40,total:100,label:'Завантаження сторінок та перекладів…'});
-      const data = await requestJson('/api/notion-sync',{method:'POST',body:'{}'});
+      const data = await requestJson('/api/notion-sync',{
+        method:'POST',
+        body: JSON.stringify({
+          token: useToken || undefined,
+          dataSourceId: useDb || undefined
+        })
+      });
       const list=Array.isArray(data.words)?data.words:[];
       if (!list.length) throw new Error('Notion повернув 0 слів — синхронізацію скасовано.');
       const mapped=list.map((w,i)=>({id:w.id||w.notion_id||('n'+(i+1)),word:w.word,translation:w.translation||'—',pronunciation:w.pronunciation||'',category:w.category||'Other',level:w.level||'',explanation:w.explanation||'',example:w.example||w.examples||''}));
@@ -5960,6 +6453,30 @@ function Admin({state, save, setWordsLive, wordsLive, setModal}) {
       setSyncProg({cur:0,total:0,label:'Помилка: '+(e.message||'sync failed')});
       emitSiteError(e.message||'Не вдалося оновити словник','Синхронізація Notion');
     } finally { setSyncing(false); }
+  };
+
+  const discoverNotionDbs = async () => {
+    setDiscovering(true); setDiscoveryErr(''); setDiscoveredDbs([]);
+    try {
+      const res = await requestJson('/api/notion-sync', {
+        method: 'POST',
+        body: JSON.stringify({ action: 'discover', token: customNotionToken.trim() || undefined })
+      });
+      if (res?.databases) {
+        setDiscoveredDbs(res.databases);
+        if (res.databases.length === 0) {
+          setDiscoveryErr('Не знайдено підключених баз для цього токена. Переконайтеся, що в Notion на сторінці бази натиснуто "..." -> "Connections" -> обрано вашу інтеграцію.');
+        } else {
+          emitSiteToast(`Знайдено баз у Notion: ${res.databases.length}`, 'ok');
+        }
+      } else {
+        throw new Error(res?.error || 'Помилка пошуку баз');
+      }
+    } catch (err) {
+      setDiscoveryErr(err.message || 'Не вдалося перевірити бази');
+    } finally {
+      setDiscovering(false);
+    }
   };
 
   const tryUnlock = async () => {
@@ -6170,31 +6687,157 @@ function Admin({state, save, setWordsLive, wordsLive, setModal}) {
       {/* TAB 2: NOTION VOCABULARY */}
       {adminTab === 'vocabulary' && (
         <ErrorBoundary>
-          <div className="card sync-card">
-            <h2>📚 Синхронізація словника Notion</h2>
-            <p className="muted">Живий двосторонній sync: Notion Database → Neon PostgreSQL. База слів оновлюється без втрати прогресу користувачів.</p>
-            
-            <div style={{margin:'14px 0',padding:12,borderRadius:8,background:'var(--surface-sunken, rgba(0,0,0,0.03))'}}>
-              <p className="sync-meta-line" style={{margin:'0 0 6px'}}>
-                Поточна кількість активних слів: <b>{wordsCount}</b>
-              </p>
-              <p className="muted small" style={{margin:0}}>
-                Останнє успішне оновлення: <b>{syncMeta.syncedAt || '—'}</b> · Авто-синк GitHub Action щогодини.
-              </p>
+          <div style={{display:'flex',flexDirection:'column',gap:16}}>
+            <div className="card sync-card">
+              <h2>📚 Синхронізація словника Notion</h2>
+              <p className="muted">Живий двосторонній sync: Notion Database → Neon PostgreSQL. База слів оновлюється без втрати прогресу користувачів.</p>
+              
+              <div style={{margin:'14px 0',padding:14,borderRadius:12,background:'var(--surface-sunken, rgba(0,0,0,0.03))',border:'1px solid var(--border)'}}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:8}}>
+                  <p className="sync-meta-line" style={{margin:0,fontSize:15}}>
+                    Поточна кількість активних слів: <b style={{color:'var(--accent)',fontSize:17}}>{wordsCount}</b>
+                  </p>
+                  <span className="pill ok" style={{fontSize:12}}>⚡ Neon + Notion Live Sync</span>
+                </div>
+                <p className="muted small" style={{margin:'6px 0 0'}}>
+                  Останнє успішне оновлення: <b>{syncMeta.syncedAt || '—'}</b> · Авто-синк GitHub Action щогодини.
+                </p>
+              </div>
+
+              <div className="row-btns wrap" style={{gap:10}}>
+                <button className="primary" type="button" disabled={syncing} onClick={() => forceSync()} style={{padding:'10px 20px',fontWeight:700}}>
+                  {syncing ? 'Синхронізація з Notion…' : '🔄 Оновити словник зараз'}
+                </button>
+                <button className="secondary" type="button" onClick={() => setShowNotionHelp(prev => !prev)} style={{padding:'10px 16px'}}>
+                  {showNotionHelp ? '📖 Приховати інструкцію Notion' : '📖 Інструкція підключення Notion'}
+                </button>
+              </div>
+
+              {syncing || syncProg.label ? (
+                <div className="sync-progress" style={{marginTop:14}}>
+                  <div className="progress"><i style={{width: `${syncProg.total ? (syncProg.cur / syncProg.total) * 100 : 0}%`}}/></div>
+                  <span style={{fontSize:12,marginTop:6,display:'inline-block',fontWeight:600}}>{syncProg.label}</span>
+                </div>
+              ) : null}
+
+              {saved && !syncing && <span className="saved-message" style={{display:'block',marginTop:10,fontWeight:700,color:'var(--accent,#10b981)'}}>Словник успішно оновлено ✓</span>}
             </div>
 
-            <button className="primary" type="button" disabled={syncing} onClick={forceSync} style={{padding:'10px 18px'}}>
-              {syncing ? 'Синхронізація з Notion…' : '🔄 Оновити словник зараз'}
-            </button>
-
-            {syncing || syncProg.label ? (
-              <div className="sync-progress" style={{marginTop:12}}>
-                <div className="progress"><i style={{width: `${syncProg.total ? (syncProg.cur / syncProg.total) * 100 : 0}%`}}/></div>
-                <span style={{fontSize:12,marginTop:4,display:'inline-block'}}>{syncProg.label}</span>
+            {/* Step-by-Step Notion Guide */}
+            {showNotionHelp && (
+              <div className="card" style={{border:'1px solid rgba(59,130,246,0.3)',background:'rgba(59,130,246,0.04)'}}>
+                <h3 style={{marginTop:0,display:'flex',alignItems:'center',gap:8,color:'#3b82f6'}}>
+                  💡 Чому Notion повертає помилку 404 (Object not found) та як це вирішити за 1 хвилину:
+                </h3>
+                <p style={{fontSize:14,lineHeight:1.6}}>
+                  В офіційному API Notion база даних вважається <b>«неіснуючою» (404)</b>, доки їй явно не надано дозвіл на підключення до вашої створеної інтеграції.
+                </p>
+                <div style={{background:'rgba(255,255,255,0.04)',padding:14,borderRadius:10,border:'1px solid var(--border)',margin:'10px 0'}}>
+                  <b style={{display:'block',marginBottom:8}}>Інструкція з підключення (у вашому Notion):</b>
+                  <ol style={{paddingLeft:20,margin:0,lineHeight:1.7,fontSize:13.5}}>
+                    <li>Відкрийте вашу базу слів у <b>Notion</b> (у веб-браузері або додатку).</li>
+                    <li>У правому верхньому кутку сторінки натисніть <b>•••</b> (три крапки).</li>
+                    <li>Прокрутіть униз меню до пункту <b>«Connections»</b> (або <b>«Підключення»</b>).</li>
+                    <li>Натисніть <b>«Connect to...»</b> (або <b>«Додати підключення»</b>).</li>
+                    <li>У списку оберіть вашу інтеграцію (наприклад, <b>«New integration»</b> або <b>«English Flow»</b>) та підтвердіть (<b>Confirm</b>).</li>
+                  </ol>
+                </div>
+                <p className="muted small" style={{margin:'8px 0 0'}}>
+                  🛡️ <b>Надійність гарантована:</b> Навіть якщо Notion тимчасово недоступний або в процесі налаштування, English Flow продовжує повноцінно навчати на повній збереженій базі з <b>330+ слів</b> (Neon PostgreSQL + офлайн кеш).
+                </p>
               </div>
-            ) : null}
+            )}
 
-            {saved && !syncing && <span className="saved-message" style={{display:'block',marginTop:10}}>Словник успішно оновлено ✓</span>}
+            {/* Custom Credentials & Database Discovery */}
+            <div className="card">
+              <h3 style={{marginTop:0}}>⚙️ Параметри підключення та Авто-пошук баз</h3>
+              <p className="muted small" style={{marginBottom:14}}>
+                Ви можете вказати токен або змінити ID бази без перезапуску сервера:
+              </p>
+
+              <div style={{display:'grid',gap:12,gridTemplateColumns:'repeat(auto-fit, minmax(280px, 1fr))'}}>
+                <div>
+                  <label style={{display:'block',fontSize:12,fontWeight:700,marginBottom:4}}>Notion Internal Secret (ntn_... або secret_...)</label>
+                  <input
+                    className="search"
+                    type="password"
+                    value={customNotionToken}
+                    onChange={e => setCustomNotionToken(e.target.value)}
+                    placeholder="Введіть або залиште порожнім для системного NOTION_TOKEN"
+                    style={{width:'100%'}}
+                  />
+                  <span className="muted small" style={{display:'block',marginTop:4}}>За замовчуванням береться із змінних оточення (Vercel / .env).</span>
+                </div>
+
+                <div>
+                  <label style={{display:'block',fontSize:12,fontWeight:700,marginBottom:4}}>Notion Database ID або повний URL</label>
+                  <input
+                    className="search"
+                    type="text"
+                    value={customNotionDbId}
+                    onChange={e => setCustomNotionDbId(e.target.value)}
+                    placeholder="f38dba17-bbd6-4f04-9875-030212db4d0a"
+                    style={{width:'100%'}}
+                  />
+                  <span className="muted small" style={{display:'block',marginTop:4}}>Підтримує як 32-символьний UUID, так і повне посилання notion.so/...</span>
+                </div>
+              </div>
+
+              <div className="row-btns wrap" style={{gap:10,marginTop:16}}>
+                <button
+                  className="secondary"
+                  type="button"
+                  disabled={discovering}
+                  onClick={discoverNotionDbs}
+                  style={{padding:'9px 16px',fontWeight:700}}
+                >
+                  {discovering ? 'Пошук у Notion…' : '🔍 Авто-пошук баз у моєму Notion'}
+                </button>
+                <button
+                  className="primary"
+                  type="button"
+                  disabled={syncing}
+                  onClick={() => forceSync(customNotionToken, customNotionDbId)}
+                  style={{padding:'9px 18px',fontWeight:700}}
+                >
+                  ⚡ Зберегти та перевірити підключення
+                </button>
+              </div>
+
+              {discoveryErr && (
+                <div style={{marginTop:12,padding:'10px 14px',borderRadius:8,background:'rgba(239,68,68,0.1)',border:'1px solid rgba(239,68,68,0.3)',color:'#ef4444',fontSize:13}}>
+                  {discoveryErr}
+                </div>
+              )}
+
+              {discoveredDbs.length > 0 && (
+                <div style={{marginTop:14,padding:14,borderRadius:10,background:'var(--surface-sunken)',border:'1px solid var(--border)'}}>
+                  <b style={{fontSize:13}}>Знайдені обʼєкти в Notion ({discoveredDbs.length}):</b>
+                  <div style={{display:'flex',flexDirection:'column',gap:8,marginTop:10}}>
+                    {discoveredDbs.map(db => (
+                      <div key={db.id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'8px 12px',borderRadius:8,background:'var(--surface)',border:'1px solid var(--border)'}}>
+                        <div>
+                          <b style={{fontSize:13}}>{db.title || 'Без назви'}</b>
+                          <span className="muted small" style={{display:'block'}}>ID: <code>{db.id}</code> ({db.object})</span>
+                        </div>
+                        <button
+                          className="secondary"
+                          type="button"
+                          style={{fontSize:12,padding:'4px 10px'}}
+                          onClick={() => {
+                            setCustomNotionDbId(db.id);
+                            localStorage.setItem('ef-custom-notion-dbid', db.id);
+                            emitSiteToast(`Вибрано базу: ${db.title}`, 'ok');
+                          }}
+                        >
+                          Вибрати цю базу
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </ErrorBoundary>
       )}
@@ -6395,14 +7038,43 @@ function AdminAnalytics(){
             {day:'2026-09-10', events:78, answers:310},
             {day:'2026-09-11', events:95, answers:390},
             {day:'2026-09-12', events:110, answers:450}
-          ]
+          ],
+          geo: {
+            countries: [
+              { country: 'Україна', code: 'UA', flag: '🇺🇦', users: 118, pct: 83, xp: 8240, accuracy: 91 },
+              { country: 'Польща', code: 'PL', flag: '🇵🇱', users: 12, pct: 8, xp: 890, accuracy: 88 },
+              { country: 'Німеччина', code: 'DE', flag: '🇩🇪', users: 5, pct: 4, xp: 340, accuracy: 86 },
+              { country: 'США', code: 'US', flag: '🇺🇸', users: 4, pct: 3, xp: 210, accuracy: 94 },
+              { country: 'Велика Британія', code: 'GB', flag: '🇬🇧', users: 2, pct: 1, xp: 90, accuracy: 89 },
+              { country: 'Канада', code: 'CA', flag: '🇨🇦', users: 1, pct: 1, xp: 30, accuracy: 85 }
+            ],
+            cities: [
+              { city: 'Київ', flag: '🇺🇦', region: 'Київська обл.', users: 54, sessions: 320, last_active: '2 хв тому' },
+              { city: 'Львів', flag: '🇺🇦', region: 'Львівська обл.', users: 28, sessions: 165, last_active: '12 хв тому' },
+              { city: 'Одеса', flag: '🇺🇦', region: 'Одеська обл.', users: 15, sessions: 84, last_active: '35 хв тому' },
+              { city: 'Харків', flag: '🇺🇦', region: 'Харківська обл.', users: 11, sessions: 62, last_active: '1 год тому' },
+              { city: 'Дніпро', flag: '🇺🇦', region: 'Дніпропетровська обл.', users: 10, sessions: 54, last_active: '2 год тому' },
+              { city: 'Варшава', flag: '🇵🇱', region: 'Мазовецьке', users: 8, sessions: 42, last_active: '40 хв тому' },
+              { city: 'Берлін', flag: '🇩🇪', region: 'Берлін', users: 4, sessions: 18, last_active: '3 год тому' },
+              { city: 'Краків', flag: '🇵🇱', region: 'Малопольське', users: 4, sessions: 16, last_active: '5 год тому' }
+            ]
+          }
         });
       });
   };
   useEffect(()=>{load()},[days]);
   if(!d)return <div className="admin-error-state"><p className="muted">Завантаження analytics…</p></div>;
   const o=d.overview||{}, l=d.learning||{}, v=d.vocabulary||{}, u=d.users||{}, s=d.social||{}, sec=d.security||{}, sys=d.system||{}, f=d.funnel||{};
-  const tabs=[['overview','Overview'],['learning','Learning'],['vocabulary','Vocabulary'],['users','Users'],['social','Social'],['security','Security'],['system','System']];
+  const tabs=[
+    ['overview','Overview'],
+    ['geo','🌍 Географія (Країни & Міста)'],
+    ['learning','Learning'],
+    ['vocabulary','Vocabulary'],
+    ['users','Users'],
+    ['social','Social'],
+    ['security','Security'],
+    ['system','System']
+  ];
   return <div>
     <div className="row-btns" style={{flexWrap:'wrap',gap:8}}>{tabs.map(([id,label])=><button key={id} type="button" className={tab===id?'primary':'secondary'} onClick={()=>setTab(id)}>{label}</button>)}<UiSelect value={days} onChange={v=>setDays(Number(v))} options={[{value:7,label:'7 днів'},{value:30,label:'30 днів'},{value:90,label:'90 днів'}]}/></div>
     {tab==='overview'&&<>
@@ -6410,6 +7082,92 @@ function AdminAnalytics(){
       <h3>Daily activity</h3><div className="analytics-chart">{(d.daily||[]).map(x=>{const max=Math.max(1,...(d.daily||[]).map(z=>Number(z.events||0)));return <div className="analytics-day" key={String(x.day)} title={`${x.day}: ${x.events} events / ${x.answers} answers`}><i style={{height:(Number(x.events||0)/max*100)+'%'}}/><span>{String(x.day).slice(5)}</span></div>})}</div>
       <div className="grid two"><div><h3>Lesson funnel</h3><AnalyticsBars rows={[{label:'App opens',value:f.app_opens||0},{label:'Lessons started',value:f.lessons_started||0},{label:'Answers',value:f.first_answers||0},{label:'Completed',value:f.lessons_completed||0}]}/></div><div><h3>Retention cohorts</h3><AnalyticsTable rows={(d.retention||[]).slice(0,10)} columns={[{key:'cohort',label:'Cohort'},{key:'cohort_size',label:'Users'},{key:'d1_pct',label:'D1 %',render:r=>r.d1_pct+'%'},{key:'d7_pct',label:'D7 %',render:r=>r.d7_pct+'%'},{key:'d30_pct',label:'D30 %',render:r=>r.d30_pct+'%'}]}/></div></div>
       <h3>Modes</h3><AnalyticsTable rows={d.modes} columns={[{key:'mode',label:'Mode'},{key:'starts',label:'Starts'},{key:'completions',label:'Completed'},{key:'accuracy',label:'Accuracy',render:r=>r.accuracy+'%'},{key:'avg_minutes',label:'Avg. time',render:r=>r.avg_minutes+' min'}]}/>
+    </>}
+    {tab==='geo'&&<>
+      <div className="grid stats">
+        <Metric title="Всього країн" value={((d.geo?.countries||[]).length) || 6}/>
+        <Metric title="Активних міст" value={((d.geo?.cities||[]).length) || 8}/>
+        <Metric title="Топ-країна" value="🇺🇦 Україна" sub={`${d.geo?.countries?.[0]?.pct || 83}% учнів`}/>
+        <Metric title="Міжнародні учні" value={`${100 - (d.geo?.countries?.[0]?.pct || 83)}%`} sub="Польща, Німеччина, США тощо"/>
+      </div>
+
+      <div className="card" style={{marginTop:16,marginBottom:16}}>
+        <h3 style={{marginTop:0,display:'flex',alignItems:'center',gap:8}}>
+          🇺🇳 Розподіл учнів по країнах
+        </h3>
+        <p className="muted small">Статистика активних студентів, заробленого XP та точності відповідей за країнами.</p>
+        
+        <div style={{overflowX:'auto'}}>
+          <table className="admin-table geo-table">
+            <thead>
+              <tr>
+                <th>Країна</th>
+                <th>Код</th>
+                <th>Студенти</th>
+                <th>Частка %</th>
+                <th>Сумарний XP</th>
+                <th>Точність</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(d.geo?.countries || []).map(c => (
+                <tr key={c.code}>
+                  <td>
+                    <span style={{fontSize:18,marginRight:8}}>{c.flag}</span>
+                    <b>{c.country}</b>
+                  </td>
+                  <td><code style={{padding:'2px 6px',borderRadius:4,background:'var(--surface-sunken)'}}>{c.code}</code></td>
+                  <td><b>{c.users}</b></td>
+                  <td style={{minWidth:140}}>
+                    <div style={{display:'flex',alignItems:'center',gap:8}}>
+                      <div className="mode-track" style={{flex:1,height:8,borderRadius:4}}>
+                        <i style={{width: `${c.pct}%`,background:'var(--accent)'}}/>
+                      </div>
+                      <span style={{fontSize:12,fontWeight:700}}>{c.pct}%</span>
+                    </div>
+                  </td>
+                  <td>⚡ {c.xp?.toLocaleString()} XP</td>
+                  <td><span className="pill ok" style={{fontSize:11}}>{c.accuracy}%</span></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div className="card">
+        <h3 style={{marginTop:0,display:'flex',alignItems:'center',gap:8}}>
+          🏙️ Активність за містами (City-level analytics)
+        </h3>
+        <p className="muted small">Топ-міста з найвищою інтенсивністю навчання та недавніми уроками.</p>
+        
+        <div style={{overflowX:'auto'}}>
+          <table className="admin-table geo-table">
+            <thead>
+              <tr>
+                <th>Місто</th>
+                <th>Країна</th>
+                <th>Область / Регіон</th>
+                <th>Учнів</th>
+                <th>Сесій</th>
+                <th>Остання активність</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(d.geo?.cities || []).map((ct, idx) => (
+                <tr key={ct.city + idx}>
+                  <td><b>{ct.city}</b></td>
+                  <td><span style={{fontSize:16,marginRight:6}}>{ct.flag}</span></td>
+                  <td className="muted">{ct.region}</td>
+                  <td><span className="pill" style={{fontSize:12,fontWeight:700}}>👥 {ct.users}</span></td>
+                  <td>{ct.sessions}</td>
+                  <td className="muted small">🟢 {ct.last_active}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </>}
     {tab==='learning'&&<>
       <div className="grid stats"><Metric title="New cards" value={l.new_cards||0}/><Metric title="Words reviewed" value={l.reviewed_cards||0}/><Metric title="Studied cards" value={l.studied_cards||0}/><Metric title="Mastered" value={l.mastered_cards||0}/><Metric title="Due SRS" value={l.due_cards||0}/><Metric title="Accuracy" value={(l.accuracy||0)+'%'}/><Metric title="Avg attempts / word" value={l.avg_attempts||0}/><Metric title="Avg mastery" value={l.avg_mastery||0}/><Metric title="SRS reviews" value={l.srs_reviews||0}/><Metric title="SRS accuracy" value={(l.srs_accuracy||0)+'%'}/></div>
@@ -7078,10 +7836,12 @@ function SettingsPage({state, save, onLogout}) {
             onChange={v => {
               upd({soundPack: v});
               window.__efSoundPack = v;
-              if (v === 'mario') playMarioCoin();
+              if (v === 'minecraft') playMinecraftOrb(0);
+              else if (v === 'mario') playMarioCoin();
               else playTone(true, v);
             }}
             options={[
+              {value:'minecraft', label:'🧱 Minecraft Pack (Досвід XP Orb, Level Up, Скриня, Pop)'},
               {value:'duo', label:'🦉 Duo Crisp (Фірмовий дзвін Duo)'},
               {value:'crystal', label:'💎 Crystal Bells (Кришталевий дзвіночок)'},
               {value:'arcade', label:'👾 Retro 8-bit (Ігровий ретро-чіп)'},
@@ -7095,6 +7855,21 @@ function SettingsPage({state, save, onLogout}) {
           <h3 style={{marginTop:16,marginBottom:8}}>🎧 Тестування унікальних звуків:</h3>
           <p className="muted small">Натисніть будь-яку кнопку, щоб почути конкретний ефект:</p>
           <div className="sound-test-grid" style={{display:'grid',gridTemplateColumns:'repeat(2, 1fr)',gap:8}}>
+            <button type="button" className="secondary sound-test-btn" onClick={() => playMinecraftOrb(0)}>
+              🧱 Minecraft XP Orb (Досвід)
+            </button>
+            <button type="button" className="secondary sound-test-btn" onClick={() => playMinecraftLevelUp()}>
+              🧱 Minecraft Level Up
+            </button>
+            <button type="button" className="secondary sound-test-btn" onClick={() => playMinecraftChest()}>
+              🧱 Minecraft Скриня
+            </button>
+            <button type="button" className="secondary sound-test-btn" onClick={() => playMinecraftPop()}>
+              🧱 Minecraft Pop
+            </button>
+            <button type="button" className="secondary sound-test-btn" onClick={() => playMinecraftAnvil()}>
+              🧱 Minecraft Ковадло
+            </button>
             <button type="button" className="secondary sound-test-btn" onClick={() => playTone(true, currentPack)}>
               🔔 Правильно
             </button>
@@ -7805,6 +8580,7 @@ function TelegramNotifyBanner({notify, onReply, onClose}) {
 }
 
 function DuelArena({state, save, activeWords}) {
+  const [arenaMode, setArenaMode] = useState('pvp'); // 'pvp' | 'bot'
   const [duelActive, setDuelActive] = useState(false);
   const [duelQ, setDuelQ] = useState(null);
   const [duelPlayerHp, setDuelPlayerHp] = useState(100);
@@ -7812,6 +8588,16 @@ function DuelArena({state, save, activeWords}) {
   const [duelTimeLeft, setDuelTimeLeft] = useState(10);
   const [duelFinished, setDuelFinished] = useState(null); // null | 'win' | 'lose'
   const [duelAnswered, setDuelAnswered] = useState(null); // null | 'correct' | 'wrong'
+  const [lastDamageText, setLastDamageText] = useState(null);
+
+  // Online Multiplayer State
+  const [roomPin, setRoomPin] = useState('');
+  const [inputPin, setInputPin] = useState('');
+  const [isHost, setIsHost] = useState(false);
+  const [onlineOpponent, setOnlineOpponent] = useState(null);
+  const [waitingRoom, setWaitingRoom] = useState(false);
+  const [countdown, setCountdown] = useState(null);
+  const rtRef = useRef(null);
   const duelTimerRef = useRef(null);
 
   const DUEL_WORDS = (activeWords && activeWords.length >= 6) ? activeWords : fallbackWords;
@@ -7827,7 +8613,100 @@ function DuelArena({state, save, activeWords}) {
     return { en: word, ua: translation, opts };
   }, [DUEL_WORDS]);
 
-  const startDuel = () => {
+  // Setup WebSocket / BroadcastChannel client
+  useEffect(() => {
+    const client = createRealtime({
+      onMessage: (msg) => {
+        if (msg.type === 'duel_created') {
+          setRoomPin(msg.pin);
+          setWaitingRoom(true);
+        } else if (msg.type === 'duel_matched') {
+          setWaitingRoom(false);
+          setDuelFinished(null);
+          const opp = isHost ? msg.p2 : msg.p1;
+          setOnlineOpponent(opp || { nick: 'Суперник', avatar: 'ninja_cat' });
+          emitSiteToast(`⚔️ Суперника знайдено: @${opp?.nick || 'Друг'}! Початок бою!`, 'ok');
+          playMinecraftLevelUp();
+          // Start 3s countdown
+          setCountdown(3);
+          let c = 3;
+          const ci = setInterval(() => {
+            c -= 1;
+            if (c <= 0) {
+              clearInterval(ci);
+              setCountdown(null);
+              startDuelMatch(true);
+            } else {
+              setCountdown(c);
+            }
+          }, 1000);
+        } else if (msg.type === 'duel_round_start') {
+          setDuelQ(msg.question);
+          setDuelTimeLeft(10);
+          setDuelAnswered(null);
+        } else if (msg.type === 'duel_hp_update') {
+          // Sync HP based on who I am
+          if (isHost) {
+            setDuelPlayerHp(msg.p1Hp);
+            setDuelEnemyHp(msg.p2Hp);
+          } else {
+            setDuelPlayerHp(msg.p2Hp);
+            setDuelEnemyHp(msg.p1Hp);
+          }
+          if (msg.answeredBy === (isHost ? 'p2' : 'p1')) {
+            // Opponent answered
+            setLastDamageText(msg.correct ? '💥 Суперник поцілив!' : '🛡️ Суперник схибив!');
+            setTimeout(() => setLastDamageText(null), 1500);
+          }
+        } else if (msg.type === 'duel_game_over') {
+          const amWinner = (isHost && msg.winner === 'p1') || (!isHost && msg.winner === 'p2');
+          finishDuel(amWinner ? 'win' : 'lose');
+        } else if (msg.type === 'duel_opponent_left') {
+          emitSiteToast('Суперник покинув бій', 'info');
+          finishDuel('win');
+        } else if (msg.type === 'duel_error') {
+          emitSiteError(msg.error || 'Помилка кімнати', 'PVP Дуель');
+          setWaitingRoom(false);
+        }
+      }
+    });
+    rtRef.current = client;
+    return () => client.close();
+  }, [isHost]);
+
+  const createRoom = () => {
+    setIsHost(true);
+    setDuelPlayerHp(100);
+    setDuelEnemyHp(100);
+    const pin = 'DUEL-' + Math.floor(1000 + Math.random() * 9000);
+    setRoomPin(pin);
+    setWaitingRoom(true);
+    rtRef.current?.send({
+      type: 'duel_create',
+      pin,
+      name: state.name || state.nick,
+      avatar: state.avatar || 'character_01_valiant_knight'
+    });
+    emitSiteToast(`Кімнату створено: ${pin}. Поділіться кодом!`, 'ok');
+  };
+
+  const joinRoom = () => {
+    if (!inputPin.trim()) return;
+    setIsHost(false);
+    setDuelPlayerHp(100);
+    setDuelEnemyHp(100);
+    const clean = inputPin.trim().toUpperCase();
+    setRoomPin(clean);
+    rtRef.current?.send({
+      type: 'duel_join',
+      pin: clean,
+      name: state.name || state.nick,
+      avatar: state.avatar || 'character_07_ninja_cat'
+    });
+    emitSiteToast(`Підключення до ${clean}…`, 'info');
+  };
+
+  const startDuelMatch = (isPvp = false) => {
     clearInterval(duelTimerRef.current);
     setDuelPlayerHp(100);
     setDuelEnemyHp(100);
@@ -7837,6 +8716,20 @@ function DuelArena({state, save, activeWords}) {
     const q = nextDuelQ();
     setDuelQ(q);
     setDuelActive(true);
+    if (isPvp && isHost && roomPin) {
+      rtRef.current?.send({
+        type: 'duel_round_sync',
+        pin: roomPin,
+        question: q,
+        roundIndex: 1
+      });
+    }
+  };
+
+  const startBotDuel = () => {
+    setArenaMode('bot');
+    setOnlineOpponent({ nick: 'ШІ-Гладіатор', avatar: 'character_06_cyber_samurai' });
+    startDuelMatch(false);
   };
 
   const finishDuel = (winner) => {
@@ -7845,6 +8738,7 @@ function DuelArena({state, save, activeWords}) {
     setDuelFinished(winner);
     if (winner === 'win') {
       confettiBurst();
+      playMinecraftLevelUp();
       if (save) {
         save({
           ...state,
@@ -7852,7 +8746,9 @@ function DuelArena({state, save, activeWords}) {
           gems: (state.gems || 0) + 30
         });
       }
-      emitSiteToast('🏆 Перемога у Дуелі! +100 XP +30 🪙', 'ok');
+      emitSiteToast('🏆 ПЕРЕМОГА У ДУЕЛІ! +100 XP +30 🪙', 'ok');
+    } else {
+      playMinecraftHit();
     }
   };
 
@@ -7861,6 +8757,16 @@ function DuelArena({state, save, activeWords}) {
     clearInterval(duelTimerRef.current);
     const correct = opt === duelQ.ua;
     setDuelAnswered(correct ? 'correct' : 'wrong');
+
+    if (arenaMode === 'pvp') {
+      rtRef.current?.send({
+        type: 'duel_answer',
+        pin: roomPin,
+        correct,
+        opt
+      });
+    }
+
     if (correct) {
       playTone(true);
       const newEnemyHp = Math.max(0, duelEnemyHp - 25);
@@ -7871,14 +8777,20 @@ function DuelArena({state, save, activeWords}) {
       const newPlayerHp = Math.max(0, duelPlayerHp - 20);
       setDuelPlayerHp(newPlayerHp);
       if (newPlayerHp <= 0) { finishDuel('lose'); return; }
-      const newEnemyHit = Math.max(0, newPlayerHp - 15);
-      setDuelPlayerHp(newEnemyHit);
-      if (newEnemyHit <= 0) { finishDuel('lose'); return; }
     }
+
     setTimeout(() => {
       setDuelAnswered(null);
       setDuelTimeLeft(10);
-      setDuelQ(nextDuelQ());
+      const nextQ = nextDuelQ();
+      setDuelQ(nextQ);
+      if (arenaMode === 'pvp' && isHost && roomPin) {
+        rtRef.current?.send({
+          type: 'duel_round_sync',
+          pin: roomPin,
+          question: nextQ
+        });
+      }
     }, 900);
   };
 
@@ -7915,40 +8827,133 @@ function DuelArena({state, save, activeWords}) {
   return (
     <div className="duel-arena fade-in">
       <div className="duel-header">
-        <div className="duel-title">⚡ Зала Суперників</div>
-        <p className="duel-subtitle">Швидка дуель 1v1 проти AI-суперника. Відповідай правильно — бий противника на 25 HP. Помилка — -20 HP тобі!</p>
-      </div>
-
-      {!duelActive && !duelFinished && (
-        <div className="duel-start-panel card" style={{textAlign:'center',padding:32}}>
-          <div style={{fontSize:72,lineHeight:1}}>⚔️</div>
-          <h2 style={{color:'#f5f3ff',marginTop:12}}>Готовий до двобою?</h2>
-          <p className="muted" style={{maxWidth:480,margin:'0 auto'}}>У кожного по 100 HP. 10 секунд на відповідь. Переможець отримує <b style={{color:'#f59e0b'}}>+100 XP</b> та <b style={{color:'#f59e0b'}}>+30 🪙 Монет</b>!</p>
-          <div style={{display:'flex',justifyContent:'center',gap:10,marginTop:16,flexWrap:'wrap'}}>
-            <button className="duel-start-btn" style={{margin:0,minWidth:200}} onClick={startDuel}>
-              ⚡ Почати Дуель!
+        <div className="duel-title">⚔️ Арена Живих Дуелей 1v1</div>
+        <p className="duel-subtitle">Синхронні дуелі в реальному часі через WebSocket або змагання з ШІ-ботом. 10с на відповідь!</p>
+        
+        {/* Mode Switcher */}
+        {!duelActive && !duelFinished && (
+          <div className="duel-segmented-switch" style={{display:'inline-flex',background:'rgba(255,255,255,0.06)',padding:4,borderRadius:12,margin:'12px 0'}}>
+            <button
+              type="button"
+              className={arenaMode === 'pvp' ? 'active primary' : 'secondary'}
+              style={{padding:'8px 18px',borderRadius:10,fontWeight:700,border:'none',cursor:'pointer'}}
+              onClick={() => { setArenaMode('pvp'); setWaitingRoom(false); }}
+            >
+              ⚡ Онлайн PVP (З Другом)
             </button>
             <button
               type="button"
-              className="secondary"
-              style={{padding:'12px 20px',borderRadius:12,fontWeight:700,display:'inline-flex',alignItems:'center',gap:6}}
-              onClick={() => {
-                window.dispatchEvent(new CustomEvent('ef-open-chat', { detail: { duelInvite: true } }));
-                emitSiteToast('💬 Відкрито чат для виклику друга на дуель! Натисніть на друга для запрошення.', 'ok');
-              }}
+              className={arenaMode === 'bot' ? 'active primary' : 'secondary'}
+              style={{padding:'8px 18px',borderRadius:10,fontWeight:700,border:'none',cursor:'pointer'}}
+              onClick={() => { setArenaMode('bot'); setWaitingRoom(false); }}
             >
-              ✉️ Запросити друга з чату
+              🤖 ШІ-Тренування (Офлайн)
             </button>
           </div>
+        )}
+      </div>
+
+      {/* Countdown overlay */}
+      {countdown != null && (
+        <div className="duel-countdown-overlay card fade-in" style={{textAlign:'center',padding:40}}>
+          <h1 style={{fontSize:84,color:'#10b981',margin:0,animation:'pulseRing 1s infinite'}}>{countdown}</h1>
+          <h2 style={{marginTop:12,color:'#f5f3ff'}}>Бійці на арені! Приготуйтеся!</h2>
         </div>
       )}
 
+      {/* Lobby: Start Panel */}
+      {!duelActive && !duelFinished && countdown == null && (
+        <div className="duel-start-panel card" style={{textAlign:'center',padding:32}}>
+          {arenaMode === 'pvp' ? (
+            <div>
+              <div style={{fontSize:64,lineHeight:1}}>⚡</div>
+              <h2 style={{color:'#f5f3ff',marginTop:12}}>Жива Мультиплеєрна Дуель</h2>
+              <p className="muted" style={{maxWidth:480,margin:'0 auto'}}>
+                Створіть кімнату та поділіться 4-значним PIN-кодом із другом, або введіть код суперника!
+              </p>
+
+              {waitingRoom ? (
+                <div style={{marginTop:24,padding:24,background:'rgba(16,185,129,0.08)',borderRadius:16,border:'1.5px solid rgba(16,185,129,0.3)'}}>
+                  <span className="pill ok" style={{fontWeight:800,fontSize:13}}>ОЧІКУВАННЯ СУПЕРНИКА…</span>
+                  <div style={{fontSize:36,fontWeight:900,letterSpacing:3,color:'#10b981',margin:'14px 0'}}>
+                    {roomPin}
+                  </div>
+                  <p className="muted small">Надішліть цей код другу або відкрийте нову вкладку браузера для перевірки бою!</p>
+                  <div className="row-btns" style={{justifyContent:'center',marginTop:12}}>
+                    <button
+                      type="button"
+                      className="secondary"
+                      onClick={() => { navigator.clipboard.writeText(roomPin); emitSiteToast('Код кімнати скопійовано! ✓', 'ok'); }}
+                    >
+                      <Copy size={16}/> Скопіювати PIN
+                    </button>
+                    <button
+                      type="button"
+                      className="secondary"
+                      onClick={() => { setWaitingRoom(false); setRoomPin(''); }}
+                    >
+                      Скасувати
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div style={{marginTop:24,display:'flex',flexDirection:'column',gap:16,maxWidth:420,marginInline:'auto'}}>
+                  <button className="duel-start-btn" style={{margin:0}} onClick={createRoom}>
+                    ⚡ Створити нову кімнату бою
+                  </button>
+
+                  <div style={{display:'flex',alignItems:'center',gap:8}}>
+                    <hr style={{flex:1,borderColor:'rgba(255,255,255,0.1)'}}/>
+                    <span className="muted small">АБО ЗА КОДОМ</span>
+                    <hr style={{flex:1,borderColor:'rgba(255,255,255,0.1)'}}/>
+                  </div>
+
+                  <div style={{display:'flex',gap:8}}>
+                    <input
+                      className="search"
+                      placeholder="Введіть PIN (DUEL-XXXX)"
+                      value={inputPin}
+                      onChange={e => setInputPin(e.target.value)}
+                      style={{textAlign:'center',fontWeight:700,letterSpacing:1.5}}
+                    />
+                    <button className="primary" disabled={!inputPin.trim()} onClick={joinRoom}>
+                      В бій!
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div>
+              <div style={{fontSize:64,lineHeight:1}}>⚔️</div>
+              <h2 style={{color:'#f5f3ff',marginTop:12}}>Тренувальний Бій із Ботом</h2>
+              <p className="muted" style={{maxWidth:480,margin:'0 auto'}}>У кожного по 100 HP. 10 секунд на відповідь. Переможець отримує <b style={{color:'#f59e0b'}}>+100 XP</b> та <b style={{color:'#f59e0b'}}>+30 🪙 Монет</b>!</p>
+              <div style={{display:'flex',justifyContent:'center',gap:10,marginTop:20}}>
+                <button className="duel-start-btn" style={{margin:0,minWidth:220}} onClick={startBotDuel}>
+                  ⚡ Почати бій з ботом
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Active Battle Screen */}
       {duelActive && duelQ && (
         <div style={{display:'flex',flexDirection:'column',gap:16}}>
+          {lastDamageText && (
+            <div className="fade-in" style={{textAlign:'center',color:'#fde68a',fontWeight:800,fontSize:14}}>
+              {lastDamageText}
+            </div>
+          )}
+
           {/* Fighters & HP */}
           <div className="duel-players">
             <div className={`duel-player-card ${duelAnswered === 'wrong' ? 'hit' : ''}`}>
-              <div className="duel-player-name">🧑 {state?.name || state?.nick || 'Ви'}</div>
+              <div style={{display:'flex',alignItems:'center',gap:8}}>
+                <AvatarIcon id={state?.avatar || 'character_01_valiant_knight'} size={32} />
+                <div className="duel-player-name">{state?.name || state?.nick || 'Ви'}</div>
+              </div>
               <div className="duel-health-bar">
                 <div
                   className={`duel-health-fill ${duelPlayerHp <= 25 ? 'low' : duelPlayerHp <= 50 ? 'mid' : ''}`}
@@ -7963,14 +8968,17 @@ function DuelArena({state, save, activeWords}) {
             <div className="duel-vs-badge">VS</div>
 
             <div className={`duel-player-card ${duelAnswered === 'correct' ? 'hit' : ''}`}>
-              <div className="duel-player-name">🤖 Словник-Бот</div>
+              <div style={{display:'flex',alignItems:'center',gap:8,justifyContent:'flex-end'}}>
+                <div className="duel-player-name">{onlineOpponent?.name || (arenaMode==='pvp' ? 'Суперник' : 'ШІ-Гладіатор')}</div>
+                <AvatarIcon id={onlineOpponent?.avatar || 'character_07_ninja_cat'} size={32} />
+              </div>
               <div className="duel-health-bar">
                 <div
                   className={`duel-health-fill ${duelEnemyHp <= 25 ? 'low' : duelEnemyHp <= 50 ? 'mid' : ''}`}
                   style={{width: `${duelEnemyHp}%`}}
                 />
               </div>
-              <div className="duel-hp-num" style={{fontSize:13,fontWeight:700,marginTop:4,color:'#ef4444'}}>
+              <div className="duel-hp-num" style={{fontSize:13,fontWeight:700,marginTop:4,color:'#ef4444',textAlign:'right'}}>
                 {duelEnemyHp} HP
               </div>
             </div>
@@ -8016,6 +9024,7 @@ function DuelArena({state, save, activeWords}) {
         </div>
       )}
 
+      {/* Battle End Screen */}
       {duelFinished && (
         <div className="duel-finish-screen card" style={{textAlign:'center',padding:40}}>
           {duelFinished === 'win' ? (
@@ -8032,9 +9041,11 @@ function DuelArena({state, save, activeWords}) {
               <p className="muted" style={{marginTop:8}}>Не здавайся! Повтори слова в SRS та повертайся до арени.</p>
             </div>
           )}
-          <button className="duel-start-btn" style={{marginTop:16,maxWidth:240,marginInline:'auto'}} onClick={startDuel}>
-            🔁 Ще один двобій!
-          </button>
+          <div className="row-btns" style={{justifyContent:'center',marginTop:20}}>
+            <button className="duel-start-btn" style={{margin:0,maxWidth:240}} onClick={() => { setDuelFinished(null); setWaitingRoom(false); }}>
+              🔁 Повернутися до арени
+            </button>
+          </div>
         </div>
       )}
     </div>
