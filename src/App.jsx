@@ -573,926 +573,104 @@ function awardDailyCoins(currentState, amount = 2, maxDaily = 60) {
 /* ==========================================================================
    30 UNIQUE FULL-BODY DYNAMIC ACTION AVATARS (ZERO DUPLICATES)
    ========================================================================== */
-const GAME_AVATARS_30 = [
-  // Warriors, Mages & Legends in Full-Body Action
-  { id: 'avatar_knight', name: 'Лицар у замаху', action: 'Лицар у замаху мечем та щитом', bg: '#1e293b', accent: '#38bdf8', archetype: 'action_knight', tag: '⚔️ Лицар' },
-  { id: 'avatar_wizard', name: 'Маг кастує', action: 'Арканний маг випускає блискавку', bg: '#3b0764', accent: '#c084fc', archetype: 'action_wizard', tag: '🧙 Маг' },
-  { id: 'avatar_ninja', name: 'Ніндзя у ривку', action: 'Тіньовий ніндзя у стрибку з сюрікеном', bg: '#090d16', accent: '#f43f5e', archetype: 'action_ninja', tag: '🥷 Ніндзя' },
-  { id: 'avatar_archer', name: 'Лучник стріляє', action: 'Ельфійський лучник натягує сяючий лук', bg: '#064e3b', accent: '#34d399', archetype: 'action_archer', tag: '🏹 Лучник' },
-  { id: 'avatar_samurai', name: 'Самурай у розсіканні', action: 'Самурай у двохручному розсікаючому ударі', bg: '#881337', accent: '#f43f5e', archetype: 'action_samurai', tag: '⚔️ Самурай' },
-  { id: 'avatar_valkyrie', name: 'Валькірія у польоті', action: 'Валькірія ширяє на крилах зі списом', bg: '#0369a1', accent: '#38bdf8', archetype: 'action_valkyrie', tag: '🛡️ Валькірія' },
-  { id: 'avatar_viking', name: 'Вікінг у навалі', action: 'Вікінг атакує з двома бойовими сокирами', bg: '#334155', accent: '#f97316', archetype: 'action_viking', tag: '🪓 Вікінг' },
-  { id: 'avatar_dragon', name: 'Дракон дихає вогнем', action: 'Вогняний дракон у польоті видихає полумʼя', bg: '#7c2d12', accent: '#fb923c', archetype: 'action_dragon', tag: '🐲 Дракон' },
-  { id: 'avatar_spartan', name: 'Спартанець бʼє', action: 'Спартанець бʼє списом з-за щита', bg: '#92400e', accent: '#fbbf24', archetype: 'action_spartan', tag: '🛡️ Спартанець' },
-  { id: 'avatar_astronaut', name: 'Астронавт летить', action: 'Астронавт летить на джетпаку у космосі', bg: '#0f172a', accent: '#00f0ff', archetype: 'action_astronaut', tag: '🚀 Астронавт' },
-  { id: 'avatar_paladin', name: 'Паладин з молотом', action: 'Святий паладин підносить сонячний молот', bg: '#854d0e', accent: '#fef08a', archetype: 'action_paladin', tag: '🔨 Паладин' },
-  { id: 'avatar_assassin', name: 'Ассасін у стрибку', action: 'Тіньовий ассасін стрибає з двома клинками', bg: '#2e1065', accent: '#a855f7', archetype: 'action_assassin', tag: '🗡️ Ассасін' },
-  { id: 'avatar_princess', name: 'Принцеса танцює', action: 'Принцеса кружляє у чарівній сукні', bg: '#831843', accent: '#f472b6', archetype: 'action_princess', tag: '👑 Принцеса' },
-  { id: 'avatar_cyber_monk', name: 'Монах у стрибку', action: 'Кібер-монах у повітряному ударі кунг-фу', bg: '#042f2e', accent: '#2dd4bf', archetype: 'action_cyber_monk', tag: '🥋 Монах' },
-  { id: 'avatar_phoenix', name: 'Фенікс злітає', action: 'Палаючий фенікс розправляє вогняні крила', bg: '#9a3412', accent: '#fdba74', archetype: 'action_phoenix', tag: '🔥 Фенікс' },
-  { id: 'avatar_druid', name: 'Друїд закликає', action: 'Лісовий друїд прикликає сяючі лози', bg: '#14532d', accent: '#86efac', archetype: 'action_druid', tag: '🌿 Друїд' },
-  { id: 'avatar_wolf', name: 'Вовк у кидку', action: 'Полярний вовк стрибає крізь заметіль', bg: '#1e293b', accent: '#93c5fd', archetype: 'action_wolf', tag: '🐺 Вовк' },
-  { id: 'duo_owl', name: 'Сова ширяє', action: 'Мудра сова ширяє з магічним сувоєм', bg: '#14532d', accent: '#4ade80', archetype: 'action_owl', tag: '🦉 Сова' },
-  { id: 'duo_lion', name: 'Лев атакує', action: 'Золотий лев-воїн у лютому ривку', bg: '#78350f', accent: '#fde047', archetype: 'action_lion', tag: '🦁 Лев' },
-  { id: 'avatar_golem', name: 'Ґолем трощить', action: 'Камʼяний велетень бʼє кулаками в землю', bg: '#334155', accent: '#4ade80', archetype: 'action_golem', tag: '🗿 Ґолем' },
-  { id: 'duo_pirate', name: 'Пірат на хвилі', action: 'Капітан піратів зі шпагою на морській хвилі', bg: '#0c4a6e', accent: '#38bdf8', archetype: 'action_pirate', tag: '🏴‍☠️ Пірат' },
-  { id: 'duo_cat', name: 'Кіт-Акробат', action: 'Кіт-ніндзя крутить сальто з кинджалами', bg: '#4c1d95', accent: '#f472b6', archetype: 'action_cat', tag: '🐱 Кіт' },
-  { id: 'duo_fox', name: 'Лис мчить', action: 'Хитрий лис мчить на повній швидкості', bg: '#7c2d12', accent: '#f97316', archetype: 'action_fox', tag: '🦊 Лис' },
-  { id: 'duo_tiger', name: 'Тигр стрибає', action: 'Смугастий тигр у стрибку розправляє пазурі', bg: '#9a3412', accent: '#fed7aa', archetype: 'action_tiger', tag: '🐯 Тигр' },
-  { id: 'duo_falcon', name: 'Сокіл пікірує', action: 'Сокіл-мисливець пікірує на швидкості з неба', bg: '#1e3a8a', accent: '#60a5fa', archetype: 'action_falcon', tag: '🦅 Сокіл' },
-  { id: 'duo_robot', name: 'Мех стріляє', action: 'Бойовий робот стріляє з плечових гармат', bg: '#164e63', accent: '#22d3ee', archetype: 'action_robot', tag: '🤖 Робот' },
-  { id: 'duo_shark', name: 'Акула з тризубом', action: 'Акула-гладіатор розсікає хвилю тризубом', bg: '#083344', accent: '#38bdf8', archetype: 'action_shark', tag: '🦈 Акула' },
-  { id: 'duo_griffin', name: 'Грифон атакує', action: 'Королівський грифон бʼє гострими кігтями', bg: '#78350f', accent: '#facc15', archetype: 'action_griffin', tag: '🦅 Грифон' },
-  { id: 'duo_bard', name: 'Бард кружляє', action: 'Мандрівний бард грає на лютні вихор нот', bg: '#581c87', accent: '#e879f9', archetype: 'action_bard', tag: '🎵 Бард' },
-  { id: 'avatar_king', name: 'Король підносить меч', action: 'Верховний король підіймає меч до сонця', bg: '#713f12', accent: '#facc15', archetype: 'action_king', tag: '👑 Король' },
-  // 5 Premium Animated Action Characters for Shop
-  { id: 'goblin_walker', name: 'Гоблін, що йде', action: 'Гоблін повільно крокує з торбою слів', bg: '#14532d', accent: '#84cc16', archetype: 'anim_goblin', tag: '✨ Анімований', animated: true },
-  { id: 'flying_dragon', name: 'Дракон у польоті', action: 'Смарагдовий дракон ширяє та змахує крилами', bg: '#064e3b', accent: '#10b981', archetype: 'anim_dragon', tag: '✨ Анімований', animated: true },
-  { id: 'flying_phoenix', name: 'Фенікс, що літає', action: 'Сонячний фенікс плавно ширяє з золотими іскрами', bg: '#7c2d12', accent: '#f59e0b', archetype: 'anim_phoenix', tag: '✨ Анімований', animated: true },
-  { id: 'crown_sovereign', name: 'Для корони (Суверен)', action: 'Король із величною сяючою короною та золотою аурою', bg: '#713f12', accent: '#facc15', archetype: 'anim_crown', tag: '✨ Анімований', animated: true },
-  { id: 'arcane_wizard', name: 'Арканний Чарівник', action: 'Маг у фіолетовій мантії творить зоряні чари', bg: '#3b0764', accent: '#d946ef', archetype: 'anim_wizard', tag: '✨ Анімований', animated: true },
-  // 12 Action Characters from Image 2 (Series 2)
-  { id: 'monster_warrior', name: 'Звіролов-Воїн', action: 'Зелений мускулистий звіролов із бойовою шипованою палицею', bg: '#14532d', accent: '#22c55e', archetype: 'series2_monster', tag: '⚔️ Звіролов', animated: true },
-  { id: 'pilot_duck', name: 'Качка-Пілот', action: 'Качка-ас в авіаторському шоломі керує штурмовиком із гвинтом', bg: '#0369a1', accent: '#38bdf8', archetype: 'series2_pilot_duck', tag: '✈️ Пілот', animated: true },
-  { id: 'treant_defender', name: 'Дерев\'яний Вартовий', action: 'Ожилий лісовий треант із шипованою булавою та щитом з кори', bg: '#3f2e18', accent: '#84cc16', archetype: 'series2_treant', tag: '🛡️ Вартовий', animated: true },
-  { id: 'axe_knight', name: 'Лицар із Сокирою', action: 'Залізний паладин у латах з полірованою бойовою сокирою', bg: '#334155', accent: '#94a3b8', archetype: 'series2_axe_knight', tag: '🪓 Лицар', animated: true },
-  { id: 'death_knight', name: 'Лицар Тіні', action: 'Темний лицар у магічних обладунках із фіолетовим клинком смерті', bg: '#2e1065', accent: '#a855f7', archetype: 'series2_death_knight', tag: '🗡️ Тінь', animated: true },
-  { id: 'heavy_axe_knight', name: 'Важкий Дроворуб', action: 'Грізний лицар із червоним плюмажем та дворучною алебардою', bg: '#7f1d1d', accent: '#f87171', archetype: 'series2_heavy_axe', tag: '🪓 Дроворуб', animated: true },
-  { id: 'hunter_fox', name: 'Лис-Слідопит', action: 'Хитрий лис у каптурі натягує мисливський композитний лук', bg: '#7c2d12', accent: '#fb923c', archetype: 'series2_hunter_fox', tag: '🏹 Слідопит', animated: true },
-  { id: 'rogue_alien', name: 'Прибулець-Шпигун', action: 'Смарагдовий іншопланетний ассасін із токсичними енерго-клинками', bg: '#022c22', accent: '#10b981', archetype: 'series2_rogue_alien', tag: '👽 Шпигун', animated: true },
-  { id: 'tactical_cat', name: 'Тактичний Кіт', action: 'Кіт-спецпризначенець у бронежилеті з тепловізором та карабіном', bg: '#1e293b', accent: '#38bdf8', archetype: 'series2_tactical_cat', tag: '🐱 Спецприз', animated: true },
-  { id: 'warlock_mage', name: 'Темний Чорнокнижник', action: 'Рогатий чаклун створює розряд темної магії та блискавки', bg: '#3b0764', accent: '#c084fc', archetype: 'series2_warlock', tag: '⚡ Чорнокнижник', animated: true },
-  { id: 'swarm_alien', name: 'Космічний Бджоляр', action: 'Багаторукий інсектоїдний іншопланетянин із подвійними бластерами', bg: '#451a03', accent: '#f59e0b', archetype: 'series2_swarm_alien', tag: '🛸 Бджоляр', animated: true },
-  { id: 'dwarf_berserker', name: 'Гном-Берсерк', action: 'Бородатий гном у рогатому шоломі з двома бородатими сокирами', bg: '#78350f', accent: '#fde047', archetype: 'series2_dwarf_berserker', tag: '🪓 Берсерк', animated: true },
+/* ==========================================================================
+   22 FUNNY FANTASY CHARACTER AVATARS (OFFICIAL 2026 MOBILE GAME ROSTER)
+   ========================================================================== */
+export const GAME_AVATARS_FUNNY = [
+  { id: 'funny_barbarian', name: 'Незграбний Варвар', action: 'Крихітний варвар із велетенським камʼяним молотом', image: 'funny_barbarian.png', tag: '🔨 Варвар' },
+  { id: 'funny_duck_pilot', name: 'Качка-Пілот', action: 'Качка-ас в авіаторському шоломі керує крихітним літаком', image: 'funny_duck_pilot.png', tag: '✈️ Пілот' },
+  { id: 'funny_tree_warrior', name: 'Збентежений Треант', action: 'Живий треант, що розгублено жонглює червоними яблуками', image: 'funny_tree_warrior.png', tag: '🌳 Треант' },
+  { id: 'funny_knight', name: 'Самовпевнений Лицар', action: 'Лицар гордо віддає честь, коли забрало шолома падає на ніс', image: 'funny_knight.png', tag: '⚔️ Лицар' },
+  { id: 'funny_dragon_sleepy', name: 'Сонний Дракончик', action: 'Дракончик у нічному ковпаку позіхає та чхає полумʼям', image: 'funny_dragon_sleepy.png', tag: '🐲 Дракон' },
+  { id: 'funny_wizard', name: 'Сердитий Чаклун', action: 'Маг у зоряному капелюсі з обгорілою бородою від закляття', image: 'funny_wizard.png', tag: '🧙 Чаклун' },
+  { id: 'funny_ninja_cat', name: 'Кіт-Ніндзя', action: 'Чорний кіт-ніндзя у стрибку з рибкою-кинжалом', image: 'funny_ninja_cat.png', tag: '🐱 Ніндзя' },
+  { id: 'funny_pirate_frog', name: 'Жаба-Пірат', action: 'Жаба в трикутному капелюсі з повʼязкою та золотою шаблею', image: 'funny_pirate_frog.png', tag: '🏴‍☠️ Жаба' },
+  { id: 'funny_goblin_engineer', name: 'Гоблін-Інженер', action: 'Гоблін в окулярах щасливо сміється над цокаючою бомбою', image: 'funny_goblin_engineer.png', tag: '💣 Гоблін' },
+  { id: 'funny_tiny_giant', name: 'Крихітний Велетень', action: 'Камʼяний міні-колос гордо грає мускулами', image: 'funny_tiny_giant.png', tag: '🗿 Велетень' },
+  { id: 'funny_castle', name: 'Живий Замок', action: 'Ожила камʼяна фортеця з очима-бійницями та ротом-мостом', image: 'funny_castle.png', tag: '🏰 Замок' },
+  { id: 'funny_chicken', name: 'Бойовий Півень', action: 'Спартанський півень у шоломі зі списом-зубочисткою', image: 'funny_chicken.png', tag: '🐓 Півень' },
+  { id: 'funny_alien_cowboy', name: 'Прибулець-Ковбой', action: 'Триокий бірюзовий прибулець у капелюсі з неоновими бластерами', image: 'funny_alien_cowboy.png', tag: '🤠 Ковбой' },
+  { id: 'funny_prince', name: 'Принц-Чепурун', action: 'Принц із пишним чубом та короною надсилає поцілунок', image: 'funny_prince.png', tag: '👑 Принц' },
+  { id: 'funny_queen', name: 'Могутня Королева', action: 'Гордовита королева чаклує іскристими метеликами', image: 'funny_queen.png', tag: '👸 Королева' },
+  { id: 'funny_dragon_rider', name: 'Вершник на Драконі', action: 'Хлопчик у каструлі на голові верхи на усміхненому дракончику', image: 'funny_dragon_rider.png', tag: '🐉 Вершник' },
+  { id: 'funny_carriage', name: 'Казкова Карета', action: 'Жива королівська карета на великих колесах мчить уперед', image: 'funny_carriage.png', tag: '🎠 Карета' },
+  { id: 'funny_little_king', name: 'Кумедний Король', action: 'Пухкий король наступає на власну вельветову мантію', image: 'funny_little_king.png', tag: '👑 Король' },
+  { id: 'funny_jester', name: 'Пустотливий Блазень', action: 'Блазень з бубонцями жонглює картами та кидає пиріг-бомбу', image: 'funny_jester.png', tag: '🃏 Блазень' },
+  { id: 'funny_heroic_cat', name: 'Героїчний Кіт у Латах', action: 'Рудий кіт у лицарських латах на три розміри більших', image: 'funny_heroic_cat.png', tag: '🛡️ Кіт' },
+  { id: 'funny_talking_tree', name: 'Дерево, що жонглює', action: 'Живе дерево весело розмовляє та жонглює яблуками', image: 'funny_talking_tree.png', tag: '🍎 Дерево' },
+  { id: 'funny_dragon_chef', name: 'Дракончик-Шеф', action: 'Дракончик у білому ковпаку смажить маршмеллоу подихом вогню', image: 'funny_dragon_chef.png', tag: '👨‍🍳 Шеф' }
 ];
 
+export const GAME_AVATARS_30 = GAME_AVATARS_FUNNY;
+
+export const OLD_AVATAR_MAP = {
+  'duo_owl': 'funny_duck_pilot',
+  'avatar_boss': 'funny_little_king',
+  'action_king': 'funny_little_king',
+  'action_knight': 'funny_knight',
+  'avatar_knight': 'funny_knight',
+  'avatar_wizard': 'funny_wizard',
+  'action_wizard': 'funny_wizard',
+  'avatar_ninja': 'funny_ninja_cat',
+  'action_ninja': 'funny_ninja_cat',
+  'avatar_dragon': 'funny_dragon_sleepy',
+  'action_dragon': 'funny_dragon_sleepy',
+  'avatar_barbarian': 'funny_barbarian',
+  'avatar_archer': 'funny_tree_warrior',
+  'avatar_valkyrie': 'funny_queen',
+  'action_princess': 'funny_queen',
+  'duo_pirate': 'funny_pirate_frog',
+  'duo_cat': 'funny_ninja_cat',
+  'duo_fox': 'funny_alien_cowboy',
+  'duo_robot': 'funny_goblin_engineer',
+  'avatar_golem': 'funny_tiny_giant',
+  'series2_monster': 'funny_barbarian',
+  'series2_pilot_duck': 'funny_duck_pilot',
+  'series2_treant': 'funny_tree_warrior',
+  'series2_axe_knight': 'funny_knight',
+  'series2_death_knight': 'funny_ninja_cat',
+  'series2_heavy_axe': 'funny_barbarian',
+  'series2_hunter_fox': 'funny_alien_cowboy',
+  'series2_rogue_alien': 'funny_alien_cowboy',
+  'series2_tactical_cat': 'funny_heroic_cat',
+  'series2_warlock': 'funny_wizard',
+  'series2_swarm_alien': 'funny_goblin_engineer',
+  'series2_dwarf_berserker': 'funny_barbarian',
+};
+
 function AvatarIcon({ id, av: propAv, size = 44, className = '', style = {}, aura = '', frame = '' }) {
-  const actualId = id || propAv?.id || (typeof propAv === 'string' ? propAv : '');
-  const av = GAME_AVATARS_30.find(a => a.id === actualId) || (propAv && typeof propAv === 'object' ? propAv : GAME_AVATARS_30[0]);
+  let actualId = id || propAv?.id || (typeof propAv === 'string' ? propAv : '');
+  if (OLD_AVATAR_MAP[actualId]) {
+    actualId = OLD_AVATAR_MAP[actualId];
+  }
+  const av = GAME_AVATARS_FUNNY.find(a => a.id === actualId) || (propAv && typeof propAv === 'object' ? propAv : GAME_AVATARS_FUNNY[0]);
+  const imgUrl = av?.image ? `/avatars/${av.image}` : '/avatars/funny_duck_pilot.png';
+
   const wrap = (node) => (!aura && !frame ? node : (
     <span className={`avatar-cosmetic-wrap ${aura || ''} ${frame || ''}`} style={{display:'inline-flex',alignItems:'center',justifyContent:'center',position:'relative',borderRadius:14,flexShrink:0}}>
       {node}
     </span>
   ));
-  
-  if (!actualId || (!actualId.startsWith('duo_') && !actualId.startsWith('avatar_') && !GAME_AVATARS_30.some(x => x.id === actualId))) {
-    return wrap(
-      <span
-        className={'avatar-emoji-fallback ' + className}
-        style={{
-          width: size, height: size, fontSize: Math.floor(size * 0.6),
-          display: 'inline-grid', placeItems: 'center', borderRadius: 14,
-          background: 'color-mix(in srgb, var(--accent) 12%, var(--surface))',
-          flexShrink: 0, ...style
-        }}
-      >
-        {actualId || '🛡️'}
-      </span>
-    );
-  }
 
-  const svgNode = (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 100 100"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      className={'avatar-vector-squircle ' + className}
-      style={{ flexShrink: 0, ...style }}
-    >
-      <defs>
-        <linearGradient id={`grad_${av.id}`} x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor={av.bg} />
-          <stop offset="100%" stopColor={colorMixDark(av.bg)} />
-        </linearGradient>
-        <radialGradient id={`glow_${av.id}`} cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor={av.accent || '#38bdf8'} stopOpacity="0.3" />
-          <stop offset="100%" stopColor={av.accent || '#38bdf8'} stopOpacity="0" />
-        </radialGradient>
-      </defs>
-      
-      {/* Background with rounded frame and dynamic aura glow */}
-      <rect width="100" height="100" rx="22" fill={`url(#grad_${av.id})`} />
-      <circle cx="50" cy="50" r="44" fill={`url(#glow_${av.id})`} />
-      <path d="M12 84 Q50 78 88 84" stroke="rgba(255,255,255,0.18)" strokeWidth="2" strokeLinecap="round" />
-
-      {/* FULL-BODY ACTION POSE RENDERERS */}
-
-      {/* 1. Knight Swinging Sword & Shield */}
-      {av.archetype === 'action_knight' && (
-        <g>
-          {/* Blue slash arc */}
-          <path d="M50 14 Q88 18 84 56" stroke="#38bdf8" strokeWidth="4" strokeLinecap="round" fill="none" opacity="0.85"/>
-          {/* Legs lunging */}
-          <path d="M42 62 L32 86 M54 62 L66 84" stroke="#94a3b8" strokeWidth="5" strokeLinecap="round"/>
-          {/* Torso & Armor */}
-          <path d="M38 38 L60 36 L56 64 L40 64 Z" fill="#cbd5e1" stroke="#475569" strokeWidth="2"/>
-          {/* Helm & Plume */}
-          <circle cx="48" cy="26" r="10" fill="#94a3b8" stroke="#334155" strokeWidth="2"/>
-          <path d="M48 16 Q52 8 58 12" stroke="#f59e0b" strokeWidth="3.5" strokeLinecap="round" fill="none"/>
-          <line x1="44" y1="26" x2="52" y2="26" stroke="#38bdf8" strokeWidth="2"/>
-          {/* Shield held forward */}
-          <path d="M26 38 Q20 54 30 66 Q36 52 32 38 Z" fill="#3b82f6" stroke="#e2e8f0" strokeWidth="2"/>
-          {/* Broadsword held in swing */}
-          <line x1="58" y1="38" x2="86" y2="20" stroke="#f8fafc" strokeWidth="3.5" strokeLinecap="round"/>
-          <polygon points="86,20 89,17 92,23" fill="#f8fafc"/>
-        </g>
-      )}
-
-      {/* 2. Arcane Wizard Casting Lightning */}
-      {av.archetype === 'action_wizard' && (
-        <g>
-          {/* Magic Staff */}
-          <line x1="24" y1="20" x2="28" y2="86" stroke="#78350f" strokeWidth="3.5"/>
-          <circle cx="23" cy="17" r="7" fill="#c084fc" stroke="#f3e8ff" strokeWidth="1.5"/>
-          {/* Billowing Robe */}
-          <path d="M40 38 Q50 20 60 38 L74 86 L30 86 Z" fill="#581c87" stroke="#7e22ce" strokeWidth="2"/>
-          {/* Hood */}
-          <path d="M40 36 Q50 14 60 36 Z" fill="#3b0764"/>
-          <circle cx="50" cy="32" r="3.5" fill="#38bdf8"/>
-          {/* Lightning Spell Stream */}
-          <path d="M60 42 L72 36 L68 46 L86 38 L78 52 L94 44" stroke="#e879f9" strokeWidth="2.5" fill="none" strokeLinecap="round"/>
-          <circle cx="86" cy="40" r="3" fill="#ffffff"/>
-        </g>
-      )}
-
-      {/* 3. Shadow Ninja in Mid-Air Katana Dash */}
-      {av.archetype === 'action_ninja' && (
-        <g>
-          {/* Red Scarf Trail */}
-          <path d="M38 34 Q18 36 8 26 Q18 44 32 40 Z" fill="#ef4444"/>
-          {/* Katana Slash Line */}
-          <line x1="16" y1="84" x2="88" y2="16" stroke="#f43f5e" strokeWidth="2.5" strokeDasharray="6 2"/>
-          {/* Dashing Torso & Limbs */}
-          <path d="M36 44 L60 36 L52 56 L30 62 Z" fill="#0f172a" stroke="#334155" strokeWidth="1.5"/>
-          <line x1="32" y1="62" x2="18" y2="76" stroke="#0f172a" strokeWidth="5" strokeLinecap="round"/>
-          <line x1="52" y1="56" x2="72" y2="74" stroke="#0f172a" strokeWidth="5" strokeLinecap="round"/>
-          {/* Mask & Glowing Red Eyes */}
-          <circle cx="48" cy="30" r="9" fill="#0f172a"/>
-          <rect x="44" y="28" width="10" height="3" rx="1" fill="#ef4444"/>
-          {/* Shurikens flying */}
-          <polygon points="76,32 82,28 80,36 86,34" fill="#cbd5e1"/>
-        </g>
-      )}
-
-      {/* 4. Elven Archer Drawing Longbow */}
-      {av.archetype === 'action_archer' && (
-        <g>
-          {/* Golden Bow Arc */}
-          <path d="M72 16 Q88 50 72 84" stroke="#f59e0b" strokeWidth="3" fill="none" strokeLinecap="round"/>
-          {/* Bowstring */}
-          <path d="M72 16 L38 50 L72 84" stroke="#e2e8f0" strokeWidth="1.5" fill="none"/>
-          {/* Glowing Arrow */}
-          <line x1="38" y1="50" x2="86" y2="50" stroke="#34d399" strokeWidth="2.5"/>
-          <polygon points="86,50 82,47 82,53" fill="#34d399"/>
-          {/* Archer Body */}
-          <line x1="42" y1="60" x2="30" y2="84" stroke="#065f46" strokeWidth="4.5" strokeLinecap="round"/>
-          <line x1="52" y1="60" x2="62" y2="84" stroke="#065f46" strokeWidth="4.5" strokeLinecap="round"/>
-          <path d="M38 40 L56 38 L52 62 L38 62 Z" fill="#047857"/>
-          <circle cx="46" cy="28" r="8" fill="#10b981"/>
-        </g>
-      )}
-
-      {/* 5. Samurai Overhead Katana Strike */}
-      {av.archetype === 'action_samurai' && (
-        <g>
-          <circle cx="50" cy="50" r="30" fill="rgba(239,68,68,0.2)"/>
-          {/* Overhead Katana with glowing trail */}
-          <path d="M34 10 Q50 4 66 12 L48 38 Z" fill="#f8fafc" stroke="#dc2626" strokeWidth="1.5"/>
-          {/* Armored Shoulders & Torso */}
-          <rect x="36" y="38" width="28" height="24" rx="4" fill="#991b1b" stroke="#f59e0b" strokeWidth="1.5"/>
-          <rect x="28" y="38" width="10" height="14" rx="2" fill="#b91c1c"/>
-          <rect x="62" y="38" width="10" height="14" rx="2" fill="#b91c1c"/>
-          {/* Stride Legs */}
-          <line x1="40" y1="62" x2="32" y2="86" stroke="#7f1d1d" strokeWidth="5" strokeLinecap="round"/>
-          <line x1="58" y1="62" x2="68" y2="86" stroke="#7f1d1d" strokeWidth="5" strokeLinecap="round"/>
-          {/* Helmet Crest (Kabuto) */}
-          <circle cx="50" cy="28" r="9" fill="#18181b"/>
-          <path d="M42 22 Q50 14 58 22" stroke="#f59e0b" strokeWidth="3" fill="none"/>
-        </g>
-      )}
-
-      {/* 6. Valkyrie Soaring with Spear */}
-      {av.archetype === 'action_valkyrie' && (
-        <g>
-          {/* Grand Wings */}
-          <path d="M44 38 C20 18 6 28 14 52 C26 46 38 46 44 48 Z" fill="#e0f2fe" opacity="0.9"/>
-          <path d="M56 38 C80 18 94 28 86 52 C74 46 62 46 56 48 Z" fill="#e0f2fe" opacity="0.9"/>
-          {/* Diving Golden Spear */}
-          <line x1="28" y1="14" x2="78" y2="86" stroke="#facc15" strokeWidth="3"/>
-          <polygon points="78,86 72,82 76,78" fill="#facc15"/>
-          {/* Body */}
-          <circle cx="50" cy="30" r="8" fill="#bae6fd"/>
-          <path d="M42 38 L58 38 L54 66 L46 66 Z" fill="#0284c7"/>
-          <line x1="46" y1="66" x2="42" y2="84" stroke="#0369a1" strokeWidth="4"/>
-          <line x1="54" y1="66" x2="58" y2="84" stroke="#0369a1" strokeWidth="4"/>
-        </g>
-      )}
-
-      {/* 7. Viking Berserker with Dual Axes */}
-      {av.archetype === 'action_viking' && (
-        <g>
-          {/* Left Axe & Right Axe */}
-          <line x1="22" y1="46" x2="16" y2="18" stroke="#78350f" strokeWidth="3"/>
-          <path d="M10 18 Q18 10 24 22 Z" fill="#e2e8f0" stroke="#475569" strokeWidth="1.5"/>
-          <line x1="78" y1="46" x2="84" y2="18" stroke="#78350f" strokeWidth="3"/>
-          <path d="M90 18 Q82 10 76 22 Z" fill="#e2e8f0" stroke="#475569" strokeWidth="1.5"/>
-          {/* Horned Helmet */}
-          <circle cx="50" cy="30" r="10" fill="#475569"/>
-          <path d="M40 28 Q34 16 38 10" stroke="#f1f5f9" strokeWidth="3" fill="none"/>
-          <path d="M60 28 Q66 16 62 10" stroke="#f1f5f9" strokeWidth="3" fill="none"/>
-          {/* Beard & Fur Pelt */}
-          <path d="M44 34 Q50 48 56 34 Z" fill="#ea580c"/>
-          <rect x="38" y="40" width="24" height="24" rx="4" fill="#334155"/>
-          <line x1="42" y1="64" x2="34" y2="86" stroke="#1e293b" strokeWidth="5" strokeLinecap="round"/>
-          <line x1="58" y1="64" x2="66" y2="86" stroke="#1e293b" strokeWidth="5" strokeLinecap="round"/>
-        </g>
-      )}
-
-      {/* 8. Dragon Breathing Fire in Flight */}
-      {av.archetype === 'action_dragon' && (
-        <g>
-          {/* Broad Dragon Wings */}
-          <path d="M46 44 C26 14 6 22 10 46 C24 40 38 44 46 48 Z" fill="#ea580c" opacity="0.95"/>
-          <path d="M54 44 C74 14 94 22 90 46 C76 40 62 44 54 48 Z" fill="#ea580c" opacity="0.95"/>
-          {/* Torrent of Flames */}
-          <path d="M58 48 Q84 40 98 48 Q82 62 58 56 Z" fill="#f97316"/>
-          <circle cx="82" cy="48" r="4" fill="#fef08a"/>
-          {/* Serpentine Dragon Body & Tail */}
-          <path d="M42 36 Q50 30 58 36 Q56 58 50 68 Q44 78 36 84" stroke="#c2410c" strokeWidth="7" fill="none" strokeLinecap="round"/>
-          <circle cx="52" cy="34" r="8" fill="#7c2d12"/>
-          <circle cx="54" cy="33" r="2.5" fill="#fef08a"/>
-        </g>
-      )}
-
-      {/* 9. Spartan Hoplite Thrusting Spear */}
-      {av.archetype === 'action_spartan' && (
-        <g>
-          {/* Long bronze spear thrust */}
-          <line x1="18" y1="24" x2="88" y2="40" stroke="#f59e0b" strokeWidth="3" strokeLinecap="round"/>
-          <polygon points="88,40 82,37 83,43" fill="#fef08a"/>
-          {/* Round Shield with Lambda */}
-          <circle cx="40" cy="56" r="18" fill="#b45309" stroke="#fef08a" strokeWidth="2"/>
-          <path d="M34 64 L40 48 L46 64" stroke="#fef08a" strokeWidth="3" fill="none"/>
-          {/* Helmet with Red Plume */}
-          <circle cx="50" cy="28" r="9" fill="#d97706"/>
-          <path d="M46 12 Q50 4 54 12 L52 24 L48 24 Z" fill="#dc2626"/>
-          {/* Legs */}
-          <line x1="44" y1="68" x2="38" y2="86" stroke="#78350f" strokeWidth="5" strokeLinecap="round"/>
-          <line x1="56" y1="68" x2="68" y2="86" stroke="#78350f" strokeWidth="5" strokeLinecap="round"/>
-        </g>
-      )}
-
-      {/* 10. Spacewalking Astronaut with Jet Thrusters */}
-      {av.archetype === 'action_astronaut' && (
-        <g>
-          {/* Twin Plasma Flame Jets */}
-          <polygon points="32,66 26,86 36,78" fill="#00f0ff"/>
-          <polygon points="68,66 74,86 64,78" fill="#00f0ff"/>
-          {/* White Spacesuit Body in Zero-G */}
-          <rect x="36" y="40" width="28" height="26" rx="6" fill="#f8fafc" stroke="#94a3b8" strokeWidth="2"/>
-          <line x1="40" y1="66" x2="30" y2="82" stroke="#f8fafc" strokeWidth="6" strokeLinecap="round"/>
-          <line x1="60" y1="66" x2="70" y2="80" stroke="#f8fafc" strokeWidth="6" strokeLinecap="round"/>
-          {/* Gold Reflective Visor */}
-          <circle cx="50" cy="28" r="12" fill="#f8fafc" stroke="#94a3b8" strokeWidth="2"/>
-          <ellipse cx="50" cy="28" rx="8" ry="6" fill="#f59e0b"/>
-        </g>
-      )}
-
-      {/* 11. Paladin Raising Radiant Warhammer */}
-      {av.archetype === 'action_paladin' && (
-        <g>
-          {/* Solar Beams Burst */}
-          <path d="M50 8 L50 20 M38 12 L46 20 M62 12 L54 20" stroke="#fde047" strokeWidth="2.5" strokeLinecap="round"/>
-          {/* Massive Warhammer */}
-          <line x1="50" y1="20" x2="50" y2="52" stroke="#78350f" strokeWidth="3.5"/>
-          <rect x="38" y="10" width="24" height="12" rx="2" fill="#eab308" stroke="#fef08a" strokeWidth="1.5"/>
-          {/* Paladin Armor */}
-          <path d="M38 42 L62 42 L58 66 L42 66 Z" fill="#fef08a" stroke="#ca8a04" strokeWidth="2"/>
-          <circle cx="50" cy="32" r="8" fill="#ffffff" stroke="#eab308" strokeWidth="2"/>
-          <line x1="44" y1="66" x2="36" y2="86" stroke="#ca8a04" strokeWidth="5" strokeLinecap="round"/>
-          <line x1="56" y1="66" x2="64" y2="86" stroke="#ca8a04" strokeWidth="5" strokeLinecap="round"/>
-        </g>
-      )}
-
-      {/* 12. Shadow Assassin Leaping with Dual Daggers */}
-      {av.archetype === 'action_assassin' && (
-        <g>
-          {/* Shadow wisps at base */}
-          <ellipse cx="50" cy="86" rx="26" ry="6" fill="rgba(168,85,247,0.25)"/>
-          {/* Reverse grip daggers */}
-          <line x1="28" y1="36" x2="16" y2="52" stroke="#e2e8f0" strokeWidth="2.5" strokeLinecap="round"/>
-          <line x1="72" y1="36" x2="84" y2="52" stroke="#e2e8f0" strokeWidth="2.5" strokeLinecap="round"/>
-          {/* Mid-air crouch */}
-          <path d="M40 38 L60 38 L54 60 L46 60 Z" fill="#1e1b4b"/>
-          <line x1="46" y1="60" x2="32" y2="78" stroke="#1e1b4b" strokeWidth="5" strokeLinecap="round"/>
-          <line x1="54" y1="60" x2="68" y2="78" stroke="#1e1b4b" strokeWidth="5" strokeLinecap="round"/>
-          <circle cx="50" cy="28" r="8" fill="#312e81"/>
-          <circle cx="48" cy="27" r="1.5" fill="#a855f7"/>
-          <circle cx="52" cy="27" r="1.5" fill="#a855f7"/>
-        </g>
-      )}
-
-      {/* 13. Dancing Royal Princess with Swirling Gown */}
-      {av.archetype === 'action_princess' && (
-        <g>
-          {/* Swirling Dress */}
-          <path d="M44 42 Q50 36 56 42 Q78 68 86 84 Q50 88 14 84 Q22 68 44 42 Z" fill="#ec4899" stroke="#f472b6" strokeWidth="2"/>
-          {/* Torso & Tiara */}
-          <path d="M46 32 L54 32 L52 44 L48 44 Z" fill="#fbcfe8"/>
-          <circle cx="50" cy="24" r="7" fill="#fdf2f8"/>
-          <polygon points="45,18 48,13 50,16 52,13 55,18" fill="#f59e0b"/>
-          {/* Magic Starlight Sparkles */}
-          <circle cx="76" cy="36" r="2" fill="#ffffff"/>
-          <circle cx="24" cy="50" r="2.5" fill="#ffffff"/>
-        </g>
-      )}
-
-      {/* 14. Cyber Monk in Flying Dragon Kick */}
-      {av.archetype === 'action_cyber_monk' && (
-        <g>
-          {/* Neon kick energy trail */}
-          <path d="M26 62 Q50 56 86 44" stroke="#2dd4bf" strokeWidth="4" strokeLinecap="round" fill="none"/>
-          {/* Body in horizontal flying kick */}
-          <line x1="28" y1="60" x2="84" y2="44" stroke="#14b8a6" strokeWidth="6" strokeLinecap="round"/>
-          <circle cx="34" cy="50" r="8" fill="#0f766e"/>
-          {/* Tucked second leg */}
-          <line x1="42" y1="56" x2="48" y2="68" stroke="#115e59" strokeWidth="5" strokeLinecap="round"/>
-        </g>
-      )}
-
-      {/* 15. Flaming Phoenix Rising */}
-      {av.archetype === 'action_phoenix' && (
-        <g>
-          {/* Upward Flaming Wings */}
-          <path d="M50 48 Q20 28 14 8 Q34 26 50 38 Q66 26 86 8 Q80 28 50 48 Z" fill="#f97316"/>
-          <path d="M50 52 Q32 36 28 20 Q42 34 50 44 Q58 34 72 20 Q68 36 50 52 Z" fill="#facc15"/>
-          {/* Long Fiery Tail Plumes */}
-          <path d="M50 60 Q44 76 34 86 M50 60 Q50 78 50 88 M50 60 Q56 76 66 86" stroke="#ea580c" strokeWidth="3" fill="none" strokeLinecap="round"/>
-          <circle cx="50" cy="38" r="6" fill="#fef08a"/>
-        </g>
-      )}
-
-      {/* 16. Woodland Druid Summoning Vines */}
-      {av.archetype === 'action_druid' && (
-        <g>
-          {/* Living Vines Curling from Ground */}
-          <path d="M28 86 Q36 70 30 58 Q24 46 34 38" stroke="#86efac" strokeWidth="2.5" fill="none" strokeLinecap="round"/>
-          <path d="M72 86 Q64 70 70 58 Q76 46 66 38" stroke="#86efac" strokeWidth="2.5" fill="none" strokeLinecap="round"/>
-          {/* Druid Robe & Crook */}
-          <line x1="68" y1="24" x2="68" y2="86" stroke="#78350f" strokeWidth="3"/>
-          <circle cx="68" cy="22" r="5" fill="#4ade80"/>
-          <path d="M42 38 L58 38 L62 86 L38 86 Z" fill="#15803d"/>
-          {/* Antler Headdress */}
-          <circle cx="50" cy="28" r="8" fill="#166534"/>
-          <path d="M44 22 L38 12 M42 16 L46 12" stroke="#b45309" strokeWidth="2"/>
-          <path d="M56 22 L62 12 M58 16 L54 12" stroke="#b45309" strokeWidth="2"/>
-        </g>
-      )}
-
-      {/* 17. Direwolf Leaping Forward */}
-      {av.archetype === 'action_wolf' && (
-        <g>
-          {/* Leaping Quadruped Body */}
-          <path d="M20 54 Q46 44 74 46 Q84 40 88 44 Q78 58 54 62 L20 62 Z" fill="#64748b"/>
-          {/* Extended Front and Back Claws */}
-          <line x1="70" y1="56" x2="88" y2="68" stroke="#64748b" strokeWidth="4.5" strokeLinecap="round"/>
-          <line x1="30" y1="60" x2="14" y2="76" stroke="#475569" strokeWidth="4.5" strokeLinecap="round"/>
-          {/* Wolf Head & Bared Fangs */}
-          <circle cx="78" cy="42" r="8" fill="#475569"/>
-          <polygon points="74,36 78,28 82,36" fill="#475569"/>
-          <circle cx="82" cy="42" r="1.5" fill="#38bdf8"/>
-        </g>
-      )}
-
-      {/* 18. Wise Owl Gliding with Magic Scroll */}
-      {av.archetype === 'action_owl' && (
-        <g>
-          {/* Wide Downward Beating Wings */}
-          <path d="M50 42 Q24 16 8 36 Q30 48 46 48 Z" fill="#22c55e"/>
-          <path d="M50 42 Q76 16 92 36 Q70 48 54 48 Z" fill="#22c55e"/>
-          {/* Owl Body & Round Eyes */}
-          <ellipse cx="50" cy="48" rx="14" ry="18" fill="#16a34a"/>
-          <circle cx="44" cy="42" r="5.5" fill="#ffffff"/>
-          <circle cx="56" cy="42" r="5.5" fill="#ffffff"/>
-          <circle cx="44" cy="42" r="2.5" fill="#0f172a"/>
-          <circle cx="56" cy="42" r="2.5" fill="#0f172a"/>
-          <polygon points="50,47 48,51 52,51" fill="#f59e0b"/>
-          {/* Clutched Glowing Ancient Scroll */}
-          <rect x="36" y="66" width="28" height="8" rx="3" fill="#fef08a" stroke="#d97706" strokeWidth="1.5"/>
-          <circle cx="36" cy="70" r="3" fill="#b45309"/>
-          <circle cx="64" cy="70" r="3" fill="#b45309"/>
-        </g>
-      )}
-
-      {/* 19. Golden Lion Warrior Charging */}
-      {av.archetype === 'action_lion' && (
-        <g>
-          {/* Massive Mane */}
-          <circle cx="64" cy="40" r="18" fill="#b45309"/>
-          {/* Muscular charging body */}
-          <path d="M22 60 Q44 48 64 52 L58 72 L26 70 Z" fill="#d97706"/>
-          <line x1="60" y1="64" x2="76" y2="82" stroke="#d97706" strokeWidth="5" strokeLinecap="round"/>
-          <line x1="32" y1="68" x2="18" y2="82" stroke="#b45309" strokeWidth="5" strokeLinecap="round"/>
-          {/* Lion Face & Fangs */}
-          <circle cx="66" cy="40" r="11" fill="#f59e0b"/>
-          <circle cx="70" cy="38" r="2" fill="#0f172a"/>
-          <polygon points="76,44 72,46 74,48" fill="#ffffff"/>
-        </g>
-      )}
-
-      {/* 20. Stone Golem Ground Slam */}
-      {av.archetype === 'action_golem' && (
-        <g>
-          {/* Ground Shockwave Cracks */}
-          <path d="M20 86 L36 78 L50 86 L64 78 L80 86" stroke="#4ade80" strokeWidth="2.5" fill="none"/>
-          {/* Giant Boulder Fists Slammed Down */}
-          <circle cx="28" cy="74" r="10" fill="#475569" stroke="#334155" strokeWidth="2"/>
-          <circle cx="72" cy="74" r="10" fill="#475569" stroke="#334155" strokeWidth="2"/>
-          {/* Broad Colossus Body */}
-          <rect x="30" y="34" width="40" height="34" rx="8" fill="#64748b" stroke="#334155" strokeWidth="2"/>
-          <circle cx="44" cy="44" r="3" fill="#22c55e"/>
-          <circle cx="56" cy="44" r="3" fill="#22c55e"/>
-        </g>
-      )}
-
-      {/* 21. Pirate Captain on Sea Crest */}
-      {av.archetype === 'action_pirate' && (
-        <g>
-          {/* Wave Crest */}
-          <path d="M10 86 Q30 76 50 86 Q70 76 90 86" stroke="#38bdf8" strokeWidth="3" fill="none"/>
-          {/* Tricorn Hat & Cutlass */}
-          <line x1="62" y1="42" x2="86" y2="22" stroke="#e2e8f0" strokeWidth="3"/>
-          <path d="M36 28 Q50 16 64 28 Z" fill="#0f172a"/>
-          <circle cx="50" cy="34" r="8" fill="#fbcfe8"/>
-          {/* Captain Coat */}
-          <path d="M40 42 L60 42 L64 74 L36 74 Z" fill="#0369a1" stroke="#f59e0b" strokeWidth="1.5"/>
-          <line x1="44" y1="74" x2="38" y2="86" stroke="#0f172a" strokeWidth="5"/>
-          <line x1="56" y1="74" x2="62" y2="86" stroke="#78350f" strokeWidth="5"/>
-        </g>
-      )}
-
-      {/* 22. Cat Acrobat in Backflip with Daggers */}
-      {av.archetype === 'action_cat' && (
-        <g>
-          {/* Twin Throwing Daggers */}
-          <line x1="20" y1="36" x2="12" y2="24" stroke="#f472b6" strokeWidth="2.5" strokeLinecap="round"/>
-          <line x1="80" y1="36" x2="88" y2="24" stroke="#f472b6" strokeWidth="2.5" strokeLinecap="round"/>
-          {/* Curled Acrobat Silhouette */}
-          <circle cx="50" cy="50" r="16" fill="#8b5cf6"/>
-          <polygon points="42,38 46,26 50,38" fill="#8b5cf6"/>
-          <polygon points="58,38 54,26 50,38" fill="#8b5cf6"/>
-          <circle cx="46" cy="46" r="2.5" fill="#fef08a"/>
-          <circle cx="54" cy="46" r="2.5" fill="#fef08a"/>
-          {/* Arched Tail */}
-          <path d="M56 62 Q72 74 74 60" stroke="#8b5cf6" strokeWidth="4" fill="none" strokeLinecap="round"/>
-        </g>
-      )}
-
-      {/* 23. Swift Red Fox Sprinting */}
-      {av.archetype === 'action_fox' && (
-        <g>
-          {/* Stretched running body */}
-          <path d="M24 56 Q48 48 76 50 Q86 44 88 48 Q78 60 52 62 Z" fill="#ea580c"/>
-          {/* Bushy Tail Flowing Back */}
-          <path d="M24 56 Q8 48 10 38 Q18 54 28 58 Z" fill="#ffffff"/>
-          <line x1="68" y1="58" x2="84" y2="76" stroke="#ea580c" strokeWidth="4" strokeLinecap="round"/>
-          <line x1="36" y1="60" x2="22" y2="76" stroke="#ea580c" strokeWidth="4" strokeLinecap="round"/>
-          <circle cx="80" cy="46" r="7" fill="#c2410c"/>
-          <polygon points="76,40 80,30 84,40" fill="#c2410c"/>
-        </g>
-      )}
-
-      {/* 24. Striped Tiger Leaping */}
-      {av.archetype === 'action_tiger' && (
-        <g>
-          {/* Fierce Leaping Tiger Body */}
-          <path d="M26 54 Q50 44 76 48 L70 66 L26 66 Z" fill="#f97316"/>
-          {/* Stripes */}
-          <line x1="42" y1="48" x2="40" y2="60" stroke="#18181b" strokeWidth="2.5"/>
-          <line x1="52" y1="46" x2="50" y2="62" stroke="#18181b" strokeWidth="2.5"/>
-          <line x1="62" y1="48" x2="60" y2="64" stroke="#18181b" strokeWidth="2.5"/>
-          <line x1="72" y1="58" x2="88" y2="76" stroke="#f97316" strokeWidth="4.5" strokeLinecap="round"/>
-          <line x1="32" y1="62" x2="16" y2="78" stroke="#f97316" strokeWidth="4.5" strokeLinecap="round"/>
-          <circle cx="78" cy="44" r="8" fill="#ea580c"/>
-        </g>
-      )}
-
-      {/* 25. Hunting Falcon in Vertical Dive */}
-      {av.archetype === 'action_falcon' && (
-        <g>
-          {/* Speed Streaks */}
-          <line x1="30" y1="14" x2="30" y2="40" stroke="rgba(255,255,255,0.3)" strokeWidth="2"/>
-          <line x1="70" y1="14" x2="70" y2="40" stroke="rgba(255,255,255,0.3)" strokeWidth="2"/>
-          {/* Tucked Falcon Silhouette Diving Straight Down */}
-          <path d="M50 82 L38 38 Q50 20 62 38 Z" fill="#1e3a8a" stroke="#60a5fa" strokeWidth="1.5"/>
-          <polygon points="50,82 46,74 54,74" fill="#f59e0b"/>
-          <circle cx="46" cy="46" r="2.5" fill="#fef08a"/>
-          <circle cx="54" cy="46" r="2.5" fill="#fef08a"/>
-        </g>
-      )}
-
-      {/* 26. Combat Mech Firing Plasma Cannons */}
-      {av.archetype === 'action_robot' && (
-        <g>
-          {/* Dual Laser Blasts */}
-          <line x1="26" y1="36" x2="10" y2="36" stroke="#22d3ee" strokeWidth="3" strokeLinecap="round"/>
-          <line x1="74" y1="36" x2="90" y2="36" stroke="#22d3ee" strokeWidth="3" strokeLinecap="round"/>
-          {/* Heavy Armored Frame */}
-          <rect x="32" y="32" width="36" height="32" rx="6" fill="#0891b2" stroke="#155e75" strokeWidth="2"/>
-          <rect x="40" y="38" width="20" height="6" rx="2" fill="#a5f3fc"/>
-          <rect x="22" y="32" width="10" height="18" rx="2" fill="#164e63"/>
-          <rect x="68" y="32" width="10" height="18" rx="2" fill="#164e63"/>
-          <line x1="38" y1="64" x2="30" y2="86" stroke="#164e63" strokeWidth="6" strokeLinecap="round"/>
-          <line x1="62" y1="64" x2="70" y2="86" stroke="#164e63" strokeWidth="6" strokeLinecap="round"/>
-        </g>
-      )}
-
-      {/* 27. Shark Gladiator with Trident */}
-      {av.archetype === 'action_shark' && (
-        <g>
-          {/* Wave Splash */}
-          <path d="M12 84 Q30 74 50 84 Q70 74 88 84" stroke="#38bdf8" strokeWidth="2.5" fill="none"/>
-          {/* Golden Trident */}
-          <line x1="32" y1="20" x2="32" y2="80" stroke="#facc15" strokeWidth="3"/>
-          <path d="M26 22 L32 14 L38 22" stroke="#facc15" strokeWidth="2.5" fill="none"/>
-          {/* Muscular Shark Head & Fin */}
-          <path d="M42 32 Q62 20 74 38 Q68 64 52 64 Z" fill="#0284c7"/>
-          <polygon points="62,26 68,14 74,28" fill="#0369a1"/>
-          <circle cx="64" cy="38" r="2.5" fill="#ffffff"/>
-          <polygon points="70,44 68,48 72,48" fill="#ffffff"/>
-        </g>
-      )}
-
-      {/* 28. Royal Griffin Striking with Talons */}
-      {av.archetype === 'action_griffin' && (
-        <g>
-          {/* Sweeping Wings */}
-          <path d="M50 44 Q24 16 12 38 Q32 46 48 48 Z" fill="#ca8a04"/>
-          <path d="M50 44 Q76 16 88 38 Q68 46 52 48 Z" fill="#ca8a04"/>
-          {/* Lion Body + Eagle Head */}
-          <circle cx="50" cy="36" r="10" fill="#facc15"/>
-          <polygon points="56,36 64,39 56,42" fill="#d97706"/>
-          {/* Extended Razor Talons */}
-          <line x1="42" y1="56" x2="32" y2="76" stroke="#ea580c" strokeWidth="3.5" strokeLinecap="round"/>
-          <line x1="58" y1="56" x2="68" y2="76" stroke="#ea580c" strokeWidth="3.5" strokeLinecap="round"/>
-        </g>
-      )}
-
-      {/* 29. Traveling Bard Strumming Lute */}
-      {av.archetype === 'action_bard' && (
-        <g>
-          {/* Floating Musical Notes */}
-          <text x="20" y="32" fill="#e879f9" fontSize="16" fontWeight="bold">♪</text>
-          <text x="76" y="32" fill="#e879f9" fontSize="16" fontWeight="bold">♫</text>
-          {/* Lute / Mandolin */}
-          <circle cx="58" cy="56" r="10" fill="#b45309"/>
-          <line x1="58" y1="56" x2="74" y2="34" stroke="#78350f" strokeWidth="3.5"/>
-          {/* Bard Dancing Silhouette */}
-          <path d="M40 38 L54 38 L52 68 L36 68 Z" fill="#7e22ce"/>
-          <circle cx="48" cy="28" r="8" fill="#f3e8ff"/>
-          {/* Feather in Cap */}
-          <path d="M48 20 Q56 12 60 16" stroke="#f43f5e" strokeWidth="3" fill="none"/>
-          <line x1="42" y1="68" x2="32" y2="86" stroke="#581c87" strokeWidth="4.5"/>
-          <line x1="50" y1="68" x2="58" y2="86" stroke="#581c87" strokeWidth="4.5"/>
-        </g>
-      )}
-
-      {/* 30. King Raising Excalibur */}
-      {av.archetype === 'action_king' && (
-        <g>
-          {/* Excalibur Sword Held to Heavens */}
-          <line x1="50" y1="8" x2="50" y2="44" stroke="#f8fafc" strokeWidth="3.5" strokeLinecap="round"/>
-          <line x1="42" y1="28" x2="58" y2="28" stroke="#facc15" strokeWidth="3"/>
-          <polygon points="50,8 47,14 53,14" fill="#facc15"/>
-          {/* Royal Cape & Crown */}
-          <path d="M34 44 L66 44 L72 86 L28 86 Z" fill="#991b1b" stroke="#f59e0b" strokeWidth="1.5"/>
-          <circle cx="50" cy="34" r="8" fill="#fef08a"/>
-          <polygon points="44,26 47,18 50,22 53,18 56,26" fill="#f59e0b"/>
-          <line x1="44" y1="70" x2="40" y2="86" stroke="#7f1d1d" strokeWidth="5"/>
-          <line x1="56" y1="70" x2="60" y2="86" stroke="#7f1d1d" strokeWidth="5"/>
-        </g>
-      )}
-
-      {/* 31. Animated Goblin Walker */}
-      {av.archetype === 'anim_goblin' && (
-        <g className="anim-goblin-svg">
-          <circle cx="50" cy="50" r="36" fill="rgba(132, 204, 22, 0.15)"/>
-          <line x1="42" y1="68" x2="30" y2="86" stroke="#4d7c0f" strokeWidth="5" strokeLinecap="round" className="anim-goblin-leg-l"/>
-          <line x1="58" y1="68" x2="70" y2="86" stroke="#4d7c0f" strokeWidth="5" strokeLinecap="round" className="anim-goblin-leg-r"/>
-          <path d="M26 44 C22 34 32 30 38 42 L38 62 L26 62 Z" fill="#78350f" stroke="#451a03" strokeWidth="1.5"/>
-          <path d="M38 42 L62 42 L58 68 L42 68 Z" fill="#65a30d" stroke="#365314" strokeWidth="2"/>
-          <path d="M44 42 L50 68 L56 42" stroke="#78350f" strokeWidth="2" fill="none"/>
-          <ellipse cx="50" cy="32" rx="12" ry="10" fill="#84cc16" stroke="#365314" strokeWidth="2"/>
-          <polygon points="38,32 20,24 34,36" fill="#84cc16" stroke="#365314" strokeWidth="1.5"/>
-          <polygon points="62,32 80,24 66,36" fill="#84cc16" stroke="#365314" strokeWidth="1.5"/>
-          <circle cx="46" cy="30" r="2.5" fill="#1e293b"/>
-          <circle cx="54" cy="30" r="2.5" fill="#1e293b"/>
-          <path d="M44 37 Q50 42 56 37" stroke="#365314" strokeWidth="1.5" fill="none"/>
-        </g>
-      )}
-
-      {/* 32. Animated Flying Dragon */}
-      {av.archetype === 'anim_dragon' && (
-        <g className="anim-dragon-svg">
-          <path d="M46 42 C24 16 6 34 16 60 C32 50 44 50 46 54 Z" fill="#10b981" stroke="#047857" strokeWidth="2" className="anim-dragon-wing-l"/>
-          <path d="M54 42 C76 16 94 34 84 60 C68 50 56 50 54 54 Z" fill="#10b981" stroke="#047857" strokeWidth="2" className="anim-dragon-wing-r"/>
-          <path d="M50 36 Q52 64 48 78 Q42 88 56 86" stroke="#059669" strokeWidth="6" strokeLinecap="round" fill="none"/>
-          <polygon points="50,18 42,32 58,32" fill="#34d399" stroke="#047857" strokeWidth="2"/>
-          <line x1="44" y1="22" x2="36" y2="12" stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round"/>
-          <line x1="56" y1="22" x2="64" y2="12" stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round"/>
-          <circle cx="47" cy="27" r="1.5" fill="#facc15"/>
-          <circle cx="53" cy="27" r="1.5" fill="#facc15"/>
-          <circle cx="50" cy="14" r="3" fill="#f97316" opacity="0.85"/>
-        </g>
-      )}
-
-      {/* 33. Animated Flying Phoenix */}
-      {av.archetype === 'anim_phoenix' && (
-        <g className="anim-phoenix-svg">
-          <circle cx="50" cy="50" r="32" fill="rgba(249, 115, 22, 0.25)" opacity="0.6"/>
-          <path d="M48 44 C28 14 8 28 14 58 C28 50 42 50 48 54 Z" fill="#ea580c" stroke="#fbbf24" strokeWidth="1.5" className="anim-phoenix-wing-l"/>
-          <path d="M52 44 C72 14 92 28 86 58 C72 50 58 50 52 54 Z" fill="#ea580c" stroke="#fbbf24" strokeWidth="1.5" className="anim-phoenix-wing-r"/>
-          <path d="M48 64 Q40 82 32 88 M50 66 Q50 84 50 92 M52 64 Q60 82 68 88" stroke="#f59e0b" strokeWidth="3" strokeLinecap="round"/>
-          <circle cx="50" cy="30" r="7" fill="#f97316" stroke="#fbbf24" strokeWidth="1.5"/>
-          <path d="M50 23 Q50 10 56 12 Q52 18 50 23" fill="#facc15"/>
-          <polygon points="50,30 50,34 56,32" fill="#facc15"/>
-        </g>
-      )}
-
-      {/* 34. Animated Crown Sovereign */}
-      {av.archetype === 'anim_crown' && (
-        <g className="anim-crown-svg">
-          <circle cx="50" cy="50" r="38" fill="rgba(250, 204, 21, 0.25)" className="anim-crown-aura"/>
-          <path d="M30 46 L70 46 L78 88 L22 88 Z" fill="#b45309" stroke="#facc15" strokeWidth="2"/>
-          <path d="M36 46 L50 88 L64 46" fill="#d97706"/>
-          <rect x="38" y="44" width="24" height="24" rx="4" fill="#fef08a" stroke="#ca8a04" strokeWidth="2"/>
-          <line x1="42" y1="56" x2="58" y2="56" stroke="#eab308" strokeWidth="2"/>
-          <circle cx="50" cy="34" r="9" fill="#fef08a" stroke="#ca8a04" strokeWidth="1.5"/>
-          <g className="anim-crown-crest">
-            <polygon points="38,26 41,12 46,20 50,10 54,20 59,12 62,26" fill="#facc15" stroke="#78350f" strokeWidth="1.5"/>
-            <circle cx="50" cy="18" r="2" fill="#ef4444"/>
-            <circle cx="43" cy="20" r="1.5" fill="#3b82f6"/>
-            <circle cx="57" cy="20" r="1.5" fill="#10b981"/>
-          </g>
-        </g>
-      )}
-
-      {/* 35. Animated Arcane Wizard */}
-      {av.archetype === 'anim_wizard' && (
-        <g className="anim-wizard-svg">
-          <circle cx="50" cy="50" r="34" stroke="#d946ef" strokeWidth="1.5" strokeDasharray="6 4" fill="none" className="anim-wizard-ring"/>
-          <line x1="72" y1="14" x2="68" y2="86" stroke="#581c87" strokeWidth="3.5" strokeLinecap="round"/>
-          <polygon points="72,14 69,18 75,18" fill="#d946ef"/>
-          <circle cx="72" cy="14" r="5" fill="#f0abfc" opacity="0.85" className="anim-wizard-crystal"/>
-          <path d="M36 40 L64 40 L70 88 L30 88 Z" fill="#6b21a8" stroke="#a855f7" strokeWidth="2"/>
-          <polygon points="50,8 36,32 64,32" fill="#4a044e" stroke="#c084fc" strokeWidth="1.5"/>
-          <ellipse cx="50" cy="32" rx="16" ry="4" fill="#581c87" stroke="#c084fc" strokeWidth="1.5"/>
-          <circle cx="50" cy="16" r="2" fill="#facc15"/>
-          <polygon points="46,36 54,36 50,54" fill="#f8fafc"/>
-        </g>
-      )}
-
-      {/* 36. Series 2: Monster Warrior with Spiked Club */}
-      {av.archetype === 'series2_monster' && (
-        <g>
-          {/* Spiked War Club */}
-          <line x1="66" y1="18" x2="84" y2="68" stroke="#78350f" strokeWidth="5" strokeLinecap="round"/>
-          <polygon points="62,18 74,12 82,24 70,30" fill="#64748b"/>
-          <line x1="70" y1="16" x2="66" y2="10" stroke="#cbd5e1" strokeWidth="2.5" strokeLinecap="round"/>
-          <line x1="78" y1="20" x2="84" y2="14" stroke="#cbd5e1" strokeWidth="2.5" strokeLinecap="round"/>
-          {/* Muscular Beast Body */}
-          <path d="M32 46 L68 46 L62 86 L38 86 Z" fill="#15803d" stroke="#14532d" strokeWidth="2"/>
-          <circle cx="50" cy="34" r="13" fill="#22c55e" stroke="#15803d" strokeWidth="1.5"/>
-          {/* Horned Brow & Fangs */}
-          <polygon points="41,26 35,16 43,22" fill="#fef08a"/>
-          <polygon points="59,26 65,16 57,22" fill="#fef08a"/>
-          <circle cx="45" cy="33" r="2" fill="#1e293b"/>
-          <circle cx="55" cy="33" r="2" fill="#1e293b"/>
-          <polygon points="45,40 48,35 50,40" fill="#fef08a"/>
-          <polygon points="50,40 52,35 55,40" fill="#fef08a"/>
-          <rect x="36" y="64" width="28" height="8" rx="2" fill="#854d0e"/>
-          <circle cx="50" cy="68" r="2.5" fill="#facc15"/>
-        </g>
-      )}
-
-      {/* 37. Series 2: Pilot Duck in Red Biplane */}
-      {av.archetype === 'series2_pilot_duck' && (
-        <g>
-          {/* Biplane Wings */}
-          <rect x="12" y="58" width="76" height="8" rx="4" fill="#dc2626" stroke="#991b1b" strokeWidth="1.5"/>
-          {/* Cockpit & Fuselage */}
-          <ellipse cx="50" cy="66" rx="26" ry="16" fill="#ef4444" stroke="#b91c1c" strokeWidth="2"/>
-          {/* Propeller Arc */}
-          <ellipse cx="50" cy="82" rx="30" ry="5" fill="none" stroke="rgba(255,255,255,0.45)" strokeWidth="2" strokeDasharray="6 4"/>
-          <circle cx="50" cy="82" r="4" fill="#475569"/>
-          {/* Duck Pilot Head */}
-          <circle cx="50" cy="40" r="14" fill="#facc15" stroke="#ca8a04" strokeWidth="1.5"/>
-          {/* Leather Helmet & Goggles */}
-          <path d="M37 38 C37 25 63 25 63 38 Z" fill="#78350f"/>
-          <rect x="39" y="34" width="10" height="7" rx="3" fill="#38bdf8" stroke="#ffffff" strokeWidth="1.5"/>
-          <rect x="51" y="34" width="10" height="7" rx="3" fill="#38bdf8" stroke="#ffffff" strokeWidth="1.5"/>
-          {/* Orange Beak */}
-          <polygon points="46,44 54,44 50,51" fill="#f97316"/>
-        </g>
-      )}
-
-      {/* 38. Series 2: Treant Living Oak Defender */}
-      {av.archetype === 'series2_treant' && (
-        <g>
-          {/* Living Bark Torso */}
-          <path d="M34 38 L66 38 L62 86 L38 86 Z" fill="#78350f" stroke="#451a03" strokeWidth="2"/>
-          {/* Bark Lines */}
-          <line x1="44" y1="46" x2="42" y2="76" stroke="#451a03" strokeWidth="2"/>
-          <line x1="56" y1="46" x2="58" y2="76" stroke="#451a03" strokeWidth="2"/>
-          {/* Mossy Crown Head */}
-          <circle cx="50" cy="30" r="13" fill="#84cc16" stroke="#4d7c0f" strokeWidth="2"/>
-          <polygon points="40,22 44,12 48,20" fill="#65a30d"/>
-          <polygon points="52,20 56,12 60,22" fill="#65a30d"/>
-          <circle cx="45" cy="30" r="2.5" fill="#fef08a"/>
-          <circle cx="55" cy="30" r="2.5" fill="#fef08a"/>
-          {/* Spiked Thorn Mace & Shield */}
-          <line x1="68" y1="36" x2="84" y2="68" stroke="#451a03" strokeWidth="4.5" strokeLinecap="round"/>
-          <circle cx="84" cy="68" r="6" fill="#84cc16"/>
-          <path d="M16 46 Q30 46 30 70 Q24 76 16 70 Z" fill="#854d0e" stroke="#ca8a04" strokeWidth="1.5"/>
-        </g>
-      )}
-
-      {/* 39. Series 2: Steel Plate Axe Knight */}
-      {av.archetype === 'series2_axe_knight' && (
-        <g>
-          {/* Blue Battle Slash */}
-          <path d="M48 12 Q86 16 82 54" stroke="#38bdf8" strokeWidth="3.5" strokeLinecap="round" fill="none" opacity="0.8"/>
-          {/* Heavy Double Axe */}
-          <line x1="48" y1="20" x2="78" y2="74" stroke="#475569" strokeWidth="4.5" strokeLinecap="round"/>
-          <path d="M68 18 C78 12 84 26 76 34 Z" fill="#94a3b8" stroke="#cbd5e1" strokeWidth="1.5"/>
-          <path d="M60 24 C54 18 64 8 72 16 Z" fill="#94a3b8" stroke="#cbd5e1" strokeWidth="1.5"/>
-          {/* Armored Paladin */}
-          <path d="M34 44 L66 44 L60 86 L40 86 Z" fill="#475569" stroke="#94a3b8" strokeWidth="2"/>
-          <circle cx="50" cy="32" r="11" fill="#cbd5e1" stroke="#475569" strokeWidth="2"/>
-          <rect x="42" y="30" width="16" height="3" rx="1.5" fill="#0284c7"/>
-          <polygon points="50,16 46,24 54,24" fill="#f59e0b"/>
-        </g>
-      )}
-
-      {/* 40. Series 2: Death Shadow Knight */}
-      {av.archetype === 'series2_death_knight' && (
-        <g>
-          {/* Violet Spectral Aura */}
-          <circle cx="50" cy="50" r="38" fill="rgba(168,85,247,0.18)" stroke="#a855f7" strokeWidth="1" strokeDasharray="4 3"/>
-          {/* Dark Broadsword with Rune */}
-          <line x1="72" y1="12" x2="68" y2="78" stroke="#1e1b4b" strokeWidth="4.5" strokeLinecap="round"/>
-          <line x1="62" y1="28" x2="82" y2="28" stroke="#c084fc" strokeWidth="3"/>
-          <circle cx="72" cy="18" r="3" fill="#c084fc"/>
-          {/* Shadow Armor */}
-          <path d="M32 44 L68 44 L62 86 L38 86 Z" fill="#1e1b4b" stroke="#6b21a8" strokeWidth="2"/>
-          <circle cx="50" cy="32" r="11" fill="#2e1065" stroke="#a855f7" strokeWidth="1.5"/>
-          {/* Glowing Violet Visor Eyes */}
-          <ellipse cx="46" cy="32" rx="3" ry="1.5" fill="#d946ef"/>
-          <ellipse cx="54" cy="32" rx="3" ry="1.5" fill="#d946ef"/>
-          {/* Flowing Obsidian Cloak */}
-          <path d="M30 46 Q20 64 26 84" stroke="#7c3aed" strokeWidth="3" fill="none"/>
-        </g>
-      )}
-
-      {/* 41. Series 2: Heavy Axe Juggernaut */}
-      {av.archetype === 'series2_heavy_axe' && (
-        <g>
-          {/* Crimson Plume Crest */}
-          <path d="M50 12 Q56 4 64 12 Q56 20 50 22" fill="#ef4444"/>
-          {/* Massive Two-Handed Halberd */}
-          <line x1="32" y1="16" x2="74" y2="82" stroke="#334155" strokeWidth="5" strokeLinecap="round"/>
-          <path d="M24 16 Q36 6 44 22 L28 28 Z" fill="#f87171" stroke="#b91c1c" strokeWidth="1.5"/>
-          {/* Heavy Juggernaut Armor */}
-          <path d="M30 42 L70 42 L64 88 L36 88 Z" fill="#7f1d1d" stroke="#ef4444" strokeWidth="2"/>
-          <circle cx="50" cy="30" r="12" fill="#94a3b8" stroke="#475569" strokeWidth="2"/>
-          <rect x="42" y="28" width="16" height="3" fill="#fef08a"/>
-          {/* Red Belt */}
-          <rect x="36" y="60" width="28" height="6" fill="#b91c1c"/>
-        </g>
-      )}
-
-      {/* 42. Series 2: Hunter Fox with Recurve Bow */}
-      {av.archetype === 'series2_hunter_fox' && (
-        <g>
-          {/* Recurve Bow & Arrow */}
-          <path d="M68 20 Q84 48 68 76" stroke="#78350f" strokeWidth="3.5" fill="none" strokeLinecap="round"/>
-          <line x1="68" y1="20" x2="68" y2="76" stroke="#e2e8f0" strokeWidth="1.5"/>
-          <line x1="42" y1="48" x2="76" y2="48" stroke="#f97316" strokeWidth="2.5"/>
-          <polygon points="76,48 71,45 71,51" fill="#ea580c"/>
-          {/* Fox Body in Ranger Hood */}
-          <path d="M34 46 L62 46 L58 86 L38 86 Z" fill="#166534" stroke="#14532d" strokeWidth="2"/>
-          <circle cx="48" cy="34" r="12" fill="#ea580c" stroke="#9a3412" strokeWidth="1.5"/>
-          {/* White Cheeks & Fox Ears */}
-          <polygon points="40,24 36,12 44,18" fill="#ea580c"/>
-          <polygon points="56,24 60,12 52,18" fill="#ea580c"/>
-          <circle cx="44" cy="34" r="2" fill="#1e293b"/>
-          <circle cx="52" cy="34" r="2" fill="#1e293b"/>
-          <polygon points="48,39 45,36 51,36" fill="#1e293b"/>
-        </g>
-      )}
-
-      {/* 43. Series 2: Rogue Alien Assassin */}
-      {av.archetype === 'series2_rogue_alien' && (
-        <g>
-          {/* Twin Emerald Energy Blades */}
-          <line x1="26" y1="28" x2="16" y2="68" stroke="#10b981" strokeWidth="3" strokeLinecap="round"/>
-          <line x1="74" y1="28" x2="84" y2="68" stroke="#10b981" strokeWidth="3" strokeLinecap="round"/>
-          {/* Sleek Chitin Body */}
-          <path d="M36 44 L64 44 L58 86 L42 86 Z" fill="#064e3b" stroke="#10b981" strokeWidth="1.5"/>
-          <circle cx="50" cy="32" r="11" fill="#059669" stroke="#34d399" strokeWidth="1.5"/>
-          {/* Luminous Antennae */}
-          <line x1="45" y1="22" x2="38" y2="12" stroke="#34d399" strokeWidth="2" strokeLinecap="round"/>
-          <circle cx="38" cy="12" r="2" fill="#6ee7b7"/>
-          <line x1="55" y1="22" x2="62" y2="12" stroke="#34d399" strokeWidth="2" strokeLinecap="round"/>
-          <circle cx="62" cy="12" r="2" fill="#6ee7b7"/>
-          {/* Alien Eyes */}
-          <ellipse cx="44" cy="32" rx="4" ry="2.5" fill="#a7f3d0"/>
-          <ellipse cx="56" cy="32" rx="4" ry="2.5" fill="#a7f3d0"/>
-        </g>
-      )}
-
-      {/* 44. Series 2: Tactical Operative Cat */}
-      {av.archetype === 'series2_tactical_cat' && (
-        <g>
-          {/* Tactical Vest */}
-          <path d="M34 46 L66 46 L62 86 L38 86 Z" fill="#1e293b" stroke="#38bdf8" strokeWidth="1.5"/>
-          <rect x="42" y="52" width="16" height="12" rx="2" fill="#334155"/>
-          {/* Cat Head */}
-          <circle cx="50" cy="34" r="12" fill="#64748b" stroke="#334155" strokeWidth="1.5"/>
-          {/* Cat Ears */}
-          <polygon points="40,24 34,14 44,20" fill="#475569"/>
-          <polygon points="60,24 66,14 56,20" fill="#475569"/>
-          {/* Night Vision Quad-Goggles Glowing Cyan */}
-          <rect x="38" y="28" width="24" height="6" rx="2" fill="#0f172a"/>
-          <circle cx="42" cy="31" r="2" fill="#38bdf8"/>
-          <circle cx="47" cy="31" r="2" fill="#38bdf8"/>
-          <circle cx="53" cy="31" r="2" fill="#38bdf8"/>
-          <circle cx="58" cy="31" r="2" fill="#38bdf8"/>
-          {/* Slung Tactical Carbine */}
-          <line x1="30" y1="48" x2="72" y2="78" stroke="#0f172a" strokeWidth="3.5" strokeLinecap="round"/>
-        </g>
-      )}
-
-      {/* 45. Series 2: Warlock Summoner */}
-      {av.archetype === 'series2_warlock' && (
-        <g>
-          {/* Crackling Lightning Runes */}
-          <path d="M22 24 L28 34 L22 42 L30 54" stroke="#fde047" strokeWidth="2.5" fill="none"/>
-          <path d="M78 24 L72 34 L78 42 L70 54" stroke="#c084fc" strokeWidth="2.5" fill="none"/>
-          {/* Horned Mantle */}
-          <path d="M42 22 Q32 10 28 20 Q36 24 42 24" fill="#581c87"/>
-          <path d="M58 22 Q68 10 72 20 Q64 24 58 24" fill="#581c87"/>
-          {/* Robes */}
-          <path d="M34 42 L66 42 L70 88 L30 88 Z" fill="#3b0764" stroke="#9333ea" strokeWidth="2"/>
-          <circle cx="50" cy="30" r="10" fill="#c084fc"/>
-          <circle cx="46" cy="29" r="1.5" fill="#fde047"/>
-          <circle cx="54" cy="29" r="1.5" fill="#fde047"/>
-        </g>
-      )}
-
-      {/* 46. Series 2: Swarm Alien Insectoid */}
-      {av.archetype === 'series2_swarm_alien' && (
-        <g>
-          {/* 4 Arms Wielding Dual Blasters */}
-          <line x1="28" y1="40" x2="14" y2="40" stroke="#f59e0b" strokeWidth="3" strokeLinecap="round"/>
-          <line x1="28" y1="56" x2="14" y2="56" stroke="#f59e0b" strokeWidth="3" strokeLinecap="round"/>
-          <line x1="72" y1="40" x2="86" y2="40" stroke="#f59e0b" strokeWidth="3" strokeLinecap="round"/>
-          <line x1="72" y1="56" x2="86" y2="56" stroke="#f59e0b" strokeWidth="3" strokeLinecap="round"/>
-          {/* Amber Insect Body */}
-          <path d="M36 42 L64 42 L58 86 L42 86 Z" fill="#78350f" stroke="#d97706" strokeWidth="2"/>
-          <circle cx="50" cy="30" r="11" fill="#b45309" stroke="#f59e0b" strokeWidth="1.5"/>
-          {/* Segmented Eyes */}
-          <ellipse cx="44" cy="29" rx="3.5" ry="5" fill="#fef08a"/>
-          <ellipse cx="56" cy="29" rx="3.5" ry="5" fill="#fef08a"/>
-        </g>
-      )}
-
-      {/* 47. Series 2: Mountain Dwarf Berserker */}
-      {av.archetype === 'series2_dwarf_berserker' && (
-        <g>
-          {/* Crossed Dual Bearded Axes */}
-          <line x1="32" y1="24" x2="68" y2="82" stroke="#78350f" strokeWidth="4" strokeLinecap="round"/>
-          <line x1="68" y1="24" x2="32" y2="82" stroke="#78350f" strokeWidth="4" strokeLinecap="round"/>
-          <path d="M26 24 C20 32 32 40 38 32 Z" fill="#cbd5e1" stroke="#475569" strokeWidth="1.5"/>
-          <path d="M74 24 C80 32 68 40 62 32 Z" fill="#cbd5e1" stroke="#475569" strokeWidth="1.5"/>
-          {/* Sturdy Armored Dwarf Body */}
-          <rect x="34" y="52" width="32" height="34" rx="6" fill="#854d0e" stroke="#451a03" strokeWidth="2"/>
-          {/* Horned Iron Helm */}
-          <circle cx="50" cy="38" r="12" fill="#64748b" stroke="#334155" strokeWidth="2"/>
-          <path d="M38 34 Q32 20 28 24" stroke="#fef08a" strokeWidth="3" fill="none"/>
-          <path d="M62 34 Q68 20 72 24" stroke="#fef08a" strokeWidth="3" fill="none"/>
-          {/* Braided Fiery Orange Beard */}
-          <path d="M40 44 Q50 68 50 68 Q50 68 60 44 Z" fill="#f97316"/>
-          <line x1="47" y1="52" x2="47" y2="64" stroke="#ea580c" strokeWidth="1.5"/>
-          <line x1="53" y1="52" x2="53" y2="64" stroke="#ea580c" strokeWidth="1.5"/>
-        </g>
-      )}
-
-    </svg>
+  return wrap(
+    <img
+      src={imgUrl}
+      alt={av.name || 'Аватар'}
+      className={`funny-avatar-img ${className}`}
+      style={{
+        width: size,
+        height: size,
+        objectFit: 'cover',
+        borderRadius: Math.max(8, Math.floor(size * 0.18)),
+        border: '1.5px solid rgba(56, 189, 248, 0.45)',
+        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4), inset 0 0 8px rgba(56, 189, 248, 0.2)',
+        background: '#101622',
+        flexShrink: 0,
+        ...style
+      }}
+      loading="lazy"
+    />
   );
-  return wrap(svgNode);
 }
 
 function colorMixDark(hex) {
@@ -1508,32 +686,25 @@ function colorMixDark(hex) {
 /* ==========================================================================
    GREEN BRAND LOGO (EXACTLY AS USER REQUESTED IN DUO-GREEN THEME)
    ========================================================================== */
-function BrandLogo({size = 34, showText = true, className = ''}) {
+function BrandLogo({size = 36, showText = true, className = ''}) {
   return (
     <div className={'brand-logo-wrap ' + className} style={{display:'inline-flex',alignItems:'center',gap:10}}>
-      <svg width={size} height={size} viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" style={{flexShrink:0,filter:'drop-shadow(0 3px 10px rgba(34,197,94,0.38))'}}>
-        <defs>
-          <linearGradient id="brandGreenGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#58CC02" />
-            <stop offset="50%" stopColor="#22C55E" />
-            <stop offset="100%" stopColor="#15803D" />
-          </linearGradient>
-          <linearGradient id="brandTopGlow" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#86EFAC" stopOpacity="0.8" />
-            <stop offset="100%" stopColor="#22C55E" stopOpacity="0" />
-          </linearGradient>
-        </defs>
-        <rect width="64" height="64" rx="19" fill="url(#brandGreenGrad)"/>
-        <rect x="2" y="2" width="60" height="30" rx="17" fill="url(#brandTopGlow)"/>
-        <path d="M16 22C21 20 28 21.5 32 25C36 21.5 43 20 48 22V42C43 40 36 41.5 32 45C28 41.5 21 40 16 42V22Z" fill="#FFFFFF"/>
-        <path d="M32 25V45" stroke="#22C55E" strokeWidth="2.5" strokeLinecap="round"/>
-        <circle cx="32" cy="17" r="4.5" fill="#FEF08A"/>
-        <circle cx="48" cy="18" r="2.5" fill="#FEF08A"/>
-        <circle cx="16" cy="18" r="2.5" fill="#FEF08A"/>
-      </svg>
+      <img
+        src="/brand_logo.png"
+        alt="English Flow"
+        style={{
+          width: size,
+          height: size,
+          borderRadius: Math.max(8, Math.floor(size * 0.22)),
+          boxShadow: '0 4px 14px rgba(0, 0, 0, 0.45)',
+          border: '1.5px solid rgba(56, 189, 248, 0.5)',
+          objectFit: 'cover',
+          flexShrink: 0
+        }}
+      />
       {showText && (
         <span className="brand-text" style={{fontWeight:800,fontSize:18,letterSpacing:'-0.02em',color:'var(--text)'}}>
-          English<span style={{color:'#22c55e',marginLeft:3}}>Flow</span>
+          English<span style={{color:'#38bdf8',marginLeft:3}}>Flow</span>
         </span>
       )}
     </div>
@@ -3297,25 +2468,24 @@ function ShopPage({state, save, onRefreshGamification, allUsers}) {
   const isBoosterActive = inventory.doubleXpUntil && inventory.doubleXpUntil > Date.now();
   const boosterMinutesLeft = isBoosterActive ? Math.ceil((inventory.doubleXpUntil - Date.now()) / 60000) : 0;
 
-  // Catalogues
+  // Catalogues — Funny Fantasy Game Roster
   const ANIMATED_AVATARS_SHOP = [
-    { id: 'goblin_walker', name: 'Гоблін-мандрівник', desc: 'Анімований герой: неспішна хода з торбою слів', cost: 850 },
-    { id: 'flying_dragon', name: 'Дракон Знань', desc: 'Анімований герой: величний політ та помахи крил над хмарами', cost: 1100 },
-    { id: 'flying_phoenix', name: 'Сонячний Фенікс', desc: 'Анімований герой: ширяння у полум\'ї знань з іскрами', cost: 1250 },
-    { id: 'crown_sovereign', name: 'Для Корони (Суверен)', desc: 'Анімований герой: монарше сяйво корони та золота аура', cost: 1400 },
-    { id: 'arcane_wizard', name: 'Арканний Чарівник', desc: 'Анімований герой: каст зоряних граматичних чар', cost: 1350 },
-    { id: 'monster_warrior', name: 'Звіролов-Воїн', desc: 'Серія 2: мускулистий звір із шипованою палицею', cost: 950 },
-    { id: 'pilot_duck', name: 'Качка-Пілот', desc: 'Серія 2: авіатор у штурмовику з гвинтом, що обертається', cost: 1200 },
-    { id: 'treant_defender', name: 'Дерев\'яний Вартовий', desc: 'Серія 2: могутній дубовий велетень з булавою та щитом', cost: 1150 },
-    { id: 'axe_knight', name: 'Лицар із Сокирою', desc: 'Серія 2: залізний лицар із бойовою сокирою', cost: 900 },
-    { id: 'death_knight', name: 'Лицар Тіні', desc: 'Серія 2: темний паладин із клинком смерті та тіньовою аурою', cost: 1450 },
-    { id: 'heavy_axe_knight', name: 'Важкий Дроворуб', desc: 'Серія 2: важкий латний лицар із червоним плюмажем', cost: 1100 },
-    { id: 'hunter_fox', name: 'Лис-Слідопит', desc: 'Серія 2: хитрий лісовий лис, що натягує композитний лук', cost: 1050 },
-    { id: 'rogue_alien', name: 'Прибулець-Шпигун', desc: 'Серія 2: смарагдовий ассасін із токсичними клинками', cost: 1250 },
-    { id: 'tactical_cat', name: 'Тактичний Кіт', desc: 'Серія 2: кіт-спецпризначенець у ПНБ з карабіном', cost: 1300 },
-    { id: 'warlock_mage', name: 'Темний Чорнокнижник', desc: 'Серія 2: рогатий маг темної блискавки', cost: 1400 },
-    { id: 'swarm_alien', name: 'Космічний Бджоляр', desc: 'Серія 2: чотирирукий інсектоїд з парними бластерами', cost: 1150 },
-    { id: 'dwarf_berserker', name: 'Гном-Берсерк', desc: 'Серія 2: північний гном із подвійними бородатими сокирами', cost: 1200 },
+    { id: 'funny_duck_pilot', name: 'Качка-Пілот', desc: 'Авіатор на крихітному червоному біплані з гвинтом, що обертається', cost: 450 },
+    { id: 'funny_barbarian', name: 'Незграбний Варвар', desc: 'Крихітний варвар, що героїчно бореться з велетенським молотом', cost: 500 },
+    { id: 'funny_dragon_sleepy', name: 'Сонний Дракончик', desc: 'Малюк у нічному ковпаку, який позіхає та чхає полумʼям', cost: 650 },
+    { id: 'funny_ninja_cat', name: 'Кіт-Ніндзя', desc: 'Чорний кіт-шинобі у неймовірному стрибку з рибкою-кинжалом', cost: 600 },
+    { id: 'funny_wizard', name: 'Сердитий Чаклун', desc: 'Маг у зоряному капелюсі з обгорілою бородою від закляття', cost: 550 },
+    { id: 'funny_pirate_frog', name: 'Жаба-Пірат', desc: 'Капітан із піратською повʼязкою та блискучою золотою шаблею', cost: 400 },
+    { id: 'funny_goblin_engineer', name: 'Гоблін-Інженер', desc: 'Гоблін в окулярах щасливо сміється над цокаючою бомбою', cost: 450 },
+    { id: 'funny_castle', name: 'Живий Замок', desc: 'Ожила камʼяна фортеця з очима-бійницями та ротом-мостом', cost: 700 },
+    { id: 'funny_chicken', name: 'Бойовий Півень', desc: 'Спартанський півень у шоломі зі списом-зубочисткою', cost: 350 },
+    { id: 'funny_alien_cowboy', name: 'Прибулець-Ковбой', desc: 'Триокий бірюзовий ковбой із подвійними неоновими бластерами', cost: 550 },
+    { id: 'funny_little_king', name: 'Кумедний Король', desc: 'Пухкий король у вельветовій мантії із золотим скіпетром', cost: 800 },
+    { id: 'funny_jester', name: 'Пустотливий Блазень', action: 'Блазень з бубонцями кидає пиріг-бомбу', cost: 500 },
+    { id: 'funny_heroic_cat', name: 'Героїчний Кіт у Латах', desc: 'Рудий кіт у лицарських латах на три розміри більших', cost: 600 },
+    { id: 'funny_talking_tree', name: 'Дерево, що жонглює', desc: 'Живе дерево весело розмовляє та жонглює яблуками', cost: 500 },
+    { id: 'funny_carriage', name: 'Казкова Карета', desc: 'Жива королівська карета на великих колесах мчить уперед', cost: 600 },
+    { id: 'funny_dragon_chef', name: 'Дракончик-Шеф', desc: 'Дракончик у білому ковпаку смажить маршмеллоу подихом вогню', cost: 650 },
   ];
 
   const AURAS = [
@@ -6544,8 +5714,8 @@ function Profile({state, save, gamification, onRefreshGamification}) {
 
         {/* 30 Character Avatars */}
         <div className="card">
-          <h2>🎭 Епічні Герої у Повний Зріст (Full-Body Action Avatars)</h2>
-          <p className="muted small">30 унікальних персонажів у динамічній дії: лицар у замаху, маг кастує блискавку, сова в польоті з сувоєм, ніндзя у стрибку та інші герої без повторів:</p>
+          <h2>🎭 Колекція Кумедних Героїв (Funny Fantasy Avatars)</h2>
+          <p className="muted small">22 кумедних, високодеталізованих персонажі у стилі мобільних фентезі-ігор: виразні емоції, гумор, жива анімація та фірмові сталеві рамки:</p>
           <div className="avatar-grid-duo" style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(68px, 1fr))',gap:8,marginTop:12}}>
             {GAME_AVATARS_30.map(av => {
               const isSelected = selectedAvatar === av.id;
