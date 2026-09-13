@@ -54,10 +54,12 @@ button,input,select{font:inherit}button{cursor:pointer}button:disabled{opacity:.
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);margin-bottom:14px}
 .grid{display:grid;gap:14px}.grid.two{grid-template-columns:repeat(2,1fr)}.grid.stats{grid-template-columns:repeat(4,1fr)}
 .stat strong{font-size:28px;display:block;margin:8px 0 2px}.stat-top{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:13px}
-.hero{display:flex;justify-content:space-between;gap:20px;padding:28px;border-radius:var(--radius);background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 14%,var(--surface)),var(--surface));border:1px solid var(--border);margin-bottom:16px;color:var(--text)}
-.hero h1{margin:8px 0;font-size:32px;color:var(--text) !important}.hero-art{font-size:64px;opacity:.9}
-[data-theme=dark] .hero{background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 12%,var(--surface)),var(--surface)) !important;border:1px solid var(--border) !important;color:var(--text) !important}
-[data-theme=dark] .hero h1{color:var(--text) !important}
+.hero{display:flex;justify-content:space-between;gap:20px;padding:28px;border-radius:var(--radius);background:linear-gradient(135deg,#059669 0%,#0284c7 50%,#4338ca 100%);border:1px solid rgba(255,255,255,0.25);margin-bottom:16px;color:#ffffff;box-shadow:0 12px 32px -8px rgba(5,150,105,0.28);position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;top:-40%;right:-15%;width:280px;height:280px;background:radial-gradient(circle,rgba(255,255,255,0.16) 0%,transparent 70%);pointer-events:none;border-radius:50%}
+.hero h1{margin:8px 0;font-size:32px;color:#ffffff !important;font-weight:800;letter-spacing:-0.02em}.hero p{color:rgba(255,255,255,0.92)}.hero b{color:#ffffff}.hero .eyebrow{background:rgba(255,255,255,0.22);color:#ffffff}.hero .freeze-chip{background:rgba(255,255,255,0.2);color:#ffffff;border:1px solid rgba(255,255,255,0.3)}.hero-art{font-size:64px;opacity:.95;filter:drop-shadow(0 8px 16px rgba(0,0,0,0.25))}
+[data-theme=dark] .hero{background:linear-gradient(135deg,#064e3b 0%,#0e7490 50%,#1e1b4b 100%) !important;border:1px solid rgba(52,211,153,0.3) !important;color:#f8fafc !important;box-shadow:0 12px 36px -8px rgba(6,78,59,0.5) !important}
+[data-theme=dark] .hero h1{color:#f8fafc !important}
+[data-theme=dark] .hero p{color:rgba(241,245,249,0.9)}
 .eyebrow,.pill{display:inline-flex;align-items:center;font-size:11px;font-weight:700;letter-spacing:.04em;padding:4px 10px;border-radius:999px;background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent)}
 .pill.ok{background:color-mix(in srgb,var(--accent) 20%,transparent)}
 .primary,.secondary{border:0;border-radius:12px;padding:11px 16px;font-weight:700;display:inline-flex;align-items:center;gap:8px}
@@ -320,7 +322,7 @@ html[data-theme=custom]{--bg:var(--custom-bg);--surface:var(--custom-surface)}
   --border:#f5d0e0;--danger:#e11d48;--shadow:0 10px 30px rgba(232,121,169,.12);--radius:22px;
   font-family:"Segoe UI",Inter,system-ui,sans-serif;
 }
-[data-skin=candy] .hero{background:linear-gradient(135deg,#1f141d,#140d13) !important;border:1px solid #3d2434 !important;color:#fdf2f8 !important}
+[data-skin=candy] .hero{background:linear-gradient(135deg,#065f46 0%,#0e7490 55%,#312e81 100%) !important;border:1px solid rgba(45,212,191,0.35) !important;color:#fdf2f8 !important}
 [data-skin=candy] .hero h1{color:#fdf2f8 !important}
 [data-skin=candy] .primary{background:linear-gradient(90deg,#e879a9,#c084fc)}
 [data-skin=candy][data-theme=dark]{
@@ -1774,8 +1776,12 @@ input[type="checkbox"]:focus-visible {
   --border: #fed7aa;
 }
 [data-skin="sunset"] .hero {
-  background: linear-gradient(135deg, #381a28, #2a1520);
-  border-color: #5b283f;
+  background: linear-gradient(135deg, #047857 0%, #0369a1 55%, #4338ca 100%) !important;
+  border: 1px solid rgba(52, 211, 153, 0.35) !important;
+  color: #ffffff !important;
+}
+[data-skin="sunset"] .hero h1 {
+  color: #ffffff !important;
 }
 [data-skin="sunset"] .primary {
   background: linear-gradient(90deg, #f97316, #e11d48);
@@ -3973,5 +3979,430 @@ input[type="checkbox"]:focus-visible {
     margin: 12mm 10mm;
   }
 }
+
+/* ==========================================================================
+   v3.4.0 — TAVERNA СТАРОДАВНЬОГО МАНДРІВНИКА (MEDIEVAL RPG SHOP)
+   ========================================================================== */
+.tavern-page-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding-bottom: 40px;
+}
+
+/* 🏰 Carved Dark Wooden Planks Header (Screenshot 4) */
+.tavern-wood-header {
+  background: linear-gradient(180deg, #2a170e 0%, #1a0e08 100%);
+  border: 2px solid #854d0e;
+  border-radius: 16px;
+  padding: 24px 28px;
+  margin-bottom: 20px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(254, 240, 138, 0.2);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  position: relative;
+  overflow: hidden;
+}
+
+.tavern-wood-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #facc15, #f59e0b, transparent);
+}
+
+.tavern-wood-title-box {
+  flex: 1;
+  min-width: 280px;
+}
+
+.tavern-runic-eyebrow {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: #f59e0b;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.tavern-wood-h1 {
+  font-size: 26px;
+  font-weight: 900;
+  color: #fef08a !important;
+  margin: 0 0 8px;
+  letter-spacing: -0.01em;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8), 0 0 14px rgba(234, 179, 8, 0.35);
+  font-family: Georgia, 'Cinzel', serif, system-ui;
+}
+
+.tavern-wood-sub {
+  color: #d6d3d1;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.tavern-wood-sub b {
+  color: #fef08a;
+}
+
+.tavern-wood-top-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.tavern-purse-badge, .tavern-xp-badge {
+  background: rgba(26, 14, 8, 0.85);
+  border: 1.5px solid #854d0e;
+  border-radius: 12px;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5), 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.tavern-purse-badge:hover, .tavern-xp-badge:hover {
+  border-color: #facc15;
+}
+
+.tavern-purse-label {
+  font-size: 11px;
+  color: #a8a29e;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+}
+
+.tavern-purse-val {
+  font-size: 18px;
+  color: #facc15;
+  font-weight: 900;
+  text-shadow: 0 0 8px rgba(250, 204, 21, 0.4);
+}
+
+/* Medieval Sub-Tabs Bar: [ ЇЖА ТА НАПОЇ ] [ СПОКІЙ ТА ЛІКИ ] [ КВЕСТИ ТА ЧУТКИ ] [ ТОВАРИ МАНДРІВНИКА ] */
+.tavern-subtabs-bar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  overflow-x: auto;
+  padding: 4px 2px 10px;
+  scrollbar-width: thin;
+}
+
+.tavern-tab-btn {
+  background: #24140b;
+  border: 1.5px solid #78350f;
+  color: #fde68a;
+  font-family: Georgia, 'Cinzel', serif, system-ui;
+  font-size: 13.5px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  padding: 10px 18px;
+  border-radius: 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.tavern-tab-btn:hover {
+  background: #361c0e;
+  border-color: #fbbf24;
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.4);
+}
+
+.tavern-tab-btn.active {
+  background: linear-gradient(180deg, #92400e 0%, #78350f 100%);
+  border-color: #facc15;
+  color: #ffffff;
+  box-shadow: 0 0 16px rgba(250, 204, 21, 0.4);
+  transform: translateY(-1px);
+}
+
+/* Parchment Grid & Cards */
+.tavern-parchment-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.tavern-parchment-card {
+  background: linear-gradient(180deg, #22130a 0%, #180d07 100%);
+  border: 1.5px solid #78350f;
+  border-radius: 14px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.tavern-parchment-card:hover {
+  transform: translateY(-4px);
+  border-color: #facc15;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.6), 0 0 16px rgba(250, 204, 21, 0.25);
+}
+
+.tavern-item-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.tavern-item-icon {
+  font-size: 36px;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.5));
+}
+
+.tavern-tier-badge {
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  padding: 4px 9px;
+  border-radius: 6px;
+  text-transform: uppercase;
+}
+
+.tier-common {
+  background: rgba(148, 163, 184, 0.2);
+  color: #cbd5e1;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+}
+
+.tier-rare {
+  background: rgba(59, 130, 246, 0.2);
+  color: #93c5fd;
+  border: 1px solid rgba(59, 130, 246, 0.45);
+}
+
+.tier-epic {
+  background: rgba(168, 85, 247, 0.2);
+  color: #d8b4fe;
+  border: 1px solid rgba(168, 85, 247, 0.45);
+}
+
+.tier-legendary {
+  background: rgba(245, 158, 11, 0.25);
+  color: #fde047;
+  border: 1px solid rgba(245, 158, 11, 0.55);
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.25);
+}
+
+.tavern-item-title {
+  font-size: 17px;
+  font-weight: 800;
+  color: #fef08a;
+  margin: 0 0 8px;
+  line-height: 1.35;
+}
+
+.tavern-item-desc {
+  font-size: 13.5px;
+  color: #d6d3d1;
+  line-height: 1.45;
+  margin: 0 0 18px;
+  flex-grow: 1;
+}
+
+.tavern-item-desc b {
+  color: #fef08a;
+}
+
+.tavern-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 14px;
+  border-top: 1px dashed rgba(133, 77, 14, 0.6);
+  margin-top: auto;
+}
+
+.tavern-price-tag {
+  font-weight: 900;
+  font-size: 15px;
+  color: #facc15;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.tavern-buy-action-btn {
+  background: linear-gradient(180deg, #ca8a04 0%, #a16207 100%);
+  border: 1.5px solid #facc15;
+  color: #1c1007;
+  font-weight: 800;
+  font-size: 13px;
+  letter-spacing: 0.05em;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  white-space: nowrap;
+}
+
+.tavern-buy-action-btn:hover:not(:disabled) {
+  background: linear-gradient(180deg, #eab308 0%, #ca8a04 100%);
+  color: #000000;
+  box-shadow: 0 0 14px rgba(250, 204, 21, 0.55);
+  transform: scale(1.04);
+}
+
+.tavern-buy-action-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+  border-color: #78350f;
+  color: #78716c;
+}
+
+.tavern-parchment-subheading {
+  font-size: 17px;
+  font-weight: 800;
+  color: #fde68a;
+  margin: 28px 0 14px;
+  border-bottom: 1.5px solid rgba(133, 77, 14, 0.5);
+  padding-bottom: 8px;
+  letter-spacing: 0.02em;
+}
+
+/* 🧝‍♀️ Tavernkeeper Edara Dialogue Bar (Screenshot 4) */
+.tavern-keeper-dialogue-bar {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  background: linear-gradient(135deg, #2a170e 0%, #180d07 100%);
+  border: 2px solid #854d0e;
+  border-radius: 16px;
+  padding: 20px 24px;
+  margin-top: 32px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
+}
+
+.tavern-keeper-avatar-wrap {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: #3b2014;
+  border: 2px solid #facc15;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 34px;
+  flex-shrink: 0;
+  box-shadow: 0 0 16px rgba(250, 204, 21, 0.35);
+}
+
+.tavern-keeper-text-box {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tavern-keeper-name {
+  font-weight: 800;
+  font-size: 14px;
+  color: #facc15;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.tavern-keeper-quote {
+  font-size: 13.5px;
+  font-style: italic;
+  color: #e7e5e4;
+  line-height: 1.55;
+  margin: 0;
+}
+
+/* ==========================================================================
+   v3.4.0 — TAVERN SKIN THEME ([data-skin="tavern"])
+   ========================================================================== */
+[data-skin="tavern"] {
+  --accent: #f59e0b;
+  --bg: #140d09;
+  --surface: #20130d;
+  --text: #fef3c7;
+  --muted: #d97706;
+  --border: #78350f;
+  --danger: #ef4444;
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.65);
+  --radius: 14px;
+}
+
+[data-skin="tavern"] .sidebar {
+  background: #170e09;
+  border-right: 2px solid #78350f;
+}
+
+[data-skin="tavern"] .sidebar .nav.active {
+  background: rgba(245, 158, 11, 0.14);
+  color: #facc15;
+  box-shadow: inset 3px 0 0 #facc15;
+}
+
+[data-skin="tavern"] .card {
+  background: #22140d;
+  border: 1.5px solid #78350f;
+}
+
+[data-skin="tavern"] .primary {
+  background: linear-gradient(180deg, #f59e0b 0%, #b45309 100%);
+  color: #1a0c04;
+  border: 1px solid #fde68a;
+  font-weight: 800;
+}
+
+[data-skin="tavern"] .primary:hover {
+  background: linear-gradient(180deg, #fbbf24 0%, #d97706 100%);
+  box-shadow: 0 0 14px rgba(245, 158, 11, 0.4);
+}
+
+/* ==========================================================================
+   v3.4.0 — CUSTOM WARMUP BADGE ICONS & 30S BOSS TIMER
+   ========================================================================== */
+.warmup-badge-icon {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.25));
+  transition: transform 0.2s ease;
+}
+
+.warmup-badge-icon:hover {
+  transform: scale(1.18) rotate(6deg);
+}
+
+.boss-time-bar {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 99px;
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+
+.boss-time-fill {
+  height: 100%;
+  transition: width 1s linear;
+}
+
 
 

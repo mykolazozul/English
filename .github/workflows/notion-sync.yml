@@ -3,8 +3,8 @@ name: Sync English words from Notion
 on:
   workflow_dispatch:
   schedule:
-    # Keep the requested hourly sync: 15 runs/day, 09:00–23:00 UTC.
-    - cron: '0 9-23 * * *'
+    # Hourly sync: 09:00–23:00 Kyiv time (UTC+2/UTC+3 -> 06:00–21:00 UTC)
+    - cron: '0 6-21 * * *'
 
 permissions:
   contents: write

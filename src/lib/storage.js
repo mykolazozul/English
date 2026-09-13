@@ -9,8 +9,57 @@ export async function serverMe(){return api('/api/auth?action=me').catch(()=>({o
 export async function loadServerConfig(){try{return (await api('/api/config')).settings||{}}catch{return {}}}
 export async function isNickTaken(nick){const n=String(nick||'').trim();if(!n)return true;const all=localProfiles();if(all[n]||all[n.toLowerCase()])return true;const h=await nickHash(n),idx=nickIndex();if(idx[h])return true;try{return !!(await serverAuth('check',{nick:n})).taken}catch{return false}}
 export async function registerNick(nick,data){const n=String(nick).trim(),profile={...data,nick:n,name:data.name||n,updatedAt:new Date().toISOString()};const h=await nickHash(n),idx=nickIndex();idx[h]=n;localStorage.setItem(NICK_INDEX,JSON.stringify(idx));const nameEnc=data.name?await encryptText(data.name):'';const stored={...profile,nickHash:h,nameEnc};const all=localProfiles();all[n]=stored;localStorage.setItem(PROFILES_KEY,JSON.stringify(all));localStorage.setItem(ACTIVE_KEY,n);return stored}
+export function getTesterProfile() {
+  return {
+    nick: 'tester',
+    name: 'Tester Pro ⚡',
+    xp: 1850,
+    gems: 250,
+    streak: 14,
+    freezeCount: 3,
+    dailyGoal: 50,
+    todayXp: 35,
+    today: new Date().toISOString().slice(0, 10),
+    avatar: 'avatar_knight',
+    theme: 'system',
+    skin: 'tavern',
+    role: 'tester',
+    admin: {
+      lessonSize: 10, correctPoints: 4, wrongPoints: -2, masteryThreshold: 8,
+      shuffleQuestions: true, shuffleAnswers: true, showPronunciation: true, perfectBonus: 10, badgeStyle: 'neo'
+    },
+    inventory: {
+      doubleXpUntil: null,
+      secondChance: 2,
+      vipFrame: true,
+      leagueShield: true,
+      cosmetics: {
+        equipped_aura: 'aura-gold',
+        equipped_frame: 'frame-gold',
+        cosmetic_aura_gold: true,
+        cosmetic_frame_gold: true
+      }
+    },
+    midnightSnap: { xp: 1815, streak: 13, learned: 40, todayXp: 0 },
+    badges: ['first_lesson', 'streak_3', 'streak_7', 'speed_demon', 'silver_league', 'gold_league'],
+    history: [
+      { word: 'n1', correct: true, points: 4, date: new Date().toISOString(), mode: 'sprint' },
+      { word: 'n2', correct: true, points: 4, date: new Date().toISOString(), mode: 'srs' }
+    ]
+  };
+}
+
 export function saveProfile(nick,data){const all=localProfiles();all[nick]={...data,nick,updatedAt:new Date().toISOString()};localStorage.setItem(PROFILES_KEY,JSON.stringify(all));if(nick)localStorage.setItem(ACTIVE_KEY,nick)}
-export function loadProfile(nick){return localProfiles()[nick]||null}
+export function loadProfile(nick){
+  const found = localProfiles()[nick];
+  if (found) return found;
+  if (String(nick).toLowerCase() === 'tester') {
+    const t = getTesterProfile();
+    saveProfile('tester', t);
+    return t;
+  }
+  return null;
+}
 export function getActiveNick(){return localStorage.getItem(ACTIVE_KEY)||''}
 export function setGuestSession(on){if(on)localStorage.setItem(GUEST_KEY,'1');else localStorage.removeItem(GUEST_KEY)}
 export function isGuestSession(){return localStorage.getItem(GUEST_KEY)==='1'}

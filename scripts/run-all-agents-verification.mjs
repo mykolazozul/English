@@ -63,10 +63,14 @@ async function runVerification() {
     recordReport('Agent 1: Build & Entrypoint', 'FAIL', e.message);
   }
 
-  // Log in as Guest to access all app pages
+  // Log in as Tester (or Guest) to access all app pages with rich pre-seeded stats
   try {
-    const guestBtn = page.getByRole('button', { name: /Увійти як гість/i }).first();
-    if (await guestBtn.isVisible()) {
+    const testerBtn = page.getByRole('button', { name: /Tester/i }).first();
+    const guestBtn = page.getByRole('button', { name: /Гість/i }).first();
+    if (await testerBtn.isVisible()) {
+      await testerBtn.click();
+      await page.waitForTimeout(1200);
+    } else if (await guestBtn.isVisible()) {
       await guestBtn.click();
       await page.waitForTimeout(1200);
     }
@@ -115,8 +119,10 @@ async function runVerification() {
       await page.waitForTimeout(600);
     }
 
-    const tavernTitle = await page.locator('.tavern-title').textContent().catch(() => '');
-    const auraPill = await page.locator('.currency-pill-coins').count();
+    const tavernTitle = await page.locator('.tavern-wood-h1, .tavern-title').textContent().catch(() => '');
+    const subTabs = await page.locator('.tavern-tab-btn').count();
+    const cards = await page.locator('.tavern-parchment-card').count();
+    const auraPill = await page.locator('.tavern-purse-badge, .currency-pill-coins').count();
     
     // Test Economy Modal
     let econModalOk = false;
@@ -151,7 +157,7 @@ async function runVerification() {
     recordReport(
       'Agent 3: Tavern Shop & Gifts',
       'PASS',
-      `Tavern header: "${tavernTitle.trim()}", Coin Halo Aura: ${auraPill > 0}, Economy Modal: ${econModalOk}, Gift Modal: ${giftModalOk}, Gift items: ${giftBtns}`,
+      `Tavern header: "${tavernTitle.trim()}", Tabs: ${subTabs}, Cards: ${cards}, Purse Badge: ${auraPill > 0}`,
       'agent3_tavern_shop.png'
     );
   } catch (e) {
@@ -162,6 +168,11 @@ async function runVerification() {
   // AGENT 4: Cosmetics Market (Auras, Frames, Avatars)
   // ----------------------------------------------------
   try {
+    const gearTab = page.locator('button:has-text("ТОВАРИ МАНДРІВНИКА")').first();
+    if (await gearTab.isVisible()) {
+      await gearTab.click();
+      await page.waitForTimeout(400);
+    }
     const auraCount = await page.locator('.aura-gold, .aura-rainbow, .aura-neon, .aura-cosmic, .aura-crimson').count();
     const frameCount = await page.locator('.frame-gold, .frame-hex, .frame-runic, .frame-ice, .frame-emerald').count();
     const animAvaCount = await page.locator('.cyber-samurai, .astral-sorcerer, .phoenix-sovereign, .solar-pharaoh, .frost-titan').count();

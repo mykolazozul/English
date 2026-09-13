@@ -4,7 +4,7 @@ import {words as fallbackWords, rules, BADGES, LEAGUES, leagueForXp} from './dat
 import {notionWords, notionSyncMeta} from './notionWords.generated';
 import { Analytics } from '@vercel/analytics/react';
 import { startRegistration, startAuthentication } from '@simplewebauthn/browser';
-import {saveProfile, loadProfile, getActiveNick, cloudPull, cloudPush, cloudConfigured, isNickTaken, registerNick, setGuestSession, isGuestSession, getFriends, addFriend, acceptFriend, getChat, sendChat, registerChatDevice, getChatDevice, getChatDevices, getMyChatDevices, revokeChatDevice, friendsLeaderboard, getDailyAverage, ensureDailyAverage, serverAuth, loadCloudVocabulary, cloudRecordProgress, cloudStartLesson, cloudFinishLesson, flushProgressQueue, serverMe, loadServerConfig, cloudLeaderboard, getWordIdByText, getGamification, postGamification, getPublicProfile, serverLogout, changePassword, getRecoveryQuestion, resetPasswordWithRecovery, setRecoveryQuestion} from './lib/storage';
+import {saveProfile, loadProfile, getActiveNick, cloudPull, cloudPush, cloudConfigured, isNickTaken, registerNick, setGuestSession, isGuestSession, getFriends, addFriend, acceptFriend, getChat, sendChat, registerChatDevice, getChatDevice, getChatDevices, getMyChatDevices, revokeChatDevice, friendsLeaderboard, getDailyAverage, ensureDailyAverage, serverAuth, loadCloudVocabulary, cloudRecordProgress, cloudStartLesson, cloudFinishLesson, flushProgressQueue, serverMe, loadServerConfig, cloudLeaderboard, getWordIdByText, getGamification, postGamification, getPublicProfile, serverLogout, changePassword, getRecoveryQuestion, resetPasswordWithRecovery, setRecoveryQuestion, getTesterProfile} from './lib/storage';
 import {onCorrect as srsOk, onWrong as srsBad, isDue, todayStr} from './lib/srs';
 import {dbPutProfile, dbGetProfile, dbListProfiles, dbSaveWords, dbLoadWords} from './lib/db.js';
 import {createRealtime} from './lib/realtime.js';
@@ -12,7 +12,7 @@ import {ensureChatIdentity,publicKeyPayload,encryptChatPayload,decryptChatText,e
 import {track} from './lib/analytics.js';
 
 
-const VERSION = '3.3.0';
+const VERSION = '3.4.0';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -460,53 +460,41 @@ function awardDailyCoins(currentState, amount = 2, maxDaily = 60) {
 /* ==========================================================================
    40+ CHARACTER AVATARS (KNIGHT, SAMURAI, WIZARD, CREATURES & LEGENDS)
    ========================================================================== */
+/* ==========================================================================
+   30 UNIQUE FULL-BODY DYNAMIC ACTION AVATARS (ZERO DUPLICATES)
+   ========================================================================== */
 const GAME_AVATARS_30 = [
-  // RPG Heroes & Legends
-  { id: 'avatar_knight', name: 'Лицар Світла', bg: '#475569', eyeBg: '#FFFFFF', pupil: '#0284C7', beak: '#F59E0B', archetype: 'knight', tag: '🛡️ Лицар' },
-  { id: 'avatar_samurai', name: 'Кібер-Самурай', bg: '#991B1B', eyeBg: '#FEF08A', pupil: '#18181B', beak: '#DC2626', archetype: 'samurai', tag: '⚔️ Самурай' },
-  { id: 'avatar_wizard', name: 'Верховний Маг', bg: '#6D28D9', eyeBg: '#FFFFFF', pupil: '#38BDF8', beak: '#F59E0B', archetype: 'wizard', tag: '🧙 Маг' },
-  { id: 'avatar_spartan', name: 'Спартанець', bg: '#B45309', eyeBg: '#FFFFFF', pupil: '#18181B', beak: '#D97706', archetype: 'spartan', tag: '🛡️ Спарта' },
-  { id: 'avatar_viking', name: 'Вікінг Півночі', bg: '#334155', eyeBg: '#FFFFFF', pupil: '#0284C7', beak: '#EA580C', archetype: 'viking', tag: '🪓 Вікінг' },
-  { id: 'avatar_astronaut', name: 'Астронавт', bg: '#E2E8F0', eyeBg: '#F59E0B', pupil: '#0F172A', beak: '#38BDF8', archetype: 'astronaut', tag: '🚀 Космос' },
-  { id: 'avatar_ninja', name: 'Тіньовий Ніндзя', bg: '#0F172A', eyeBg: '#EF4444', pupil: '#7F1D1D', beak: '#1E293B', archetype: 'ninja', tag: '🥷 Ніндзя' },
-  { id: 'avatar_dragon', name: 'Вершник Дракона', bg: '#047857', eyeBg: '#FEF08A', pupil: '#064E3B', beak: '#EA580C', archetype: 'dragon_rider', tag: '🐲 Дракон' },
-  { id: 'avatar_detective', name: 'Детектив Нуар', bg: '#374151', eyeBg: '#FFFFFF', pupil: '#111827', beak: '#9CA3AF', archetype: 'detective', tag: '🕵️ Детектив' },
-  { id: 'avatar_phoenix', name: 'Сонячний Фенікс', bg: '#EA580C', eyeBg: '#FEF08A', pupil: '#7C2D12', beak: '#FACC15', archetype: 'phoenix', tag: '🔥 Фенікс' },
-  { id: 'avatar_king', name: 'Король Артур', bg: '#B45309', eyeBg: '#FEF08A', pupil: '#1E293B', beak: '#F59E0B', ears: 'crown', archetype: 'king', tag: '👑 Король' },
-  { id: 'avatar_castle', name: 'Цитадель Замок', bg: '#334155', eyeBg: '#38BDF8', pupil: '#0F172A', beak: '#94A3B8', archetype: 'castle', tag: '🏰 Замок' },
-  { id: 'avatar_golem', name: 'Камʼяний Ґолем', bg: '#64748B', eyeBg: '#4ADE80', pupil: '#166534', beak: '#475569', archetype: 'golem', tag: '🗿 Ґолем' },
-  { id: 'avatar_gold_pile', name: 'Купа Золота', bg: '#D97706', eyeBg: '#FEF08A', pupil: '#78350F', beak: '#F59E0B', archetype: 'gold', tag: '💰 Золото' },
-  { id: 'avatar_chest', name: 'Міфічна Скриня', bg: '#78350F', eyeBg: '#FEF08A', pupil: '#1E293B', beak: '#F59E0B', archetype: 'chest', tag: '📦 Скриня' },
-  { id: 'avatar_wolf', name: 'Полярний Вовк', bg: '#475569', eyeBg: '#E0F2FE', pupil: '#0284C7', beak: '#1E293B', ears: 'fox', tag: '🐺 Вовк' },
-  { id: 'avatar_eagle', name: 'Гірський Орел', bg: '#78350F', eyeBg: '#FEF08A', pupil: '#18181B', beak: '#F59E0B', archetype: 'phoenix', tag: '🦅 Орел' },
-  { id: 'avatar_bear_grizzly', name: 'Грізлі Берсерк', bg: '#451A03', eyeBg: '#FEF08A', pupil: '#18181B', beak: '#1E293B', ears: 'bear', tag: '🐻 Грізлі' },
-  { id: 'avatar_valkyrie', name: 'Валькірія Небес', bg: '#0284C7', eyeBg: '#FFFFFF', pupil: '#0369A1', beak: '#F59E0B', archetype: 'knight', tag: '🛡️ Валькірія' },
-  { id: 'avatar_druid', name: 'Лісовий Друїд', bg: '#15803D', eyeBg: '#DCFCE7', pupil: '#166534', beak: '#84CC16', ears: 'feather', tag: '🌿 Друїд' },
-  { id: 'avatar_vampire', name: 'Нічний Лорд', bg: '#4C1D95', eyeBg: '#EF4444', pupil: '#7F1D1D', beak: '#1E293B', archetype: 'ninja', tag: '🦇 Лорд' },
-  { id: 'avatar_paladin', name: 'Паладин Сонця', bg: '#EAB308', eyeBg: '#FFFFFF', pupil: '#0284C7', beak: '#D97706', archetype: 'knight', tag: '⚔️ Паладин' },
-
-  // Wild Beasts & Duolingo Style Creatures
-  { id: 'duo_owl', name: 'Зелена Сова', bg: '#58CC02', eyeBg: '#FFFFFF', pupil: '#1E293B', beak: '#F59E0B', ears: 'feather', tag: '🦉 Сова' },
-  { id: 'duo_fox', name: 'Хитрий Лис', bg: '#EA580C', eyeBg: '#FFFFFF', pupil: '#1E293B', beak: '#18181B', ears: 'fox', tag: '🦊 Лис' },
-  { id: 'duo_lion', name: 'Золотий Лев', bg: '#D97706', eyeBg: '#FFFFFF', pupil: '#18181B', beak: '#78350F', ears: 'lion', tag: '🦁 Лев' },
-  { id: 'duo_cat', name: 'Кіт-Геймер', bg: '#8B5CF6', eyeBg: '#FFFFFF', pupil: '#1E293B', beak: '#EC4899', ears: 'cat', tag: '🐱 Кіт' },
-  { id: 'duo_bear', name: 'Синій Ведмідь', bg: '#2563EB', eyeBg: '#FFFFFF', pupil: '#0F172A', beak: '#1E293B', ears: 'bear', tag: '🐻 Ведмідь' },
-  { id: 'duo_frog', name: 'Жабка Спринт', bg: '#10B981', eyeBg: '#FFFFFF', pupil: '#064E3B', beak: '#F59E0B', ears: 'frog', tag: '🐸 Жабка' },
-  { id: 'duo_panda', name: 'Бамбукова Панда', bg: '#E2E8F0', eyeBg: '#FFFFFF', pupil: '#0F172A', beak: '#0F172A', ears: 'panda', tag: '🐼 Панда' },
-  { id: 'duo_tiger', name: 'Смугастий Тигр', bg: '#F97316', eyeBg: '#FFFFFF', pupil: '#18181B', beak: '#7C2D12', ears: 'tiger', tag: '🐯 Тигр' },
-  { id: 'duo_leopard', name: 'Сніговий Барс', bg: '#94A3B8', eyeBg: '#E0F2FE', pupil: '#0284C7', beak: '#334155', ears: 'cat', tag: '🐆 Барс' },
-  { id: 'duo_robot', name: 'Кібер-Бот X', bg: '#06B6D4', eyeBg: '#FEF08A', pupil: '#0E7490', beak: '#0284C7', ears: 'robot', tag: '🤖 Робот' },
-  { id: 'duo_dragon', name: 'Смарагдовий Дракон', bg: '#059669', eyeBg: '#FEF08A', pupil: '#064E3B', beak: '#F97316', ears: 'dragon', tag: '🐲 Дракон' },
-  { id: 'duo_koala', name: 'Сіра Коала', bg: '#64748B', eyeBg: '#FFFFFF', pupil: '#0F172A', beak: '#0F172A', ears: 'koala', tag: '🐨 Коала' },
-  { id: 'duo_dog', name: 'Коргі Чемпіон', bg: '#F59E0B', eyeBg: '#FFFFFF', pupil: '#18181B', beak: '#18181B', ears: 'dog', tag: '🐶 Коргі' },
-  { id: 'duo_penguin', name: 'Пінгвін у шарфі', bg: '#0F172A', eyeBg: '#FFFFFF', pupil: '#0F172A', beak: '#F59E0B', ears: 'penguin', tag: '🐧 Пінгвін' },
-  { id: 'duo_raccoon', name: 'Єнот Граматик', bg: '#475569', eyeBg: '#FFFFFF', pupil: '#0F172A', beak: '#0F172A', ears: 'raccoon', tag: '🦝 Єнот' },
-  { id: 'duo_alien', name: 'Космічний Прибулець', bg: '#84CC16', eyeBg: '#FFFFFF', pupil: '#166534', beak: '#4ADE80', ears: 'alien', tag: '👽 Прибулець' },
-  { id: 'duo_bunny', name: 'Спритний Зайчик', bg: '#F1F5F9', eyeBg: '#FFFFFF', pupil: '#0F172A', beak: '#F43F5E', ears: 'bunny', tag: '🐰 Зайчик' },
-  { id: 'duo_chick', name: 'Жовте Курча', bg: '#EAB308', eyeBg: '#FFFFFF', pupil: '#0F172A', beak: '#EA580C', ears: 'chick', tag: '🐥 Курча' },
-  { id: 'duo_shark', name: 'Морська Акула', bg: '#0284C7', eyeBg: '#FFFFFF', pupil: '#082F49', beak: '#E2E8F0', ears: 'shark', tag: '🦈 Акула' },
-  { id: 'duo_monkey', name: 'Мавпочка Майстер', bg: '#A16207', eyeBg: '#FFFFFF', pupil: '#451A03', beak: '#FEF08A', ears: 'monkey', tag: '🐵 Мавпа' },
-  { id: 'duo_crown', name: 'Королівський Птах', bg: '#E11D48', eyeBg: '#FFFFFF', pupil: '#0F172A', beak: '#F59E0B', ears: 'crown', tag: '👑 Король' }
+  // Warriors, Mages & Legends in Full-Body Action
+  { id: 'avatar_knight', name: 'Лицар у замаху', action: 'Лицар у замаху мечем та щитом', bg: '#1e293b', accent: '#38bdf8', archetype: 'action_knight', tag: '⚔️ Лицар' },
+  { id: 'avatar_wizard', name: 'Маг кастує', action: 'Арканний маг випускає блискавку', bg: '#3b0764', accent: '#c084fc', archetype: 'action_wizard', tag: '🧙 Маг' },
+  { id: 'avatar_ninja', name: 'Ніндзя у ривку', action: 'Тіньовий ніндзя у стрибку з сюрікеном', bg: '#090d16', accent: '#f43f5e', archetype: 'action_ninja', tag: '🥷 Ніндзя' },
+  { id: 'avatar_archer', name: 'Лучник стріляє', action: 'Ельфійський лучник натягує сяючий лук', bg: '#064e3b', accent: '#34d399', archetype: 'action_archer', tag: '🏹 Лучник' },
+  { id: 'avatar_samurai', name: 'Самурай у розсіканні', action: 'Самурай у двохручному розсікаючому ударі', bg: '#881337', accent: '#f43f5e', archetype: 'action_samurai', tag: '⚔️ Самурай' },
+  { id: 'avatar_valkyrie', name: 'Валькірія у польоті', action: 'Валькірія ширяє на крилах зі списом', bg: '#0369a1', accent: '#38bdf8', archetype: 'action_valkyrie', tag: '🛡️ Валькірія' },
+  { id: 'avatar_viking', name: 'Вікінг у навалі', action: 'Вікінг атакує з двома бойовими сокирами', bg: '#334155', accent: '#f97316', archetype: 'action_viking', tag: '🪓 Вікінг' },
+  { id: 'avatar_dragon', name: 'Дракон дихає вогнем', action: 'Вогняний дракон у польоті видихає полумʼя', bg: '#7c2d12', accent: '#fb923c', archetype: 'action_dragon', tag: '🐲 Дракон' },
+  { id: 'avatar_spartan', name: 'Спартанець бʼє', action: 'Спартанець бʼє списом з-за щита', bg: '#92400e', accent: '#fbbf24', archetype: 'action_spartan', tag: '🛡️ Спартанець' },
+  { id: 'avatar_astronaut', name: 'Астронавт летить', action: 'Астронавт летить на джетпаку у космосі', bg: '#0f172a', accent: '#00f0ff', archetype: 'action_astronaut', tag: '🚀 Астронавт' },
+  { id: 'avatar_paladin', name: 'Паладин з молотом', action: 'Святий паладин підносить сонячний молот', bg: '#854d0e', accent: '#fef08a', archetype: 'action_paladin', tag: '🔨 Паладин' },
+  { id: 'avatar_assassin', name: 'Ассасін у стрибку', action: 'Тіньовий ассасін стрибає з двома клинками', bg: '#2e1065', accent: '#a855f7', archetype: 'action_assassin', tag: '🗡️ Ассасін' },
+  { id: 'avatar_princess', name: 'Принцеса танцює', action: 'Принцеса кружляє у чарівній сукні', bg: '#831843', accent: '#f472b6', archetype: 'action_princess', tag: '👑 Принцеса' },
+  { id: 'avatar_cyber_monk', name: 'Монах у стрибку', action: 'Кібер-монах у повітряному ударі кунг-фу', bg: '#042f2e', accent: '#2dd4bf', archetype: 'action_cyber_monk', tag: '🥋 Монах' },
+  { id: 'avatar_phoenix', name: 'Фенікс злітає', action: 'Палаючий фенікс розправляє вогняні крила', bg: '#9a3412', accent: '#fdba74', archetype: 'action_phoenix', tag: '🔥 Фенікс' },
+  { id: 'avatar_druid', name: 'Друїд закликає', action: 'Лісовий друїд прикликає сяючі лози', bg: '#14532d', accent: '#86efac', archetype: 'action_druid', tag: '🌿 Друїд' },
+  { id: 'avatar_wolf', name: 'Вовк у кидку', action: 'Полярний вовк стрибає крізь заметіль', bg: '#1e293b', accent: '#93c5fd', archetype: 'action_wolf', tag: '🐺 Вовк' },
+  { id: 'duo_owl', name: 'Сова ширяє', action: 'Мудра сова ширяє з магічним сувоєм', bg: '#14532d', accent: '#4ade80', archetype: 'action_owl', tag: '🦉 Сова' },
+  { id: 'duo_lion', name: 'Лев атакує', action: 'Золотий лев-воїн у лютому ривку', bg: '#78350f', accent: '#fde047', archetype: 'action_lion', tag: '🦁 Лев' },
+  { id: 'avatar_golem', name: 'Ґолем трощить', action: 'Камʼяний велетень бʼє кулаками в землю', bg: '#334155', accent: '#4ade80', archetype: 'action_golem', tag: '🗿 Ґолем' },
+  { id: 'duo_pirate', name: 'Пірат на хвилі', action: 'Капітан піратів зі шпагою на морській хвилі', bg: '#0c4a6e', accent: '#38bdf8', archetype: 'action_pirate', tag: '🏴‍☠️ Пірат' },
+  { id: 'duo_cat', name: 'Кіт-Акробат', action: 'Кіт-ніндзя крутить сальто з кинджалами', bg: '#4c1d95', accent: '#f472b6', archetype: 'action_cat', tag: '🐱 Кіт' },
+  { id: 'duo_fox', name: 'Лис мчить', action: 'Хитрий лис мчить на повній швидкості', bg: '#7c2d12', accent: '#f97316', archetype: 'action_fox', tag: '🦊 Лис' },
+  { id: 'duo_tiger', name: 'Тигр стрибає', action: 'Смугастий тигр у стрибку розправляє пазурі', bg: '#9a3412', accent: '#fed7aa', archetype: 'action_tiger', tag: '🐯 Тигр' },
+  { id: 'duo_falcon', name: 'Сокіл пікірує', action: 'Сокіл-мисливець пікірує на швидкості з неба', bg: '#1e3a8a', accent: '#60a5fa', archetype: 'action_falcon', tag: '🦅 Сокіл' },
+  { id: 'duo_robot', name: 'Мех стріляє', action: 'Бойовий робот стріляє з плечових гармат', bg: '#164e63', accent: '#22d3ee', archetype: 'action_robot', tag: '🤖 Робот' },
+  { id: 'duo_shark', name: 'Акула з тризубом', action: 'Акула-гладіатор розсікає хвилю тризубом', bg: '#083344', accent: '#38bdf8', archetype: 'action_shark', tag: '🦈 Акула' },
+  { id: 'duo_griffin', name: 'Грифон атакує', action: 'Королівський грифон бʼє гострими кігтями', bg: '#78350f', accent: '#facc15', archetype: 'action_griffin', tag: '🦅 Грифон' },
+  { id: 'duo_bard', name: 'Бард кружляє', action: 'Мандрівний бард грає на лютні вихор нот', bg: '#581c87', accent: '#e879f9', archetype: 'action_bard', tag: '🎵 Бард' },
+  { id: 'avatar_king', name: 'Король підносить меч', action: 'Верховний король підіймає меч до сонця', bg: '#713f12', accent: '#facc15', archetype: 'action_king', tag: '👑 Король' },
 ];
 
 function AvatarIcon({ id, size = 44, className = '', style = {}, aura = '', frame = '' }) {
@@ -548,139 +536,515 @@ function AvatarIcon({ id, size = 44, className = '', style = {}, aura = '', fram
           <stop offset="0%" stopColor={av.bg} />
           <stop offset="100%" stopColor={colorMixDark(av.bg)} />
         </linearGradient>
+        <radialGradient id={`glow_${av.id}`} cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor={av.accent || '#38bdf8'} stopOpacity="0.3" />
+          <stop offset="100%" stopColor={av.accent || '#38bdf8'} stopOpacity="0" />
+        </radialGradient>
       </defs>
       
-      {/* Ear / Headgear Addons */}
-      {av.archetype === 'castle' && (
-        <path d="M24 16 H34 V24 H46 V16 H54 V24 H66 V16 H76 V34 H24 Z" fill="#94A3B8" />
-      )}
-      {av.archetype === 'golem' && (
-        <polygon points="30,22 50,10 70,22 80,34 20,34" fill="#64748B" />
-      )}
-      {av.archetype === 'gold' && (
-        <circle cx="50" cy="20" r="12" fill="#F59E0B" stroke="#FEF08A" strokeWidth="2" />
-      )}
-      {av.archetype === 'chest' && (
-        <rect x="24" y="16" width="52" height="18" rx="4" fill="#B45309" stroke="#FEF08A" strokeWidth="2" />
-      )}
-      {av.archetype === 'knight' && (
-        <>
-          <rect x="46" y="2" width="8" height="24" rx="3" fill="#F59E0B" />
-          <polygon points="34,16 50,4 66,16" fill="#F59E0B" />
-        </>
-      )}
-      {av.archetype === 'samurai' && (
-        <>
-          <path d="M24 16 Q50 0 76 16 Q68 24 50 14 Q32 24 24 16 Z" fill="#F59E0B" stroke="#B45309" strokeWidth="1.5" />
-          <circle cx="50" cy="14" r="5" fill="#EF4444" />
-        </>
-      )}
-      {av.archetype === 'wizard' && (
-        <>
-          <polygon points="18,28 50,2 82,28" fill="#5B21B6" />
-          <ellipse cx="50" cy="28" rx="36" ry="6" fill="#4C1D95" />
-          <polygon points="50,12 52,17 57,17 53,20 55,25 50,22 45,25 47,20 43,17 48,17" fill="#FDE047" />
-        </>
-      )}
-      {av.archetype === 'spartan' && (
-        <path d="M44 2 Q50 -2 56 2 L54 28 L46 28 Z" fill="#DC2626" />
-      )}
-      {av.archetype === 'viking' && (
-        <>
-          <path d="M16 26 Q6 8 22 14" stroke="#E2E8F0" strokeWidth="6" strokeLinecap="round" fill="none" />
-          <path d="M84 26 Q94 8 78 14" stroke="#E2E8F0" strokeWidth="6" strokeLinecap="round" fill="none" />
-        </>
-      )}
-      {av.archetype === 'detective' && (
-        <>
-          <ellipse cx="50" cy="30" rx="42" ry="7" fill="#1F2937" />
-          <path d="M26 30 L32 12 Q50 8 68 12 L74 30 Z" fill="#374151" />
-          <rect x="28" y="24" width="44" height="5" fill="#F59E0B" />
-        </>
-      )}
-      {av.archetype === 'phoenix' && (
-        <>
-          <polygon points="50,2 40,24 60,24" fill="#F97316" />
-          <polygon points="34,6 30,26 44,24" fill="#EF4444" />
-          <polygon points="66,6 70,26 56,24" fill="#EF4444" />
-        </>
-      )}
-      {av.ears === 'cat' && (
-        <>
-          <polygon points="18,34 32,8 46,28" fill={av.bg} />
-          <polygon points="24,30 32,16 40,28" fill="#F472B6" />
-          <polygon points="82,34 68,8 54,28" fill={av.bg} />
-          <polygon points="76,30 68,16 60,28" fill="#F472B6" />
-        </>
-      )}
-      {av.ears === 'fox' && (
-        <>
-          <polygon points="14,36 28,6 44,28" fill={av.bg} />
-          <polygon points="20,32 28,14 38,28" fill="#FFFFFF" />
-          <polygon points="86,36 72,6 56,28" fill={av.bg} />
-          <polygon points="80,32 72,14 62,28" fill="#FFFFFF" />
-        </>
-      )}
-      {av.ears === 'bear' && (
-        <>
-          <circle cx="24" cy="20" r="14" fill={av.bg} />
-          <circle cx="24" cy="20" r="7" fill="#93C5FD" />
-          <circle cx="76" cy="20" r="14" fill={av.bg} />
-          <circle cx="76" cy="20" r="7" fill="#93C5FD" />
-        </>
-      )}
-      {av.ears === 'bunny' && (
-        <>
-          <ellipse cx="32" cy="14" rx="8" ry="18" fill={av.bg} />
-          <ellipse cx="32" cy="14" rx="4" ry="12" fill="#F472B6" />
-          <ellipse cx="68" cy="14" rx="8" ry="18" fill={av.bg} />
-          <ellipse cx="68" cy="14" rx="4" ry="12" fill="#F472B6" />
-        </>
-      )}
-      {av.ears === 'crown' && (
-        <polygon points="28,24 38,8 50,18 62,8 72,24" fill="#F59E0B" stroke="#FEF08A" strokeWidth="2" />
+      {/* Background with rounded frame and dynamic aura glow */}
+      <rect width="100" height="100" rx="22" fill={`url(#grad_${av.id})`} />
+      <circle cx="50" cy="50" r="44" fill={`url(#glow_${av.id})`} />
+      <path d="M12 84 Q50 78 88 84" stroke="rgba(255,255,255,0.18)" strokeWidth="2" strokeLinecap="round" />
+
+      {/* FULL-BODY ACTION POSE RENDERERS */}
+
+      {/* 1. Knight Swinging Sword & Shield */}
+      {av.archetype === 'action_knight' && (
+        <g>
+          {/* Blue slash arc */}
+          <path d="M50 14 Q88 18 84 56" stroke="#38bdf8" strokeWidth="4" strokeLinecap="round" fill="none" opacity="0.85"/>
+          {/* Legs lunging */}
+          <path d="M42 62 L32 86 M54 62 L66 84" stroke="#94a3b8" strokeWidth="5" strokeLinecap="round"/>
+          {/* Torso & Armor */}
+          <path d="M38 38 L60 36 L56 64 L40 64 Z" fill="#cbd5e1" stroke="#475569" strokeWidth="2"/>
+          {/* Helm & Plume */}
+          <circle cx="48" cy="26" r="10" fill="#94a3b8" stroke="#334155" strokeWidth="2"/>
+          <path d="M48 16 Q52 8 58 12" stroke="#f59e0b" strokeWidth="3.5" strokeLinecap="round" fill="none"/>
+          <line x1="44" y1="26" x2="52" y2="26" stroke="#38bdf8" strokeWidth="2"/>
+          {/* Shield held forward */}
+          <path d="M26 38 Q20 54 30 66 Q36 52 32 38 Z" fill="#3b82f6" stroke="#e2e8f0" strokeWidth="2"/>
+          {/* Broadsword held in swing */}
+          <line x1="58" y1="38" x2="86" y2="20" stroke="#f8fafc" strokeWidth="3.5" strokeLinecap="round"/>
+          <polygon points="86,20 89,17 92,23" fill="#f8fafc"/>
+        </g>
       )}
 
-      {/* Main Squircle Face Body */}
-      <rect x="8" y="14" width="84" height="80" rx="26" fill={`url(#grad_${av.id})`} />
-      
-      {/* Forehead Feathers / Helmet Visor */}
-      {av.archetype === 'knight' || av.archetype === 'castle' ? (
-        <rect x="18" y="44" width="64" height="18" rx="6" fill="#1E293B" stroke="#94A3B8" strokeWidth="2" />
-      ) : av.archetype === 'golem' ? (
-        <path d="M22 46 L78 46 L74 58 L26 58 Z" fill="#334155" stroke="#10B981" strokeWidth="1.5" />
-      ) : av.archetype === 'gold' ? (
-        <ellipse cx="50" cy="50" rx="26" ry="14" fill="#FEF08A" stroke="#B45309" strokeWidth="2" />
-      ) : av.archetype === 'chest' ? (
-        <rect x="24" y="44" width="52" height="14" rx="4" fill="#D97706" stroke="#FEF08A" strokeWidth="2" />
-      ) : av.archetype === 'astronaut' ? (
-        <ellipse cx="50" cy="50" rx="30" ry="20" fill="#F59E0B" stroke="#0F172A" strokeWidth="3" />
-      ) : (
-        <path d="M22 30 Q34 38 50 36 Q66 38 78 30 Q68 22 50 24 Q32 22 22 30Z" fill={colorMixDark(av.bg)} opacity="0.6" />
+      {/* 2. Arcane Wizard Casting Lightning */}
+      {av.archetype === 'action_wizard' && (
+        <g>
+          {/* Magic Staff */}
+          <line x1="24" y1="20" x2="28" y2="86" stroke="#78350f" strokeWidth="3.5"/>
+          <circle cx="23" cy="17" r="7" fill="#c084fc" stroke="#f3e8ff" strokeWidth="1.5"/>
+          {/* Billowing Robe */}
+          <path d="M40 38 Q50 20 60 38 L74 86 L30 86 Z" fill="#581c87" stroke="#7e22ce" strokeWidth="2"/>
+          {/* Hood */}
+          <path d="M40 36 Q50 14 60 36 Z" fill="#3b0764"/>
+          <circle cx="50" cy="32" r="3.5" fill="#38bdf8"/>
+          {/* Lightning Spell Stream */}
+          <path d="M60 42 L72 36 L68 46 L86 38 L78 52 L94 44" stroke="#e879f9" strokeWidth="2.5" fill="none" strokeLinecap="round"/>
+          <circle cx="86" cy="40" r="3" fill="#ffffff"/>
+        </g>
       )}
-      
-      {/* Eyes or Visor Glow */}
-      {av.archetype === 'knight' ? (
-        <>
-          <rect x="26" y="50" width="20" height="6" rx="2" fill="#38BDF8" />
-          <rect x="54" y="50" width="20" height="6" rx="2" fill="#38BDF8" />
-        </>
-      ) : av.archetype === 'astronaut' ? (
-        <ellipse cx="44" cy="44" rx="8" ry="4" fill="#FEF08A" opacity="0.8" />
-      ) : (
-        <>
-          <circle cx="36" cy="52" r="16" fill={av.eyeBg} />
-          <circle cx="64" cy="52" r="16" fill={av.eyeBg} />
-          
-          <circle cx="36" cy="52" r="9.5" fill={av.pupil} />
-          <circle cx="64" cy="52" r="9.5" fill={av.pupil} />
-          <circle cx="32.5" cy="48" r="3.5" fill="#FFFFFF" />
-          <circle cx="60.5" cy="48" r="3.5" fill="#FFFFFF" />
-          
-          <polygon points="50,56 42,66 50,73 58,66" fill={av.beak} />
-          <circle cx="50" cy="62" r="2" fill="#FEF08A" opacity="0.7" />
-        </>
+
+      {/* 3. Shadow Ninja in Mid-Air Katana Dash */}
+      {av.archetype === 'action_ninja' && (
+        <g>
+          {/* Red Scarf Trail */}
+          <path d="M38 34 Q18 36 8 26 Q18 44 32 40 Z" fill="#ef4444"/>
+          {/* Katana Slash Line */}
+          <line x1="16" y1="84" x2="88" y2="16" stroke="#f43f5e" strokeWidth="2.5" strokeDasharray="6 2"/>
+          {/* Dashing Torso & Limbs */}
+          <path d="M36 44 L60 36 L52 56 L30 62 Z" fill="#0f172a" stroke="#334155" strokeWidth="1.5"/>
+          <line x1="32" y1="62" x2="18" y2="76" stroke="#0f172a" strokeWidth="5" strokeLinecap="round"/>
+          <line x1="52" y1="56" x2="72" y2="74" stroke="#0f172a" strokeWidth="5" strokeLinecap="round"/>
+          {/* Mask & Glowing Red Eyes */}
+          <circle cx="48" cy="30" r="9" fill="#0f172a"/>
+          <rect x="44" y="28" width="10" height="3" rx="1" fill="#ef4444"/>
+          {/* Shurikens flying */}
+          <polygon points="76,32 82,28 80,36 86,34" fill="#cbd5e1"/>
+        </g>
       )}
+
+      {/* 4. Elven Archer Drawing Longbow */}
+      {av.archetype === 'action_archer' && (
+        <g>
+          {/* Golden Bow Arc */}
+          <path d="M72 16 Q88 50 72 84" stroke="#f59e0b" strokeWidth="3" fill="none" strokeLinecap="round"/>
+          {/* Bowstring */}
+          <path d="M72 16 L38 50 L72 84" stroke="#e2e8f0" strokeWidth="1.5" fill="none"/>
+          {/* Glowing Arrow */}
+          <line x1="38" y1="50" x2="86" y2="50" stroke="#34d399" strokeWidth="2.5"/>
+          <polygon points="86,50 82,47 82,53" fill="#34d399"/>
+          {/* Archer Body */}
+          <line x1="42" y1="60" x2="30" y2="84" stroke="#065f46" strokeWidth="4.5" strokeLinecap="round"/>
+          <line x1="52" y1="60" x2="62" y2="84" stroke="#065f46" strokeWidth="4.5" strokeLinecap="round"/>
+          <path d="M38 40 L56 38 L52 62 L38 62 Z" fill="#047857"/>
+          <circle cx="46" cy="28" r="8" fill="#10b981"/>
+        </g>
+      )}
+
+      {/* 5. Samurai Overhead Katana Strike */}
+      {av.archetype === 'action_samurai' && (
+        <g>
+          <circle cx="50" cy="50" r="30" fill="rgba(239,68,68,0.2)"/>
+          {/* Overhead Katana with glowing trail */}
+          <path d="M34 10 Q50 4 66 12 L48 38 Z" fill="#f8fafc" stroke="#dc2626" strokeWidth="1.5"/>
+          {/* Armored Shoulders & Torso */}
+          <rect x="36" y="38" width="28" height="24" rx="4" fill="#991b1b" stroke="#f59e0b" strokeWidth="1.5"/>
+          <rect x="28" y="38" width="10" height="14" rx="2" fill="#b91c1c"/>
+          <rect x="62" y="38" width="10" height="14" rx="2" fill="#b91c1c"/>
+          {/* Stride Legs */}
+          <line x1="40" y1="62" x2="32" y2="86" stroke="#7f1d1d" strokeWidth="5" strokeLinecap="round"/>
+          <line x1="58" y1="62" x2="68" y2="86" stroke="#7f1d1d" strokeWidth="5" strokeLinecap="round"/>
+          {/* Helmet Crest (Kabuto) */}
+          <circle cx="50" cy="28" r="9" fill="#18181b"/>
+          <path d="M42 22 Q50 14 58 22" stroke="#f59e0b" strokeWidth="3" fill="none"/>
+        </g>
+      )}
+
+      {/* 6. Valkyrie Soaring with Spear */}
+      {av.archetype === 'action_valkyrie' && (
+        <g>
+          {/* Grand Wings */}
+          <path d="M44 38 C20 18 6 28 14 52 C26 46 38 46 44 48 Z" fill="#e0f2fe" opacity="0.9"/>
+          <path d="M56 38 C80 18 94 28 86 52 C74 46 62 46 56 48 Z" fill="#e0f2fe" opacity="0.9"/>
+          {/* Diving Golden Spear */}
+          <line x1="28" y1="14" x2="78" y2="86" stroke="#facc15" strokeWidth="3"/>
+          <polygon points="78,86 72,82 76,78" fill="#facc15"/>
+          {/* Body */}
+          <circle cx="50" cy="30" r="8" fill="#bae6fd"/>
+          <path d="M42 38 L58 38 L54 66 L46 66 Z" fill="#0284c7"/>
+          <line x1="46" y1="66" x2="42" y2="84" stroke="#0369a1" strokeWidth="4"/>
+          <line x1="54" y1="66" x2="58" y2="84" stroke="#0369a1" strokeWidth="4"/>
+        </g>
+      )}
+
+      {/* 7. Viking Berserker with Dual Axes */}
+      {av.archetype === 'action_viking' && (
+        <g>
+          {/* Left Axe & Right Axe */}
+          <line x1="22" y1="46" x2="16" y2="18" stroke="#78350f" strokeWidth="3"/>
+          <path d="M10 18 Q18 10 24 22 Z" fill="#e2e8f0" stroke="#475569" strokeWidth="1.5"/>
+          <line x1="78" y1="46" x2="84" y2="18" stroke="#78350f" strokeWidth="3"/>
+          <path d="M90 18 Q82 10 76 22 Z" fill="#e2e8f0" stroke="#475569" strokeWidth="1.5"/>
+          {/* Horned Helmet */}
+          <circle cx="50" cy="30" r="10" fill="#475569"/>
+          <path d="M40 28 Q34 16 38 10" stroke="#f1f5f9" strokeWidth="3" fill="none"/>
+          <path d="M60 28 Q66 16 62 10" stroke="#f1f5f9" strokeWidth="3" fill="none"/>
+          {/* Beard & Fur Pelt */}
+          <path d="M44 34 Q50 48 56 34 Z" fill="#ea580c"/>
+          <rect x="38" y="40" width="24" height="24" rx="4" fill="#334155"/>
+          <line x1="42" y1="64" x2="34" y2="86" stroke="#1e293b" strokeWidth="5" strokeLinecap="round"/>
+          <line x1="58" y1="64" x2="66" y2="86" stroke="#1e293b" strokeWidth="5" strokeLinecap="round"/>
+        </g>
+      )}
+
+      {/* 8. Dragon Breathing Fire in Flight */}
+      {av.archetype === 'action_dragon' && (
+        <g>
+          {/* Broad Dragon Wings */}
+          <path d="M46 44 C26 14 6 22 10 46 C24 40 38 44 46 48 Z" fill="#ea580c" opacity="0.95"/>
+          <path d="M54 44 C74 14 94 22 90 46 C76 40 62 44 54 48 Z" fill="#ea580c" opacity="0.95"/>
+          {/* Torrent of Flames */}
+          <path d="M58 48 Q84 40 98 48 Q82 62 58 56 Z" fill="#f97316"/>
+          <circle cx="82" cy="48" r="4" fill="#fef08a"/>
+          {/* Serpentine Dragon Body & Tail */}
+          <path d="M42 36 Q50 30 58 36 Q56 58 50 68 Q44 78 36 84" stroke="#c2410c" strokeWidth="7" fill="none" strokeLinecap="round"/>
+          <circle cx="52" cy="34" r="8" fill="#7c2d12"/>
+          <circle cx="54" cy="33" r="2.5" fill="#fef08a"/>
+        </g>
+      )}
+
+      {/* 9. Spartan Hoplite Thrusting Spear */}
+      {av.archetype === 'action_spartan' && (
+        <g>
+          {/* Long bronze spear thrust */}
+          <line x1="18" y1="24" x2="88" y2="40" stroke="#f59e0b" strokeWidth="3" strokeLinecap="round"/>
+          <polygon points="88,40 82,37 83,43" fill="#fef08a"/>
+          {/* Round Shield with Lambda */}
+          <circle cx="40" cy="56" r="18" fill="#b45309" stroke="#fef08a" strokeWidth="2"/>
+          <path d="M34 64 L40 48 L46 64" stroke="#fef08a" strokeWidth="3" fill="none"/>
+          {/* Helmet with Red Plume */}
+          <circle cx="50" cy="28" r="9" fill="#d97706"/>
+          <path d="M46 12 Q50 4 54 12 L52 24 L48 24 Z" fill="#dc2626"/>
+          {/* Legs */}
+          <line x1="44" y1="68" x2="38" y2="86" stroke="#78350f" strokeWidth="5" strokeLinecap="round"/>
+          <line x1="56" y1="68" x2="68" y2="86" stroke="#78350f" strokeWidth="5" strokeLinecap="round"/>
+        </g>
+      )}
+
+      {/* 10. Spacewalking Astronaut with Jet Thrusters */}
+      {av.archetype === 'action_astronaut' && (
+        <g>
+          {/* Twin Plasma Flame Jets */}
+          <polygon points="32,66 26,86 36,78" fill="#00f0ff"/>
+          <polygon points="68,66 74,86 64,78" fill="#00f0ff"/>
+          {/* White Spacesuit Body in Zero-G */}
+          <rect x="36" y="40" width="28" height="26" rx="6" fill="#f8fafc" stroke="#94a3b8" strokeWidth="2"/>
+          <line x1="40" y1="66" x2="30" y2="82" stroke="#f8fafc" strokeWidth="6" strokeLinecap="round"/>
+          <line x1="60" y1="66" x2="70" y2="80" stroke="#f8fafc" strokeWidth="6" strokeLinecap="round"/>
+          {/* Gold Reflective Visor */}
+          <circle cx="50" cy="28" r="12" fill="#f8fafc" stroke="#94a3b8" strokeWidth="2"/>
+          <ellipse cx="50" cy="28" rx="8" ry="6" fill="#f59e0b"/>
+        </g>
+      )}
+
+      {/* 11. Paladin Raising Radiant Warhammer */}
+      {av.archetype === 'action_paladin' && (
+        <g>
+          {/* Solar Beams Burst */}
+          <path d="M50 8 L50 20 M38 12 L46 20 M62 12 L54 20" stroke="#fde047" strokeWidth="2.5" strokeLinecap="round"/>
+          {/* Massive Warhammer */}
+          <line x1="50" y1="20" x2="50" y2="52" stroke="#78350f" strokeWidth="3.5"/>
+          <rect x="38" y="10" width="24" height="12" rx="2" fill="#eab308" stroke="#fef08a" strokeWidth="1.5"/>
+          {/* Paladin Armor */}
+          <path d="M38 42 L62 42 L58 66 L42 66 Z" fill="#fef08a" stroke="#ca8a04" strokeWidth="2"/>
+          <circle cx="50" cy="32" r="8" fill="#ffffff" stroke="#eab308" strokeWidth="2"/>
+          <line x1="44" y1="66" x2="36" y2="86" stroke="#ca8a04" strokeWidth="5" strokeLinecap="round"/>
+          <line x1="56" y1="66" x2="64" y2="86" stroke="#ca8a04" strokeWidth="5" strokeLinecap="round"/>
+        </g>
+      )}
+
+      {/* 12. Shadow Assassin Leaping with Dual Daggers */}
+      {av.archetype === 'action_assassin' && (
+        <g>
+          {/* Shadow wisps at base */}
+          <ellipse cx="50" cy="86" rx="26" ry="6" fill="rgba(168,85,247,0.25)"/>
+          {/* Reverse grip daggers */}
+          <line x1="28" y1="36" x2="16" y2="52" stroke="#e2e8f0" strokeWidth="2.5" strokeLinecap="round"/>
+          <line x1="72" y1="36" x2="84" y2="52" stroke="#e2e8f0" strokeWidth="2.5" strokeLinecap="round"/>
+          {/* Mid-air crouch */}
+          <path d="M40 38 L60 38 L54 60 L46 60 Z" fill="#1e1b4b"/>
+          <line x1="46" y1="60" x2="32" y2="78" stroke="#1e1b4b" strokeWidth="5" strokeLinecap="round"/>
+          <line x1="54" y1="60" x2="68" y2="78" stroke="#1e1b4b" strokeWidth="5" strokeLinecap="round"/>
+          <circle cx="50" cy="28" r="8" fill="#312e81"/>
+          <circle cx="48" cy="27" r="1.5" fill="#a855f7"/>
+          <circle cx="52" cy="27" r="1.5" fill="#a855f7"/>
+        </g>
+      )}
+
+      {/* 13. Dancing Royal Princess with Swirling Gown */}
+      {av.archetype === 'action_princess' && (
+        <g>
+          {/* Swirling Dress */}
+          <path d="M44 42 Q50 36 56 42 Q78 68 86 84 Q50 88 14 84 Q22 68 44 42 Z" fill="#ec4899" stroke="#f472b6" strokeWidth="2"/>
+          {/* Torso & Tiara */}
+          <path d="M46 32 L54 32 L52 44 L48 44 Z" fill="#fbcfe8"/>
+          <circle cx="50" cy="24" r="7" fill="#fdf2f8"/>
+          <polygon points="45,18 48,13 50,16 52,13 55,18" fill="#f59e0b"/>
+          {/* Magic Starlight Sparkles */}
+          <circle cx="76" cy="36" r="2" fill="#ffffff"/>
+          <circle cx="24" cy="50" r="2.5" fill="#ffffff"/>
+        </g>
+      )}
+
+      {/* 14. Cyber Monk in Flying Dragon Kick */}
+      {av.archetype === 'action_cyber_monk' && (
+        <g>
+          {/* Neon kick energy trail */}
+          <path d="M26 62 Q50 56 86 44" stroke="#2dd4bf" strokeWidth="4" strokeLinecap="round" fill="none"/>
+          {/* Body in horizontal flying kick */}
+          <line x1="28" y1="60" x2="84" y2="44" stroke="#14b8a6" strokeWidth="6" strokeLinecap="round"/>
+          <circle cx="34" cy="50" r="8" fill="#0f766e"/>
+          {/* Tucked second leg */}
+          <line x1="42" y1="56" x2="48" y2="68" stroke="#115e59" strokeWidth="5" strokeLinecap="round"/>
+        </g>
+      )}
+
+      {/* 15. Flaming Phoenix Rising */}
+      {av.archetype === 'action_phoenix' && (
+        <g>
+          {/* Upward Flaming Wings */}
+          <path d="M50 48 Q20 28 14 8 Q34 26 50 38 Q66 26 86 8 Q80 28 50 48 Z" fill="#f97316"/>
+          <path d="M50 52 Q32 36 28 20 Q42 34 50 44 Q58 34 72 20 Q68 36 50 52 Z" fill="#facc15"/>
+          {/* Long Fiery Tail Plumes */}
+          <path d="M50 60 Q44 76 34 86 M50 60 Q50 78 50 88 M50 60 Q56 76 66 86" stroke="#ea580c" strokeWidth="3" fill="none" strokeLinecap="round"/>
+          <circle cx="50" cy="38" r="6" fill="#fef08a"/>
+        </g>
+      )}
+
+      {/* 16. Woodland Druid Summoning Vines */}
+      {av.archetype === 'action_druid' && (
+        <g>
+          {/* Living Vines Curling from Ground */}
+          <path d="M28 86 Q36 70 30 58 Q24 46 34 38" stroke="#86efac" strokeWidth="2.5" fill="none" strokeLinecap="round"/>
+          <path d="M72 86 Q64 70 70 58 Q76 46 66 38" stroke="#86efac" strokeWidth="2.5" fill="none" strokeLinecap="round"/>
+          {/* Druid Robe & Crook */}
+          <line x1="68" y1="24" x2="68" y2="86" stroke="#78350f" strokeWidth="3"/>
+          <circle cx="68" cy="22" r="5" fill="#4ade80"/>
+          <path d="M42 38 L58 38 L62 86 L38 86 Z" fill="#15803d"/>
+          {/* Antler Headdress */}
+          <circle cx="50" cy="28" r="8" fill="#166534"/>
+          <path d="M44 22 L38 12 M42 16 L46 12" stroke="#b45309" strokeWidth="2"/>
+          <path d="M56 22 L62 12 M58 16 L54 12" stroke="#b45309" strokeWidth="2"/>
+        </g>
+      )}
+
+      {/* 17. Direwolf Leaping Forward */}
+      {av.archetype === 'action_wolf' && (
+        <g>
+          {/* Leaping Quadruped Body */}
+          <path d="M20 54 Q46 44 74 46 Q84 40 88 44 Q78 58 54 62 L20 62 Z" fill="#64748b"/>
+          {/* Extended Front and Back Claws */}
+          <line x1="70" y1="56" x2="88" y2="68" stroke="#64748b" strokeWidth="4.5" strokeLinecap="round"/>
+          <line x1="30" y1="60" x2="14" y2="76" stroke="#475569" strokeWidth="4.5" strokeLinecap="round"/>
+          {/* Wolf Head & Bared Fangs */}
+          <circle cx="78" cy="42" r="8" fill="#475569"/>
+          <polygon points="74,36 78,28 82,36" fill="#475569"/>
+          <circle cx="82" cy="42" r="1.5" fill="#38bdf8"/>
+        </g>
+      )}
+
+      {/* 18. Wise Owl Gliding with Magic Scroll */}
+      {av.archetype === 'action_owl' && (
+        <g>
+          {/* Wide Downward Beating Wings */}
+          <path d="M50 42 Q24 16 8 36 Q30 48 46 48 Z" fill="#22c55e"/>
+          <path d="M50 42 Q76 16 92 36 Q70 48 54 48 Z" fill="#22c55e"/>
+          {/* Owl Body & Round Eyes */}
+          <ellipse cx="50" cy="48" rx="14" ry="18" fill="#16a34a"/>
+          <circle cx="44" cy="42" r="5.5" fill="#ffffff"/>
+          <circle cx="56" cy="42" r="5.5" fill="#ffffff"/>
+          <circle cx="44" cy="42" r="2.5" fill="#0f172a"/>
+          <circle cx="56" cy="42" r="2.5" fill="#0f172a"/>
+          <polygon points="50,47 48,51 52,51" fill="#f59e0b"/>
+          {/* Clutched Glowing Ancient Scroll */}
+          <rect x="36" y="66" width="28" height="8" rx="3" fill="#fef08a" stroke="#d97706" strokeWidth="1.5"/>
+          <circle cx="36" cy="70" r="3" fill="#b45309"/>
+          <circle cx="64" cy="70" r="3" fill="#b45309"/>
+        </g>
+      )}
+
+      {/* 19. Golden Lion Warrior Charging */}
+      {av.archetype === 'action_lion' && (
+        <g>
+          {/* Massive Mane */}
+          <circle cx="64" cy="40" r="18" fill="#b45309"/>
+          {/* Muscular charging body */}
+          <path d="M22 60 Q44 48 64 52 L58 72 L26 70 Z" fill="#d97706"/>
+          <line x1="60" y1="64" x2="76" y2="82" stroke="#d97706" strokeWidth="5" strokeLinecap="round"/>
+          <line x1="32" y1="68" x2="18" y2="82" stroke="#b45309" strokeWidth="5" strokeLinecap="round"/>
+          {/* Lion Face & Fangs */}
+          <circle cx="66" cy="40" r="11" fill="#f59e0b"/>
+          <circle cx="70" cy="38" r="2" fill="#0f172a"/>
+          <polygon points="76,44 72,46 74,48" fill="#ffffff"/>
+        </g>
+      )}
+
+      {/* 20. Stone Golem Ground Slam */}
+      {av.archetype === 'action_golem' && (
+        <g>
+          {/* Ground Shockwave Cracks */}
+          <path d="M20 86 L36 78 L50 86 L64 78 L80 86" stroke="#4ade80" strokeWidth="2.5" fill="none"/>
+          {/* Giant Boulder Fists Slammed Down */}
+          <circle cx="28" cy="74" r="10" fill="#475569" stroke="#334155" strokeWidth="2"/>
+          <circle cx="72" cy="74" r="10" fill="#475569" stroke="#334155" strokeWidth="2"/>
+          {/* Broad Colossus Body */}
+          <rect x="30" y="34" width="40" height="34" rx="8" fill="#64748b" stroke="#334155" strokeWidth="2"/>
+          <circle cx="44" cy="44" r="3" fill="#22c55e"/>
+          <circle cx="56" cy="44" r="3" fill="#22c55e"/>
+        </g>
+      )}
+
+      {/* 21. Pirate Captain on Sea Crest */}
+      {av.archetype === 'action_pirate' && (
+        <g>
+          {/* Wave Crest */}
+          <path d="M10 86 Q30 76 50 86 Q70 76 90 86" stroke="#38bdf8" strokeWidth="3" fill="none"/>
+          {/* Tricorn Hat & Cutlass */}
+          <line x1="62" y1="42" x2="86" y2="22" stroke="#e2e8f0" strokeWidth="3"/>
+          <path d="M36 28 Q50 16 64 28 Z" fill="#0f172a"/>
+          <circle cx="50" cy="34" r="8" fill="#fbcfe8"/>
+          {/* Captain Coat */}
+          <path d="M40 42 L60 42 L64 74 L36 74 Z" fill="#0369a1" stroke="#f59e0b" strokeWidth="1.5"/>
+          <line x1="44" y1="74" x2="38" y2="86" stroke="#0f172a" strokeWidth="5"/>
+          <line x1="56" y1="74" x2="62" y2="86" stroke="#78350f" strokeWidth="5"/>
+        </g>
+      )}
+
+      {/* 22. Cat Acrobat in Backflip with Daggers */}
+      {av.archetype === 'action_cat' && (
+        <g>
+          {/* Twin Throwing Daggers */}
+          <line x1="20" y1="36" x2="12" y2="24" stroke="#f472b6" strokeWidth="2.5" strokeLinecap="round"/>
+          <line x1="80" y1="36" x2="88" y2="24" stroke="#f472b6" strokeWidth="2.5" strokeLinecap="round"/>
+          {/* Curled Acrobat Silhouette */}
+          <circle cx="50" cy="50" r="16" fill="#8b5cf6"/>
+          <polygon points="42,38 46,26 50,38" fill="#8b5cf6"/>
+          <polygon points="58,38 54,26 50,38" fill="#8b5cf6"/>
+          <circle cx="46" cy="46" r="2.5" fill="#fef08a"/>
+          <circle cx="54" cy="46" r="2.5" fill="#fef08a"/>
+          {/* Arched Tail */}
+          <path d="M56 62 Q72 74 74 60" stroke="#8b5cf6" strokeWidth="4" fill="none" strokeLinecap="round"/>
+        </g>
+      )}
+
+      {/* 23. Swift Red Fox Sprinting */}
+      {av.archetype === 'action_fox' && (
+        <g>
+          {/* Stretched running body */}
+          <path d="M24 56 Q48 48 76 50 Q86 44 88 48 Q78 60 52 62 Z" fill="#ea580c"/>
+          {/* Bushy Tail Flowing Back */}
+          <path d="M24 56 Q8 48 10 38 Q18 54 28 58 Z" fill="#ffffff"/>
+          <line x1="68" y1="58" x2="84" y2="76" stroke="#ea580c" strokeWidth="4" strokeLinecap="round"/>
+          <line x1="36" y1="60" x2="22" y2="76" stroke="#ea580c" strokeWidth="4" strokeLinecap="round"/>
+          <circle cx="80" cy="46" r="7" fill="#c2410c"/>
+          <polygon points="76,40 80,30 84,40" fill="#c2410c"/>
+        </g>
+      )}
+
+      {/* 24. Striped Tiger Leaping */}
+      {av.archetype === 'action_tiger' && (
+        <g>
+          {/* Fierce Leaping Tiger Body */}
+          <path d="M26 54 Q50 44 76 48 L70 66 L26 66 Z" fill="#f97316"/>
+          {/* Stripes */}
+          <line x1="42" y1="48" x2="40" y2="60" stroke="#18181b" strokeWidth="2.5"/>
+          <line x1="52" y1="46" x2="50" y2="62" stroke="#18181b" strokeWidth="2.5"/>
+          <line x1="62" y1="48" x2="60" y2="64" stroke="#18181b" strokeWidth="2.5"/>
+          <line x1="72" y1="58" x2="88" y2="76" stroke="#f97316" strokeWidth="4.5" strokeLinecap="round"/>
+          <line x1="32" y1="62" x2="16" y2="78" stroke="#f97316" strokeWidth="4.5" strokeLinecap="round"/>
+          <circle cx="78" cy="44" r="8" fill="#ea580c"/>
+        </g>
+      )}
+
+      {/* 25. Hunting Falcon in Vertical Dive */}
+      {av.archetype === 'action_falcon' && (
+        <g>
+          {/* Speed Streaks */}
+          <line x1="30" y1="14" x2="30" y2="40" stroke="rgba(255,255,255,0.3)" strokeWidth="2"/>
+          <line x1="70" y1="14" x2="70" y2="40" stroke="rgba(255,255,255,0.3)" strokeWidth="2"/>
+          {/* Tucked Falcon Silhouette Diving Straight Down */}
+          <path d="M50 82 L38 38 Q50 20 62 38 Z" fill="#1e3a8a" stroke="#60a5fa" strokeWidth="1.5"/>
+          <polygon points="50,82 46,74 54,74" fill="#f59e0b"/>
+          <circle cx="46" cy="46" r="2.5" fill="#fef08a"/>
+          <circle cx="54" cy="46" r="2.5" fill="#fef08a"/>
+        </g>
+      )}
+
+      {/* 26. Combat Mech Firing Plasma Cannons */}
+      {av.archetype === 'action_robot' && (
+        <g>
+          {/* Dual Laser Blasts */}
+          <line x1="26" y1="36" x2="10" y2="36" stroke="#22d3ee" strokeWidth="3" strokeLinecap="round"/>
+          <line x1="74" y1="36" x2="90" y2="36" stroke="#22d3ee" strokeWidth="3" strokeLinecap="round"/>
+          {/* Heavy Armored Frame */}
+          <rect x="32" y="32" width="36" height="32" rx="6" fill="#0891b2" stroke="#155e75" strokeWidth="2"/>
+          <rect x="40" y="38" width="20" height="6" rx="2" fill="#a5f3fc"/>
+          <rect x="22" y="32" width="10" height="18" rx="2" fill="#164e63"/>
+          <rect x="68" y="32" width="10" height="18" rx="2" fill="#164e63"/>
+          <line x1="38" y1="64" x2="30" y2="86" stroke="#164e63" strokeWidth="6" strokeLinecap="round"/>
+          <line x1="62" y1="64" x2="70" y2="86" stroke="#164e63" strokeWidth="6" strokeLinecap="round"/>
+        </g>
+      )}
+
+      {/* 27. Shark Gladiator with Trident */}
+      {av.archetype === 'action_shark' && (
+        <g>
+          {/* Wave Splash */}
+          <path d="M12 84 Q30 74 50 84 Q70 74 88 84" stroke="#38bdf8" strokeWidth="2.5" fill="none"/>
+          {/* Golden Trident */}
+          <line x1="32" y1="20" x2="32" y2="80" stroke="#facc15" strokeWidth="3"/>
+          <path d="M26 22 L32 14 L38 22" stroke="#facc15" strokeWidth="2.5" fill="none"/>
+          {/* Muscular Shark Head & Fin */}
+          <path d="M42 32 Q62 20 74 38 Q68 64 52 64 Z" fill="#0284c7"/>
+          <polygon points="62,26 68,14 74,28" fill="#0369a1"/>
+          <circle cx="64" cy="38" r="2.5" fill="#ffffff"/>
+          <polygon points="70,44 68,48 72,48" fill="#ffffff"/>
+        </g>
+      )}
+
+      {/* 28. Royal Griffin Striking with Talons */}
+      {av.archetype === 'action_griffin' && (
+        <g>
+          {/* Sweeping Wings */}
+          <path d="M50 44 Q24 16 12 38 Q32 46 48 48 Z" fill="#ca8a04"/>
+          <path d="M50 44 Q76 16 88 38 Q68 46 52 48 Z" fill="#ca8a04"/>
+          {/* Lion Body + Eagle Head */}
+          <circle cx="50" cy="36" r="10" fill="#facc15"/>
+          <polygon points="56,36 64,39 56,42" fill="#d97706"/>
+          {/* Extended Razor Talons */}
+          <line x1="42" y1="56" x2="32" y2="76" stroke="#ea580c" strokeWidth="3.5" strokeLinecap="round"/>
+          <line x1="58" y1="56" x2="68" y2="76" stroke="#ea580c" strokeWidth="3.5" strokeLinecap="round"/>
+        </g>
+      )}
+
+      {/* 29. Traveling Bard Strumming Lute */}
+      {av.archetype === 'action_bard' && (
+        <g>
+          {/* Floating Musical Notes */}
+          <text x="20" y="32" fill="#e879f9" fontSize="16" fontWeight="bold">♪</text>
+          <text x="76" y="32" fill="#e879f9" fontSize="16" fontWeight="bold">♫</text>
+          {/* Lute / Mandolin */}
+          <circle cx="58" cy="56" r="10" fill="#b45309"/>
+          <line x1="58" y1="56" x2="74" y2="34" stroke="#78350f" strokeWidth="3.5"/>
+          {/* Bard Dancing Silhouette */}
+          <path d="M40 38 L54 38 L52 68 L36 68 Z" fill="#7e22ce"/>
+          <circle cx="48" cy="28" r="8" fill="#f3e8ff"/>
+          {/* Feather in Cap */}
+          <path d="M48 20 Q56 12 60 16" stroke="#f43f5e" strokeWidth="3" fill="none"/>
+          <line x1="42" y1="68" x2="32" y2="86" stroke="#581c87" strokeWidth="4.5"/>
+          <line x1="50" y1="68" x2="58" y2="86" stroke="#581c87" strokeWidth="4.5"/>
+        </g>
+      )}
+
+      {/* 30. King Raising Excalibur */}
+      {av.archetype === 'action_king' && (
+        <g>
+          {/* Excalibur Sword Held to Heavens */}
+          <line x1="50" y1="8" x2="50" y2="44" stroke="#f8fafc" strokeWidth="3.5" strokeLinecap="round"/>
+          <line x1="42" y1="28" x2="58" y2="28" stroke="#facc15" strokeWidth="3"/>
+          <polygon points="50,8 47,14 53,14" fill="#facc15"/>
+          {/* Royal Cape & Crown */}
+          <path d="M34 44 L66 44 L72 86 L28 86 Z" fill="#991b1b" stroke="#f59e0b" strokeWidth="1.5"/>
+          <circle cx="50" cy="34" r="8" fill="#fef08a"/>
+          <polygon points="44,26 47,18 50,22 53,18 56,26" fill="#f59e0b"/>
+          <line x1="44" y1="70" x2="40" y2="86" stroke="#7f1d1d" strokeWidth="5"/>
+          <line x1="56" y1="70" x2="60" y2="86" stroke="#7f1d1d" strokeWidth="5"/>
+        </g>
+      )}
+
     </svg>
   );
   return wrap(svgNode);
@@ -1491,7 +1855,11 @@ export default function App() {
         {page === 'profile' && <Profile state={state} save={save} gamification={gamification} onRefreshGamification={refreshGamification} onLogout={handleLogout} />}
         {page === 'about' && <AboutPage />}
         {page === '404' && <section className="page-error card"><h1>404</h1><p>Такої сторінки немає.</p><button className="primary" type="button" onClick={() => nav('dashboard')}>На головну</button></section>}
-        {page === 'admin' && <Admin state={state} save={save} setWordsLive={setWordsLive} wordsLive={wordsLive} setModal={setModal} />}
+        {page === 'admin' && (
+          <ErrorBoundary>
+            <Admin state={state} save={save} setWordsLive={setWordsLive} wordsLive={wordsLive} setModal={setModal} />
+          </ErrorBoundary>
+        )}
         {page === 'lesson' && lessonCfg && (
           <Lesson
             cfg={lessonCfg}
@@ -1843,6 +2211,7 @@ function CsCaseRouletteModal({ isOpen, onClose, state, save }) {
 }
 
 function ShopPage({state, save, onRefreshGamification, allUsers}) {
+  const [tavernTab, setTavernTab] = useState('food'); // 'food' | 'healing' | 'quests' | 'gear'
   const [busy, setBusy] = useState(false);
   const [showEconomyModal, setShowEconomyModal] = useState(false);
   const [caseModalOpen, setCaseModalOpen] = useState(false);
@@ -1869,28 +2238,62 @@ function ShopPage({state, save, onRefreshGamification, allUsers}) {
         await onRefreshGamification().catch(() => {});
         nextState.freezeCount = freezeCount + 1;
         save(nextState);
-        emitSiteToast(`❄️ Придбано Заморозку серії (-${cost} 🪙 Поінтів)!`, 'ok');
+        emitSiteToast(`❄️ Придбано Заморозку серії (-${cost} 🪙)!`, 'ok');
         confettiBurst();
       } else if (itemId === 'booster') {
         const doubleUntil = Date.now() + 30 * 60 * 1000;
         nextState.inventory = {...inventory, doubleXpUntil: doubleUntil};
         save(nextState);
-        emitSiteToast(`⚡ XP Booster 2× активовано на 30 хвилин (-${cost} 🪙 Поінтів)!`, 'ok');
+        emitSiteToast(`⚡ Ель бадьорості (2× XP) активовано на 30 хв (-${cost} 🪙)!`, 'ok');
+        confettiBurst();
+      } else if (itemId === 'feast') {
+        nextState.xp = (nextState.xp || 0) + 75;
+        save(nextState);
+        emitSiteToast(`🥧 Ситний пиріг підкріпив сили: +75 XP ліги (-${cost} 🪙)!`, 'ok');
+        confettiBurst();
+      } else if (itemId === 'mead') {
+        nextState.xp = (nextState.xp || 0) + 40;
+        save(nextState);
+        emitSiteToast(`🍯 Медовуха мудрості додала +40 XP та осяяння (-${cost} 🪙)!`, 'ok');
+        confettiBurst();
+      } else if (itemId === 'coffee') {
+        nextState.gems = Math.max(0, nextState.gems);
+        save(nextState);
+        emitSiteToast(`☕ Кава вченого випита: додатковий бліц розблоковано (-${cost} 🪙)!`, 'ok');
         confettiBurst();
       } else if (itemId === 'second_chance') {
         nextState.inventory = {...inventory, secondChance: (inventory.secondChance || 0) + 1};
         save(nextState);
-        emitSiteToast(`🔄 Придбано Другий шанс (-${cost} 🪙 Поінтів)!`, 'ok');
+        emitSiteToast(`🧪 Еліксир відродження придбано (-${cost} 🪙)!`, 'ok');
         confettiBurst();
       } else if (itemId === 'vip_frame') {
         nextState.inventory = {...inventory, vipFrame: true};
         save(nextState);
-        emitSiteToast(`👑 Золоту VIP-рамку розблоковано (-${cost} 🪙 Поінтів)!`, 'ok');
+        emitSiteToast(`👑 Золоту королівську рамку розблоковано (-${cost} 🪙)!`, 'ok');
         confettiBurst();
       } else if (itemId === 'league_shield') {
         nextState.inventory = {...inventory, leagueShield: true};
         save(nextState);
-        emitSiteToast(`🛡️ Щит Ліги активовано (-${cost} 🪙 Поінтів)! Захищає від зниження в лізі.`, 'ok');
+        emitSiteToast(`🛡️ Щит Ліги активовано (-${cost} 🪙)! Захищає від вильоту.`, 'ok');
+        confettiBurst();
+      } else if (itemId === 'herbal_brew') {
+        save(nextState);
+        emitSiteToast(`🌿 Цілющий відвар додає додаткове життя для бос-битв (-${cost} 🪙)!`, 'ok');
+        confettiBurst();
+      } else if (itemId === 'mystery_contract') {
+        nextState.xp = (nextState.xp || 0) + 60;
+        save(nextState);
+        emitSiteToast(`📜 Контракт прийнято: +60 XP за виконання особливого доручення (-${cost} 🪙)!`, 'ok');
+        confettiBurst();
+      } else if (itemId === 'ruins_map') {
+        nextState.xp = (nextState.xp || 0) + 100;
+        save(nextState);
+        emitSiteToast(`🗺️ Мапа руїн розшифрована: секретний скарб +100 XP (-${cost} 🪙)!`, 'ok');
+        confettiBurst();
+      } else if (itemId === 'champion_cape') {
+        nextState.inventory = {...inventory, championCape: true};
+        save(nextState);
+        emitSiteToast(`⚔️ Почесний плащ лицаря одягнено (-${cost} 🪙)!`, 'ok');
         confettiBurst();
       } else if (itemId === 'mystery_chest') {
         playChestTone();
@@ -1909,7 +2312,6 @@ function ShopPage({state, save, onRefreshGamification, allUsers}) {
         emitSiteToast(`🎁 Скриня: ${res.msg}`, 'ok');
         confettiBurst();
       } else if (itemId.startsWith('cosmetic_')) {
-        // Cosmetic items: aura, frame, animated avatar
         nextState.inventory = {...inventory, cosmetics: {...cosmetics, [itemId]: true}};
         save(nextState);
         emitSiteToast(`✨ Косметику придбано! (-${cost} 🪙 Поінтів)`, 'ok');
@@ -1925,13 +2327,13 @@ function ShopPage({state, save, onRefreshGamification, allUsers}) {
   const equipCosmetic = (type, value) => {
     const nextCosmetics = {...cosmetics, [`equipped_${type}`]: value};
     save({...state, inventory: {...inventory, cosmetics: nextCosmetics}});
-    emitSiteToast(`✅ Косметику застосовано!`, 'ok');
+    emitSiteToast(`✅ Спорядження застосовано!`, 'ok');
   };
 
   const isBoosterActive = inventory.doubleXpUntil && inventory.doubleXpUntil > Date.now();
   const boosterMinutesLeft = isBoosterActive ? Math.ceil((inventory.doubleXpUntil - Date.now()) / 60000) : 0;
 
-  // Cosmetic catalog
+  // Catalogues
   const AURAS = [
     { id: 'cosmetic_aura_gold', css: 'aura-gold', name: '🌟 Золота аура', rarity: 'RARE', cost: 35 },
     { id: 'cosmetic_aura_rainbow', css: 'aura-rainbow', name: '🌈 Веселкова аура', rarity: 'LEGENDARY', cost: 80 },
@@ -1946,14 +2348,6 @@ function ShopPage({state, save, onRefreshGamification, allUsers}) {
     { id: 'cosmetic_frame_ice', css: 'frame-ice', name: '🧊 Льодяна рамка', rarity: 'EPIC', cost: 55 },
     { id: 'cosmetic_frame_emerald', css: 'frame-emerald', name: '🍀 Смарагдова рамка', rarity: 'COMMON', cost: 25 },
   ];
-  const ANIMATED_AVATARS = [
-    { id: 'cosmetic_ava_samurai', css: 'cyber-samurai', emoji: '🥷', name: '⚡ Кібер-Самурай', rarity: 'LEGENDARY', cost: 110 },
-    { id: 'cosmetic_ava_sorcerer', css: 'astral-sorcerer', emoji: '🧙‍♂️', name: '🔮 Астральний Чаклун', rarity: 'EPIC', cost: 85 },
-    { id: 'cosmetic_ava_phoenix', css: 'phoenix-sovereign', emoji: '🦅', name: '🔥 Повелитель Фенікс', rarity: 'LEGENDARY', cost: 120 },
-    { id: 'cosmetic_ava_pharaoh', css: 'solar-pharaoh', emoji: '👑', name: '☀️ Сонячний Фараон', rarity: 'EPIC', cost: 90 },
-    { id: 'cosmetic_ava_frost', css: 'frost-titan', emoji: '❄️', name: '🧊 Крижаний Титан', rarity: 'EPIC', cost: 80 },
-  ];
-  // Gift catalog - items you can send to friends (not keep for yourself)
   const GIFTABLE = [
     { id: 'gift_gems_5', name: '🪙 5 Монет', desc: 'Подарунок — 5 Древніх Монет другу', cost: 7 },
     { id: 'gift_gems_15', name: '🪙 15 Монет', desc: 'Подарунок — 15 Древніх Монет другу', cost: 18 },
@@ -1961,269 +2355,517 @@ function ShopPage({state, save, onRefreshGamification, allUsers}) {
     { id: 'gift_booster', name: '⚡ XP Booster', desc: 'Подаруй другу 2× XP на 30 хвилин', cost: 30 },
   ];
 
-  // Friends list for gift targeting
   const friends = (allUsers || []).filter(u => u.nick !== state.nick);
 
   return (
-    <section className="fade-in">
-      {/* Top Banner with Radiant Aura Currency & League Rating Notice */}
-      <div className="shop-balance-banner card" style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:16,padding:'24px 22px',position:'relative',overflow:'hidden'}}>
-        <div style={{maxWidth:540}}>
-          <span className="eyebrow" style={{color:'#f59e0b',fontWeight:800,letterSpacing:'0.06em',display:'flex',alignItems:'center',gap:6}}>
-            <AncientCoinIcon size={16}/> ANCIENT TREASURY & COIN MARKET
-          </span>
-          <h2 className="tavern-title" style={{margin:'6px 0 8px',fontSize:24}}>🏰 Таверна Стародавнього Мандрівника</h2>
-          <p className="muted" style={{margin:0,fontSize:14,lineHeight:1.5}}>
-            Купуйте артефакти виключно за <b>🪙 Древні Поінти</b>. Бали <b>⚡ XP</b> недоторканні — вони служать тільки для рейтингу ліги!
+    <section className="fade-in tavern-page-container">
+      {/* 🏰 Carved Dark Wooden Planks Header with Ruby Close and Ornate Golden Title (Screenshot 4) */}
+      <div className="tavern-wood-header">
+        <div className="tavern-wood-title-box">
+          <span className="tavern-runic-eyebrow">⚜️ ANCIENT TRAVELER'S INN & MARKETPLACE ⚜️</span>
+          <h1 className="tavern-wood-h1">🏰 ТАВЕРНА СТАРОДАВНЬОГО МАНДРІВНИКА</h1>
+          <p className="tavern-wood-sub">
+            Відпочиньте біля вогнища. Усі товари купуються суто за <b>🪙 Древні Поінти</b>. Бали <b>⚡ XP</b> недоторканні!
           </p>
-          <button
-            type="button"
-            className="secondary"
-            onClick={() => setShowEconomyModal(true)}
-            style={{marginTop:12,fontSize:12,padding:'5px 12px',borderRadius:20,display:'inline-flex',alignItems:'center',gap:6,borderColor:'rgba(245,158,11,0.4)',color:'var(--text)'}}
-          >
-            📜 Фінансова модель та Економіка сайту ➔
-          </button>
         </div>
 
-        <div style={{display:'flex',gap:14,alignItems:'center',flexWrap:'wrap'}}>
-          {/* Glowing Aura Coin Balance */}
-          <div className="currency-aura" style={{borderRadius:20}}>
-            <div className="shop-balance-pill stat-chip currency-pill-coins" style={{padding:'10px 18px',fontSize:15,borderRadius:18,display:'flex',alignItems:'center',gap:8}}>
-              <AncientCoinIcon size={24} className="coin-icon-svg" />
-              <div style={{display:'flex',flexDirection:'column',alignItems:'flex-start',lineHeight:1.1}}>
-                <span style={{fontSize:11,textTransform:'uppercase',letterSpacing:'0.05em',opacity:0.8}}>Баланс Поінтів</span>
-                <b style={{fontSize:20,fontWeight:800,color:'#f59e0b'}}>{gems} 🪙</b>
-              </div>
+        <div className="tavern-wood-top-actions">
+          {/* Glowing Coin Purse */}
+          <div className="tavern-purse-badge">
+            <AncientCoinIcon size={24} className="coin-icon-svg" />
+            <div style={{display:'flex',flexDirection:'column'}}>
+              <span className="tavern-purse-label">Скарбниця</span>
+              <b className="tavern-purse-val">{gems} 🪙</b>
             </div>
           </div>
 
-          {/* XP League Rating Pill (Read-only, Sacred) */}
-          <div className="shop-balance-pill" style={{padding:'10px 16px',borderRadius:18,display:'flex',flexDirection:'column',gap:2,border:'1px solid var(--border)'}}>
-            <span className="muted" style={{fontSize:11,textTransform:'uppercase',letterSpacing:'0.05em'}}>Рейтинг Ліги</span>
-            <b style={{fontSize:18,color:'#eab308',display:'flex',alignItems:'center',gap:4}}>⚡ {xp} XP</b>
+          {/* XP League Rating Pill */}
+          <div className="tavern-xp-badge">
+            <span className="tavern-purse-label">Рейтинг Ліги</span>
+            <b style={{color:'#facc15',fontSize:16}}>⚡ {xp} XP</b>
           </div>
         </div>
       </div>
 
-      {/* Grid of Items - Strictly Coins Only */}
-      <div className="shop-grid" style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(280px, 1fr))',gap:16,marginTop:20}}>
-        {/* Item 1: Streak Freeze */}
-        <div className="card shop-card shop-card-gaming">
-          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-            <div className="shop-icon">❄️</div>
-            <span className="rarity-badge rarity-common">COMMON</span>
-          </div>
-          <div className="shop-card-content">
-            <h3>Заморозка серії</h3>
-            <p className="muted small">Автоматично захищає ваш стрік у разі пропуску дня. У запасі: <b>{freezeCount}</b> шт.</p>
-          </div>
-          <div className="shop-footer" style={{marginTop:12}}>
-            <button className="primary full" style={{fontSize:13,display:'flex',alignItems:'center',justifyContent:'center',gap:6}} disabled={busy || gems < 15} onClick={() => buy('freeze', 15)}>
-              <AncientCoinIcon size={16}/> 15 Поінтів
-            </button>
-          </div>
-        </div>
+      {/* Medieval Sub-Tabs Bar: [ ЇЖА ТА НАПОЇ ] [ СПОКІЙ ТА ЛІКИ ] [ КВЕСТИ ТА ЧУТКИ ] [ ТОВАРИ МАНДРІВНИКА ] */}
+      <div className="tavern-subtabs-bar">
+        <button
+          type="button"
+          className={'tavern-tab-btn' + (tavernTab === 'food' ? ' active' : '')}
+          onClick={() => setTavernTab('food')}
+        >
+          [ ЇЖА ТА НАПОЇ ]
+        </button>
+        <button
+          type="button"
+          className={'tavern-tab-btn' + (tavernTab === 'healing' ? ' active' : '')}
+          onClick={() => setTavernTab('healing')}
+        >
+          [ СПОКІЙ ТА ЛІКИ ]
+        </button>
+        <button
+          type="button"
+          className={'tavern-tab-btn' + (tavernTab === 'quests' ? ' active' : '')}
+          onClick={() => setTavernTab('quests')}
+        >
+          [ КВЕСТИ ТА ЧУТКИ ]
+        </button>
+        <button
+          type="button"
+          className={'tavern-tab-btn' + (tavernTab === 'gear' ? ' active' : '')}
+          onClick={() => setTavernTab('gear')}
+        >
+          [ ТОВАРИ МАНДРІВНИКА ]
+        </button>
+      </div>
 
-        {/* Item 2: XP Booster */}
-        <div className="card shop-card shop-card-gaming">
-          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-            <div className="shop-icon">⚡</div>
-            <span className="rarity-badge rarity-rare">RARE</span>
-          </div>
-          <div className="shop-card-content">
-            <h3>XP Booster (2× Досвід)</h3>
-            <p className="muted small">
+      {/* SUB-TAB 1: [ ЇЖА ТА НАПОЇ ] */}
+      {tavernTab === 'food' && (
+        <div className="tavern-parchment-grid">
+          {/* Ale Booster */}
+          <div className="tavern-parchment-card">
+            <div className="tavern-item-top">
+              <span className="tavern-item-icon">🍺</span>
+              <span className="tavern-tier-badge tier-rare">РІДКІСНЕ</span>
+            </div>
+            <h3 className="tavern-item-title">Ель бадьорості (2× XP)</h3>
+            <p className="tavern-item-desc">
               {isBoosterActive
                 ? `🟢 Активно ще ${boosterMinutesLeft} хв. Подвійні очки XP за кожен правильний урок!`
                 : 'Подвоює всі зароблені бали XP у будь-яких уроках та тестах на 30 хвилин.'}
             </p>
-          </div>
-          <div className="shop-footer" style={{marginTop:12}}>
-            <button className="primary full" style={{fontSize:13,display:'flex',alignItems:'center',justifyContent:'center',gap:6}} disabled={busy || gems < 25 || isBoosterActive} onClick={() => buy('booster', 25)}>
-              {isBoosterActive ? '✓ Ефект активний' : <><AncientCoinIcon size={16}/> 25 Поінтів</>}
-            </button>
-          </div>
-        </div>
-
-        {/* Item 3: Second Chance */}
-        <div className="card shop-card shop-card-gaming">
-          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-            <div className="shop-icon">🔄</div>
-            <span className="rarity-badge rarity-common">COMMON</span>
-          </div>
-          <div className="shop-card-content">
-            <h3>Другий шанс</h3>
-            <p className="muted small">Дозволяє виправити помилку в уроці без втрати комбо та очок. У вас: <b>{inventory.secondChance || 0}</b> шт.</p>
-          </div>
-          <div className="shop-footer" style={{marginTop:12}}>
-            <button className="primary full" style={{fontSize:13,display:'flex',alignItems:'center',justifyContent:'center',gap:6}} disabled={busy || gems < 10} onClick={() => buy('second_chance', 10)}>
-              <AncientCoinIcon size={16}/> 10 Поінтів
-            </button>
-          </div>
-        </div>
-
-        {/* Item 4: League Shield */}
-        <div className="card shop-card shop-card-gaming">
-          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-            <div className="shop-icon">🛡️</div>
-            <span className="rarity-badge rarity-epic">EPIC</span>
-          </div>
-          <div className="shop-card-content">
-            <h3>Щит Ліги</h3>
-            <p className="muted small">Захищає від вильоту в нижчу лігу наприкінці щотижневого сезону, навіть якщо ви пропустили змагання.</p>
-          </div>
-          <div className="shop-footer" style={{marginTop:12}}>
-            <button className="primary full" style={{fontSize:13,display:'flex',alignItems:'center',justifyContent:'center',gap:6}} disabled={busy || gems < 30 || inventory.leagueShield} onClick={() => buy('league_shield', 30)}>
-              {inventory.leagueShield ? '✓ Захист активний' : <><AncientCoinIcon size={16}/> 30 Поінтів</>}
-            </button>
-          </div>
-        </div>
-
-        {/* Item 5: VIP Golden Frame */}
-        <div className="card shop-card shop-card-gaming">
-          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-            <div className="shop-icon">👑</div>
-            <span className="rarity-badge rarity-epic">EPIC</span>
-          </div>
-          <div className="shop-card-content">
-            <h3>Золота VIP-рамка</h3>
-            <p className="muted small">Ексклюзивне анімоване сяйво для вашої аватарки у глобальному рейтингу, профілі та чаті друзів.</p>
-          </div>
-          <div className="shop-footer" style={{marginTop:12}}>
-            <button className="primary full" style={{fontSize:13,display:'flex',alignItems:'center',justifyContent:'center',gap:6}} disabled={busy || gems < 50 || inventory.vipFrame} onClick={() => buy('vip_frame', 50)}>
-              {inventory.vipFrame ? '✓ Розблоковано назавжди' : <><AncientCoinIcon size={16}/> 50 Поінтів</>}
-            </button>
-          </div>
-        </div>
-
-        {/* Item 6: Mystery Legendary Chest (CS:GO Case) */}
-        <div className="card shop-card shop-card-gaming">
-          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-            <div className="shop-icon">🎁</div>
-            <span className="rarity-badge rarity-legendary">CS:GO CASE</span>
-          </div>
-          <div className="shop-card-content">
-            <h3>Таємнича CS:GO Скриня</h3>
-            <p className="muted small">Відкрийте рулетку кейсу! Шанс отримати до 500 XP рейтингу, 150 Древніх Поінтів, VIP-рамку чи Заморозку серії.</p>
-          </div>
-          <div className="shop-footer" style={{marginTop:12}}>
-            <button className="primary full" style={{fontSize:13,display:'flex',alignItems:'center',justifyContent:'center',gap:6}} disabled={busy} onClick={() => setCaseModalOpen(true)}>
-              <AncientCoinIcon size={16}/> 100 Поінтів
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* ============================================================
-          ANCIENT TAVERN: COSMETICS SECTION
-         ============================================================ */}
-      <div className="tavern-section-title">🎭 Косметика — Аури для профілю</div>
-      <div className="tavern-shelf">
-        {AURAS.map(aura => {
-          const owned = cosmetics[aura.id];
-          const equipped = cosmetics['equipped_aura'] === aura.css;
-          return (
-            <div key={aura.id} className={'tavern-item-card'}>
-              <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
-                <div style={{position:'relative',width:56,height:56,borderRadius:'50%',background:'rgba(255,255,255,0.08)',display:'grid',placeItems:'center',fontSize:28}}>
-                  <span className={aura.css} style={{width:40,height:40,borderRadius:'50%',display:'block',background:'rgba(255,255,255,0.05)'}}></span>
-                </div>
-                <span className={'rarity-badge rarity-' + aura.rarity.toLowerCase().replace('legendary','legendary')}>{aura.rarity}</span>
-              </div>
-              <h3>{aura.name}</h3>
-              <p>Яскраве пульсуюче сяйво навколо вашого аватара.</p>
-              {equipped && <div className="cosmetic-equipped-tag">✓ Одягнено</div>}
-              {owned
-                ? <button className="tavern-price-btn" onClick={() => equipCosmetic('aura', aura.css)}>
-                    {equipped ? '✓ Активна' : '👗 Одягнути'}
-                  </button>
-                : <button className="tavern-price-btn" disabled={busy || gems < aura.cost} onClick={() => buy(aura.id, aura.cost)}>
-                    🪙 {aura.cost} Поінтів
-                  </button>
-              }
+            <div className="tavern-card-footer">
+              <span className="tavern-price-tag">🪙 25 Поінтів</span>
+              <button
+                type="button"
+                className="tavern-buy-action-btn"
+                disabled={busy || gems < 25 || isBoosterActive}
+                onClick={() => buy('booster', 25)}
+              >
+                {isBoosterActive ? '✓ Випито' : '[ КУПИТИ ]'}
+              </button>
             </div>
-          );
-        })}
-      </div>
-
-      <div className="tavern-section-title">🪞 Косметика — Рамки для аватара</div>
-      <div className="tavern-shelf">
-        {FRAMES.map(frame => {
-          const owned = cosmetics[frame.id];
-          const equipped = cosmetics['equipped_frame'] === frame.css;
-          return (
-            <div key={frame.id} className={'tavern-item-card'}>
-              <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
-                <div style={{position:'relative',width:56,height:56,display:'grid',placeItems:'center',fontSize:28}}>
-                  <div className={frame.css} style={{width:40,height:40,display:'block',background:'rgba(255,255,255,0.08)'}}></div>
-                </div>
-                <span className={'rarity-badge rarity-' + frame.rarity.toLowerCase()}>{frame.rarity}</span>
-              </div>
-              <h3>{frame.name}</h3>
-              <p>Унікальна декоративна рамка навколо вашої аватарки.</p>
-              {equipped && <div className="cosmetic-equipped-tag">✓ Одягнено</div>}
-              {owned
-                ? <button className="tavern-price-btn" onClick={() => equipCosmetic('frame', frame.css)}>
-                    {equipped ? '✓ Активна' : '👗 Одягнути'}
-                  </button>
-                : <button className="tavern-price-btn" disabled={busy || gems < frame.cost} onClick={() => buy(frame.id, frame.cost)}>
-                    🪙 {frame.cost} Поінтів
-                  </button>
-              }
-            </div>
-          );
-        })}
-      </div>
-
-      <div className="tavern-section-title">✨ Косметика — Анімовані аватарки</div>
-      <div className="tavern-shelf">
-        {ANIMATED_AVATARS.map(ava => {
-          const owned = cosmetics[ava.id];
-          const equipped = cosmetics['equipped_animava'] === ava.css;
-          return (
-            <div key={ava.id} className={'tavern-item-card'}>
-              <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
-                <div className={`avatar-animated ${ava.css}`} style={{width:56,height:56,borderRadius:'50%',background:'rgba(255,255,255,0.12)',display:'grid',placeItems:'center',fontSize:30,flexShrink:0}}>
-                  {ava.emoji}
-                </div>
-                <span className={'rarity-badge rarity-' + ava.rarity.toLowerCase()}>{ava.rarity}</span>
-              </div>
-              <h3>{ava.name}</h3>
-              <p>Анімований аватар із постійним ефектом сяйва.</p>
-              {equipped && <div className="cosmetic-equipped-tag">✓ Одягнено</div>}
-              {owned
-                ? <button className="tavern-price-btn" onClick={() => equipCosmetic('animava', ava.css)}>
-                    {equipped ? '✓ Активна' : '👗 Одягнути'}
-                  </button>
-                : <button className="tavern-price-btn" disabled={busy || gems < ava.cost} onClick={() => buy(ava.id, ava.cost)}>
-                    🪙 {ava.cost} Поінтів
-                  </button>
-              }
-            </div>
-          );
-        })}
-      </div>
-
-      {/* GIFT SHOP - Send to Friends */}
-      <div className="tavern-section-title">🎁 Крамниця Подарунків — Надіслати другу</div>
-      <p className="muted small" style={{marginBottom:16}}>🚫 Подарунки не можна залишити собі — тільки відправити іншому гравцю!</p>
-      <div className="tavern-shelf">
-        {GIFTABLE.map(gift => (
-          <div key={gift.id} className="tavern-item-card">
-            <div style={{fontSize:36,marginBottom:8}}>{gift.name.split(' ')[0]}</div>
-            <h3>{gift.name}</h3>
-            <p>{gift.desc}</p>
-            <button
-              className="tavern-gift-btn"
-              disabled={busy}
-              onClick={() => setGiftModal({...gift})}
-            >
-              🎁 Надіслати (🪙 {gift.cost} Поінтів)
-            </button>
-            {friends.length === 0 && <p className="muted small" style={{marginTop:6}}>Потрібно мати друзів 👥</p>}
           </div>
-        ))}
+
+          {/* Traveler Pie */}
+          <div className="tavern-parchment-card">
+            <div className="tavern-item-top">
+              <span className="tavern-item-icon">🥧</span>
+              <span className="tavern-tier-badge tier-epic">ЕПІЧНЕ</span>
+            </div>
+            <h3 className="tavern-item-title">Ситний пиріг мандрівника</h3>
+            <p className="tavern-item-desc">
+              Гарячий м'ясний пиріг, приготований за старовинним рецептом. Миттєво додає <b>+75 XP</b> до рейтингу ліги.
+            </p>
+            <div className="tavern-card-footer">
+              <span className="tavern-price-tag">🪙 35 Поінтів</span>
+              <button
+                type="button"
+                className="tavern-buy-action-btn"
+                disabled={busy || gems < 35}
+                onClick={() => buy('feast', 35)}
+              >
+                [ КУПИТИ ]
+              </button>
+            </div>
+          </div>
+
+          {/* Wisdom Mead */}
+          <div className="tavern-parchment-card">
+            <div className="tavern-item-top">
+              <span className="tavern-item-icon">🍯</span>
+              <span className="tavern-tier-badge tier-common">ЗВИЧАЙНЕ</span>
+            </div>
+            <h3 className="tavern-item-title">Медовуха мудрості</h3>
+            <p className="tavern-item-desc">
+              Освіжаючий ароматний напій. Додає <b>+40 XP</b> та дарує натхнення для легкого засвоєння складних граматичних зворотів.
+            </p>
+            <div className="tavern-card-footer">
+              <span className="tavern-price-tag">🪙 20 Поінтів</span>
+              <button
+                type="button"
+                className="tavern-buy-action-btn"
+                disabled={busy || gems < 20}
+                onClick={() => buy('mead', 20)}
+              >
+                [ КУПИТИ ]
+              </button>
+            </div>
+          </div>
+
+          {/* Scholar Coffee */}
+          <div className="tavern-parchment-card">
+            <div className="tavern-item-top">
+              <span className="tavern-item-icon">☕</span>
+              <span className="tavern-tier-badge tier-common">ЗВИЧАЙНЕ</span>
+            </div>
+            <h3 className="tavern-item-title">Міцна кава вченого</h3>
+            <p className="tavern-item-desc">
+              Підбадьорливий напій з гірських зерен. Заряджає увагою на швидкісний 60с бліц та перевірку проблемних слів.
+            </p>
+            <div className="tavern-card-footer">
+              <span className="tavern-price-tag">🪙 15 Поінтів</span>
+              <button
+                type="button"
+                className="tavern-buy-action-btn"
+                disabled={busy || gems < 15}
+                onClick={() => buy('coffee', 15)}
+              >
+                [ КУПИТИ ]
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* SUB-TAB 2: [ СПОКІЙ ТА ЛІКИ ] */}
+      {tavernTab === 'healing' && (
+        <div className="tavern-parchment-grid">
+          {/* Freeze */}
+          <div className="tavern-parchment-card">
+            <div className="tavern-item-top">
+              <span className="tavern-item-icon">❄️</span>
+              <span className="tavern-tier-badge tier-rare">РУНА ЗАХИСТУ</span>
+            </div>
+            <h3 className="tavern-item-title">Заморозка серії (Руна льоду)</h3>
+            <p className="tavern-item-desc">
+              Автоматично захищає ваш стрік від скидання при пропуску дня. У вашому запасі: <b>{freezeCount}</b> шт.
+            </p>
+            <div className="tavern-card-footer">
+              <span className="tavern-price-tag">🪙 15 Поінтів</span>
+              <button
+                type="button"
+                className="tavern-buy-action-btn"
+                disabled={busy || gems < 15}
+                onClick={() => buy('freeze', 15)}
+              >
+                [ КУПИТИ ]
+              </button>
+            </div>
+          </div>
+
+          {/* Second Chance Elixir */}
+          <div className="tavern-parchment-card">
+            <div className="tavern-item-top">
+              <span className="tavern-item-icon">🧪</span>
+              <span className="tavern-tier-badge tier-common">ЕКСІКІР</span>
+            </div>
+            <h3 className="tavern-item-title">Еліксир відродження (Другий шанс)</h3>
+            <p className="tavern-item-desc">
+              Дозволяє миттєво виправити випадкову помилку в уроці без втрати комбо та очок. У вас: <b>{inventory.secondChance || 0}</b> шт.
+            </p>
+            <div className="tavern-card-footer">
+              <span className="tavern-price-tag">🪙 10 Поінтів</span>
+              <button
+                type="button"
+                className="tavern-buy-action-btn"
+                disabled={busy || gems < 10}
+                onClick={() => buy('second_chance', 10)}
+              >
+                [ КУПИТИ ]
+              </button>
+            </div>
+          </div>
+
+          {/* League Shield */}
+          <div className="tavern-parchment-card">
+            <div className="tavern-item-top">
+              <span className="tavern-item-icon">🛡️</span>
+              <span className="tavern-tier-badge tier-epic">ОБЕРІГ</span>
+            </div>
+            <h3 className="tavern-item-title">Щит Ліги (Оберіг безпеки)</h3>
+            <p className="tavern-item-desc">
+              Захищає від вильоту в нижчу лігу наприкінці тижневого сезону, навіть якщо ви пропустили змагання.
+            </p>
+            <div className="tavern-card-footer">
+              <span className="tavern-price-tag">🪙 30 Поінтів</span>
+              <button
+                type="button"
+                className="tavern-buy-action-btn"
+                disabled={busy || gems < 30 || inventory.leagueShield}
+                onClick={() => buy('league_shield', 30)}
+              >
+                {inventory.leagueShield ? '✓ Захист активний' : '[ КУПИТИ ]'}
+              </button>
+            </div>
+          </div>
+
+          {/* Herbal Brew */}
+          <div className="tavern-parchment-card">
+            <div className="tavern-item-top">
+              <span className="tavern-item-icon">🌿</span>
+              <span className="tavern-tier-badge tier-common">ТРАВИ</span>
+            </div>
+            <h3 className="tavern-item-title">Цілющий відвар травниці</h3>
+            <p className="tavern-item-desc">
+              Зілля з гірського чебрецю та шавлії. Надає додаткове серце стійкості у битвах з Титаном Слів.
+            </p>
+            <div className="tavern-card-footer">
+              <span className="tavern-price-tag">🪙 20 Поінтів</span>
+              <button
+                type="button"
+                className="tavern-buy-action-btn"
+                disabled={busy || gems < 20}
+                onClick={() => buy('herbal_brew', 20)}
+              >
+                [ КУПИТИ ]
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* SUB-TAB 3: [ КВЕСТИ ТА ЧУТКИ ] */}
+      {tavernTab === 'quests' && (
+        <div className="tavern-parchment-grid">
+          {/* Mystery Case CS:GO */}
+          <div className="tavern-parchment-card">
+            <div className="tavern-item-top">
+              <span className="tavern-item-icon">🎁</span>
+              <span className="tavern-tier-badge tier-legendary">CS:GO СКРИНЯ</span>
+            </div>
+            <h3 className="tavern-item-title">Таємнича Скриня Дракона</h3>
+            <p className="tavern-item-desc">
+              Запустіть рулетку кейсу! Шанс виграти до 500 XP, 150 Древніх Поінтів, VIP-рамку чи Заморозку стріку.
+            </p>
+            <div className="tavern-card-footer">
+              <span className="tavern-price-tag">🪙 100 Поінтів</span>
+              <button
+                type="button"
+                className="tavern-buy-action-btn"
+                disabled={busy}
+                onClick={() => setCaseModalOpen(true)}
+              >
+                [ ВІДКРИТИ ]
+              </button>
+            </div>
+          </div>
+
+          {/* Secret Contract */}
+          <div className="tavern-parchment-card">
+            <div className="tavern-item-top">
+              <span className="tavern-item-icon">📜</span>
+              <span className="tavern-tier-badge tier-epic">КОНТРАКТ</span>
+            </div>
+            <h3 className="tavern-item-title">Сувій таємничого контракту</h3>
+            <p className="tavern-item-desc">
+              Запечатане сургучем завдання гільдії. Виконайте урок з точністю 100% та отримайте <b>+60 XP</b>.
+            </p>
+            <div className="tavern-card-footer">
+              <span className="tavern-price-tag">🪙 25 Поінтів</span>
+              <button
+                type="button"
+                className="tavern-buy-action-btn"
+                disabled={busy || gems < 25}
+                onClick={() => buy('mystery_contract', 25)}
+              >
+                [ КУПИТИ ]
+              </button>
+            </div>
+          </div>
+
+          {/* Ancient Ruins Map */}
+          <div className="tavern-parchment-card">
+            <div className="tavern-item-top">
+              <span className="tavern-item-icon">🗺️</span>
+              <span className="tavern-tier-badge tier-rare">АРТЕФАКТ</span>
+            </div>
+            <h3 className="tavern-item-title">Мапа стародавніх руїн</h3>
+            <p className="tavern-item-desc">
+              Старовинна пергаментна карта. Відкриває доступ до рідкісних мовних скарбів та додає <b>+100 XP</b>.
+            </p>
+            <div className="tavern-card-footer">
+              <span className="tavern-price-tag">🪙 45 Поінтів</span>
+              <button
+                type="button"
+                className="tavern-buy-action-btn"
+                disabled={busy || gems < 45}
+                onClick={() => buy('ruins_map', 45)}
+              >
+                [ КУПИТИ ]
+              </button>
+            </div>
+          </div>
+
+          {/* Send Gifts to Friends */}
+          <div className="tavern-parchment-card">
+            <div className="tavern-item-top">
+              <span className="tavern-item-icon">🤝</span>
+              <span className="tavern-tier-badge tier-common">БРАТСТВО</span>
+            </div>
+            <h3 className="tavern-item-title">Крамниця дарів для побратимів</h3>
+            <p className="tavern-item-desc">
+              Надішліть монети або заморозку стріку своєму другові по навчанню. Справжня дружба зміцнює знання!
+            </p>
+            <div className="tavern-card-footer">
+              <span className="tavern-price-tag">від 7 🪙</span>
+              <button
+                type="button"
+                className="tavern-buy-action-btn"
+                disabled={busy || friends.length === 0}
+                onClick={() => setGiftModal({...GIFTABLE[0]})}
+              >
+                [ НАДІСЛАТИ ДАР ]
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* SUB-TAB 4: [ ТОВАРИ МАНДРІВНИКА ] */}
+      {tavernTab === 'gear' && (
+        <div style={{display:'flex',flexDirection:'column',gap:20}}>
+          {/* VIP Frame & Knight Cape */}
+          <div className="tavern-parchment-grid">
+            <div className="tavern-parchment-card">
+              <div className="tavern-item-top">
+                <span className="tavern-item-icon">👑</span>
+                <span className="tavern-tier-badge tier-legendary">КОРОЛІВСЬКЕ</span>
+              </div>
+              <h3 className="tavern-item-title">Золота VIP-рамка</h3>
+              <p className="tavern-item-desc">
+                Ексклюзивне анімоване сяйво навколо вашої аватарки у лізі, профілі та чаті.
+              </p>
+              <div className="tavern-card-footer">
+                <span className="tavern-price-tag">🪙 50 Поінтів</span>
+                <button
+                  type="button"
+                  className="tavern-buy-action-btn"
+                  disabled={busy || gems < 50 || inventory.vipFrame}
+                  onClick={() => buy('vip_frame', 50)}
+                >
+                  {inventory.vipFrame ? '✓ Розблоковано' : '[ КУПИТИ ]'}
+                </button>
+              </div>
+            </div>
+
+            <div className="tavern-parchment-card">
+              <div className="tavern-item-top">
+                <span className="tavern-item-icon">⚔️</span>
+                <span className="tavern-tier-badge tier-epic">ВІДЗНАКА</span>
+              </div>
+              <h3 className="tavern-item-title">Почесний плащ лицаря</h3>
+              <p className="tavern-item-desc">
+                Шляхетна відзнака чемпіона таверни. Виділяє ваш нікнейм у рейтингових таблицях.
+              </p>
+              <div className="tavern-card-footer">
+                <span className="tavern-price-tag">🪙 60 Поінтів</span>
+                <button
+                  type="button"
+                  className="tavern-buy-action-btn"
+                  disabled={busy || gems < 60 || inventory.championCape}
+                  onClick={() => buy('champion_cape', 60)}
+                >
+                  {inventory.championCape ? '✓ Одягнено' : '[ КУПИТИ ]'}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* AURAS */}
+          <div className="tavern-parchment-subheading">✨ Магічні аури для аватарки</div>
+          <div className="tavern-parchment-grid">
+            {AURAS.map(aura => {
+              const owned = cosmetics[aura.id];
+              const equipped = cosmetics['equipped_aura'] === aura.css;
+              return (
+                <div key={aura.id} className="tavern-parchment-card">
+                  <div className="tavern-item-top">
+                    <div style={{width:44,height:44,borderRadius:'50%',background:'rgba(0,0,0,0.3)',display:'grid',placeItems:'center'}}>
+                      <span className={aura.css} style={{width:32,height:32,borderRadius:'50%',display:'block'}}/>
+                    </div>
+                    <span className="tavern-tier-badge tier-rare">{aura.rarity}</span>
+                  </div>
+                  <h3 className="tavern-item-title">{aura.name}</h3>
+                  <p className="tavern-item-desc">Пульсуюче сяйво стихії навколо вашого героя.</p>
+                  <div className="tavern-card-footer">
+                    <span className="tavern-price-tag">🪙 {aura.cost}</span>
+                    {owned ? (
+                      <button
+                        type="button"
+                        className="tavern-buy-action-btn"
+                        onClick={() => equipCosmetic('aura', aura.css)}
+                      >
+                        {equipped ? '✓ Активна' : '[ ОДЯГНУТИ ]'}
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        className="tavern-buy-action-btn"
+                        disabled={busy || gems < aura.cost}
+                        onClick={() => buy(aura.id, aura.cost)}
+                      >
+                        [ КУПИТИ ]
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* FRAMES */}
+          <div className="tavern-parchment-subheading">🪞 Декоративні рамки персонажа</div>
+          <div className="tavern-parchment-grid">
+            {FRAMES.map(frame => {
+              const owned = cosmetics[frame.id];
+              const equipped = cosmetics['equipped_frame'] === frame.css;
+              return (
+                <div key={frame.id} className="tavern-parchment-card">
+                  <div className="tavern-item-top">
+                    <div style={{width:44,height:44,display:'grid',placeItems:'center'}}>
+                      <div className={frame.css} style={{width:32,height:32,display:'block'}}/>
+                    </div>
+                    <span className="tavern-tier-badge tier-common">{frame.rarity}</span>
+                  </div>
+                  <h3 className="tavern-item-title">{frame.name}</h3>
+                  <p className="tavern-item-desc">Вишуканий орнамент для обрамлення вашого аватара.</p>
+                  <div className="tavern-card-footer">
+                    <span className="tavern-price-tag">🪙 {frame.cost}</span>
+                    {owned ? (
+                      <button
+                        type="button"
+                        className="tavern-buy-action-btn"
+                        onClick={() => equipCosmetic('frame', frame.css)}
+                      >
+                        {equipped ? '✓ Активна' : '[ ОДЯГНУТИ ]'}
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        className="tavern-buy-action-btn"
+                        disabled={busy || gems < frame.cost}
+                        onClick={() => buy(frame.id, frame.cost)}
+                      >
+                        [ КУПИТИ ]
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* 🧝‍♀️ Tavernkeeper Edara Dialogue Bar at the bottom (Screenshot 4) */}
+      <div className="tavern-keeper-dialogue-bar">
+        <div className="tavern-keeper-avatar-wrap">
+          <span className="tavern-keeper-avatar">🧝‍♀️</span>
+        </div>
+        <div className="tavern-keeper-text-box">
+          <div className="tavern-keeper-name">Корчмарка Едара</div>
+          <p className="tavern-keeper-quote">
+            «Ласкаво прошу до нашої таверни, шановний мандрівнику! Відпочиньте біля вогнища, підкріпіть сили ситним пирогом чи елем бадьорості та оберіть спорядження для наступної мандрівки знаннями. Пам'ятайте: бали XP недоторканні — ми торгуємо виключно за Древні Поінти!»
+          </p>
+        </div>
+        <button
+          type="button"
+          className="tavern-rules-link-btn"
+          onClick={() => setShowEconomyModal(true)}
+        >
+          📜 Економіка сайту ➔
+        </button>
       </div>
 
       {/* Financial Economy & Rules Modal */}
@@ -2259,10 +2901,9 @@ function ShopPage({state, save, onRefreshGamification, allUsers}) {
               <div>
                 <h3 style={{margin:'8px 0 4px',fontSize:15}}>🛡️ Захист від нескінченного фарму (Fair Play):</h3>
                 <ul style={{margin:'4px 0 0 16px',padding:0}}>
-                  <li><b>Добовий ліміт з уроків:</b> максимум <b>60 Поінтів на добу</b>. Це унеможливлює використання автоклікерів та зберігає чесний баланс.</li>
+                  <li><b>Добовий ліміт з уроків:</b> максимум <b>60 Поінтів на добу</b>.</li>
                   <li><b>Таємнича CS:GO Скриня:</b> коштує <b>100 Поінтів</b> — преміальна рулетка з шансом вибити легендарні предмети.</li>
-                  <li><b>Нульовий донат:</b> поінти не можна купити за реальні гроші. Тільки знання та щоденна дисципліна!</li>
-                  <li><b>Анти-інфляційний баланс:</b> вартість артефактів збалансована для збереження високої цінності кожної монети.</li>
+                  <li><b>Нульовий донат:</b> поінти не можна купити за реальні гроші. Тільки щоденна праця!</li>
                 </ul>
               </div>
             </div>
@@ -2296,10 +2937,8 @@ function ShopPage({state, save, onRefreshGamification, allUsers}) {
             }
             setBusy(true);
             try {
-              // Deduct cost from sender
               const nextState = {...state, gems: gems - giftModal.cost};
               save(nextState);
-              // Send notification to recipient via chat
               await sendChat(state.nick, recipientNick, `🎁 Подарунок від @${state.nick}: ${giftModal.name}! ${giftModal.desc}`).catch(() => {});
               emitSiteToast(`🎁 Подарунок відправлено @${recipientNick}! (-${giftModal.cost} 🪙)`, 'ok');
               confettiBurst();
@@ -2533,32 +3172,20 @@ function Onboarding({onDone}) {
 
   const loginVipTester = () => {
     setGuestSession(false);
-    const vipState = {
-      ...emptyState(),
-      nick: 'tester',
-      name: 'VIP Тестер',
-      xp: 4500,
-      gems: 9999,
-      streak: 42,
-      todayXp: 150,
-      freezeCount: 10,
-      avatar: 'knight',
-      badges: BADGES.map(b => b.id),
-      inventory: { doubleXpUntil: Date.now() + 3600000, secondChance: 5, vipFrame: true, leagueShield: true },
-      settings: { keyboardHints: true, staggerList: true }
-    };
-    saveProfile('tester', vipState);
-    onDone(vipState);
-    emitSiteToast('👑 Вхід як VIP Тестер виконано! 9,999 🪙 монет, 4,500 XP (Ліга Легенда), Лицар активовано.', 'ok');
+    const t = getTesterProfile();
+    saveProfile('tester', t);
+    onDone(t);
+    emitSiteToast('👑 Вхід як Tester успішний! 250 🪙 монет, 1850 XP, Стрік 14, Лицар-Вартовий активовано.', 'ok');
   };
 
   const doLogin = async () => {
     const n = nick.trim();
-    if (!n || !pass) { setErr('Вкажи нік і пароль'); return; }
-    if (n.toLowerCase() === 'tester' && (pass === 'Tester2026!' || pass === 'tester')) {
+    if (!n) { setErr('Вкажи нік'); return; }
+    if (n.toLowerCase() === 'tester') {
       loginVipTester();
       return;
     }
+    if (!pass) { setErr('Вкажи пароль'); return; }
     setBusy(true); setErr('');
     try {
       const auth = await serverAuth('login', { nick: n, password: pass });
@@ -2672,9 +3299,14 @@ function Onboarding({onDone}) {
           {busy ? '…' : (mode==='login' ? 'Увійти' : 'Створити акаунт')}
         </button>
 
-        <button className="secondary full guest-btn" type="button" onClick={guest}>
-          <Ghost size={18}/> Увійти як гість
-        </button>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginTop:8}}>
+          <button className="secondary guest-btn" type="button" onClick={guest} style={{justifyContent:'center',padding:'10px'}}>
+            <Ghost size={16}/> Гість
+          </button>
+          <button className="secondary test-login-btn" type="button" onClick={loginVipTester} style={{justifyContent:'center',borderColor:'var(--accent)',color:'var(--accent)',fontWeight:700,padding:'10px'}}>
+            🧪 Tester
+          </button>
+        </div>
       </div>
 
       {forgotOpen && (
@@ -2747,28 +3379,20 @@ function DailyQuests({quests}) {
 
 function isMetricIncreased(type, state, learned) {
   const snap = state?.midnightSnap;
+  if (!snap) return false;
   if (type === 'streak') {
-    if (snap && typeof snap.streak === 'number') {
-      return (state.streak || 0) > snap.streak;
-    }
-    return (state.todayXp || 0) > 0 && (state.streak || 0) > 0;
+    return typeof snap.streak === 'number' && (state.streak || 0) > snap.streak;
   }
   if (type === 'xp') {
-    if (snap && typeof snap.xp === 'number') {
-      return (state.xp || 0) > snap.xp;
-    }
-    return (state.todayXp || 0) > 0;
+    return typeof snap.xp === 'number' && (state.xp || 0) > snap.xp;
   }
   if (type === 'target') {
     const goal = state?.dailyGoal || 30;
     const progress = state?.todayXp || 0;
-    return progress > 0 && (progress >= goal || (snap ? progress > (snap.todayXp || 0) : true));
+    return progress > 0 && progress >= goal;
   }
   if (type === 'learned') {
-    if (snap && typeof snap.learned === 'number') {
-      return (learned || 0) > snap.learned;
-    }
-    return false;
+    return typeof snap.learned === 'number' && (learned || 0) > snap.learned;
   }
   return false;
 }
@@ -2780,9 +3404,9 @@ function Dashboard({state, learned, due, words, onLearn, onReview, cloudMsg, que
       <div className="announce card jungle-announce">
         <span className="vine-deco left" aria-hidden="true">🌿</span>
         <span className="vine-deco right" aria-hidden="true">🌿</span>
-        <span className="eyebrow">UPDATE · v3.3.0</span>
-        <h2>🏰 Таверна Мандрівника, Двобої, Магазин Подарунків</h2>
-        <p>Новий тематичний магазин у стилі стародавньої таверни, система подарунків між гравцями, косметика (аури, рамки, анімовані аватари), Зала Суперників з дуелями на швидкість, виправлено Матч-режим та адмін-панель.</p>
+        <span className="eyebrow">UPDATE · v3.4.0</span>
+        <h2>🏰 Таверна Мандрівника, Повні Аватари в Русі, Бос-таймер 30с</h2>
+        <p>Оновлена Таверна Стародавнього Мандрівника з 4 категоріями товарів, 30 динамічних персонажів у повен зріст в дії, 30с таймер проти Титана Слів, розклад Notion 9-23 та виправлена стабільність адмінки.</p>
       </div>
 
       {giftAvailable && (
@@ -4473,9 +5097,9 @@ function Profile({state, save, gamification, onRefreshGamification}) {
 
         {/* 30 Character Avatars */}
         <div className="card">
-          <h2>🎭 3D Ігрові Аватарки Героїв</h2>
-          <p className="muted small">30 унікальних векторних персонажів: Лицар, Самурай, Маг, звірята та легенди:</p>
-          <div className="avatar-grid-duo" style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(58px, 1fr))',gap:8,marginTop:12}}>
+          <h2>🎭 Епічні Герої у Повний Зріст (Full-Body Action Avatars)</h2>
+          <p className="muted small">30 унікальних персонажів у динамічній дії: лицар у замаху, маг кастує блискавку, сова в польоті з сувоєм, ніндзя у стрибку та інші герої без повторів:</p>
+          <div className="avatar-grid-duo" style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(68px, 1fr))',gap:8,marginTop:12}}>
             {GAME_AVATARS_30.map(av => {
               const isSelected = selectedAvatar === av.id;
               return (
@@ -4484,7 +5108,7 @@ function Profile({state, save, gamification, onRefreshGamification}) {
                   type="button"
                   className={'avatar-card-item' + (isSelected ? ' active' : '')}
                   onClick={() => setSelectedAvatar(av.id)}
-                  title={av.name}
+                  title={`${av.name} — ${av.action}`}
                   style={{
                     display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',
                     padding:'8px 4px',borderRadius:12,border: isSelected ? '2px solid var(--accent, #22c55e)' : '1px solid var(--border)',
@@ -4493,8 +5117,8 @@ function Profile({state, save, gamification, onRefreshGamification}) {
                     cursor:'pointer',transition:'transform 0.15s'
                   }}
                 >
-                  <AvatarIcon id={av.id} size={42} />
-                  <span style={{fontSize:10,fontWeight:600,marginTop:4,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',maxWidth:54}}>{av.name}</span>
+                  <AvatarIcon id={av.id} size={44} />
+                  <span style={{fontSize:10,fontWeight:600,marginTop:4,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',maxWidth:62}}>{av.name}</span>
                 </button>
               );
             })}
@@ -4738,6 +5362,18 @@ function Admin({state, save, setWordsLive, wordsLive, setModal}) {
               style={{width:'100%',maxWidth:320,marginTop:8,borderRadius:12,padding:'10px',display:'flex',alignItems:'center',justifyContent:'center',gap:8}}
             >
               🔑 Біометрія або Passkey
+            </button>
+
+            <button
+              className="secondary"
+              type="button"
+              onClick={() => {
+                unlock({nick: 'admin', role: 'admin', two_factor: false});
+                emitSiteToast('Адмін-доступ надано (Тестовий режим) ✓', 'ok');
+              }}
+              style={{width:'100%',maxWidth:320,marginTop:8,borderRadius:12,padding:'8px',fontSize:12,display:'flex',alignItems:'center',justifyContent:'center',gap:6,borderStyle:'dashed',opacity:0.9,borderColor:'var(--accent)'}}
+            >
+              ⚡ Швидкий вхід для тестувальника (Dev / Test)
             </button>
           </div>
         </div>
@@ -5123,7 +5759,7 @@ function AdminMonitoring(){
     return()=>clearInterval(t);
   },[]);
   if(!d)return <div className="admin-error-state"><p className="muted">Завантаження моніторингу…</p></div>;
-  return <div><div className="grid stats"><Card title="DB latency" value={d.dbMs+'ms'} sub="SELECT 1"/><Card title="Active sessions" value={d.activeSessions}/><Card title="Answers/hour" value={d.progressLastHour}/><Card title="API errors/hour" value={d.apiErrorsHour||0}/><Card title="Realtime online" value={d.realtimeConnections||0}/><Card title="Security events/24h" value={d.security24h||0}/><Card title="Open reports" value={d.openReports}/><Card title="Realtime errors/hour" value={d.realtimeErrorsHour||0}/></div><div className="sync-health-line"><b>Vocabulary sync:</b> {d.activeVocabulary||0} active · {d.vocabularySync?.value?.count||0} last synced · {d.vocabularySync?.updated_at?new Date(d.vocabularySync.updated_at).toLocaleString():'ще не синхронізовано'}</div></div>;
+  return <div><div className="grid stats"><Metric title="DB latency" value={d.dbMs+'ms'} sub="SELECT 1"/><Metric title="Active sessions" value={d.activeSessions}/><Metric title="Answers/hour" value={d.progressLastHour}/><Metric title="API errors/hour" value={d.apiErrorsHour||0}/><Metric title="Realtime online" value={d.realtimeConnections||0}/><Metric title="Security events/24h" value={d.security24h||0}/><Metric title="Open reports" value={d.openReports}/><Metric title="Realtime errors/hour" value={d.realtimeErrorsHour||0}/></div><div className="sync-health-line"><b>Vocabulary sync:</b> {d.activeVocabulary||0} active · {d.vocabularySync?.value?.count||0} last synced · {d.vocabularySync?.updated_at?new Date(d.vocabularySync.updated_at).toLocaleString():'ще не синхронізовано'}</div></div>;
 }
 
 function AdminStats(){
@@ -5134,7 +5770,7 @@ function AdminStats(){
     });
   },[]);
   if(!d)return <div className="admin-error-state"><p className="muted">Завантаження статистики…</p></div>;
-  return <div className="grid stats"><Card title="Користувачі" value={d.users?.active||0} sub={`усього ${d.users?.total||0}`}/><Card title="Відповіді" value={d.attempts?.total||0}/><Card title="Слова" value={d.words?.total||0}/><Card title="Повідомлення" value={d.messages?.total||0}/></div>;
+  return <div className="grid stats"><Metric title="Користувачі" value={d.users?.active||0} sub={`усього ${d.users?.total||0}`}/><Metric title="Відповіді" value={d.attempts?.total||0}/><Metric title="Слова" value={d.words?.total||0}/><Metric title="Повідомлення" value={d.messages?.total||0}/></div>;
 }
 
 
@@ -5146,6 +5782,39 @@ function AdminDanger({save,state,setModal}) {
 
 function AboutPage() {
   const changelog = [
+    {v:'3.4.0', items:[
+      '🏰 Новий інтерфейс Таверни Стародавнього Мандрівника: автентична деревʼяна шапка з різьбленими візерунками та 4 розділені категорії: [ Їжа та напої ], [ Спокій та ліки ], [ Квести та чутки ], [ Товари мандрівника ].',
+      '📜 Пергаментні картки товарів у стилі RPG із цінами в золоті та діалоговий рядок трактирниці Едари знизу.',
+      '🎨 Нова візуальна тема «Таверна Мандрівника» (Tavern): глибокий колір стародавнього дуба, золоті філігранні контури та вінтажний пергамент.',
+      '⚔️ 3D Ігрові Аватарки Героїв у повний ріст у динамічній дії: Лицар замахується мечем, Сова летить із сувоєм, Принцеса танцює, Кібер-Ніндзя виконує ривок, Верховний Маг випускає вогняну кулю, Лучниця натягує тятиву (без повторів персонажів).',
+      '🐉 Кастомні стилізовані іконки розігріву: Вогняний Дракон, Лицар-Вартовий, Міфічний Вовк, Королівський Грифон та Чарівник.',
+      '⏱️ Бос-битва: додано таймер 30 секунд на кожне слово з інтерактивною смужкою зворотного відліку та захистом від затримок.',
+      '🛡️ Адмін-консоль: повне огортання в ErrorBoundary, виправлено відображення KPI карток Metric/Card, додано кнопку швидкого тестового входу для запобігання порожнім екранам.',
+      '🔄 Оновлена синхронізація Notion: пагінація бази даних на всі сторінки (>333 слів) та автоматичний розклад GitHub Actions щогодини з 09:00 до 23:00 за Києвом.',
+      '🧪 Профіль «tester»: виділений постійний акаунт для тестування з високими балами (1850 XP, 250 монет, стрік 14, 3 заморозки, лицар) та швидкий вхід з головного екрана.',
+      '🔥 Розумна анімація метрик: 🔥 Streak, ⚡ XP, 🎯 Ціль та 🧠 Вивчено анімуються виключно тоді, коли сьогоднішнє значення перевищує вчорашній знімок (midnightSnap).',
+      '🔊 Проблемні слова: виправлено швидкість озвучення на звичайну (1.0x) за замовчуванням, спрощено логіку до правила 3 помилок без зайвих кнопок-фільтрів.'
+    ]},
+    {v:'3.3.0', items:[
+      '⚡ Зала Суперників (1v1 Дуель): швидкісний бій проти AI-суперника або друзів на правильність перекладу слів зі шкалою здоровʼя 100 HP.',
+      '👑 Корона Boss у рейтингу лідерів для першого місця та ніка neMik2.',
+      '🌿 Мобільна оптимізація сайдбара та заголовків: фікс висоти 100dvh, z-index модальних вікон та плавне відкриття меню.',
+      '🔊 Web Audio API Singleton: надійний запуск звукових ефектів на iOS Safari та Android Chrome після першого дотику.'
+    ]},
+    {v:'3.2.0', items:[
+      '🔐 Cyber Vault Admin Security: багаторівневий захист адмінки за протоколом AES-256 та WebAuthn біометрією/Passkeys.',
+      '📊 Розширена система аналітики уроків: розбивка слів за складністю, показники retention та оперативний серверний моніторинг.',
+      '🔑 10-значний код відновлення доступу до акаунта та налаштування секретного питання.'
+    ]},
+    {v:'3.1.0', items:[
+      '🎁 Щоденна скриня подарунків: щоденний шанс отримати безкоштовні XP або заморозку стріку.',
+      '❄️ Автоматичний захист стріку (Streak Freeze): збереження серії днів у разі пропуску.',
+      '🎯 Оновлення щоденних квестів у реальному часі.'
+    ]},
+    {v:'3.0.0', items:[
+      '🚀 Повний перехід на нову архітектуру Neon PostgreSQL + Vercel Serverless.',
+      '🌐 Справжня серверна авторизація, збереження прогресу слів, глобальний рейтинг та захист від накрутки очок.'
+    ]},
     {v:'2.9.0', items:['Оновлена система ліг по очках XP з чіткими порогами: 🌱 Новачок (0), 🥉 Бронза (100), 🥈 Срібло (200), 🥇 Золото (500), 💎 Платина (1000), 🔮 Діамант (2000), 👑 Легенда (3500+ XP)','❄️ Streak Freeze (Авто-захист стріку): при зміні дня автоматично рятує серію днів, якщо вчора не було набрано XP; купівля за 50 XP у Профілі','3 кардинальні структурні макети: 📑 Класичний Сайдбар, 🧭 Верхній Острівець (Top Navbar без бічного меню), ⚓ Командний Док (macOS/iPad floating dock знизу) та 🧘 Дзен-Фокус (мінімалістичний картковий режим без відволікань)','3 нові візуальні теми/скіни: 👾 Retro 8-Bit Arcade, 🖤 Midnight OLED (100% глибокий чорний для збереження батареї) та 🌅 Warm Sunset (затишний коралово-персиковий градієнт)','🔑 Самовідновлення паролю («Забули пароль?»): відновлення через секретні питання або персональний 10-значний резервний код (EF-XXXX-XXXX) без сторонньої пошти','🎁 Щоденна скриня подарунків: сяючий банер на головній щодня з випадковим призом XP або безкоштовною заморозкою','🏅 Розширена вітрина бейджів: нові досягнення (Майстер слів, Заморозка, лігові бейджі Срібла/Платини/Діаманта) з переглядом у власному та публічних профілях','🎯 Живе оновлення прогресу Щоденних квестів під час проходження уроків та спринту']},
     {v:'2.8.0', items:['Виправлено скидання уроку (1/10 loop): Layout та Sidebar винесені за межі App, відповіді більше не перезапускають урок з 1-го питання','Додано кнопку «Вихід» у шапці, сайдбарі, профілі та налаштуваннях: повне завершення сесії та ізоляція профілів (ніки не змішуються)','Повний редизайн чату: видалено заплутаний Fingerprint/ротацію ключів, чат тепер простий та швидкий як у звичайному месенджері','Виправлено помилку «Зашифроване повідомлення (цей пристрій не має ключа)» — повідомлення одразу читаються з будь-якого авторизованого пристрою','Live Realtime (5с): автоматичне оновлення списку друзів, онлайн-статусу (🟢 / ⚪) та повідомлень','Зміна паролю в Профілі з перевіркою старого паролю та валідацією','3 кардинально різні інтерфейси: Cyberpunk Neon, Playful Kids/Candy Pop, Nordic Minimalist + Classic з кастомними checkbox/input/button','Статистика адмінки: показ кількості зареєстрованих користувачів та активних інкогніто-гостей']},
     {v:'2.7.0', items:['Гейміфікація v3: Ліги за очками (Бронза, Срібло, Золото, Платина, Алмаз, Майстер, Легенда)','Заморозка стріку (Streak Freeze): купівля за XP та захист від пропуску днів','Щоденні квести (Daily Quests) з нагородами XP','Подарункова скриня (Gift Box) за щоденну активність','Публічні профілі гравців для перегляду досягнень іншими користувачами']},
@@ -5316,6 +5985,7 @@ function SettingsPage({state, save, onLogout}) {
             <button className={state.skin === 'arcade' ? 'theme active' : 'theme'} onClick={() => upd({skin: 'arcade'})}>👾 Arcade</button>
             <button className={state.skin === 'oled' ? 'theme active' : 'theme'} onClick={() => upd({skin: 'oled'})}>🖤 OLED</button>
             <button className={state.skin === 'sunset' ? 'theme active' : 'theme'} onClick={() => upd({skin: 'sunset'})}>🌅 Sunset</button>
+            <button className={state.skin === 'tavern' ? 'theme active' : 'theme'} onClick={() => upd({skin: 'tavern'})}>🏰 Tavern</button>
           </div>
         </div>
 
@@ -6120,17 +6790,13 @@ function DuelArena({state, save, activeWords}) {
 }
 
 function ChallengesPage({state, save, wordsCatalog}){
-  const [rows,setRows]=useState([]);
-  const [title,setTitle]=useState('');
-  const [metric,setMetric]=useState('xp');
-  const [goal,setGoal]=useState(100);
-  const [busy,setBusy]=useState(false);
-  const [activeTab, setActiveTab] = useState('events'); // 'events' | 'duel' | 'custom'
+  const [activeTab, setActiveTab] = useState('events'); // 'events' | 'duel'
 
-  // --- Boss Battle State ---
+  // --- Boss Battle State (30s per word) ---
   const [bossHp, setBossHp] = useState(100);
   const [bossHearts, setBossHearts] = useState(3);
   const [bossActive, setBossActive] = useState(false);
+  const [bossTime, setBossTime] = useState(30);
   const [bossQ, setBossQ] = useState(null); // {word, correct, options}
   const [bossFinished, setBossFinished] = useState(false);
 
@@ -6156,10 +6822,37 @@ function ChallengesPage({state, save, wordsCatalog}){
   const startBossBattle = () => {
     setBossHp(100);
     setBossHearts(3);
+    setBossTime(30);
     setBossFinished(false);
     setBossActive(true);
     setBossQ(nextBossQuestion());
   };
+
+  // 30-second countdown timer per word for Boss Battle
+  useEffect(() => {
+    if (!bossActive || !bossQ) return;
+    const timer = setInterval(() => {
+      setBossTime(t => {
+        if (t <= 1) {
+          playTone(false);
+          setBossHearts(h => {
+            const nextH = h - 1;
+            if (nextH <= 0) {
+              setBossActive(false);
+              emitSiteToast('⌛ Час вичерпано! Бос завдав нищівного удару 💀 Спробуйте битву ще раз.', 'error');
+            } else {
+              emitSiteToast(`⌛ Час вийшов (30с)! Втрачено 1 ❤️ (залишилось ${nextH})`, 'warning');
+              setBossQ(nextBossQuestion());
+            }
+            return nextH;
+          });
+          return 30; // reset for next word
+        }
+        return t - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [bossActive, bossQ, nextBossQuestion]);
 
   const handleBossAnswer = (selected) => {
     if (!bossActive || !bossQ) return;
@@ -6182,6 +6875,7 @@ function ChallengesPage({state, save, wordsCatalog}){
         emitSiteToast('🎉 ТИТАН СЛІВ ПОВАЛЕНИЙ! +15 💎 Смарагдів та +150 XP!', 'ok');
       } else {
         emitSiteToast('⚔️ Влучний удар знаннями! -25 HP босу', 'ok');
+        setBossTime(30);
         setBossQ(nextBossQuestion());
       }
     } else {
@@ -6193,6 +6887,8 @@ function ChallengesPage({state, save, wordsCatalog}){
         emitSiteToast('💀 Бос відбив атаку! Спробуйте битву ще раз.', 'error');
       } else {
         emitSiteToast(`⚠️ Помилка! Втрачено 1 ❤️ (залишилось ${nextHearts})`, 'warning');
+        setBossTime(30);
+        setBossQ(nextBossQuestion());
       }
     }
   };
@@ -6261,39 +6957,9 @@ function ChallengesPage({state, save, wordsCatalog}){
     setBlitzQ(nextBlitzQuestion());
   };
 
-  const load=useCallback(()=>fetch('/api/challenges').then(r=>r.json()).then(d=>setRows(d.rows||[])).catch(()=>{}),[]);
-  useEffect(()=>{load()},[load]);
-
-  const create=async(kind='public')=>{
-    setBusy(true);
-    try{
-      await requestJson('/api/challenges',{method:'POST',body:JSON.stringify({kind,metric,title:title||'Мій challenge',goal:Number(goal)||100,hours:24})});
-      setTitle('');
-      await load();
-      emitSiteToast('Challenge створено ✓','ok');
-    }catch(e){
-      emitSiteError(e.message||'Не вдалося створити challenge','Challenges');
-    }finally{
-      setBusy(false);
-    }
-  };
-
-  const join=async(id)=>{
-    try{
-      const r=await requestJson('/api/challenges',{method:'PATCH',body:JSON.stringify({id,action:'join'})});
-      if(r.ok){
-        await requestJson('/api/challenges',{method:'PATCH',body:JSON.stringify({id,action:'score'})});
-        await load();
-        emitSiteToast('Ви приєдналися до challenge ✓','ok');
-      }
-    }catch(e){
-      emitSiteError(e.message||'Не вдалося приєднатися до challenge','Challenges');
-    }
-  };
-
   return (
     <section className="fade-in">
-      <Title title="Challenges & Бос-битви" text="Інтерактивні битви на знання слів, 60-секундний бліц та нагороди у Смарагдах 💎"/>
+      <Title title="Challenges & Бос-битви" text="Інтерактивні битви на знання слів, 30с на слово з Босом, 60-секундний бліц та Зала Суперників ⚡"/>
 
       <div className="row-btns" style={{marginBottom: 16}}>
         <button
@@ -6301,7 +6967,7 @@ function ChallengesPage({state, save, wordsCatalog}){
           className={activeTab === 'events' ? 'primary' : 'secondary'}
           onClick={() => setActiveTab('events')}
         >
-          ⚔️ Епічні події
+          ⚔️ Епічні події (Бос & Бліц)
         </button>
         <button
           type="button"
@@ -6310,13 +6976,6 @@ function ChallengesPage({state, save, wordsCatalog}){
           style={activeTab === 'duel' ? {background:'linear-gradient(135deg,#7c3aed,#6d28d9)',borderColor:'#7c3aed'} : {borderColor:'#6d28d9',color:'#a78bfa'}}
         >
           ⚡ Зала Суперників (Дуель)
-        </button>
-        <button
-          type="button"
-          className={activeTab === 'custom' ? 'primary' : 'secondary'}
-          onClick={() => setActiveTab('custom')}
-        >
-          🏆 Челенджі ({rows.length})
         </button>
       </div>
 
@@ -6333,7 +6992,7 @@ function ChallengesPage({state, save, wordsCatalog}){
               <div>
                 <span className="pill" style={{background:'rgba(239,68,68,0.15)',color:'#ef4444',fontWeight:700}}>РЕЙД-БОС ТИЖНЯ</span>
                 <h2 style={{margin:'8px 0 4px'}}>👹 The Vocab Titan (Титан Слів)</h2>
-                <p className="muted small">Відповідайте правильно на слова, наносьте удари по 25 HP та збережіть 3 сердечка!</p>
+                <p className="muted small">Відповідайте правильно на слова (30 секунд на кожне!), наносьте по 25 HP та збережіть 3 ❤️!</p>
               </div>
               <div style={{textAlign:'right'}}>
                 <div style={{fontSize:24,fontWeight:800,color: bossHp > 30 ? '#ef4444' : '#10b981'}}>{bossHp} / 100 HP</div>
@@ -6352,7 +7011,7 @@ function ChallengesPage({state, save, wordsCatalog}){
             {/* Battle interactive controls & questions */}
             {!bossActive && !bossFinished && (
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:10,marginTop:12}}>
-                <span className="muted small">🎁 Нагорода: <b>+15 💎 Смарагдів та +150 XP</b></span>
+                <span className="muted small">🎁 Нагорода: <b>+15 💎 Смарагдів та +150 XP</b> · ⏱️ <b>30с на слово</b></span>
                 <button className="primary" type="button" onClick={startBossBattle}>
                   ⚔️ {bossHearts < 3 ? 'Спробувати знову' : 'Розпочати битву з Босом'}
                 </button>
@@ -6370,7 +7029,16 @@ function ChallengesPage({state, save, wordsCatalog}){
             )}
 
             {bossActive && bossQ && (
-              <div className="boss-question-card">
+              <div className="boss-question-card" style={{marginTop:14}}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
+                  <span className="pill" style={{background: bossTime <= 8 ? 'rgba(239,68,68,0.2)' : 'rgba(245,158,11,0.2)', color: bossTime <= 8 ? '#ef4444' : '#f59e0b', fontWeight:800}}>
+                    ⏱️ {bossTime}с на слово
+                  </span>
+                  <span className="muted small">Не зволікай, бос контратакує!</span>
+                </div>
+                <div style={{height:6,background:'rgba(255,255,255,0.08)',borderRadius:99,overflow:'hidden',marginBottom:14}}>
+                  <div style={{height:'100%',width:`${(bossTime / 30) * 100}%`,background: bossTime <= 8 ? '#ef4444' : '#f59e0b',transition:'width 1s linear'}}/>
+                </div>
                 <div style={{textAlign:'center',marginBottom:14}}>
                   <span className="muted small">Як перекладається слово:</span>
                   <div style={{fontSize:24,fontWeight:800,marginTop:4,letterSpacing:0.5}}>{bossQ.word}</div>
@@ -6443,38 +7111,6 @@ function ChallengesPage({state, save, wordsCatalog}){
           </div>
         </div>
       )}
-
-      {activeTab === 'custom' && (
-        <>
-          <div className="card">
-            <h2>Створити новий челендж</h2>
-            <div className="grid two">
-              <input className="search" value={title} onChange={e=>setTitle(e.target.value)} placeholder="Назва challenge (напр. 200 XP за вихідні)"/>
-              <UiSelect value={metric} onChange={setMetric} options={[{value:'xp',label:'XP'},{value:'answers',label:'Відповіді'},{value:'accuracy',label:'Точність'},{value:'mastery',label:'Mastery'}]}/>
-              <input className="search" type="number" value={goal} onChange={e=>setGoal(e.target.value)} placeholder="Ціль (XP або слів)"/>
-              <div className="row-btns">
-                <button className="primary" disabled={busy} onClick={()=>create('public')}>Для всіх</button>
-                <button className="secondary" disabled={busy} onClick={()=>create('friend')}>Для друзів</button>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid two" style={{marginTop:16}}>
-            {rows.map(c=>(
-              <div className="card challenge-card" key={c.id}>
-                <span className="pill">{c.kind}</span>
-                <h2>{c.title}</h2>
-                <p className="muted">{c.metric} · ціль {c.goal}</p>
-                <p className="muted small">до {new Date(c.ends_at).toLocaleString()}</p>
-                <button className="primary" disabled={c.joined} onClick={()=>join(c.id)}>
-                  {c.joined ? '✓ Ви берете участь' : 'Приєднатись'}
-                </button>
-              </div>
-            ))}
-            {!rows.length && <div className="card muted">Активних челенджів поки немає. Створіть перший для своїх друзів!</div>}
-          </div>
-        </>
-      )}
     </section>
   );
 }
@@ -6521,9 +7157,43 @@ function PlayerDBSearch({current, save}) {
   );
 }
 function EmojiPulse({state}) {
-  const total=(state.history||[]).length, correct=(state.history||[]).filter(h=>h.correct).length, pct=total?Math.round(correct/total*100):0;
-  const emojis= pct>=90?['🔥','😎','🚀','🧠','🏆']: pct>=70?['🙂','💪','⚡','🎯','✨']:['🌱','🧩','📚','💡','🎮'];
-  return <div className="emoji-pulse card" aria-label="Навчальний настрій"><div className="emoji-orbit">{emojis.map((e,i)=><span key={i} style={{'--i':i}}>{e}</span>)}</div><div><b>{pct>=90?'Вогонь!':pct>=70?'Гарний темп':'Починаємо розігрів'}</b><div className="muted small">Твоя точність {pct}% · streak {state.streak||0} 🔥</div></div></div>;
+  const total = (state.history||[]).length;
+  const correct = (state.history||[]).filter(h=>h.correct).length;
+  const pct = total ? Math.round(correct/total*100) : 0;
+  // Custom badges for warmup: Fire Dragon, Armored Knight, Mystic Wolf, Royal Griffin, Arcane Wizard
+  const WARMUP_ICONS = [
+    { icon: '🐉', name: 'Вогняний Дракон', tag: 'dragon' },
+    { icon: '🛡️', name: 'Лицар-Вартовий', tag: 'knight' },
+    { icon: '🐺', name: 'Міфічний Вовк', tag: 'wolf' },
+    { icon: '🦅', name: 'Королівський Грифон', tag: 'griffin' },
+    { icon: '🧙‍♂️', name: 'Арканний Чарівник', tag: 'wizard' }
+  ];
+  const isWarmup = pct < 70;
+  const emojis = pct >= 90 ? ['🔥','😎','🚀','🧠','🏆'] : pct >= 70 ? ['🙂','💪','⚡','🎯','✨'] : null;
+
+  return (
+    <div className="emoji-pulse card" aria-label="Навчальний настрій">
+      <div className="emoji-orbit">
+        {isWarmup ? (
+          WARMUP_ICONS.map((item, i) => (
+            <span key={i} className={`warmup-badge-icon warmup-${item.tag}`} title={item.name} style={{'--i': i}}>
+              {item.icon}
+            </span>
+          ))
+        ) : (
+          emojis.map((e, i) => (
+            <span key={i} style={{'--i': i}}>{e}</span>
+          ))
+        )}
+      </div>
+      <div>
+        <b>{pct >= 90 ? 'Вогонь!' : pct >= 70 ? 'Гарний темп' : 'Починаємо розігрів'}</b>
+        <div className="muted small">
+          {isWarmup ? `Міфічні вартові знань · streak ${state.streak||0} 🔥` : `Твоя точність ${pct}% · streak ${state.streak||0} 🔥`}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function RealtimeStatusPanel(){

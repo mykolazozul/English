@@ -47,9 +47,14 @@ function findProp(props, names = [], expectedType = null) {
 }
 
 function propTitleSmart(p) {
-  const prop = findProp(p, ['Word', 'word', 'Name', 'name', 'Title', 'title', 'Слово', 'слово', 'Термін', 'English'], 'title');
+  const prop = findProp(p, ['Word', 'word', 'Name', 'name', 'Title', 'title', 'Слово', 'слово', 'Термін', 'English', 'Term', 'Vocabulary', 'ENG', 'Words', 'English Word', 'Word / Phrase'], 'title') 
+    || Object.values(p || {}).find(x => x?.type === 'title');
   if (!prop) return '';
-  return (prop.title || prop.rich_text || []).map(x => x.plain_text || x.text?.content || '').join('').trim();
+  const text = (prop.title || prop.rich_text || []).map(x => x.plain_text || x.text?.content || '').join('').trim();
+  if (text) return text;
+  // Fallback: search any rich_text matching word names
+  const alt = findProp(p, ['Word', 'word', 'Name', 'name', 'Слово', 'English', 'Term', 'ENG']);
+  return alt ? (alt.rich_text || alt.title || []).map(x => x.plain_text || x.text?.content || '').join('').trim() : '';
 }
 
 function propTextSmart(p, names) {
