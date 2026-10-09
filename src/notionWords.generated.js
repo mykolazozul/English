@@ -3,5 +3,5 @@ export const notionWords = [];
 export const notionSyncMeta = {
   "dataSourceId": "f38dba17-bbd6-4f04-9875-030212db4d0a",
   "count": 0,
-  "syncedAt": "2026-10-09T18:41:34.755Z"
+  "syncedAt": "2026-10-09T23:05:08.123Z"
 };
