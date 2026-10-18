@@ -7,7 +7,7 @@ on:
     - cron: '0 6-21 * * *'
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   sync:
@@ -18,41 +18,29 @@ jobs:
         with:
           node-version: 20
 
-      - name: Sync Notion to generated files
+      - name: Sync Notion to Neon DB directly (no Git commit / no Vercel rebuild)
         env:
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
           NOTION_DATA_SOURCE_ID: ${{ secrets.NOTION_DATA_SOURCE_ID }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
-          if [ -z "$NOTION_TOKEN" ]; then
-            echo "::warning::NOTION_TOKEN secret is not set in GitHub Repository Secrets. Skipping static sync."
+          if [ -z "$NOTION_TOKEN" ] || [ -z "$DATABASE_URL" ]; then
+            echo "Direct Neon sync skipped (using Vercel API or auto-sync on /api/vocabulary)."
           else
-            npm run sync:notion || echo "::warning::Notion sync script finished with warnings. Preserving existing word cache."
+            npm install --no-audit --no-fund
+            npm run sync:notion || echo "::warning::Notion sync script finished with warnings."
           fi
 
-      - name: Sync Notion to Neon via Vercel API
+      - name: Trigger live Notion sync on Vercel API (no redeploy)
         env:
           VERCEL_API_URL: ${{ secrets.VERCEL_API_URL }}
           SYNC_SECRET: ${{ secrets.SYNC_SECRET || secrets.CRON_SECRET || secrets.ADMIN_PASSWORD }}
         run: |
           if [ -z "$VERCEL_API_URL" ]; then
-            echo "::warning::VERCEL_API_URL secret is not set. Skipping remote database sync webhook."
+            echo "VERCEL_API_URL not set; /api/vocabulary on Vercel auto-syncs hourly from Notion into Neon DB."
           else
             curl -sS -X POST "$VERCEL_API_URL/api/notion-sync" \
               -H "Content-Type: application/json" \
               -H "x-sync-secret: $SYNC_SECRET" \
               -d '{}' || echo "::warning::Vercel notion-sync webhook reported a non-critical network issue."
           fi
-
-      - name: Commit synced static cache
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/notionWords.generated.js public/notion-sync-meta.json public/words.json public/words-db.json
-          if git diff --cached --quiet; then
-            echo "No static word changes to commit"
-          else
-            git commit -m "chore: hourly sync English words from Notion"
-            git push
-          fi
-
