@@ -55,8 +55,8 @@ const CATS = [...new Set(words.map(w => w.category))].sort();
 const defaultAdmin = {lessonSize: 10, correctPoints: 4, wrongPoints: -2, masteryThreshold: 8, shuffleQuestions: true, shuffleAnswers: true, showPronunciation: true, perfectBonus: 0, badgeStyle: 'neo'};
 const emptyState = () => ({
   nick: '', name: '', passHash: '', xp: 0, gems: 25, streak: 1, dailyGoal: 50, todayXp: 0, today: todayStr(),
-  mastery: {}, srs: {}, attempts: {}, history: [], badges: [], avatar: 'duo_owl',
-  theme: 'system', skin: 'classic', font: 'Plus Jakarta Sans', customTheme: {accent: '#22c55e', bg: '#f6f8f6', surface: '#ffffff'},
+  mastery: {}, srs: {}, attempts: {}, history: [], badges: [], avatar: 'character_04_overconfident_knight',
+  theme: 'dark', skin: 'arcane_citadel', font: 'Plus Jakarta Sans', customTheme: {accent: '#f59e0b', bg: '#0b0906', surface: '#16110b'},
   admin: {...defaultAdmin},
   quiet: false, sfx: true, soundPack: 'duo', guest: false, gamesPlayed: 0,
   compareMode: 'global', compareFriend: '', midnightSnap: null, badgeStyle: 'neo',
@@ -717,46 +717,46 @@ function AncientCoinIcon({ size = 20, className = '', style = {} }) {
    All circular, humorous, dynamic mobile-game inspired vector avatars
    ========================================================================== */
 export const GAME_AVATARS_FUNNY = [
-  { id: 'character_01_clumsy_barbarian', name: 'Незграбний Варвар', action: 'Крихітний варвар хитається під вагою молота', image: 'character_01_clumsy_barbarian.svg', tag: '🔨 Варвар' },
-  { id: 'character_02_flying_duck_pilot', name: 'Качка-Пілот', action: 'Качка в авіаторському шоломі з гвинтом', image: 'character_02_flying_duck_pilot.svg', tag: '✈️ Пілот' },
-  { id: 'character_03_confused_tree_warrior', name: 'Збентежений Треант', action: 'Живий треант розгублено жонглює яблуками', image: 'character_03_confused_tree_warrior.svg', tag: '🌳 Треант' },
-  { id: 'character_04_overconfident_knight', name: 'Самовпевнений Лицар', action: 'Лицар показує клас, поки падає забрало', image: 'character_04_overconfident_knight.svg', tag: '⚔️ Лицар' },
-  { id: 'character_05_sleepy_dragon', name: 'Сонний Дракончик', action: 'Дракончик у нічному ковпаку чхає вогнем', image: 'character_05_sleepy_dragon.svg', tag: '🐲 Дракон' },
-  { id: 'character_06_angry_wizard', name: 'Сердитий Чаклун', action: 'Маг у зоряному капелюсі з обгорілою бородою', image: 'character_06_angry_wizard.svg', tag: '🧙 Чаклун' },
-  { id: 'character_07_ninja_cat', name: 'Кіт-Ніндзя', action: 'Чорний кіт із рибкою-кунаєм та рухливим хвостом', image: 'character_07_ninja_cat.svg', tag: '🐱 Ніндзя' },
-  { id: 'character_08_pirate_frog', name: 'Жаба-Пірат', action: 'Капітан із золотою шаблею стріляє язиком', image: 'character_08_pirate_frog.svg', tag: '🏴‍☠️ Жаба' },
-  { id: 'character_09_goblin_engineer', name: 'Гоблін-Інженер', action: 'Гоблін закручує гайку на цокаючій бомбі', image: 'character_09_goblin_engineer.svg', tag: '💣 Гоблін' },
-  { id: 'character_10_tiny_giant', name: 'Крихітний Велетень', action: 'Міні-колос із кумедною ромашкою на голові', image: 'character_10_tiny_giant.svg', tag: '🗿 Велетень' },
-  { id: 'character_11_chicken_warrior', name: 'Бойовий Півень', action: 'Спартанський півень у шоломі зі списом', image: 'character_11_chicken_warrior.svg', tag: '🐓 Півень' },
-  { id: 'character_12_alien_cowboy', name: 'Прибулець-Ковбой', action: 'Триокий прибулець крутить бластери на слимаку', image: 'character_12_alien_cowboy.svg', tag: '🤠 Ковбой' },
-  { id: 'character_13_cyber_samurai', name: 'Кібер-Самурай', action: 'Неоновий самурай із плазмовою катаною', image: 'character_13_cyber_samurai.svg', tag: '⚡ Кібер' },
-  { id: 'character_14_coffee_mage', name: 'Маг-Кавоман', action: 'Експресо-чарівник із пульсуючим поглядом', image: 'character_14_coffee_mage.svg', tag: '☕ Кава' },
-  { id: 'character_15_pixel_rogue', name: 'Піксельний Розбійник', action: 'Ретро-злодій із мішком біткоїнів та відмичкою', image: 'character_15_pixel_rogue.svg', tag: '👾 Ретро' },
-  { id: 'character_16_space_hamster', name: 'Космо-Хомʼяк', action: 'Хомʼяк у скафандрі хрумає місячне зернятко', image: 'character_16_space_hamster.svg', tag: '🚀 Космос' },
-  { id: 'character_17_disco_necromancer', name: 'Діско-Некромант', action: 'Володар темряви танцює бугі під дзеркальною кулею', image: 'character_17_disco_necromancer.svg', tag: '🪩 Діско' },
-  { id: 'character_18_bubble_witch', name: 'Бульбашкова Відьма', action: 'Юна чаклунка пускає магічні вибухові кульки', image: 'character_18_bubble_witch.svg', tag: '🫧 Бульбашки' },
-  { id: 'character_19_heavy_mech', name: 'Важкий Мех-Танк', action: 'Грізний бойовий робот випускає хмарки пари', image: 'character_19_heavy_mech.svg', tag: '🤖 Мех' },
-  { id: 'character_20_royal_corgi', name: 'Королівський Коргі', action: 'Коргі в діамантовій короні велично махає лапкою', image: 'character_20_royal_corgi.svg', tag: '👑 Коргі' },
-  { id: 'character_21_lava_golem', name: 'Лавовий Голем', action: 'Велетень з магми зігріває в руках кружку какао', image: 'character_21_lava_golem.svg', tag: '🌋 Лава' },
-  { id: 'character_22_laser_panda', name: 'Лазерна Панда', action: 'Майстер кунг-фу стріляє лазерами з бамбука', image: 'character_22_laser_panda.svg', tag: '🐼 Панда' },
-  { id: 'character_23_storm_druid', name: 'Грозовий Друїд', action: 'Друїд викликає блискавки з крихітної хмаринки', image: 'character_23_storm_druid.svg', tag: '⚡ Гроза' },
-  { id: 'character_24_donut_knight', name: 'Лицар-Пончик', action: 'Глазурований паладин захищає солодке королівство', image: 'character_24_donut_knight.svg', tag: '🍩 Пончик' },
-  { id: 'character_25_shadow_fox', name: 'Тіньовий Лис', action: 'Хитрий лис розчиняється в диму фіолетового сутінку', image: 'character_25_shadow_fox.svg', tag: '🦊 Тінь' },
-  { id: 'character_26_clockwork_bard', name: 'Заводний Бард', action: 'Механічний музикант грає баладу на шестернях', image: 'character_26_clockwork_bard.svg', tag: '⚙️ Бард' },
-  { id: 'character_27_phoenix_bard', name: 'Фенікс-Рокер', action: 'Вогняний птах запалює на палаючій гітарі', image: 'character_27_phoenix_bard.svg', tag: '🎸 Фенікс' }
+  { id: 'character_01_clumsy_barbarian', name: 'Незграбний Варвар', action: 'Крихітний варвар хитається під вагою молота', image: 'character_01_clumsy_barbarian.webp', tag: '🔨 Варвар' },
+  { id: 'character_02_flying_duck_pilot', name: 'Качка-Пілот', action: 'Качка в авіаторському шоломі з гвинтом', image: 'character_02_flying_duck_pilot.webp', tag: '✈️ Пілот' },
+  { id: 'character_03_confused_tree_warrior', name: 'Збентежений Треант', action: 'Живий треант розгублено жонглює яблуками', image: 'character_03_confused_tree_warrior.webp', tag: '🌳 Треант' },
+  { id: 'character_04_overconfident_knight', name: 'Самовпевнений Лицар', action: 'Лицар показує клас, поки падає забрало', image: 'character_04_overconfident_knight.webp', tag: '⚔️ Лицар' },
+  { id: 'character_05_sleepy_dragon', name: 'Сонний Дракончик', action: 'Дракончик у нічному ковпаку чхає вогнем', image: 'character_05_sleepy_dragon.webp', tag: '🐲 Дракон' },
+  { id: 'character_06_angry_wizard', name: 'Сердитий Чаклун', action: 'Маг у зоряному капелюсі з обгорілою бородою', image: 'character_06_angry_wizard.webp', tag: '🧙 Чаклун' },
+  { id: 'character_07_ninja_cat', name: 'Кіт-Ніндзя', action: 'Чорний кіт із рибкою-кунаєм та рухливим хвостом', image: 'character_07_ninja_cat.webp', tag: '🐱 Ніндзя' },
+  { id: 'character_08_pirate_frog', name: 'Жаба-Пірат', action: 'Капітан із золотою шаблею стріляє язиком', image: 'character_08_pirate_frog.webp', tag: '🏴‍☠️ Жаба' },
+  { id: 'character_09_goblin_engineer', name: 'Гоблін-Інженер', action: 'Гоблін закручує гайку на цокаючій бомбі', image: 'character_09_goblin_engineer.webp', tag: '💣 Гоблін' },
+  { id: 'character_10_tiny_giant', name: 'Крихітний Велетень', action: 'Міні-колос із кумедною ромашкою на голові', image: 'character_10_tiny_giant.webp', tag: '🗿 Велетень' },
+  { id: 'character_11_chicken_warrior', name: 'Бойовий Півень', action: 'Спартанський півень у шоломі зі списом', image: 'character_11_chicken_warrior.webp', tag: '🐓 Півень' },
+  { id: 'character_12_alien_cowboy', name: 'Прибулець-Ковбой', action: 'Триокий прибулець крутить бластери на слимаку', image: 'character_12_alien_cowboy.webp', tag: '🤠 Ковбой' },
+  { id: 'character_13_cyber_samurai', name: 'Кібер-Самурай', action: 'Неоновий самурай із плазмовою катаною', image: 'character_13_cyber_samurai.webp', tag: '⚡ Кібер' },
+  { id: 'character_14_coffee_mage', name: 'Маг-Кавоман', action: 'Експресо-чарівник із пульсуючим поглядом', image: 'character_14_coffee_mage.webp', tag: '☕ Кава' },
+  { id: 'character_15_pixel_rogue', name: 'Піксельний Розбійник', action: 'Ретро-злодій із мішком біткоїнів та відмичкою', image: 'character_15_pixel_rogue.webp', tag: '👾 Ретро' },
+  { id: 'character_16_space_hamster', name: 'Космо-Хомʼяк', action: 'Хомʼяк у скафандрі хрумає місячне зернятко', image: 'character_16_space_hamster.webp', tag: '🚀 Космос' },
+  { id: 'character_17_disco_necromancer', name: 'Діско-Некромант', action: 'Володар темряви танцює бугі під дзеркальною кулею', image: 'character_17_disco_necromancer.webp', tag: '🪩 Діско' },
+  { id: 'character_18_bubble_witch', name: 'Бульбашкова Відьма', action: 'Юна чаклунка пускає магічні вибухові кульки', image: 'character_18_bubble_witch.webp', tag: '🫧 Бульбашки' },
+  { id: 'character_19_heavy_mech', name: 'Важкий Мех-Танк', action: 'Грізний бойовий робот випускає хмарки пари', image: 'character_19_heavy_mech.webp', tag: '🤖 Мех' },
+  { id: 'character_20_royal_corgi', name: 'Королівський Коргі', action: 'Коргі в діамантовій короні велично махає лапкою', image: 'character_20_royal_corgi.webp', tag: '👑 Коргі' },
+  { id: 'character_21_lava_golem', name: 'Лавовий Голем', action: 'Велетень з магми зігріває в руках кружку какао', image: 'character_21_lava_golem.webp', tag: '🌋 Лава' },
+  { id: 'character_22_laser_panda', name: 'Лазерна Панда', action: 'Майстер кунг-фу стріляє лазерами з бамбука', image: 'character_22_laser_panda.webp', tag: '🐼 Панда' },
+  { id: 'character_23_storm_druid', name: 'Грозовий Друїд', action: 'Друїд викликає блискавки з крихітної хмаринки', image: 'character_23_storm_druid.webp', tag: '⚡ Гроза' },
+  { id: 'character_24_donut_knight', name: 'Лицар-Пончик', action: 'Глазурований паладин захищає солодке королівство', image: 'character_24_donut_knight.webp', tag: '🍩 Пончик' },
+  { id: 'character_25_shadow_fox', name: 'Тіньовий Лис', action: 'Хитрий лис розчиняється в диму фіолетового сутінку', image: 'character_25_shadow_fox.webp', tag: '🦊 Тінь' },
+  { id: 'character_26_clockwork_bard', name: 'Заводний Бард', action: 'Механічний музикант грає баладу на шестернях', image: 'character_26_clockwork_bard.webp', tag: '⚙️ Бард' },
+  { id: 'character_27_phoenix_bard', name: 'Фенікс-Рокер', action: 'Вогняний птах запалює на палаючій гітарі', image: 'character_27_phoenix_bard.webp', tag: '🎸 Фенікс' }
 ];
 
 export const ANIMATED_AVATARS_SHOP = [
-  { id: 'shop_avatar_01_neon_emperor', name: 'Неоновий Імператор', desc: 'Ексклюзивний анімований аватар: голографічна корона, неоновий кібер-плащ', cost: 750, image: 'shop_avatar_01_neon_emperor.svg' },
-  { id: 'shop_avatar_02_golden_griffin', name: 'Золотий Грифон', desc: 'Ексклюзивний анімований аватар: золоте сяюче пірʼя, крила та міфічні пазурі', cost: 700, image: 'shop_avatar_02_golden_griffin.svg' },
-  { id: 'shop_avatar_03_cosmic_dj', name: 'Космічний Ді-джей', desc: 'Ексклюзивний анімований аватар: навушники з еквалайзером, платівка крутиться', cost: 650, image: 'shop_avatar_03_cosmic_dj.svg' },
-  { id: 'shop_avatar_04_shadow_assassin', name: 'Тіньовий Асасин', desc: 'Ексклюзивний анімований аватар: тіньові кинджали, фіолетові очі в тумані', cost: 600, image: 'shop_avatar_04_shadow_assassin.svg' },
-  { id: 'shop_avatar_05_mecha_dragon', name: 'Меха-Дракон', desc: 'Ексклюзивний анімований аватар: реактивні турбіни, синє плазмове полумʼя', cost: 800, image: 'shop_avatar_05_mecha_dragon.svg' },
-  { id: 'shop_avatar_06_crystal_golem', name: 'Кристалічний Голем', desc: 'Ексклюзивний анімований аватар: смарагдові кристали ростуть і сяють', cost: 550, image: 'shop_avatar_06_crystal_golem.svg' },
-  { id: 'shop_avatar_07_quantum_cat', name: 'Квантовий Кіт', desc: 'Ексклюзивний анімований аватар: мерехтить між двома вимірами', cost: 620, image: 'shop_avatar_07_quantum_cat.svg' },
-  { id: 'shop_avatar_08_frost_lich', name: 'Крижаний Ліч', desc: 'Ексклюзивний анімований аватар: крижана сфера паморозі обертається', cost: 680, image: 'shop_avatar_08_frost_lich.svg' },
-  { id: 'shop_avatar_09_solar_knight', name: 'Сонячний Лицар', desc: 'Ексклюзивний анімований аватар: сонячний щит з променями та вогняний плюмаж', cost: 720, image: 'shop_avatar_09_solar_knight.svg' },
-  { id: 'shop_avatar_10_void_walker', name: 'Мандрівник Порожнечі', desc: 'Ексклюзивний анімований аватар: чорна діра втягує зірки та простір', cost: 850, image: 'shop_avatar_10_void_walker.svg' }
+  { id: 'shop_avatar_01_neon_emperor', name: 'Неоновий Імператор', desc: 'Ексклюзивний анімований аватар: голографічна корона, неоновий кібер-плащ', cost: 750, image: 'shop_avatar_01_neon_emperor.webp' },
+  { id: 'shop_avatar_02_golden_griffin', name: 'Золотий Грифон', desc: 'Ексклюзивний анімований аватар: золоте сяюче пірʼя, крила та міфічні пазурі', cost: 700, image: 'shop_avatar_02_golden_griffin.webp' },
+  { id: 'shop_avatar_03_cosmic_dj', name: 'Космічний Ді-джей', desc: 'Ексклюзивний анімований аватар: навушники з еквалайзером, платівка крутиться', cost: 650, image: 'shop_avatar_03_cosmic_dj.webp' },
+  { id: 'shop_avatar_04_shadow_assassin', name: 'Тіньовий Асасин', desc: 'Ексклюзивний анімований аватар: тіньові кинджали, фіолетові очі в тумані', cost: 600, image: 'shop_avatar_04_shadow_assassin.webp' },
+  { id: 'shop_avatar_05_mecha_dragon', name: 'Меха-Дракон', desc: 'Ексклюзивний анімований аватар: реактивні турбіни, синє плазмове полумʼя', cost: 800, image: 'shop_avatar_05_mecha_dragon.webp' },
+  { id: 'shop_avatar_06_crystal_golem', name: 'Кристалічний Голем', desc: 'Ексклюзивний анімований аватар: смарагдові кристали ростуть і сяють', cost: 550, image: 'shop_avatar_06_crystal_golem.webp' },
+  { id: 'shop_avatar_07_quantum_cat', name: 'Квантовий Кіт', desc: 'Ексклюзивний анімований аватар: мерехтить між двома вимірами', cost: 620, image: 'shop_avatar_07_quantum_cat.webp' },
+  { id: 'shop_avatar_08_frost_lich', name: 'Крижаний Ліч', desc: 'Ексклюзивний анімований аватар: крижана сфера паморозі обертається', cost: 680, image: 'shop_avatar_08_frost_lich.webp' },
+  { id: 'shop_avatar_09_solar_knight', name: 'Сонячний Лицар', desc: 'Ексклюзивний анімований аватар: сонячний щит з променями та вогняний плюмаж', cost: 720, image: 'shop_avatar_09_solar_knight.webp' },
+  { id: 'shop_avatar_10_void_walker', name: 'Мандрівник Порожнечі', desc: 'Ексклюзивний анімований аватар: чорна діра втягує зірки та простір', cost: 850, image: 'shop_avatar_10_void_walker.webp' }
 ];
 
 export const GAME_AVATARS_30 = [...GAME_AVATARS_FUNNY, ...ANIMATED_AVATARS_SHOP];
@@ -800,32 +800,53 @@ function AvatarIcon({ id, av: propAv, size = 44, className = '', style = {}, aur
     actualId = OLD_AVATAR_MAP[actualId];
   }
   const av = GAME_AVATARS_30.find(a => a.id === actualId) || (propAv && typeof propAv === 'object' ? propAv : GAME_AVATARS_FUNNY[0]);
-  const imgUrl = av?.image ? `/avatars/${av.image}` : '/avatars/character_02_flying_duck_pilot.svg';
+  const imgUrl = av?.image ? `/avatars/${av.image}` : '/avatars/character_02_flying_duck_pilot.webp';
+  const sqRadius = Math.max(8, Math.round(size * 0.26));
+  const lipDepth = Math.max(2, Math.round(size * 0.08));
 
-  const wrap = (node) => (!aura && !frame ? node : (
-    <span className={`avatar-cosmetic-wrap ${aura || ''} ${frame || ''}`} style={{display:'inline-flex',alignItems:'center',justifyContent:'center',position:'relative',borderRadius:'50%',flexShrink:0}}>
-      {node}
-    </span>
-  ));
-
-  return wrap(
-    <img
-      src={imgUrl}
-      alt={av?.name || 'Аватар'}
-      className={`funny-avatar-img ${className}`}
+  const node = (
+    <span
+      className={`avatar-squircle-3d ${className}`}
       style={{
         width: size,
         height: size,
-        objectFit: 'cover',
-        borderRadius: '50%',
-        border: '1.5px solid rgba(56, 189, 248, 0.45)',
-        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4), inset 0 0 8px rgba(56, 189, 248, 0.2)',
-        background: '#101622',
-        flexShrink: 0,
-        ...style
+        borderRadius: sqRadius,
+        '--sq-radius': `${sqRadius}px`,
+        '--sq-lip': `${lipDepth}px`,
+        ...style,
       }}
-      loading="lazy"
-    />
+    >
+      <img
+        src={imgUrl}
+        alt={av?.name || 'Аватар'}
+        className="funny-avatar-img"
+        style={{
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          borderRadius: sqRadius,
+          display: 'block',
+        }}
+        loading="lazy"
+      />
+    </span>
+  );
+
+  if (!aura && !frame) return node;
+  return (
+    <span
+      className={`avatar-cosmetic-wrap ${aura || ''} ${frame || ''}`}
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        position: 'relative',
+        borderRadius: sqRadius,
+        flexShrink: 0,
+      }}
+    >
+      {node}
+    </span>
   );
 }
 
@@ -839,28 +860,73 @@ function colorMixDark(hex) {
   return '#1E293B';
 }
 
-/* ==========================================================================
-   GREEN BRAND LOGO (EXACTLY AS USER REQUESTED IN DUO-GREEN THEME)
-   ========================================================================== */
-function BrandLogo({size = 36, showText = true, className = ''}) {
+export const BRAND_LOGO_VARIANTS = [
+  { id: 'owl', name: 'Магічна Сова', desc: '3D сова з гримуаром та золотими рунами', src: '/brand_logo.webp', glow: 'rgba(245, 158, 11, 0.65)', accent: '#f59e0b' },
+  { id: 'phoenix', name: 'Кібер-Фенікс', desc: '3D вогняний фенікс із плазмовим ядром', src: '/brand_logo_phoenix.webp', glow: 'rgba(249, 115, 22, 0.65)', accent: '#fb923c' },
+  { id: 'dragon', name: 'Смарагдовий Дракон', desc: '3D дракон мудрості зі смарагдовою сферою', src: '/brand_logo_dragon.webp', glow: 'rgba(16, 185, 129, 0.65)', accent: '#10b981' },
+  { id: 'crown', name: 'Королівська Корона', desc: '3D золота корона над книгою знань', src: '/brand_logo_crown.webp', glow: 'rgba(250, 204, 21, 0.7)', accent: '#facc15' },
+];
+
+function BrandLogo({size = 36, showText = true, className = '', variant = ''}) {
+  const [activeVariant, setActiveVariant] = useState(() => {
+    if (variant) return variant;
+    try { return localStorage.getItem('ef_brand_logo') || 'owl'; } catch { return 'owl'; }
+  });
+
+  useEffect(() => {
+    if (variant) {
+      setActiveVariant(variant);
+      return;
+    }
+    const onLogoChange = (e) => {
+      if (e?.detail?.id) setActiveVariant(e.detail.id);
+    };
+    window.addEventListener('ef-brand-logo', onLogoChange);
+    return () => window.removeEventListener('ef-brand-logo', onLogoChange);
+  }, [variant]);
+
+  const info = BRAND_LOGO_VARIANTS.find(v => v.id === (variant || activeVariant)) || BRAND_LOGO_VARIANTS[0];
+  const radius = Math.max(9, Math.round(size * 0.27));
+  const lip = Math.max(2, Math.round(size * 0.085));
+
   return (
-    <div className={'brand-logo-wrap ' + className} style={{display:'inline-flex',alignItems:'center',gap:10}}>
-      <img
-        src="/brand_logo.svg"
-        alt="English Flow"
+    <div className={'brand-logo-wrap ' + className} style={{display:'inline-flex',alignItems:'center',gap:11,position:'relative'}}>
+      <span
+        className="brand-logo-orb"
         style={{
           width: size,
           height: size,
-          borderRadius: Math.max(8, Math.floor(size * 0.22)),
-          boxShadow: '0 4px 14px rgba(0, 0, 0, 0.45)',
-          border: '1.5px solid rgba(56, 189, 248, 0.5)',
-          objectFit: 'cover',
-          flexShrink: 0
+          borderRadius: radius,
+          position: 'relative',
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+          '--logo-glow': info.glow,
+          '--logo-accent': info.accent,
+          '--logo-lip': `${lip}px`,
         }}
-      />
+      >
+        <img
+          src={info.src}
+          alt="English Flow"
+          className="brand-logo-svg-img"
+          style={{
+            width: size,
+            height: size,
+            borderRadius: radius,
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.35)',
+            objectFit: 'cover',
+            flexShrink: 0
+          }}
+        />
+      </span>
       {showText && (
-        <span className="brand-text" style={{fontWeight:800,fontSize:18,letterSpacing:'-0.02em',color:'var(--text)'}}>
-          English<span style={{color:'#38bdf8',marginLeft:3}}>Flow</span>
+        <span className="brand-text-wrap" style={{display:'inline-flex',flexDirection:'column',lineHeight:1.05}}>
+          <span className="brand-text" style={{fontWeight:800,fontSize:18.5,letterSpacing:'-0.025em',color:'var(--text)',display:'inline-flex',alignItems:'center',gap:3}}>
+            English<span className="brand-flow-shimmer">Flow</span>
+          </span>
+          <span className="brand-sub-badge">ARCANE CITADEL</span>
         </span>
       )}
     </div>
@@ -1663,7 +1729,15 @@ export default function App() {
     let backup = null;
     try { backup = JSON.parse(localStorage.getItem('ef_state_backup') || 'null'); } catch {}
     const chosen = (p && (p.xp || 0) >= (backup?.xp || 0)) ? p : (backup || p);
-    return chosen ? {...emptyState(), ...chosen, admin: {...defaultAdmin, ...(chosen.admin || {})}} : emptyState();
+    const merged = chosen ? {...emptyState(), ...chosen, admin: {...defaultAdmin, ...(chosen.admin || {})}} : emptyState();
+    try {
+      if (!localStorage.getItem('ef_style_v2_arcane_migrated')) {
+        localStorage.setItem('ef_style_v2_arcane_migrated', '1');
+        merged.theme = 'dark';
+        merged.skin = 'arcane_citadel';
+      }
+    } catch {}
+    return merged;
   });
   const [page, setPage] = useState(state.nick ? 'dashboard' : 'onboarding');
   const [mobile, setMobile] = useState(false);
@@ -1674,7 +1748,7 @@ export default function App() {
       const cached = localStorage.getItem('ef-words-cache-v1');
       if (cached) {
         const p = JSON.parse(cached);
-        if (p?.words?.length) {
+        if (p?.words?.length && p.words.length >= words.length) {
           return p.words.map(w => ({
             id: w.id, word: w.word, translation: w.translation || '—', pronunciation: w.pronunciation || '',
             category: w.category || 'Other', level: w.level || '', explanation: w.explanation || '',
@@ -1931,7 +2005,7 @@ export default function App() {
     (async () => {
       try {
         const remoteWords = await loadCloudVocabulary();
-        if (remoteWords?.length) {
+        if (remoteWords?.length && remoteWords.length >= words.length) {
           const mapped = remoteWords.map(w => ({id:w.id,word:w.word,translation:w.translation||'—',pronunciation:w.pronunciation||'',category:w.category||'Other',level:w.level||'',explanation:w.explanation||'',example:w.example||''}));
           setWordsLive(mapped);
           try { localStorage.setItem('ef-words-cache-v1', JSON.stringify({words:mapped,meta:{count:mapped.length,source:'neon'},at:new Date().toISOString()})); } catch {}
@@ -2056,7 +2130,7 @@ export default function App() {
       <Layout state={state} page={page} nav={nav} mobile={mobile} setMobile={setMobile} onLogout={handleLogout} layout={state.layout || 'sidebar'} setLayout={(l) => save({...state, layout: l})}>
         {page === 'dashboard' && <Dashboard state={state} learned={learnedCount} due={dueCount} words={activeWords.length} onLearn={() => nav('learn')} onReview={() => nav('review')} cloudMsg={cloudMsg} quests={gamification?.quests} giftAvailable={gamification?.giftAvailable} onOpenGift={() => setGiftModal(true)} />}
         {page === 'learn' && <Learn state={state} cats={activeCats} onStart={startLesson} />}
-        {page === 'vocabulary' && <Vocabulary state={state} setModal={setModal} wordsCatalog={activeWords} cats={activeCats} />}
+        {page === 'vocabulary' && <Vocabulary state={state} setModal={setModal} wordsCatalog={activeWords} cats={activeCats} setWordsLive={setWordsLive} />}
         {page === 'review' && <ReviewPage state={state} due={dueCount} onStart={() => startLesson('srs', 'en-ua', 'all')} />}
         {page === 'stats' && <Stats state={state} learned={learnedCount} />}
         {page === 'badges' && <BadgesPage state={state} save={save} />}
@@ -3142,8 +3216,8 @@ function ShopPage({state, save, onRefreshGamification, allUsers}) {
                 const isOwned = cosmetics[item.id] || isEquipped;
                 return (
                   <div key={item.id} className="tavern-parchment-card" style={{alignItems:'center',textAlign:'center'}}>
-                    <div style={{marginBottom:8,position:'relative',width:84,height:84,borderRadius:'50%',background:'rgba(0,0,0,0.35)',display:'grid',placeItems:'center',overflow:'hidden',border:'2px solid var(--accent)'}}>
-                      <AvatarIcon id={item.id} av={avData} size={76} />
+                    <div style={{marginBottom:10,position:'relative',width:84,height:84,borderRadius:22,display:'grid',placeItems:'center'}}>
+                      <AvatarIcon id={item.id} av={avData} size={80} />
                     </div>
                     <span className="tavern-tier-badge tier-legendary" style={{marginBottom:6}}>✨ АНІМОВАНИЙ</span>
                     <h3 className="tavern-item-title" style={{margin:'2px 0 6px'}}>{item.name}</h3>
@@ -4979,7 +5053,7 @@ function MatchGame({items, state, save, onExit, onDone, lessonId, direction='en-
   );
 }
 
-function Vocabulary({state, setModal, wordsCatalog, cats}) {
+function Vocabulary({state, setModal, wordsCatalog, cats, setWordsLive}) {
   const dict = (wordsCatalog && wordsCatalog.length) ? wordsCatalog : words;
   const [q, setQ] = useState('');
   const [cat, setCat] = useState('all');
@@ -4990,6 +5064,11 @@ function Vocabulary({state, setModal, wordsCatalog, cats}) {
     setSyncBusy(true);
     try {
       const res = await requestJson('/api/notion-sync', {method:'POST', body:'{}'}).catch(() => null);
+      if (res?.words?.length && res.words.length >= words.length && typeof setWordsLive === 'function') {
+        const mapped = res.words.map(w => ({id:w.id,word:w.word,translation:w.translation||'—',pronunciation:w.pronunciation||'',category:w.category||'Other',level:w.level||'',explanation:w.explanation||'',example:w.example||(w.examples||'').split('\n')[0]||''}));
+        setWordsLive(mapped);
+        try { localStorage.setItem('ef-words-cache-v1', JSON.stringify({words:mapped,meta:{count:mapped.length,source:'notion'},at:new Date().toISOString()})); } catch {}
+      }
       if (res?.words?.length) {
         setModal?.({
           type: 'info',
@@ -6186,8 +6265,8 @@ function Profile({state, save, gamification, onRefreshGamification}) {
 
       {/* Hero Header */}
       <div className="hero-rpg card">
-        <div className="rpg-avatar" style={{borderRadius:'50%',overflow:'hidden',width:76,height:76,boxShadow:'0 0 20px rgba(56,189,248,0.4)',border:'2px solid #38bdf8'}}>
-          <AvatarIcon id={selectedAvatar || 'character_01_clumsy_barbarian'} size={76} className={state.inventory?.vipFrame ? 'vip-avatar-glow' : ''} />
+        <div className="rpg-avatar" style={{borderRadius:22,overflow:'visible',width:80,height:80,display:'grid',placeItems:'center'}}>
+          <AvatarIcon id={selectedAvatar || 'character_01_clumsy_barbarian'} size={78} className={state.inventory?.vipFrame ? 'vip-avatar-glow' : ''} />
         </div>
         <div style={{flex:1,minWidth:200}}>
           <div className="rpg-level">Рівень {level}</div>
@@ -6256,8 +6335,8 @@ function Profile({state, save, gamification, onRefreshGamification}) {
 
         {/* 30 Character Avatars */}
         <div className="card">
-          <h2>🎭 Колекція Анімованих SVG Героїв (Animated Game Avatars)</h2>
-          <p className="muted small">12 унікальних живих анімованих SVG-персонажів у стилі мобільних фентезі-ігор: справжня безперервна векторна анімація, виразні емоції, гумор та фірмові сталеві рамки:</p>
+          <h2>🎭 Колекція Анімованих SVG Героїв (37 Живих Логотипів)</h2>
+          <p className="muted small">37 унікальних живих анімованих SVG-персонажів та гербів: справжня багатошарова векторна анімація, сяючі руни, крила та фірмові сталеві рамки:</p>
           <div className="avatar-grid-duo" style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(68px, 1fr))',gap:8,marginTop:12}}>
             {GAME_AVATARS_30.map(av => {
               const isSelected = selectedAvatar === av.id;
@@ -7735,6 +7814,14 @@ function SettingsPage({state, save, onLogout}) {
   ];
 
   const setFont = (f) => {
+    const optional = { 'Outfit': 'Outfit:wght@400;500;600;700', 'Quicksand': 'Quicksand:wght@500;600;700', 'Lexend': 'Lexend:wght@400;500;600;700' };
+    if (optional[f] && !document.querySelector(`link[data-font-css="${f}"]`)) {
+      const l = document.createElement('link');
+      l.rel = 'stylesheet';
+      l.href = `https://fonts.googleapis.com/css2?family=${optional[f]}&display=swap`;
+      l.dataset.fontCss = f;
+      document.head.appendChild(l);
+    }
     document.documentElement.dataset.font = f;
     document.documentElement.style.setProperty('--font-main', `"${f}", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`);
     upd({font: f});
@@ -7798,8 +7885,12 @@ function SettingsPage({state, save, onLogout}) {
             ))}
           </div>
 
-          <label style={{marginTop:16}}>Колірні скіни</label>
+          <label style={{marginTop:16}}>Дизайн сайту та Колірні скіни (Варіанти 1–4)</label>
           <div className="theme-buttons skins" style={{marginTop:4}}>
+            <button className={state.skin === 'arcane_citadel' ? 'theme active' : 'theme'} onClick={() => upd({theme: 'dark', skin: 'arcane_citadel'})}>⚔️ Варіант 2: Arcane RPG Citadel</button>
+            <button className={state.skin === 'emerald_bento' ? 'theme active' : 'theme'} onClick={() => upd({theme: 'dark', skin: 'emerald_bento'})}>💎 Варіант 1: Cyber-Emerald Bento</button>
+            <button className={state.skin === 'tactile_3d' ? 'theme active' : 'theme'} onClick={() => upd({theme: 'dark', skin: 'tactile_3d'})}>🎮 Варіант 3: Tactile 3D Studio</button>
+            <button className={state.skin === 'aurora_dock' ? 'theme active' : 'theme'} onClick={() => upd({theme: 'dark', skin: 'aurora_dock'})}>🌌 Варіант 4: Nordic Aurora Minimal</button>
             <button className={state.skin === 'classic' ? 'theme active' : 'theme'} onClick={() => upd({skin: 'classic'})}>🌿 Classic</button>
             <button className={state.skin === 'neon' ? 'theme active' : 'theme'} onClick={() => upd({skin: 'neon'})}>⚡ Neon</button>
             <button className={state.skin === 'candy' ? 'theme active' : 'theme'} onClick={() => upd({skin: 'candy'})}>🍭 Candy</button>
@@ -7809,6 +7900,34 @@ function SettingsPage({state, save, onLogout}) {
             <button className={state.skin === 'sunset' ? 'theme active' : 'theme'} onClick={() => upd({skin: 'sunset'})}>🌅 Sunset</button>
             <button className={state.skin === 'tavern' ? 'theme active' : 'theme'} onClick={() => upd({skin: 'tavern'})}>🏰 Tavern</button>
             <button className={state.skin === 'stone_rpg' ? 'theme active' : 'theme'} onClick={() => upd({skin: 'stone_rpg'})}>🗿 Камінний Храм (Stone RPG)</button>
+          </div>
+
+          <label style={{marginTop:16}}>✨ Анімований Логотип Сайту (4 живі герби)</label>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(135px, 1fr))',gap:8,marginTop:6}}>
+            {BRAND_LOGO_VARIANTS.map(v => {
+              const currentLogo = state.brandLogo || (typeof localStorage !== 'undefined' ? localStorage.getItem('ef_brand_logo') : '') || 'owl';
+              const isSel = currentLogo === v.id;
+              return (
+                <button
+                  key={v.id}
+                  type="button"
+                  className={'theme' + (isSel ? ' active' : '')}
+                  style={{display:'flex',alignItems:'center',gap:8,padding:'8px 10px',textAlign:'left',justifyContent:'flex-start'}}
+                  onClick={() => {
+                    try { localStorage.setItem('ef_brand_logo', v.id); } catch {}
+                    window.dispatchEvent(new CustomEvent('ef-brand-logo', { detail: { id: v.id } }));
+                    upd({ brandLogo: v.id });
+                    emitSiteToast(`Логотип сайту змінено: ${v.name}`, 'ok');
+                  }}
+                >
+                  <BrandLogo size={30} showText={false} variant={v.id} />
+                  <span style={{display:'flex',flexDirection:'column',overflow:'hidden'}}>
+                    <b style={{fontSize:12,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{v.name}</b>
+                    <span className="muted" style={{fontSize:10,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{v.desc}</span>
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </div>
 

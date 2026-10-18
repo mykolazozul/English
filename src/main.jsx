@@ -4,6 +4,6 @@ import App from './App';
 import './styles.css';
 try {
   const link = document.querySelector('link[rel="icon"]');
-  if (link) link.href = '/favicon.svg';
+  if (link) link.href = '/favicon-64.png';
 } catch {}
 createRoot(document.getElementById('root')).render(<App />);

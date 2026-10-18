@@ -6101,3 +6101,170 @@ button.close-btn {
   font-size: 13px;
 }
 
+/* ==========================================================================
+   CLEAN STATIC AVATARS & BRAND LOGOS (no animations, no glints, no sparks)
+   ========================================================================== */
+.avatar-squircle-3d {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  background: #0f172a;
+  transition: border-color 0.18s ease;
+  user-select: none;
+}
+
+.avatar-squircle-3d:hover {
+  border-color: rgba(255, 255, 255, 0.32);
+}
+
+.brand-logo-orb {
+  transition: none;
+}
+
+.brand-flow-shimmer {
+  background: linear-gradient(90deg, #fbbf24 0%, #34d399 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 900;
+}
+
+.brand-sub-badge {
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted, #94a3b8);
+  opacity: 0.85;
+  margin-top: 1px;
+}
+
+.funny-avatar-img {
+  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.22s ease;
+}
+
+/* ==========================================================================
+   WEBSITE STYLE VARIANT 2: ARCANE RPG CITADEL (Чорний Обсидіан + Королівське Золото)
+   ========================================================================== */
+[data-skin=arcane_citadel] {
+  --bg: #0b0906;
+  --surface: #15110c;
+  --text: #fef3c7;
+  --muted: #b49a67;
+  --border: rgba(245, 158, 11, 0.26);
+  --accent: #f59e0b;
+  --danger: #ef4444;
+  --shadow: 0 14px 36px rgba(0, 0, 0, 0.72), 0 0 22px rgba(245, 158, 11, 0.08);
+  --radius: 18px;
+}
+
+[data-skin=arcane_citadel] body {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(245, 158, 11, 0.11) 0%, transparent 45%),
+    radial-gradient(circle at 85% 15%, rgba(239, 68, 68, 0.08) 0%, transparent 45%),
+    #0b0906;
+  color: #fef3c7;
+}
+
+[data-skin=arcane_citadel] .sidebar {
+  background: linear-gradient(180deg, #16110b 0%, #0d0a07 100%);
+  border-right: 1px solid rgba(245, 158, 11, 0.28);
+  box-shadow: 6px 0 32px rgba(0, 0, 0, 0.65);
+}
+
+[data-skin=arcane_citadel] .main > header {
+  background: rgba(21, 17, 12, 0.88);
+  border-bottom: 1px solid rgba(245, 158, 11, 0.25);
+  backdrop-filter: blur(16px);
+}
+
+[data-skin=arcane_citadel] .card {
+  background: linear-gradient(160deg, rgba(28, 22, 15, 0.96) 0%, rgba(17, 13, 9, 0.98) 100%);
+  border: 1.5px solid rgba(245, 158, 11, 0.28);
+  box-shadow: 0 4px 0 rgba(120, 53, 15, 0.55), 0 14px 32px rgba(0, 0, 0, 0.65);
+}
+
+[data-skin=arcane_citadel] .hero {
+  background: linear-gradient(135deg, #451a03 0%, #78350f 45%, #7f1d1d 100%) !important;
+  border: 1.5px solid rgba(251, 191, 36, 0.55) !important;
+  box-shadow: 0 5px 0 #451a03, 0 16px 42px rgba(245, 158, 11, 0.24) !important;
+  color: #fef3c7 !important;
+}
+
+[data-skin=arcane_citadel] .sidebar .nav.active,
+[data-skin=arcane_citadel] .nav.active {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+  color: #1c1204 !important;
+  border: 1.5px solid #fde047 !important;
+  box-shadow: 0 3px 0 #78350f, 0 6px 18px rgba(245, 158, 11, 0.45) !important;
+}
+
+[data-skin=arcane_citadel] .sidebar .nav.active svg,
+[data-skin=arcane_citadel] .nav.active svg {
+  color: #1c1204 !important;
+  stroke: #1c1204 !important;
+}
+
+[data-skin=arcane_citadel] .primary {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: #1c1204;
+  font-weight: 800;
+  border: 1px solid #fde047;
+  box-shadow: 0 3px 0 #78350f, 0 6px 16px rgba(245, 158, 11, 0.32);
+}
+
+/* ==========================================================================
+   WEBSITE STYLE VARIANT 1: CYBER-EMERALD GLASS BENTO
+   ========================================================================== */
+[data-skin=emerald_bento] {
+  --bg: #070b14;
+  --surface: #0f172a;
+  --text: #f8fafc;
+  --muted: #94a3b8;
+  --border: rgba(16, 185, 129, 0.26);
+  --accent: #10b981;
+  --shadow: 0 16px 40px rgba(0, 0, 0, 0.65), 0 0 24px rgba(16, 185, 129, 0.08);
+  --radius: 20px;
+}
+
+/* ==========================================================================
+   WEBSITE STYLE VARIANT 3: TACTILE 3D DUO STUDIO
+   ========================================================================== */
+[data-skin=tactile_3d] {
+  --bg: #091526;
+  --surface: #112239;
+  --text: #f0f9ff;
+  --muted: #7dd3fc;
+  --border: #1e3a5f;
+  --accent: #22c55e;
+  --shadow: 0 6px 0 #07192e, 0 14px 28px rgba(0, 0, 0, 0.55);
+  --radius: 22px;
+}
+
+[data-skin=tactile_3d] .card {
+  border-width: 2px;
+  box-shadow: 0 6px 0 #07192e, 0 14px 28px rgba(0, 0, 0, 0.5);
+}
+
+[data-skin=tactile_3d] .primary {
+  box-shadow: 0 4px 0 #15803d;
+}
+
+/* ==========================================================================
+   WEBSITE STYLE VARIANT 4: NORDIC AURORA MINIMAL
+   ========================================================================== */
+[data-skin=aurora_dock] {
+  --bg: #050811;
+  --surface: #0c1222;
+  --text: #e2e8f0;
+  --muted: #94a3b8;
+  --border: rgba(129, 140, 248, 0.22);
+  --accent: #818cf8;
+  --shadow: 0 16px 44px rgba(0, 0, 0, 0.65);
+  --radius: 20px;
+}
+
