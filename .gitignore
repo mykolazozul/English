@@ -6,4 +6,9 @@ dist
 *.pem
 credentials.json
 *.log
+*.out
+kiro-*
+agent_screenshots/
+playwright-report/
+test-results/
 .DS_Store

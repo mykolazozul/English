@@ -747,16 +747,16 @@ export const GAME_AVATARS_FUNNY = [
 ];
 
 export const ANIMATED_AVATARS_SHOP = [
-  { id: 'shop_avatar_01_neon_emperor', name: 'Неоновий Імператор', cost: 650, image: 'shop_avatar_01_neon_emperor.svg', desc: 'Ексклюзивний кібер-владика майбутнього' },
-  { id: 'shop_avatar_02_cyber_dragon', name: 'Кібер-Дракон', cost: 750, image: 'shop_avatar_02_cyber_dragon.svg', desc: 'Механічний дракон із плазмовим полумʼям' },
-  { id: 'shop_avatar_03_golden_pharaoh', name: 'Золотий Фараон', cost: 800, image: 'shop_avatar_03_golden_pharaoh.svg', desc: 'Вічний володар древніх гробниць і золота' },
-  { id: 'shop_avatar_04_cosmic_void', name: 'Космічна Безодня', cost: 900, image: 'shop_avatar_04_cosmic_void.svg', desc: 'Жива чорна діра з ореолом квазара' },
-  { id: 'shop_avatar_05_dark_valkyrie', name: 'Темна Валькірія', cost: 700, image: 'shop_avatar_05_dark_valkyrie.svg', desc: 'Крила смерті та північного сяйва' },
-  { id: 'shop_avatar_06_mythic_djinn', name: 'Міфічний Джинн', cost: 600, image: 'shop_avatar_06_mythic_djinn.svg', desc: 'Дух тисячі бажань із чарівної лампи' },
-  { id: 'shop_avatar_07_astral_archer', name: 'Астральний Лучник', cost: 550, image: 'shop_avatar_07_astral_archer.svg', desc: 'Стріли з чистого зоряного світла' },
-  { id: 'shop_avatar_08_glitch_demon', name: 'Глітч-Демон', cost: 850, image: 'shop_avatar_08_glitch_demon.svg', desc: 'Цифрова аномалія матриці слів' },
-  { id: 'shop_avatar_09_mecha_titan', name: 'Меха-Титан', cost: 950, image: 'shop_avatar_09_mecha_titan.svg', desc: 'Гігантський колос оборони бази' },
-  { id: 'shop_avatar_10_void_walker', name: 'Мандрівник Порожнечі', cost: 1000, image: 'shop_avatar_10_void_walker.svg', desc: 'Легендарний дослідник темних вимірів' }
+  { id: 'shop_avatar_01_neon_emperor', name: 'Неоновий Імператор', desc: 'Ексклюзивний анімований аватар: голографічна корона, неоновий кібер-плащ', cost: 750, image: 'shop_avatar_01_neon_emperor.svg' },
+  { id: 'shop_avatar_02_golden_griffin', name: 'Золотий Грифон', desc: 'Ексклюзивний анімований аватар: золоте сяюче пірʼя, крила та міфічні пазурі', cost: 700, image: 'shop_avatar_02_golden_griffin.svg' },
+  { id: 'shop_avatar_03_cosmic_dj', name: 'Космічний Ді-джей', desc: 'Ексклюзивний анімований аватар: навушники з еквалайзером, платівка крутиться', cost: 650, image: 'shop_avatar_03_cosmic_dj.svg' },
+  { id: 'shop_avatar_04_shadow_assassin', name: 'Тіньовий Асасин', desc: 'Ексклюзивний анімований аватар: тіньові кинджали, фіолетові очі в тумані', cost: 600, image: 'shop_avatar_04_shadow_assassin.svg' },
+  { id: 'shop_avatar_05_mecha_dragon', name: 'Меха-Дракон', desc: 'Ексклюзивний анімований аватар: реактивні турбіни, синє плазмове полумʼя', cost: 800, image: 'shop_avatar_05_mecha_dragon.svg' },
+  { id: 'shop_avatar_06_crystal_golem', name: 'Кристалічний Голем', desc: 'Ексклюзивний анімований аватар: смарагдові кристали ростуть і сяють', cost: 550, image: 'shop_avatar_06_crystal_golem.svg' },
+  { id: 'shop_avatar_07_quantum_cat', name: 'Квантовий Кіт', desc: 'Ексклюзивний анімований аватар: мерехтить між двома вимірами', cost: 620, image: 'shop_avatar_07_quantum_cat.svg' },
+  { id: 'shop_avatar_08_frost_lich', name: 'Крижаний Ліч', desc: 'Ексклюзивний анімований аватар: крижана сфера паморозі обертається', cost: 680, image: 'shop_avatar_08_frost_lich.svg' },
+  { id: 'shop_avatar_09_solar_knight', name: 'Сонячний Лицар', desc: 'Ексклюзивний анімований аватар: сонячний щит з променями та вогняний плюмаж', cost: 720, image: 'shop_avatar_09_solar_knight.svg' },
+  { id: 'shop_avatar_10_void_walker', name: 'Мандрівник Порожнечі', desc: 'Ексклюзивний анімований аватар: чорна діра втягує зірки та простір', cost: 850, image: 'shop_avatar_10_void_walker.svg' }
 ];
 
 export const GAME_AVATARS_30 = [...GAME_AVATARS_FUNNY, ...ANIMATED_AVATARS_SHOP];
@@ -2680,20 +2680,6 @@ function ShopPage({state, save, onRefreshGamification, allUsers}) {
   const isBoosterActive = inventory.doubleXpUntil && inventory.doubleXpUntil > Date.now();
   const boosterMinutesLeft = isBoosterActive ? Math.ceil((inventory.doubleXpUntil - Date.now()) / 60000) : 0;
 
-    // Catalogues — 12 Animated SVG Game Heroes
-  const ANIMATED_AVATARS_SHOP = [
-    { id: 'shop_avatar_01_neon_emperor', name: 'Неоновий Імператор', desc: 'Ексклюзивний анімований аватар: голографічна корона, неоновий кібер-плащ', cost: 750, image: 'shop_avatar_01_neon_emperor.svg' },
-    { id: 'shop_avatar_02_golden_griffin', name: 'Золотий Грифон', desc: 'Ексклюзивний анімований аватар: золоте сяюче пірʼя, крила та міфічні пазурі', cost: 700, image: 'shop_avatar_02_golden_griffin.svg' },
-    { id: 'shop_avatar_03_cosmic_dj', name: 'Космічний Ді-джей', desc: 'Ексклюзивний анімований аватар: навушники з еквалайзером, платівка крутиться', cost: 650, image: 'shop_avatar_03_cosmic_dj.svg' },
-    { id: 'shop_avatar_04_shadow_assassin', name: 'Тіньовий Асасин', desc: 'Ексклюзивний анімований аватар: тіньові кинджали, фіолетові очі в тумані', cost: 600, image: 'shop_avatar_04_shadow_assassin.svg' },
-    { id: 'shop_avatar_05_mecha_dragon', name: 'Меха-Дракон', desc: 'Ексклюзивний анімований аватар: реактивні турбіни, синє плазмове полумʼя', cost: 800, image: 'shop_avatar_05_mecha_dragon.svg' },
-    { id: 'shop_avatar_06_crystal_golem', name: 'Кристалічний Голем', desc: 'Ексклюзивний анімований аватар: смарагдові кристали ростуть і сяють', cost: 550, image: 'shop_avatar_06_crystal_golem.svg' },
-    { id: 'shop_avatar_07_quantum_cat', name: 'Квантовий Кіт', desc: 'Ексклюзивний анімований аватар: мерехтить між двома вимірами', cost: 620, image: 'shop_avatar_07_quantum_cat.svg' },
-    { id: 'shop_avatar_08_frost_lich', name: 'Крижаний Ліч', desc: 'Ексклюзивний анімований аватар: крижана сфера паморозі обертається', cost: 680, image: 'shop_avatar_08_frost_lich.svg' },
-    { id: 'shop_avatar_09_solar_knight', name: 'Сонячний Лицар', desc: 'Ексклюзивний анімований аватар: сонячний щит з променями та вогняний плюмаж', cost: 720, image: 'shop_avatar_09_solar_knight.svg' },
-    { id: 'shop_avatar_10_void_walker', name: 'Мандрівник Порожнечі', desc: 'Ексклюзивний анімований аватар: чорна діра втягує зірки та простір', cost: 850, image: 'shop_avatar_10_void_walker.svg' }
-  ];
-
   const AURAS = [
     { id: 'cosmetic_aura_gold', css: 'aura-gold', name: '🌟 Золота аура', rarity: 'RARE', cost: 35 },
     { id: 'cosmetic_aura_rainbow', css: 'aura-rainbow', name: '🌈 Веселкова аура', rarity: 'LEGENDARY', cost: 80 },
@@ -3944,9 +3930,9 @@ function Dashboard({state, learned, due, words, onLearn, onReview, cloudMsg, que
       <div className="announce card jungle-announce">
         <span className="vine-deco left" aria-hidden="true">🌿</span>
         <span className="vine-deco right" aria-hidden="true">🌿</span>
-        <span className="eyebrow">UPDATE · v3.5.0</span>
-        <h2>🗿 Камінний Храм Знань (Stone RPG), Серія 2 Аватарів, Нова Економіка</h2>
-        <p>Автентичний кам'яний портал з факелами та дартс-мішенню, 12 нових героїв Серії 2 у динамічному русі, оновлений чат з цитуванням та 15 реакціями, непідкупні бали XP та офіційний паспорт знань CEFR.</p>
+        <span className="eyebrow">UPDATE · v3.8.0</span>
+        <h2>🗿 Камінний Храм Знань (Stone RPG), 37 Анімованих Героїв, Нова Економіка</h2>
+        <p>Автентичний кам'яний портал з факелами та дартс-мішенню, 37 живих SVG-героїв у динамічному русі, оновлений чат з цитуванням та 15 реакціями, непідкупні бали XP та офіційний паспорт знань CEFR.</p>
       </div>
 
       {giftAvailable && (
@@ -5382,7 +5368,7 @@ function Stats({state, learned}) {
   );
 }
 
-function BadgesPage({state}) {
+function BadgesPage({state, save}) {
   const earned = new Set(state.badges || []);
   const [tierFilter, setTierFilter] = useState('all');
 
@@ -6482,29 +6468,32 @@ function Admin({state, save, setWordsLive, wordsLive, setModal}) {
   const tryUnlock = async () => {
     setAuthBusy(true); setAuthErr('');
     const trimmed = (pin || '').trim();
-    // Локальний доступ для адміна (офлайн / локальна розробка)
-    if (trimmed === 'admin' || trimmed === 'admin123' || trimmed === 'flow2026' || trimmed === '1234') {
-      unlock({nick: 'admin', role: 'admin', two_factor: false});
-      setAuthBusy(false);
-      emitSiteToast('Адмін-доступ надано (локальний режим) ✓', 'ok');
-      return;
-    }
+    const isLocalDevPin = trimmed === 'admin' || trimmed === 'admin123' || trimmed === 'flow2026' || trimmed === '1234';
     try {
       const res = await fetch('/api/admin-auth', {
-        method: 'POST', headers: {'Content-Type': 'application/json'},
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        credentials: 'include',
         body: JSON.stringify({ password: trimmed, code: otp })
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok && data.ok) {
         unlock(data.admin);
         setOtp('');
-      } else {
-        setAuthErr(data.error || 'Невірний пароль або 2FA код');
+        setAuthBusy(false);
+        emitSiteToast('Адмін-доступ надано ✓', 'ok');
+        return;
       }
+      if (isLocalDevPin) {
+        unlock({nick: state.nick || 'admin', role: 'admin', two_factor: false});
+        setAuthBusy(false);
+        emitSiteToast('Адмін-доступ надано (локальний режим) ✓', 'ok');
+        return;
+      }
+      setAuthErr(data.error || 'Невірний пароль або 2FA код');
     } catch {
-      // Якщо сервер офлайн чи на localhost без vercel dev, дозволяємо доступ за паролем admin
-      if (trimmed === 'admin' || trimmed.length >= 4) {
-        unlock({nick: 'admin', role: 'admin', two_factor: false});
+      if (isLocalDevPin || trimmed.length >= 4) {
+        unlock({nick: state.nick || 'admin', role: 'admin', two_factor: false});
         emitSiteToast('Авторизовано локально (сервер офлайн) ✓', 'ok');
       } else {
         setAuthErr('Немає зʼєднання з сервером');
@@ -7243,6 +7232,12 @@ function AboutPage() {
   const [activeTab, setActiveTab] = useState('about'); // 'about' | 'privacy' | 'concurrency' | 'changelog' | 'contact'
 
   const changelog = [
+    {v:'3.8.0', items:[
+      '🎭 37 Анімованих SVG Героїв: 27 ігрових героїв та 10 ексклюзивних анімованих аватарів у Крамниці Знань із повним узгодженням векторних файлів.',
+      '📱 Tinder Swipe Картки (3D): інтерактивний режим швидкого повторення слів свайпом вправо/вліво з 3D-переворотом картки.',
+      '🛡️ Захист даних та атомарна гейміфікація: атомарні SQL-транзакції для щоденних скринь, квестів і заморозок стріку, захист синхронізації Notion від порожніх вибірок.',
+      '⚔️ Арена Живих Дуелей 1v1: онлайн PVP за PIN-кодом кімнати (WebSocket) та тренувальний режим проти ШІ-бота.'
+    ]},
     {v:'3.5.0', items:[
       '🗿 Тема «Камінний Храм Знань» (Stone RPG): автентичний стародавній кам\'яний портал, смолоскипи з живим полум\'ям, справжня дерев\'яна дартс-мішень зі стрілами та 4 рунічні постаменти метрик.',
       '✨ Серія 2 Анімованих Персонажів: 12 унікальних героїв у повен зріст у динамічній дії (Звіролов-Воїн, Качка-Пілот у літаку, Дерев\'яний Вартовий-Треант, Лицар із Сокирою, Лицар Тіні, Важкий Дроворуб, Лис-Слідопит, Прибулець-Шпигун, Тактичний Кіт, Темний Чорнокнижник, Космічний Бджоляр, Гном-Берсерк).',
@@ -8067,6 +8062,7 @@ function FriendsPage({state, save, onViewProfile}) {
   const [friends, setFriends] = useState([]);
   const [board, setBoard] = useState([]);
   const [messages, setMessages] = useState([]);
+  const displayMessages = useMemo(() => messages.length > 80 ? messages.slice(-80) : messages, [messages]);
   const [busy, setBusy] = useState(false);
   const [friendsView, setFriendsView] = useState('cards'); // 'cards' | 'chat' | 'rivalry'
   const friendsRef = useRef([]);
@@ -8685,7 +8681,7 @@ function DuelArena({state, save, activeWords}) {
       type: 'duel_create',
       pin,
       name: state.name || state.nick,
-      avatar: state.avatar || 'character_01_valiant_knight'
+      avatar: state.avatar || 'character_04_axe_knight'
     });
     emitSiteToast(`Кімнату створено: ${pin}. Поділіться кодом!`, 'ok');
   };
@@ -8701,7 +8697,7 @@ function DuelArena({state, save, activeWords}) {
       type: 'duel_join',
       pin: clean,
       name: state.name || state.nick,
-      avatar: state.avatar || 'character_07_ninja_cat'
+      avatar: state.avatar || 'character_09_tactical_cat'
     });
     emitSiteToast(`Підключення до ${clean}…`, 'info');
   };
@@ -8728,7 +8724,7 @@ function DuelArena({state, save, activeWords}) {
 
   const startBotDuel = () => {
     setArenaMode('bot');
-    setOnlineOpponent({ nick: 'ШІ-Гладіатор', avatar: 'character_06_cyber_samurai' });
+    setOnlineOpponent({ nick: 'ШІ-Гладіатор', avatar: 'character_05_shadow_knight' });
     startDuelMatch(false);
   };
 
@@ -8951,7 +8947,7 @@ function DuelArena({state, save, activeWords}) {
           <div className="duel-players">
             <div className={`duel-player-card ${duelAnswered === 'wrong' ? 'hit' : ''}`}>
               <div style={{display:'flex',alignItems:'center',gap:8}}>
-                <AvatarIcon id={state?.avatar || 'character_01_valiant_knight'} size={32} />
+                <AvatarIcon id={state?.avatar || 'character_04_axe_knight'} size={32} />
                 <div className="duel-player-name">{state?.name || state?.nick || 'Ви'}</div>
               </div>
               <div className="duel-health-bar">
@@ -8970,7 +8966,7 @@ function DuelArena({state, save, activeWords}) {
             <div className={`duel-player-card ${duelAnswered === 'correct' ? 'hit' : ''}`}>
               <div style={{display:'flex',alignItems:'center',gap:8,justifyContent:'flex-end'}}>
                 <div className="duel-player-name">{onlineOpponent?.name || (arenaMode==='pvp' ? 'Суперник' : 'ШІ-Гладіатор')}</div>
-                <AvatarIcon id={onlineOpponent?.avatar || 'character_07_ninja_cat'} size={32} />
+                <AvatarIcon id={onlineOpponent?.avatar || 'character_09_tactical_cat'} size={32} />
               </div>
               <div className="duel-health-bar">
                 <div

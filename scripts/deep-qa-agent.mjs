@@ -35,7 +35,7 @@ async function runDeepQa() {
       await nickInput.fill('tester');
       const passInput = page.locator('input[type="password"]').first();
       await passInput.fill('Tester2026!');
-      const loginBtn = page.locator('button.primary', { hasText: /Увійти/i }).first();
+      const loginBtn = page.locator('button.auth-hero-btn, button.primary', { hasText: /Увійти/i }).first();
       await loginBtn.click();
       await page.waitForTimeout(1500);
     }
@@ -66,11 +66,11 @@ async function runDeepQa() {
     console.log('Navigating and authenticating on http://127.0.0.1:5173/ ...');
     await ensureLoggedIn(desktopPage);
 
-    // 1.1 Verify version badge v3.5.1
+    // 1.1 Verify version badge v3.8.0
     const versionBadge = await desktopPage.$('.version-badge');
     assert(versionBadge !== null, 'Version badge exists in DOM');
     const versionText = await versionBadge.innerText();
-    assert(versionText.includes('3.5.1'), `Version badge reflects v3.5.1: "${versionText}"`);
+    assert(versionText.includes('3.8.0'), `Version badge reflects v3.8.0: "${versionText}"`);
 
     // 1.2 Verify header currency pill displays Golden Coins (🪙)
     const coinPill = await desktopPage.$('.currency-pill-coins, .stat-chip:has-text("🪙")');

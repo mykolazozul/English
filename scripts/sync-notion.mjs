@@ -176,6 +176,11 @@ do {
 
 all.sort((a, b) => a.word.localeCompare(b.word, 'en', { sensitivity: 'base' }));
 
+if (all.length === 0) {
+  console.warn('⚠️ Notion sync returned 0 words. Preserving existing local vocabulary bundles without overwriting.');
+  process.exit(0);
+}
+
 const meta = {
   dataSourceId: DATA_SOURCE_ID,
   count: all.length,

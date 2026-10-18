@@ -6,7 +6,7 @@ create table if not exists users (
   nick text not null unique,
   name text not null default '',
   password_hash text not null,
-  role text not null default 'user' check (role in ('user','admin','moderator')),
+  role text not null default 'user' check (role in ('user','admin','moderator','tester')),
   status text not null default 'active' check (status in ('active','suspended','deleted')),
   xp integer not null default 0 check (xp >= 0),
   streak integer not null default 1 check (streak >= 0),

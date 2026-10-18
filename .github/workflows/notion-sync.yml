@@ -22,6 +22,7 @@ jobs:
         env:
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
           NOTION_DATA_SOURCE_ID: ${{ secrets.NOTION_DATA_SOURCE_ID }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
           if [ -z "$NOTION_TOKEN" ]; then
             echo "::warning::NOTION_TOKEN secret is not set in GitHub Repository Secrets. Skipping static sync."
@@ -32,10 +33,10 @@ jobs:
       - name: Sync Notion to Neon via Vercel API
         env:
           VERCEL_API_URL: ${{ secrets.VERCEL_API_URL }}
-          SYNC_SECRET: ${{ secrets.SYNC_SECRET }}
+          SYNC_SECRET: ${{ secrets.SYNC_SECRET || secrets.CRON_SECRET || secrets.ADMIN_PASSWORD }}
         run: |
-          if [ -z "$VERCEL_API_URL" ] || [ -z "$SYNC_SECRET" ]; then
-            echo "::warning::VERCEL_API_URL or SYNC_SECRET secret is not set. Skipping remote database sync webhook."
+          if [ -z "$VERCEL_API_URL" ]; then
+            echo "::warning::VERCEL_API_URL secret is not set. Skipping remote database sync webhook."
           else
             curl -sS -X POST "$VERCEL_API_URL/api/notion-sync" \
               -H "Content-Type: application/json" \

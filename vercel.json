@@ -61,6 +61,10 @@
       "destination": "/api/index?route=friends"
     },
     {
+      "source": "/api/gamification",
+      "destination": "/api/index?route=gamification"
+    },
+    {
       "source": "/api/health",
       "destination": "/api/index?route=health"
     },
